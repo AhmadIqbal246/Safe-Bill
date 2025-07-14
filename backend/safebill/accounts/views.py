@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from .serializers import (
     RegistrationSerializer, UserTokenObtainPairSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, BankAccountSerializer
 )
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -16,6 +16,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import permissions
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import BankAccount
 
 User = get_user_model()
 
@@ -161,4 +162,26 @@ class PasswordResetConfirmView(APIView):
                 return Response({'detail': 'Password has been reset.'}, status=200)
             return Response({'detail': 'Invalid or expired token.'}, status=400)
         return Response(serializer.errors, status=400)
+
+
+class BankAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BankAccountSerializer(data=request.data)
+        if serializer.is_valid():
+            # If the user already has a bank account, update it
+            bank_account, created = BankAccount.objects.update_or_create(
+                user=request.user,
+                defaults=serializer.validated_data
+            )
+            return Response(BankAccountSerializer(bank_account).data)
+        return Response(serializer.errors, status=400)
+
+    def get(self, request):
+        try:
+            bank_account = request.user.bank_account
+            return Response(BankAccountSerializer(bank_account).data)
+        except BankAccount.DoesNotExist:
+            return Response({'detail': 'No bank account found.'}, status=404)
 

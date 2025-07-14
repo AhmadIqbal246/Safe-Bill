@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 # to allow all credentials (cookies, authorization headers, etc.) to be included in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Initialise environment variables
 env = environ.Env()
