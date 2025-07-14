@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye, EyeOff } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   registerSellerWithBasicAndBussiness,
@@ -46,6 +46,8 @@ export default function SellerRegisterFlow() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
   const [selectedSkills, setSelectedSkills] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [errors, setErrors] = useState({});
 
@@ -157,7 +159,7 @@ export default function SellerRegisterFlow() {
       toast.success(
         typeof success === "string"
           ? success
-          : success.detail || "Registration successful. Please your email to verify your account."
+          : success.detail || "Registration successful. Please your email to verify your Email."
       );
       setFormData(initialFormData);
       setCurrentStep(1);
@@ -341,15 +343,27 @@ export default function SellerRegisterFlow() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password *
                 </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => updateFormData("password", e.target.value)}
-                  placeholder="Create a strong password"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => updateFormData("password", e.target.value)}
+                    placeholder="Create a strong password"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  <span
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-gray-400" />
+                    )}
+                  </span>
+                </div>
                 <p className="text-gray-500 text-sm mt-1">
                   At least 8 characters with uppercase, lowercase, and numbers
                 </p>
@@ -362,19 +376,27 @@ export default function SellerRegisterFlow() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password *
                 </label>
-                <input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    updateFormData("confirmPassword", e.target.value)
-                  }
-                  placeholder="Confirm your password"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.confirmPassword
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+                    placeholder="Confirm your password"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  <span
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-gray-400" />
+                    )}
+                  </span>
+                </div>
                 {errors.confirmPassword && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.confirmPassword}
