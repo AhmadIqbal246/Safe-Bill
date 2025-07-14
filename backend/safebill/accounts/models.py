@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 
@@ -31,6 +33,33 @@ class BusinessDetail(models.Model):
     type_of_activity = models.CharField(max_length=255)
     service_area = models.CharField(max_length=255)
     siret_verified = models.BooleanField(default=False)
+    company_phone_number = models.CharField(max_length=30, blank=True, unique=True)
+    company_contact_person = models.CharField(max_length=255, blank=True)
+    skills = ArrayField(
+        models.CharField(max_length=100),
+        blank=True,
+        default=list
+    )
 
     def __str__(self):
         return f"{self.company_name} (SIRET: {self.siret_number})"
+
+
+class BankAccount(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='bank_account'
+    )
+    account_holder_name = models.CharField(max_length=255)
+    iban = models.CharField(max_length=34, blank=True, unique=True)
+    bank_code = models.CharField(max_length=20)
+    branch_code = models.CharField(max_length=20)
+    rib_key = models.CharField(max_length=10, unique=True)
+    bic_swift = models.CharField(max_length=20, unique=True)
+    bank_name = models.CharField(max_length=255)
+    bank_address = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.account_holder_name} - {self.bank_name}"

@@ -3,6 +3,7 @@ from .models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import BusinessDetail
+from .models import BankAccount
 
 
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -10,7 +11,8 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         model = BusinessDetail
         fields = [
             'company_name', 'siret_number', 'full_address',
-            'type_of_activity', 'service_area', 'siret_verified'
+            'type_of_activity', 'service_area', 'siret_verified',
+            'company_phone_number', 'company_contact_person', 'skills'
         ]
         read_only_fields = ['siret_verified']
 
@@ -20,25 +22,31 @@ class RegistrationSerializer(serializers.Serializer):
     Bussiness_information = serializers.DictField()
 
     def validate(self, data):
-        # You can add more validation here if needed
+        basic_info = data.get('Basic_Information', {})
+        business_info = data.get('Bussiness_information', {})
+
+        # Email
+        if 'email' in basic_info and User.objects.filter(email=basic_info['email']).exists():
+            raise serializers.ValidationError({'email': 'This email is already taken.'})
+       # Username
+        if 'username' in basic_info and User.objects.filter(username=basic_info['username']).exists():
+            raise serializers.ValidationError({'username': 'This username is already taken.'})
+
+        # SIRET number
+        if 'siret_number' in business_info and BusinessDetail.objects.filter(siret_number=business_info['siret_number']).exists():
+            raise serializers.ValidationError({'siret_number': 'This SIRET number is already taken.'})
+
+        # Company phone number
+        if 'company_phone_number' in business_info and business_info['company_phone_number']:
+            if BusinessDetail.objects.filter(company_phone_number=business_info['company_phone_number']).exists():
+                raise serializers.ValidationError({'company_phone_number': 'This company phone number is already taken.'})
+
         return data
 
     def create(self, validated_data):
         basic_info = validated_data['Basic_Information']
         business_info = validated_data['Bussiness_information']
         # Create user
-        if User.objects.filter(email=basic_info['email']).exists():
-            raise serializers.ValidationError({
-                'email': 'This email is already taken.'
-            })
-        if User.objects.filter(username=basic_info['username']).exists():
-            raise serializers.ValidationError({
-                'username': 'This username is already taken.'
-            })
-        if BusinessDetail.objects.filter(siret_number=business_info['siret_number']).exists():
-            raise serializers.ValidationError({
-                'siret_number': 'This SIRET number is already taken.'
-            })
         user = User.objects.create_user(
             username=basic_info['username'],
             email=basic_info['email'],
@@ -57,7 +65,10 @@ class RegistrationSerializer(serializers.Serializer):
             full_address=business_info['full_address'],
             type_of_activity=business_info['type_of_activity'],
             service_area=business_info['service_area'],
-            siret_verified=False
+            siret_verified=False,
+            company_phone_number=business_info.get('company_phone_number', ''),
+            company_contact_person=business_info.get('company_contact_person', ''),
+            skills=business_info.get('skills', []),
         )
         return user
     
@@ -91,3 +102,39 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     new_password = serializers.CharField(
         write_only=True, validators=[validate_password]
     ) 
+
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            'account_holder_name', 'iban', 'bank_code', 'branch_code',
+            'rib_key', 'bic_swift', 'bank_name', 'bank_address', 'created_at'
+        ]
+        read_only_fields = ['created_at'] 
+
+    def validate(self, data):
+        instance = getattr(self, 'instance', None)
+        iban = data.get('iban')
+        rib_key = data.get('rib_key')
+        bic_swift = data.get('bic_swift')
+
+        if iban and BankAccount.objects.exclude(
+            pk=getattr(instance, 'pk', None)
+        ).filter(iban=iban).exists():
+            raise serializers.ValidationError({
+                'iban': 'This IBAN is already in use.'
+            })
+        if rib_key and BankAccount.objects.exclude(
+            pk=getattr(instance, 'pk', None)
+        ).filter(rib_key=rib_key).exists():
+            raise serializers.ValidationError({
+                'rib_key': 'This RIB key is already in use.'
+            })
+        if bic_swift and BankAccount.objects.exclude(
+            pk=getattr(instance, 'pk', None)
+        ).filter(bic_swift=bic_swift).exists():
+            raise serializers.ValidationError({
+                'bic_swift': 'This BIC/SWIFT is already in use.'
+            })
+        return data 
