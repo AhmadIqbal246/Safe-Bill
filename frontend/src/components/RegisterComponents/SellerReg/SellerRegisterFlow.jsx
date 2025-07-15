@@ -207,11 +207,10 @@ export default function SellerRegisterFlow() {
               }}
             />
             {/* Step circles */}
-            <div className="relative flex justify-between">
+            <div className="relative flex justify-between px-1 sm:px-4">
               {steps.map((step, idx) => (
-                <div
-                  key={step.number}
-                  className="flex flex-col items-center w-1/5"
+                <div key={step.number} 
+                  className="flex flex-col items-center w-16 sm:w-1/5" // Fixed width on mobile
                 >
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium z-10
@@ -225,13 +224,13 @@ export default function SellerRegisterFlow() {
                   >
                     {step.number}
                   </div>
-                  <span
-                    className={`mt-2 text-xs font-medium text-center ${
-                      step.active ? "text-gray-900" : "text-gray-500"
-                    }`}
-                  >
-                    {step.title}
-                  </span>
+                  <span className={`mt-2 text-[0.65rem] sm:text-xs font-medium text-center
+  px-[2px] sm:px-2
+  leading-tight sm:leading-normal
+  ${step.active ? "text-gray-900" : "text-gray-500"}`}
+>
+  {step.title}
+</span>
                 </div>
               ))}
             </div>

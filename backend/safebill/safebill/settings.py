@@ -36,8 +36,8 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Initialise environment variables
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+# env = environ.Env()
+# environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Application definition
 
@@ -94,15 +94,14 @@ WSGI_APPLICATION = 'safebill.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME'),
-        'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PASSWORD'),
-        'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
+# Comment out environ initialization for now
+# env = environ.Env()
+# environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -168,6 +167,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = 'dummy@email.com'  # Replace with actual email in production
+EMAIL_HOST_PASSWORD = 'dummy'  # Replace with actual password in production
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
