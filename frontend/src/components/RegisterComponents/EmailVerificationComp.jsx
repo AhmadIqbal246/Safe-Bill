@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react'; // or your preferred icon
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ function EmailVerificationComp() {
   const [message, setMessage] = useState('');
   const uid = searchParams.get('uid');
   const token = searchParams.get('token');
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function verifyEmail() {
@@ -18,6 +19,7 @@ function EmailVerificationComp() {
         );
         setStatus('success');
         setMessage(res.data.detail || 'Your email has been verified!');
+        setTimeout(() => navigate('/login'), 2000);
       } catch (err) {
         setStatus('error');
         setMessage(
@@ -31,7 +33,7 @@ function EmailVerificationComp() {
       setStatus('error');
       setMessage('Invalid verification link.');
     }
-  }, [uid, token]);
+  }, [uid, token, navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">

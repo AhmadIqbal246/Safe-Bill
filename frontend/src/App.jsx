@@ -4,6 +4,7 @@ import "./App.css";
 import Home from "./pages/Home";
 import SellerRegisterPage from "./pages/SellerRegisterPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
+import LogInPage from "./pages/LogInPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,6 +29,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/seller-register" element={<SellerRegisterPage />} />
           <Route path='/email-verification' element={<EmailVerificationPage/>}/>
+          <Route path='/login' element={<LogInPage/>}/>
           {/* Add more routes as needed */}
         </Routes>
       </Router>
