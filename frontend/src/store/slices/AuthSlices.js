@@ -4,6 +4,20 @@ import { jwtDecode } from "jwt-decode";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Initialize from sessionStorage
+const access = sessionStorage.getItem('access');
+const refresh = sessionStorage.getItem('refresh');
+const user = sessionStorage.getItem('user');
+
+const initialState = {
+  loading: false,
+  error: null,
+  success: false,
+  user: user ? JSON.parse(user) : null,
+  access: access || null,
+  refresh: refresh || null,
+};
+
 export const registerSellerWithBasicAndBussiness = createAsyncThunk(
   'auth/registerSellerWithBasicAndBussiness',
   async (payload, { rejectWithValue }) => {
@@ -33,6 +47,10 @@ export const loginUser = createAsyncThunk(
       );
       // Decode user info from access token
       const user = jwtDecode(response.data.access);
+      // Save to sessionStorage
+      sessionStorage.setItem('access', response.data.access);
+      sessionStorage.setItem('refresh', response.data.refresh);
+      sessionStorage.setItem('user', JSON.stringify(user));
       return { ...response.data, user };
     } catch (err) {
       if (err.response && err.response.data) {
@@ -45,14 +63,7 @@ export const loginUser = createAsyncThunk(
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: {
-    loading: false,
-    error: null,
-    success: false,
-    user: null,
-    access: null,
-    refresh: null,
-  },
+  initialState,
   reducers: {
     resetAuthState: (state) => {
       state.loading = false;
@@ -66,6 +77,9 @@ const authSlice = createSlice({
       state.success = false;
       state.error = null;
       state.loading = false;
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('refresh');
+      sessionStorage.removeItem('user');
     },
   },
   extraReducers: (builder) => {
