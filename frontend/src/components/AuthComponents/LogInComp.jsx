@@ -26,7 +26,11 @@ export default function LogInComp() {
       toast.success("Login successful!");
       setTimeout(() => {
         dispatch(resetAuthState());
-        navigate("/");
+        if (user.onboarding_complete === false) {
+          navigate("/onboarding");
+        } else {
+          navigate("/");
+        }
       }, 1500);
     } else if (error) {
       toast.error(

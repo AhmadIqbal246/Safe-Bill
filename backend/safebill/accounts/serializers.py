@@ -4,6 +4,23 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import BusinessDetail
 from .models import BankAccount
+import requests
+from django.conf import settings
+
+
+def verify_siret_number(siret_number):
+    print("Sending Verification REQ:", siret_number)
+    url = (
+        f'https://api.insee.fr/entreprises/sirene/V3.11/siret/{siret_number}'
+    )
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': f'Bearer {settings.SIRET_VALIDATION_ACCESS_TOKEN}',
+    }
+    response = requests.get(url, headers=headers)
+    print("Response for Verification[status-code]:", response.status_code)
+    print("Response for Verification:", response.text)
+    return response.status_code == 200
 
 
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -26,20 +43,44 @@ class RegistrationSerializer(serializers.Serializer):
         business_info = data.get('Bussiness_information', {})
 
         # Email
-        if 'email' in basic_info and User.objects.filter(email=basic_info['email']).exists():
-            raise serializers.ValidationError({'email': 'This email is already taken.'})
-       # Username
-        if 'username' in basic_info and User.objects.filter(username=basic_info['username']).exists():
-            raise serializers.ValidationError({'username': 'This username is already taken.'})
+        if 'email' in basic_info and User.objects.filter(
+            email=basic_info['email']
+        ).exists():
+            raise serializers.ValidationError(
+                {'email': 'This email is already taken.'}
+            )
+        # Username
+        if 'username' in basic_info and User.objects.filter(
+            username=basic_info['username']
+        ).exists():
+            raise serializers.ValidationError(
+                {'username': 'This username is already taken.'}
+            )
 
         # SIRET number
-        if 'siret_number' in business_info and BusinessDetail.objects.filter(siret_number=business_info['siret_number']).exists():
-            raise serializers.ValidationError({'siret_number': 'This SIRET number is already taken.'})
+        if 'siret_number' in business_info and BusinessDetail.objects.filter(
+            siret_number=business_info['siret_number']
+        ).exists():
+            raise serializers.ValidationError(
+                {'siret_number': 'This SIRET number is already taken.'}
+            )
+
+        # SIRET number validation via INSEE API
+        siret_number = business_info.get('siret_number')
+        if siret_number:
+            if not verify_siret_number(siret_number):
+                raise serializers.ValidationError(
+                    {'siret_number': 'Invalid SIRET number.'}
+                )
 
         # Company phone number
         if 'company_phone_number' in business_info and business_info['company_phone_number']:
-            if BusinessDetail.objects.filter(company_phone_number=business_info['company_phone_number']).exists():
-                raise serializers.ValidationError({'company_phone_number': 'This company phone number is already taken.'})
+            if BusinessDetail.objects.filter(
+                company_phone_number=business_info['company_phone_number']
+            ).exists():
+                raise serializers.ValidationError(
+                    {'company_phone_number': 'This company phone number is already taken.'}
+                )
 
         return data
 
@@ -58,16 +99,20 @@ class RegistrationSerializer(serializers.Serializer):
             is_active=False
         )
         # Create business detail
+        siret_number = business_info['siret_number']
+        siret_verified = verify_siret_number(siret_number)
         BusinessDetail.objects.create(
             user=user,
             company_name=business_info['company_name'],
-            siret_number=business_info['siret_number'],
+            siret_number=siret_number,
             full_address=business_info['full_address'],
             type_of_activity=business_info['type_of_activity'],
             service_area=business_info['service_area'],
-            siret_verified=False,
-            company_phone_number=business_info.get('company_phone_number', ''),
-            company_contact_person=business_info.get('company_contact_person', ''),
+            siret_verified=siret_verified,
+            company_phone_number=business_info.get(
+                'company_phone_number', ''),
+            company_contact_person=business_info.get(
+                'company_contact_person', ''),
             skills=business_info.get('skills', []),
         )
         return user

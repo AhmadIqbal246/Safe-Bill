@@ -40,6 +40,7 @@ class BusinessDetail(models.Model):
         blank=True,
         default=list
     )
+    
 
     def __str__(self):
         return f"{self.company_name} (SIRET: {self.siret_number})"
