@@ -8,6 +8,7 @@ import LogInPage from "./pages/LogInPage";
 
 import Profile from "./pages/Profile";
 import Directory from "./pages/Directory"
+import SellerDashboard from "./pages/Seller-Dashboard/Dashboard"
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,6 +36,7 @@ function App() {
           <Route path='/login' element={<LogInPage/>}/>
           <Route path='/profile' element={<Profile/>}/>
           <Route path='/directory' element={<Directory/>}/>
+          <Route path='/seller-dashboard' element={<SellerDashboard/>}/>
           {/* Add more routes as needed */}
         </Routes>
       </Router>
