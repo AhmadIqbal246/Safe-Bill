@@ -29,7 +29,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         fields = [
             'company_name', 'siret_number', 'full_address',
             'type_of_activity', 'service_area', 'siret_verified',
-            'company_phone_number', 'company_contact_person', 'skills'
+            'company_contact_person', 'skills'
         ]
         read_only_fields = ['siret_verified']
 
@@ -58,29 +58,20 @@ class RegistrationSerializer(serializers.Serializer):
             )
 
         # SIRET number
-        if 'siret_number' in business_info and BusinessDetail.objects.filter(
-            siret_number=business_info['siret_number']
-        ).exists():
-            raise serializers.ValidationError(
-                {'siret_number': 'This SIRET number is already taken.'}
-            )
+        #if 'siret_number' in business_info and BusinessDetail.objects.filter(
+         #   siret_number=business_info['siret_number']
+        #).exists():
+          #  raise serializers.ValidationError(
+         #       {'siret_number': 'This SIRET number is already taken.'}
+        #    )
 
         # SIRET number validation via INSEE API
-        siret_number = business_info.get('siret_number')
-        if siret_number:
-            if not verify_siret_number(siret_number):
-                raise serializers.ValidationError(
-                    {'siret_number': 'Invalid SIRET number.'}
-                )
-
-        # Company phone number
-        if 'company_phone_number' in business_info and business_info['company_phone_number']:
-            if BusinessDetail.objects.filter(
-                company_phone_number=business_info['company_phone_number']
-            ).exists():
-                raise serializers.ValidationError(
-                    {'company_phone_number': 'This company phone number is already taken.'}
-                )
+        #siret_number = business_info.get('siret_number')
+        #if siret_number:
+        #    if not verify_siret_number(siret_number):
+          #      raise serializers.ValidationError(
+         #           {'siret_number': 'Invalid SIRET number.'}
+        #        )
 
         return data
 
@@ -92,15 +83,13 @@ class RegistrationSerializer(serializers.Serializer):
             username=basic_info['username'],
             email=basic_info['email'],
             password=basic_info['password'],
-            first_name=basic_info.get('first_name', ''),
-            last_name=basic_info.get('last_name', ''),
             phone_number=basic_info.get('phone_number', ''),
             role=basic_info['role'],
             is_active=False
         )
         # Create business detail
         siret_number = business_info['siret_number']
-        siret_verified = verify_siret_number(siret_number)
+        #siret_verified = verify_siret_number(siret_number)
         BusinessDetail.objects.create(
             user=user,
             company_name=business_info['company_name'],
@@ -108,9 +97,7 @@ class RegistrationSerializer(serializers.Serializer):
             full_address=business_info['full_address'],
             type_of_activity=business_info['type_of_activity'],
             service_area=business_info['service_area'],
-            siret_verified=siret_verified,
-            company_phone_number=business_info.get(
-                'company_phone_number', ''),
+            siret_verified=False,
             company_contact_person=business_info.get(
                 'company_contact_person', ''),
             skills=business_info.get('skills', []),

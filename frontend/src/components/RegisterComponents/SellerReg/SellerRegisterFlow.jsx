@@ -9,6 +9,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ClipLoader } from "react-spinners";
 import Select from "react-select";
+import { Link } from "react-router-dom";
 
 const skillOptions = [
   { value: "plumbing", label: "Plumbing" },
@@ -24,8 +25,6 @@ export default function SellerRegisterFlow() {
   const { loading, error, success } = useSelector((state) => state.auth);
 
   const initialFormData = {
-    firstName: "",
-    lastName: "",
     email: "",
     phoneNumber: "",
     countryCode: "+33",
@@ -68,9 +67,9 @@ export default function SellerRegisterFlow() {
   const validateStep1 = () => {
     const newErrors = {};
 
-    if (!formData.firstName.trim())
-      newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    // if (!formData.firstName.trim())
+    //   newErrors.firstName = "First name is required";
+    // if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phoneNumber.trim())
       newErrors.phoneNumber = "Phone number is required";
@@ -88,23 +87,24 @@ export default function SellerRegisterFlow() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // At first there were two steps, hence twi type of validations.
   const validateStep2 = () => {
     const newErrors = {};
 
     if (!formData.businessNumber.trim())
-      newErrors.businessNumber = "Business number is required";
+      newErrors.businessNumber = "Business number / SIRET is required";
     if (!formData.companyName.trim())
       newErrors.companyName = "Company name is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.contactPerson.trim())
-      newErrors.contactPerson = "Contact person is required";
+      newErrors.contactPerson = "Contact perso name is required";
     if (!formData.skills.trim()) newErrors.skills = "Skills are required";
     if (!formData.activityType)
       newErrors.activityType = "Activity type is required";
     if (!formData.serviceArea)
       newErrors.serviceArea = "Service area is required";
-    if (!formData.companyPhoneNumber.trim())
-      newErrors.companyPhoneNumber = "Company phone number is required";
+    // if (!formData.companyPhoneNumber.trim())
+    //   newErrors.companyPhoneNumber = "Company phone number is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -121,8 +121,6 @@ export default function SellerRegisterFlow() {
       const payload = {
         Basic_Information: {
           username: formData.email.split("@")[0], // or another username logic
-          first_name: formData.firstName,
-          last_name: formData.lastName,
           email: formData.email,
           password: formData.password,
           phone_number: formData.phoneNumber,
@@ -132,9 +130,8 @@ export default function SellerRegisterFlow() {
           company_name: formData.companyName,
           siret_number: formData.businessNumber,
           full_address: formData.address,
-          type_of_activity: formData.activityType,
+          type_of_activity: formData.activityType, // bussiness type
           service_area: formData.serviceArea,
-          company_phone_number: formData.companyPhoneNumber, // or a separate field if you have one
           company_contact_person: formData.contactPerson,
           skills: formData.skills
             .split(",")
@@ -159,9 +156,10 @@ export default function SellerRegisterFlow() {
       toast.success(
         typeof success === "string"
           ? success
-          : success.detail || "Registration successful. Please your email to verify your Email."
+          : success.detail || "Registration successful. Please check your email to verify your Email."
       );
       setFormData(initialFormData);
+      setSelectedSkills([]);
       setCurrentStep(1);
       dispatch(resetAuthState());
     } else if (error) {
@@ -175,10 +173,8 @@ export default function SellerRegisterFlow() {
 
   const steps = [
     { number: 1, title: "Basic Information", active: currentStep >= 1 },
-    { number: 2, title: "Business Details", active: currentStep >= 2 },
-    { number: 3, title: "Documents", active: false },
-    { number: 4, title: "Preferences", active: false },
-    { number: 5, title: "Verification", active: false },
+    { number: 2, title: "Documents", active: false },
+    { number: 3, title: "Verification", active: false },
   ];
 
   return (
@@ -242,65 +238,91 @@ export default function SellerRegisterFlow() {
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      updateFormData("firstName", e.target.value)
-                    }
-                    placeholder="Enter your first name"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.firstName ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.firstName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.firstName}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  SIRET Number *
+                </label>
+                <input
+                  type="text"
+                  value={formData.businessNumber}
+                  onChange={(e) =>
+                    updateFormData("businessNumber", e.target.value)
+                  }
+                  placeholder="Enter your SIRET Number"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.businessNumber ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.businessNumber && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.businessNumber.replace(
+                      "Business number",
+                      "SIRET number"
+                    )}
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => updateFormData("lastName", e.target.value)}
-                    placeholder="Enter your last name"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.lastName ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.lastName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.lastName}
-                    </p>
-                  )}
-                </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.companyName}
+                  onChange={(e) =>
+                    updateFormData("companyName", e.target.value)
+                  }
+                  placeholder="Company name"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.companyName ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.companyName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.companyName}
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
+                  Full Address *
                 </label>
                 <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateFormData("email", e.target.value)}
-                  placeholder="Enter your email address"
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => updateFormData("address", e.target.value)}
+                  placeholder="Enter the Address"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.email ? "border-red-500" : "border-gray-300"
+                    errors.address ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                {errors.address && (
+                  <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact First Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.contactPerson}
+                  onChange={(e) =>
+                    updateFormData("contactPerson", e.target.value)
+                  }
+                  placeholder="Enter Name"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.contactPerson ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.contactPerson && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.contactPerson}
+                  </p>
                 )}
               </div>
 
@@ -339,6 +361,112 @@ export default function SellerRegisterFlow() {
                 )}
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateFormData("email", e.target.value)}
+                  placeholder="Enter your email address"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Type *
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.activityType}
+                    onChange={(e) =>
+                      updateFormData("activityType", e.target.value)
+                    }
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent appearance-none bg-white ${
+                      errors.activityType ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Choose a Activity</option>
+                    <option value="plumbing">Plumbing</option>
+                    <option value="electrical">Electrical</option>
+                    <option value="carpentry">Carpentry</option>
+                    <option value="painting">Painting</option>
+                    <option value="cleaning">Cleaning</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
+                {errors.activityType && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.activityType}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Skills *
+                </label>
+                <Select
+                  isMulti
+                  name="skills"
+                  options={skillOptions}
+                  value={selectedSkills}
+                  onChange={(selected) => {
+                    setSelectedSkills(selected);
+                    updateFormData(
+                      "skills",
+                      selected && selected.length > 0
+                        ? selected.map((s) => s.label).join(",")
+                        : ""
+                    );
+                  }}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  placeholder="Type or select skills"
+                />
+                {errors.skills && (
+                  <p className="text-red-500 text-sm mt-1">{errors.skills}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Area *
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.serviceArea}
+                    onChange={(e) =>
+                      updateFormData("serviceArea", e.target.value)
+                    }
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent appearance-none bg-white ${
+                      errors.serviceArea ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Service Area</option>
+                    <option value="paris">Paris</option>
+                    <option value="lyon">Lyon</option>
+                    <option value="marseille">Marseille</option>
+                    <option value="toulouse">Toulouse</option>
+                    <option value="nice">Nice</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
+                {errors.serviceArea && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.serviceArea}
+                  </p>
+                )}
+              </div>
+
+                
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password *
@@ -444,8 +572,7 @@ export default function SellerRegisterFlow() {
                     htmlFor="marketing"
                     className="ml-2 text-sm text-gray-700"
                   >
-                    I want to receive marketing communications and updates about
-                    Safe Bill services
+                    Do you Want to be in Professional Directory?
                   </label>
                 </div>
               </div>
@@ -453,7 +580,7 @@ export default function SellerRegisterFlow() {
           )}
 
           {/* Step 2: Business Details */}
-          {currentStep === 2 && (
+          {/* {currentStep === 2 && (
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -571,7 +698,7 @@ export default function SellerRegisterFlow() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type Of Activity *
+                  Business Type *
                 </label>
                 <div className="relative">
                   <select
@@ -638,7 +765,7 @@ export default function SellerRegisterFlow() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Enter the Service Area *
+                  Service Area *
                 </label>
                 <div className="relative">
                   <select
@@ -666,31 +793,33 @@ export default function SellerRegisterFlow() {
                 )}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center mt-8 gap-4">
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1}
               className={`px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
                 currentStep === 1
-                  ? "text-gray-400 cursor-not-allowed"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
               }`}
             >
               Previous
             </button>
 
-            {currentStep === 1 ? (
-              <button
-                onClick={handleContinue}
-                className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
+            <span className="text-sm text-gray-600">
+              Already registered?{" "}
+              <Link
+                to="/login"
+                className="font-medium text-gray-800 hover:underline"
               >
-                Continue
-              </button>
-            ) : (
-              <button
+                Login
+              </Link>
+            </span>
+
+            <button
               onClick={handleSubmit}
               className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer flex items-center justify-center"
               disabled={loading}
@@ -701,10 +830,9 @@ export default function SellerRegisterFlow() {
                   Submitting...
                 </span>
               ) : (
-                "Submit"
+                "Create my account"
               )}
             </button>
-            )}
           </div>
         </div>
       </div>

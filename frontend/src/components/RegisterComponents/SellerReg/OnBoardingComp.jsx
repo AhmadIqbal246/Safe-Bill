@@ -1,12 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UploadCloud, X } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  uploadBusinessDocuments,
+  resetBusinessDetailState,
+} from "../../../store/slices/BussinessDetailSlice";
+import { toast } from "react-toastify";
 
 const documents = [
   { key: "kbis", label: "Upload KBIS" },
-  { key: "liability_certificate", label: "Upload Liability Insurance Certificate" },
+  {
+    key: "liability_certificate",
+    label: "Upload Liability Insurance Certificate",
+  },
   { key: "insurance_certificate", label: "Upload Insurance Certificate" },
   { key: "id_main_contact", label: "Upload ID of Main Contact" },
   { key: "rib", label: "Upload Company Bank Details (RIB)" },
+];
+
+const requiredDocs = [
+  { key: "kbis", label: "KBIS" },
+  { key: "liability_certificate", label: "Liability Insurance Certificate" },
+  { key: "insurance_certificate", label: "Insurance Certificate" },
+  { key: "id_main_contact", label: "ID of Main Contact" },
+  { key: "rib", label: "Company Bank Details (RIB)" },
 ];
 
 export default function OnBoardingComp() {
@@ -22,10 +39,54 @@ export default function OnBoardingComp() {
     bank_address: "",
   });
   const [subStep, setSubStep] = useState(1); // 1: documents, 2: bank details
+  const [errors, setErrors] = useState({});
 
-  const handleFileChange = (key, file) => setFiles((prev) => ({ ...prev, [key]: file }));
-  const handleRemoveFile = (key) => setFiles((prev) => ({ ...prev, [key]: undefined }));
-  const handleBankChange = (e) => setBank({ ...bank, [e.target.name]: e.target.value });
+  const dispatch = useDispatch();
+  const { loading, error, success } = useSelector(
+    (state) => state.businessDetail
+  );
+
+  const validateFileTypeAndSize = (key, file) => {
+    const maxSize = 7 * 1024 * 1024; // 7 MB
+    if (key === "id_main_contact") {
+      // Only allow JPG, PNG, TIFF
+      if (!["image/jpeg", "image/png", "image/tiff"].includes(file.type)) {
+        return "Only JPG, PNG, or TIFF files are allowed for ID.";
+      }
+    } else {
+      // Only allow PDF
+      if (file.type !== "application/pdf") {
+        return "Only PDF files are allowed for this document.";
+      }
+    }
+    if (file.size > maxSize) {
+      return "File size must be under 7 MB.";
+    }
+    return null;
+  };
+
+  const handleFileChange = (key, file) => {
+    const errorMsg = validateFileTypeAndSize(key, file);
+    setErrors((prev) => ({ ...prev, [key]: errorMsg }));
+    if (!errorMsg) {
+      setFiles((prev) => ({ ...prev, [key]: file }));
+    }
+  };
+  const handleRemoveFile = (key) =>
+    setFiles((prev) => ({ ...prev, [key]: undefined }));
+  const handleBankChange = (e) =>
+    setBank({ ...bank, [e.target.name]: e.target.value });
+
+  const validateDocs = () => {
+    const newErrors = {};
+    requiredDocs.forEach((doc) => {
+      if (!files[doc.key]) {
+        newErrors[doc.key] = `${doc.label} is required`;
+      }
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Placeholder for final continue handler
   const handleFinalContinue = () => {
@@ -33,6 +94,45 @@ export default function OnBoardingComp() {
     // e.g., call API, show toast, etc.
     alert("Proceed to next onboarding step!");
   };
+
+  const fieldMap = {
+    kbis: "kbis",
+    liability_certificate: "pro_insurance",
+    insurance_certificate: "insurance",
+    id_main_contact: "id",
+    rib: "rib",
+  };
+
+  const handleContinue = () => {
+    if (!validateDocs()) return;
+    const formData = new FormData();
+    Object.keys(fieldMap).forEach((frontKey) => {
+      if (files[frontKey]) {
+        formData.append(fieldMap[frontKey], files[frontKey]);
+      }
+    });
+    const accessToken = sessionStorage.getItem("access");
+    console.log("TOKEN", accessToken);
+
+    dispatch(uploadBusinessDocuments({ formData, accessToken }));
+  };
+
+  useEffect(() => {
+    if (success) {
+      setSubStep(2);
+      dispatch(resetBusinessDetailState());
+    }
+  }, [success, dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(
+        typeof error === "string"
+          ? error
+          : error?.detail || "An error occurred while uploading documents."
+      );
+    }
+  }, [error]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
@@ -60,28 +160,31 @@ export default function OnBoardingComp() {
             }}
           />
           <div className="relative flex justify-between">
-            {["Basic Information", "Business Details", "Documents", "Preferences", "Verification"].map((title, idx) => (
-              <div key={title} className="flex flex-col items-center w-1/5">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium z-10
-                    ${idx + 1 === 3
-                      ? "bg-black text-white"
-                      : idx + 1 < 3
-                      ? "bg-white border-2 border-black text-black"
-                      : "bg-gray-200 text-gray-500"
+            {["Basic Information", "Documents", "Verification"].map(
+              (title, idx) => (
+                <div key={title} className="flex flex-col items-center w-1/5">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium z-10
+                    ${
+                      idx + 1 === 3
+                        ? "bg-black text-white"
+                        : idx + 1 < 3
+                        ? "bg-white border-2 border-black text-black"
+                        : "bg-gray-200 text-gray-500"
                     }`}
-                >
-                  {idx + 1}
+                  >
+                    {idx + 1}
+                  </div>
+                  <span
+                    className={`mt-2 text-xs font-medium text-center ${
+                      idx + 1 <= 3 ? "text-gray-900" : "text-gray-500"
+                    }`}
+                  >
+                    {title}
+                  </span>
                 </div>
-                <span
-                  className={`mt-2 text-xs font-medium text-center ${
-                    idx + 1 <= 3 ? "text-gray-900" : "text-gray-500"
-                  }`}
-                >
-                  {title}
-                </span>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
 
@@ -108,7 +211,7 @@ export default function OnBoardingComp() {
                           <button
                             type="button"
                             className="mt-2 text-gray-400 hover:text-red-500"
-                            onClick={e => {
+                            onClick={(e) => {
                               e.stopPropagation();
                               handleRemoveFile(doc.key);
                             }}
@@ -118,15 +221,24 @@ export default function OnBoardingComp() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-base">{doc.label}</span>
+                        <span className="text-gray-400 text-base">
+                          {doc.label}
+                        </span>
                       )}
                       <input
                         type="file"
                         className="hidden"
-                        onChange={e => handleFileChange(doc.key, e.target.files[0])}
+                        onChange={(e) =>
+                          handleFileChange(doc.key, e.target.files[0])
+                        }
                         tabIndex={-1}
                       />
                     </label>
+                    {errors[doc.key] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[doc.key]}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -141,15 +253,17 @@ export default function OnBoardingComp() {
               </button>
               <button
                 className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
-                onClick={() => setSubStep(2)}
+                onClick={handleContinue}
+                disabled={loading}
               >
-                Continue
+                {loading ? "Uploading..." : "Continue"}
               </button>
             </div>
           </>
         )}
 
         {/* SubStep 2: Bank Details */}
+        {/*
         {subStep === 2 && (
           <>
             <div className="mb-8">
@@ -261,23 +375,24 @@ export default function OnBoardingComp() {
                 </div>
               </div>
             </div>
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
-              <button
-                className="px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                onClick={() => setSubStep(1)}
-              >
-                Previous
-              </button>
-              <button
-                className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
-                onClick={handleFinalContinue}
-              >
-                Continue
-              </button>
-            </div>
+
           </>
         )}
+        */}
+        <div className="flex justify-between mt-8">
+          <button
+            className="px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+            onClick={() => setSubStep(1)}
+          >
+            Previous
+          </button>
+          <button
+            className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
+            onClick={handleFinalContinue}
+          >
+            Continue
+          </button>
+        </div>
       </div>
     </div>
   );

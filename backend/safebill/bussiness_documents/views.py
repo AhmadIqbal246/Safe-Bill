@@ -12,7 +12,7 @@ class MultiDocumentUploadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = MultiDocumentUploadSerializer(data=request.data, files=request.FILES)
+        serializer = MultiDocumentUploadSerializer(data=request.data)
         if serializer.is_valid():
             user = request.user
             for doc_type in ['kbis', 'pro_insurance', 'insurance', 'id', 'rib']:
