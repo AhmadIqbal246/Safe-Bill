@@ -136,13 +136,13 @@ export default function OnBoardingComp() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-sm p-8 w-full max-w-2xl mx-auto">
+      <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8 w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <h1 className="text-2xl font-semibold text-[#01257D] mb-2">
             Complete Your Onboarding
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[#96C2DB]">
             {subStep === 1
               ? "Please upload the required documents to finish your registration."
               : "Please provide your bank details to finish your registration."}
@@ -150,9 +150,9 @@ export default function OnBoardingComp() {
         </div>
         {/* Progress Steps */}
         <div className="relative mb-8">
-          <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full transform -translate-y-1/2" />
+          <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full transform -translate-y-1/2" />
           <div
-            className="absolute top-1/2 left-0 h-1 bg-black rounded-full transition-all duration-300"
+            className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300"
             style={{
               width: `${((3 - 1) / (5 - 1)) * 100}%`,
               maxWidth: "100%",
@@ -165,19 +165,18 @@ export default function OnBoardingComp() {
                 <div key={title} className="flex flex-col items-center w-1/5">
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium z-10
-                    ${
-                      idx + 1 === 3
-                        ? "bg-black text-white"
+                      ${idx + 1 === 3
+                        ? "bg-[#01257D] text-white"
                         : idx + 1 < 3
-                        ? "bg-white border-2 border-black text-black"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
+                        ? "bg-[#FFFFFF] border-2 border-[#01257D] text-[#01257D]"
+                        : "bg-[#96C2DB] text-white"
+                      }`}
                   >
                     {idx + 1}
                   </div>
                   <span
                     className={`mt-2 text-xs font-medium text-center ${
-                      idx + 1 <= 3 ? "text-gray-900" : "text-gray-500"
+                      idx + 1 <= 3 ? "text-[#01257D]" : "text-[#96C2DB]"
                     }`}
                   >
                     {title}
@@ -246,13 +245,13 @@ export default function OnBoardingComp() {
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8">
               <button
-                className="px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-gray-400 bg-gray-100"
+                className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer bg-[#E6F0FA] text-[#01257D] opacity-60 cursor-not-allowed`}
                 disabled
               >
                 Previous
               </button>
               <button
-                className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
+                className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer bg-[#01257D] text-white hover:bg-[#2346a0] ${loading ? 'opacity-80' : ''}`}
                 onClick={handleContinue}
                 disabled={loading}
               >
@@ -379,20 +378,20 @@ export default function OnBoardingComp() {
           </>
         )}
         */}
-        <div className="flex justify-between mt-8">
+        {/* <div className="flex justify-between mt-8">
           <button
-            className="px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+            className="px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-[#96C2DB] bg-[#F0F4F8]"
             onClick={() => setSubStep(1)}
           >
             Previous
           </button>
           <button
-            className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer"
+            className="px-6 py-2 text-sm font-medium text-[#01257D] bg-[#00FFFF] hover:bg-[#96C2DB] rounded-md transition-colors cursor-pointer"
             onClick={handleFinalContinue}
           >
             Continue
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

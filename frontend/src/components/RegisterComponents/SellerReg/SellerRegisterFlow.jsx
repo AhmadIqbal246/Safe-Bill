@@ -180,13 +180,13 @@ export default function SellerRegisterFlow() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-2xl font-semibold text-[#01257D] mb-2">
               Join Safe Bill as a Service Provider
             </h1>
-            <p className="text-gray-600">
+            <p className="text-[#96C2DB]">
               Complete your registration to start receiving leads and growing
               your business
             </p>
@@ -195,9 +195,9 @@ export default function SellerRegisterFlow() {
           {/* Progress Steps */}
           <div className="relative mb-8">
             {/* Progress bar */}
-            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full transform -translate-y-1/2" />
+            <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full transform -translate-y-1/2" />
             <div
-              className="absolute top-1/2 left-0 h-1 bg-black rounded-full transition-all duration-300"
+              className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300"
               style={{
                 width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
                 maxWidth: "100%",
@@ -215,17 +215,17 @@ export default function SellerRegisterFlow() {
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium z-10
             ${
               currentStep === step.number
-                ? "bg-black text-white"
+                ? "bg-[#01257D] text-white"
                 : step.active
-                ? "bg-white border-2 border-black text-black"
-                : "bg-gray-200 text-gray-500"
+                ? "bg-[#FFFFFF] border-2 border-[#01257D] text-[#01257D]"
+                : "bg-[#96C2DB] text-white"
             }`}
                   >
                     {step.number}
                   </div>
                   <span
                     className={`mt-2 text-xs font-medium text-center ${
-                      step.active ? "text-gray-900" : "text-gray-500"
+                      step.active ? "text-[#01257D]" : "text-[#96C2DB]"
                     }`}
                   >
                     {step.title}
@@ -800,20 +800,20 @@ export default function SellerRegisterFlow() {
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1}
-              className={`px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer ${
                 currentStep === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  ? "bg-[#E6F0FA] text-[#01257D] opacity-60 cursor-not-allowed"
+                  : "bg-[#E6F0FA] text-[#01257D] hover:bg-[#c7e0fa]"
               }`}
             >
               Previous
             </button>
 
-            <span className="text-sm text-gray-600">
+            <span className="text-[#96C2DB] text-sm">
               Already registered?{" "}
               <Link
                 to="/login"
-                className="font-medium text-gray-800 hover:underline"
+                className="font-semibold text-[#01257D] hover:underline"
               >
                 Login
               </Link>
@@ -821,7 +821,7 @@ export default function SellerRegisterFlow() {
 
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors cursor-pointer flex items-center justify-center"
+              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#01257D] text-white hover:bg-[#2346a0] ${loading ? 'opacity-80' : ''}`}
               disabled={loading}
             >
               {loading ? (
