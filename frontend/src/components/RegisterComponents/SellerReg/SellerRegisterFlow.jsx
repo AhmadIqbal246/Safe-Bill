@@ -183,10 +183,10 @@ export default function SellerRegisterFlow() {
         <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-[#01257D] mb-2">
+            <h1 className="text-2xl font-semibold text-[#111827] mb-2">
               Join Safe Bill as a Service Provider
             </h1>
-            <p className="text-[#96C2DB]">
+            <p className="text-[#111827]">
               Complete your registration to start receiving leads and growing
               your business
             </p>

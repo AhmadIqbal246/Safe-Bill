@@ -6,6 +6,7 @@ import SellerRegisterPage from "./pages/SellerRegisterPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import LogInPage from "./pages/LogInPage";
 import OnBoardingPage from "./pages/OnBoardingPage";
+import FindProfessionals from "./pages/FindProfessionals";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,6 +33,7 @@ function App() {
           <Route path='/email-verification' element={<EmailVerificationPage/>}/>
           <Route path='/login' element={<LogInPage/>}/>
           <Route path='/onboarding' element={<OnBoardingPage/>}/>
+          <Route path='/find-professionals' element={<FindProfessionals/>}/>
 
           {/* Add more routes as needed */}
         </Routes>

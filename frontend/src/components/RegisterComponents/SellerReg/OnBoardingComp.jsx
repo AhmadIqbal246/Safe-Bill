@@ -139,10 +139,10 @@ export default function OnBoardingComp() {
       <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8 w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-[#01257D] mb-2">
+          <h1 className="text-2xl font-semibold text-[#111827] mb-2">
             Complete Your Onboarding
           </h1>
-          <p className="text-[#96C2DB]">
+          <p className="text-[#111827]">
             {subStep === 1
               ? "Please upload the required documents to finish your registration."
               : "Please provide your bank details to finish your registration."}

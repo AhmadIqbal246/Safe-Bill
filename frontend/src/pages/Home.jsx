@@ -1,6 +1,11 @@
 import React from 'react'
 import { useState } from 'react'
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar'
+import IntroWithSearch from '../components/HomePageComps/IntroWithSearch'
+import FeatureComp from '../components/HomePageComps/FeatureComp'
+import TrustedProfessionals from '../components/HomePageComps/TrustedProfessionals'
+import ServicesCards from '../components/HomePageComps/ServicesCards'
+import Footer from '../components/mutualComponents/Footer'
 
 export default function Home() {
     const [isSignedIn, setIsSignedIn] = useState(false)
@@ -27,6 +32,11 @@ export default function Home() {
           onJoinNow={handleJoinNow}
           onSignOut={handleSignOut}
         />
+        <IntroWithSearch/>
+        <FeatureComp/>
+        <TrustedProfessionals/>
+        <ServicesCards/>
+        <Footer/>
 
       </div>
     )

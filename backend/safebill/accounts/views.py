@@ -14,9 +14,8 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import permissions
-from rest_framework_simplejwt.tokens import RefreshToken
-from .models import BankAccount
+from .models import BankAccount, BusinessDetail
+from rest_framework.decorators import api_view
 
 User = get_user_model()
 
@@ -190,4 +189,85 @@ class BankAccountView(APIView):
             return Response(BankAccountSerializer(bank_account).data)
         except BankAccount.DoesNotExist:
             return Response({'detail': 'No bank account found.'}, status=404)
+
+
+@api_view(['GET'])
+def filter_sellers_by_service_type(request):
+    service_type = request.GET.get('service_type')
+    if not service_type:
+        return Response(
+            {'detail': 'service_type query param is required.'},
+            status=400
+        )
+    sellers = BusinessDetail.objects.filter(
+        type_of_activity__iexact=service_type,
+        user__role='seller'
+    )
+    data = [
+        {
+            'name': s.user.username,
+            'business_type': s.type_of_activity
+        }
+        for s in sellers
+    ]
+    return Response(data)
+
+
+@api_view(['GET'])
+def filter_sellers_by_service_area(request):
+    service_area = request.GET.get('service_area')
+    if not service_area:
+        return Response(
+            {'detail': 'service_area query param is required.'},
+            status=400
+        )
+    sellers = BusinessDetail.objects.filter(
+        service_area__iexact=service_area,
+        user__role='seller'
+    )
+    data = [
+        {
+            'name': s.user.username,
+            'business_type': s.type_of_activity
+        }
+        for s in sellers
+    ]
+    return Response(data)
+
+
+@api_view(['GET'])
+def filter_sellers_by_type_and_area(request):
+    service_type = request.GET.get('service_type')
+    service_area = request.GET.get('service_area')
+    if not service_type or not service_area:
+        return Response(
+            {'detail': 'Both service_type and service_area query params are required.'},
+            status=400
+        )
+    sellers = BusinessDetail.objects.filter(
+        type_of_activity__iexact=service_type,
+        service_area__iexact=service_area,
+        user__role='seller'
+    )
+    data = [
+        {
+            'name': s.user.username,
+            'business_type': s.type_of_activity
+        }
+        for s in sellers
+    ]
+    return Response(data)
+
+
+@api_view(['GET'])
+def list_all_sellers(request):
+    sellers = BusinessDetail.objects.filter(user__role='seller')
+    data = [
+        {
+            'name': s.user.username,
+            'business_type': s.type_of_activity
+        }
+        for s in sellers
+    ]
+    return Response(data)
 
