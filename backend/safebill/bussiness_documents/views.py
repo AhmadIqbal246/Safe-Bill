@@ -21,5 +21,8 @@ class MultiDocumentUploadView(APIView):
                     document_type=doc_type,
                     file=serializer.validated_data[doc_type]
                 )
+            # Set onboarding_complete to True
+            user.onboarding_complete = True
+            user.save()
             return Response({'detail': 'Documents uploaded successfully.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

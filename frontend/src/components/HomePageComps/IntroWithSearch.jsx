@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const specialties = [
   { value: "", label: "Select specialty..." },
@@ -11,6 +13,19 @@ const specialties = [
 ];
 
 export default function IntroWithSearch() {
+  const [serviceType, setServiceType] = useState("");
+  const [area, setArea] = useState("");
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+
+  const handleSearch = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    navigate(`/find-professionals?serviceType=${serviceType}&area=${area}`);
+  };
+
   return (
     <section className="w-full flex flex-col items-center justify-center py-16 px-4 bg-white">
       <h1 className="text-3xl md:text-5xl font-bold text-[#111827] text-center mb-6 leading-tight">
@@ -22,7 +37,11 @@ export default function IntroWithSearch() {
       <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-4 md:p-6 flex flex-col md:flex-row items-stretch gap-4 md:gap-2">
         <div className="flex-1 flex flex-col">
           <label className="text-xs font-medium text-[#111827] mb-1">What service do you need?</label>
-          <select className="w-full border border-gray-200 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#01257D] bg-white">
+          <select
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#01257D] bg-white"
+            value={serviceType}
+            onChange={e => setServiceType(e.target.value)}
+          >
             {specialties.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
@@ -34,9 +53,14 @@ export default function IntroWithSearch() {
             type="text"
             placeholder="Enter city or zip code"
             className="w-full border border-gray-200 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#01257D] bg-white"
+            value={area}
+            onChange={e => setArea(e.target.value)}
           />
         </div>
-        <button className="mt-2 md:mt-6 flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-2 bg-[#01257D] text-white font-semibold rounded-md shadow-sm hover:bg-[#2346a0] transition-colors text-base whitespace-nowrap">
+        <button
+          className="mt-2 md:mt-6 flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-2 bg-[#01257D] text-white font-semibold rounded-md shadow-sm hover:bg-[#2346a0] transition-colors text-base whitespace-nowrap cursor-pointer"
+          onClick={handleSearch}
+        >
           <Search className="w-5 h-5" />
           Find a professional near you
         </button>

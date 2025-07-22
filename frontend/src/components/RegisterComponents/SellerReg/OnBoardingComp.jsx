@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { UploadCloud, X } from "lucide-react";
+import { UploadCloud, X, CheckCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   uploadBusinessDocuments,
   resetBusinessDetailState,
 } from "../../../store/slices/BussinessDetailSlice";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const documents = [
   { key: "kbis", label: "Upload KBIS" },
@@ -45,6 +46,8 @@ export default function OnBoardingComp() {
   const { loading, error, success } = useSelector(
     (state) => state.businessDetail
   );
+
+  const navigate = useNavigate();
 
   const validateFileTypeAndSize = (key, file) => {
     const maxSize = 7 * 1024 * 1024; // 7 MB
@@ -119,8 +122,17 @@ export default function OnBoardingComp() {
 
   useEffect(() => {
     if (success) {
-      setSubStep(2);
+      setSubStep(3); // Go to verification step
       dispatch(resetBusinessDetailState());
+      // Update onboarding_complete in sessionStorage user
+      const userStr = sessionStorage.getItem('user');
+      if (userStr) {
+        try {
+          const userObj = JSON.parse(userStr);
+          userObj.onboarding_complete = true;
+          sessionStorage.setItem('user', JSON.stringify(userObj));
+        } catch (e) {}
+      }
     }
   }, [success, dispatch]);
 
@@ -140,12 +152,14 @@ export default function OnBoardingComp() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-[#111827] mb-2">
-            Complete Your Onboarding
+            Join Safe Bill as a Service Provider
           </h1>
           <p className="text-[#111827]">
             {subStep === 1
               ? "Please upload the required documents to finish your registration."
-              : "Please provide your bank details to finish your registration."}
+              : subStep === 3
+              ? "Documents uploaded successfully. Go to Dashboard to start receiving leads and growing your business."
+              : ""}
           </p>
         </div>
         {/* Progress Steps */}
@@ -186,7 +200,6 @@ export default function OnBoardingComp() {
             )}
           </div>
         </div>
-
         {/* SubStep 1: Document Uploads */}
         {subStep === 1 && (
           <>
@@ -260,124 +273,30 @@ export default function OnBoardingComp() {
             </div>
           </>
         )}
-
-        {/* SubStep 2: Bank Details */}
-        {/*
-        {subStep === 2 && (
-          <>
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Bank Details</h2>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Account holder name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="account_holder"
-                  value={bank.account_holder}
-                  onChange={handleBankChange}
-                  placeholder="Enter the Name"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  IBAN
-                </label>
-                <input
-                  type="text"
-                  name="iban"
-                  value={bank.iban}
-                  onChange={handleBankChange}
-                  placeholder="IBAN"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bank code <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="bank_code"
-                    value={bank.bank_code}
-                    onChange={handleBankChange}
-                    placeholder="Bank Code"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Branch code <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="branch_code"
-                    value={bank.branch_code}
-                    onChange={handleBankChange}
-                    placeholder="Branch Code"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    RIB key (Clé RIB) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="rib_key"
-                    value={bank.rib_key}
-                    onChange={handleBankChange}
-                    placeholder="Bank Code"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    BIC/SWIFT <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="bic"
-                    value={bank.bic}
-                    onChange={handleBankChange}
-                    placeholder="Branch Code"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bank name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="bank_name"
-                    value={bank.bank_name}
-                    onChange={handleBankChange}
-                    placeholder="Bank Code"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bank address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="bank_address"
-                    value={bank.bank_address}
-                    onChange={handleBankChange}
-                    placeholder="Branch Code"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent border-gray-300"
-                  />
-                </div>
+        {/* SubStep 3: Verification Success */}
+        {subStep === 3 && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="mb-6">
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#01257D]">
+                <CheckCircle className="w-12 h-12 text-white" />
               </div>
             </div>
-
-          </>
+            <h2 className="text-2xl font-semibold text-[#111827] mb-2 text-center">
+              {typeof success === 'string'
+                ? success
+                : success?.detail || 'We have got details successfully for Verification'}
+            </h2>
+            <p className="text-[#6B7280] mb-8 text-center">
+              Log in, to your dashboard now to start
+            </p>
+            <button
+              className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md text-base hover:bg-[#2346a0] transition-colors cursor-pointer"
+              onClick={() => navigate('/')}
+            >
+              Go to Dashboard
+            </button>
+          </div>
         )}
-        */}
         {/* <div className="flex justify-between mt-8">
           <button
             className="px-6 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer text-[#96C2DB] bg-[#F0F4F8]"
