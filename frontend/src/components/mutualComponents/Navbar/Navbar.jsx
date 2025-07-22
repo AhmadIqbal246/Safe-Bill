@@ -1,11 +1,10 @@
-
 import { useState } from "react"
 import { Bell, Menu, X } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../../../store/slices/AuthSlices";
 
 export default function SafeBillHeader({
-  isSignedIn = false,
-  userAvatar,
-  userName = "User",
   onSignIn,
   onJoinNow,
   onSignOut,
@@ -13,15 +12,32 @@ export default function SafeBillHeader({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
+  // Get auth state from Redux
+  const user = useSelector(state => state.auth.user);
+  const isSignedIn = !!user;
+  const userName = user ? (user.name || user.username || "User") : "User";
+  const userAvatar = user && user.avatar ? user.avatar : null;
+  const userEmail = user && user.email ? user.email : "";
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    dispatch(logout());
+    setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    navigate("/");
+  };
+
   const signedOutNavItems = [
-    { label: "Browse Categories", href: "#" },
-    { label: "How It Works", href: "#" },
-    { label: "Success Stories", href: "#" },
-    { label: "Support", href: "#" },
+    { label: "Home", href: "/" },
+    { label: "Directory", href: "#" },
+    { label: "How it works", href: "#" },
+    { label: "Contact", href: "#" },
   ]
 
   const signedInNavItems = [
-    { label: "Find Professionals", href: "#" },
+    { label: "Find Professionals", href: "/find-professionals" },
     { label: "How it Works", href: "#" },
     { label: "For Professionals", href: "#" },
   ]
@@ -34,7 +50,7 @@ export default function SafeBillHeader({
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <h1 className="text-xl font-semibold text-gray-900">Safe Bill</h1>
+            <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer">Safe Bill</Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -55,16 +71,16 @@ export default function SafeBillHeader({
             {isSignedIn ? (
               <>
                 {/* Notification Bell */}
-                <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
+                <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
                   <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+
                 </button>
 
                 {/* User Avatar with Dropdown */}
                 <div className="relative">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                    className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
                       {userAvatar ? (
@@ -83,10 +99,14 @@ export default function SafeBillHeader({
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                       <div className="py-1">
-                        <div className="px-4 py-3 border-b border-gray-100">
+                        <button
+                          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                          className="flex flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
+                          style={{ background: 'none', border: 'none' }}
+                        >
                           <p className="text-sm font-medium text-gray-900">{userName}</p>
-                          <p className="text-xs text-gray-500">user@example.com</p>
-                        </div>
+                          <p className="text-xs text-gray-500">{userEmail}</p>
+                        </button>
                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           Profile
                         </a>
@@ -98,8 +118,8 @@ export default function SafeBillHeader({
                         </a>
                         <div className="border-t border-gray-100">
                           <button
-                            onClick={onSignOut}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={handleSignOut}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                           >
                             Sign out
                           </button>
@@ -114,15 +134,15 @@ export default function SafeBillHeader({
                 {/* Sign In and Join Now Buttons */}
                 <button
                   onClick={onSignIn}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                 >
-                  Sign In
+                  <Link to="/login">Sign In</Link>
                 </button>
                 <button
                   onClick={onJoinNow}
-                  className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                 >
-                  Join Now
+                  <Link to="/seller-register">Sign Up</Link>
                 </button>
               </>
             )}
@@ -158,7 +178,10 @@ export default function SafeBillHeader({
                 {isSignedIn ? (
                   <div className="flex items-center px-3">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                      <button
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden focus:outline-none"
+                      >
                         {userAvatar ? (
                           <img
                             src={userAvatar || "/placeholder.svg"}
@@ -168,16 +191,47 @@ export default function SafeBillHeader({
                         ) : (
                           <span className="text-sm font-medium text-gray-600">{userName.charAt(0).toUpperCase()}</span>
                         )}
-                      </div>
+                      </button>
                     </div>
-                    <div className="ml-3">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="ml-3 flex flex-col items-start bg-transparent w-auto text-left focus:outline-none"
+                      style={{ background: 'none', border: 'none' }}
+                    >
                       <div className="text-base font-medium text-gray-800">{userName}</div>
-                      <div className="text-sm font-medium text-gray-500">user@example.com</div>
-                    </div>
-                    <button className="ml-auto relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full">
-                      <Bell className="h-5 w-5" />
-                      <span className="absolute top-1 right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+                      <div className="text-sm font-medium text-gray-500">{userEmail}</div>
                     </button>
+                    <button className="ml-auto relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
+                      <Bell className="h-5 w-5" />
+                    </button>
+                    {/* Mobile Dropdown Menu */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-4 top-20 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                        <div className="py-1">
+                          <div className="px-4 py-3 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900">{userName}</p>
+                            <p className="text-xs text-gray-500">{userEmail}</p>
+                          </div>
+                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Profile
+                          </a>
+                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Settings
+                          </a>
+                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Billing
+                          </a>
+                          <div className="border-t border-gray-100">
+                            <button
+                              onClick={handleSignOut}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Sign out
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2 px-3">
@@ -185,13 +239,13 @@ export default function SafeBillHeader({
                       onClick={onSignIn}
                       className="w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                     >
-                      Sign In
+                      <Link to="/login">Sign In</Link>
                     </button>
                     <button
                       onClick={onJoinNow}
                       className="w-full px-3 py-2 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-md"
                     >
-                      Join Now
+                      <Link to="/seller-register">Sign Up</Link>
                     </button>
                   </div>
                 )}
