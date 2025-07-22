@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import environ
+env = environ.Env()
+environ.Env.read_env(os.path.join('E:/Safe Bill/Safe-Bill/backend/safebill/.env'))
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -91,13 +93,21 @@ WSGI_APPLICATION = 'safebill.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
     }
 }
+
+# Remove any DATABASE_ROUTERS settings since we're using only PostgreSQL
+FRONTEND_URL = env('FRONTEND_URL') 
+
+
 
 # Comment out environ initialization for now
 # env = environ.Env()
@@ -122,6 +132,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 
 # Internationalization
