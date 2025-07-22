@@ -177,7 +177,11 @@ class BankAccountView(APIView):
                 user=request.user,
                 defaults=serializer.validated_data
             )
-            return Response(BankAccountSerializer(bank_account).data)
+
+            return Response(
+                {'detail': 'Bank Details saved successfully.'},
+                status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=400)
 
     def get(self, request):

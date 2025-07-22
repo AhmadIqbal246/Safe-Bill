@@ -33,13 +33,13 @@ class BusinessDetail(models.Model):
     type_of_activity = models.CharField(max_length=255)
     service_area = models.CharField(max_length=255)
     siret_verified = models.BooleanField(default=False)
-    company_phone_number = models.CharField(max_length=30, blank=True, unique=True)
     company_contact_person = models.CharField(max_length=255, blank=True)
     skills = ArrayField(
         models.CharField(max_length=100),
         blank=True,
         default=list
     )
+    
 
     def __str__(self):
         return f"{self.company_name} (SIRET: {self.siret_number})"
