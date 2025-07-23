@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
@@ -8,6 +9,8 @@ import LogInPage from "./pages/LogInPage";
 import OnBoardingPage from "./pages/OnBoardingPage";
 import FindProfessionals from "./pages/FindProfessionals";
 import ProtectedRoute from "./store/ProtectedRoute";
+import DashboardPage from "./pages/DashboardPage";
+import MyQuotesPage from "./pages/MyQuotesPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,6 +38,9 @@ function App() {
           <Route path='/login' element={<LogInPage/>}/>
           <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage/></ProtectedRoute>}/>
           <Route path='/find-professionals' element={<ProtectedRoute><FindProfessionals/></ProtectedRoute>}/>
+          <Route path='/dashboard' element={<ProtectedRoute><DashboardPage/></ProtectedRoute>}/>
+          <Route path='/my-quotes' element={<ProtectedRoute><MyQuotesPage/></ProtectedRoute>}/>
+
 
           {/* Add more routes as needed */}
         </Routes>
