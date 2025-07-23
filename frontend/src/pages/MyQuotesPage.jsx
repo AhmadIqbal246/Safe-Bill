@@ -4,7 +4,10 @@ import ProjectCreation from '../components/Quotes/ProjectCreation';
 
 export default function MyQuotesPage() {
   return (
-    <MainLayout>
+    <MainLayout
+      hideSafeBillHeader
+      shiftNavbarLeft 
+    >
       <ProjectCreation />
     </MainLayout>
   );

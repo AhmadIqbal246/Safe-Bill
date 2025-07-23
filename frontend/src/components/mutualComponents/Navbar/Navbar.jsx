@@ -5,10 +5,28 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
 
+export const signedOutNavItems = [
+  { label: "Home", href: "/" },
+  { label: "Directory", href: "#" },
+  { label: "How it works", href: "#" },
+  { label: "Contact", href: "#" },
+];
+
+export const signedInNavItems = [
+  { label: "Find Professionals", href: "/find-professionals" },
+  { label: "How it Works", href: "#" },
+  { label: "For Professionals", href: "#" },
+];
+
 export default function SafeBillHeader({
   onSignIn,
   onJoinNow,
   onSignOut,
+  hideSafeBillHeader,
+  shiftNavbarLeft,
+  navbarRightStyle,
+  navbarRightClassName,
+  showMobileMenuButton = true,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -30,20 +48,16 @@ export default function SafeBillHeader({
     navigate("/");
   };
 
-  const signedOutNavItems = [
-    { label: "Home", href: "/" },
-    { label: "Directory", href: "#" },
-    { label: "How it works", href: "#" },
-    { label: "Contact", href: "#" },
-  ]
-
-  const signedInNavItems = [
-    { label: "Find Professionals", href: "/find-professionals" },
-    { label: "How it Works", href: "#" },
-    { label: "For Professionals", href: "#" },
-  ]
-
   const navItems = isSignedIn ? signedInNavItems : signedOutNavItems
+
+  // Example: use a default style if shiftNavbarLeft is true, or use the passed style/class
+  const leftShiftStyle = shiftNavbarLeft
+    ? navbarRightStyle || { marginLeft: 0, justifyContent: 'flex-start' }
+    : navbarRightStyle;
+
+  const leftShiftClass = shiftNavbarLeft
+    ? navbarRightClassName || 'pl-8 justify-start'
+    : navbarRightClassName || 'justify-end';
 
   return (
     <header className="w-full bg-white border-b border-gray-200">
@@ -51,7 +65,9 @@ export default function SafeBillHeader({
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer">Safe Bill</Link>
+            {!hideSafeBillHeader && (
+              <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer">Safe Bill</Link>
+            )}
           </div>
 
           {/* Desktop Navigation */}
@@ -68,15 +84,13 @@ export default function SafeBillHeader({
           </nav>
 
           {/* Right Side - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`} style={leftShiftStyle}>
             {isSignedIn ? (
               <>
                 {/* Notification Bell */}
                 <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
                   <Bell className="h-5 w-5" />
-
                 </button>
-
                 {/* User Avatar with Dropdown */}
                 <div className="relative">
                   <button
@@ -95,7 +109,6 @@ export default function SafeBillHeader({
                       )}
                     </div>
                   </button>
-
                   {/* Dropdown Menu */}
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
@@ -149,15 +162,95 @@ export default function SafeBillHeader({
             )}
           </div>
 
+          {/* Mobile Right Side (avatar and bell only, no hamburger) */}
+          {!showMobileMenuButton && (
+            <div className="flex md:hidden items-center space-x-4">
+              {isSignedIn ? (
+                <>
+                  <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
+                    <Bell className="h-5 w-5" />
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                        {userAvatar ? (
+                          <img
+                            src={userAvatar || "/placeholder.svg"}
+                            alt={userName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-gray-600">{userName.charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                    </button>
+                    {/* Dropdown Menu (reuse desktop logic) */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                        <div className="py-1">
+                          <button
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="flex flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
+                            style={{ background: 'none', border: 'none' }}
+                          >
+                            <p className="text-sm font-medium text-gray-900">{userName}</p>
+                            <p className="text-xs text-gray-500">{userEmail}</p>
+                          </button>
+                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Profile
+                          </a>
+                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Settings
+                          </a>
+                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            Billing
+                          </a>
+                          <div className="border-t border-gray-100">
+                            <button
+                              onClick={handleSignOut}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                            >
+                              Sign out
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={onSignIn}
+                    className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  >
+                    <Link to="/login">Sign In</Link>
+                  </button>
+                  <button
+                    onClick={onJoinNow}
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
+                  >
+                    <Link to="/seller-register">Sign Up</Link>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
+          {showMobileMenuButton && (
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu */}

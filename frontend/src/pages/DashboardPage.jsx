@@ -104,7 +104,8 @@ export default function DashboardPage() {
       ]
 
   return (
-    <MainLayout>
+    <MainLayout hideSafeBillHeader shiftNavbarLeft
+    >
       {/* Dashboard content goes here */}
       <main className="flex-1 p-4 sm:p-8">
             <div className="flex flex-col lg:flex-row justify-between items-start">
