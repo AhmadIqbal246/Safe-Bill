@@ -50,13 +50,57 @@ export default function SellerRegisterFlow() {
 
   const [errors, setErrors] = useState({});
 
+  // Password validation regex: at least 8 chars, one uppercase, one lowercase, one number, one special char
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+
+  // Real-time password validation
+  const validatePasswordRealtime = (password, confirmPassword) => {
+    let passwordErrors = [];
+    let confirmPasswordError = "";
+    if (!password) {
+      passwordErrors.push("Password is required");
+    } else {
+      if (password.length < 8) {
+        passwordErrors.push("Password must be at least 8 characters long.");
+      }
+      if (!/[A-Z]/.test(password)) {
+        passwordErrors.push("Password should contain at least one uppercase letter.");
+      }
+      if (!/[a-z]/.test(password)) {
+        passwordErrors.push("Password should contain at least one lowercase letter.");
+      }
+      if (!/\d/.test(password)) {
+        passwordErrors.push("Password should contain at least one number.");
+      }
+      if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+        passwordErrors.push("Password should contain at least one special character.");
+      }
+    }
+    if (confirmPassword) {
+      if (password !== confirmPassword) {
+        confirmPasswordError = "Passwords do not match";
+      }
+    } else if (confirmPassword === "") {
+      confirmPasswordError = "Please confirm your password";
+    }
+    setErrors((prev) => ({
+      ...prev,
+      password: passwordErrors,
+      confirmPassword: confirmPasswordError,
+    }));
+  };
+
   const updateFormData = (field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-    // Clear error when user starts typing
-    if (errors[field]) {
+    // Real-time password validation
+    if (field === "password" || field === "confirmPassword") {
+      const pwd = field === "password" ? value : formData.password;
+      const confPwd = field === "confirmPassword" ? value : formData.confirmPassword;
+      validatePasswordRealtime(pwd, confPwd);
+    } else if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
         [field]: "",
@@ -67,18 +111,41 @@ export default function SellerRegisterFlow() {
   const validateStep1 = () => {
     const newErrors = {};
 
-    // if (!formData.firstName.trim())
-    //   newErrors.firstName = "First name is required";
-    // if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    // Password validation rules
+    const passwordErrors = [];
+    if (!formData.password) {
+      passwordErrors.push("Password is required");
+    } else {
+      if (formData.password.length < 8) {
+        passwordErrors.push("Password must be at least 8 characters long.");
+      }
+      if (!/[A-Z]/.test(formData.password)) {
+        passwordErrors.push("Password should contain at least one uppercase letter.");
+      }
+      if (!/[a-z]/.test(formData.password)) {
+        passwordErrors.push("Password should contain at least one lowercase letter.");
+      }
+      if (!/\d/.test(formData.password)) {
+        passwordErrors.push("Password should contain at least one number.");
+      }
+      if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.password)) {
+        passwordErrors.push("Password should contain at least one special character.");
+      }
+    }
+    if (passwordErrors.length > 0) {
+      newErrors.password = passwordErrors;
+    }
+
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phoneNumber.trim())
       newErrors.phoneNumber = "Phone number is required";
-    if (!formData.password) newErrors.password = "Password is required";
-    if (formData.password.length < 8)
-      newErrors.password = "Password must be at least 8 characters";
     if (!formData.confirmPassword)
       newErrors.confirmPassword = "Please confirm your password";
-    if (formData.password !== formData.confirmPassword)
+    if (
+      formData.password &&
+      formData.confirmPassword &&
+      formData.password !== formData.confirmPassword
+    )
       newErrors.confirmPassword = "Passwords do not match";
     if (!formData.agreeToTerms)
       newErrors.agreeToTerms = "You must agree to the terms";
@@ -117,6 +184,10 @@ export default function SellerRegisterFlow() {
   };
 
   const handleSubmit = () => {
+    // Always validate step 1 before submitting
+    if (!validateStep1()) {
+      return;
+    }
     if (validateStep2()) {
       const payload = {
         Basic_Information: {
@@ -240,7 +311,7 @@ export default function SellerRegisterFlow() {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SIRET Number *
+                  Business Registration Number *
                 </label>
                 <input
                   type="text"
@@ -248,7 +319,7 @@ export default function SellerRegisterFlow() {
                   onChange={(e) =>
                     updateFormData("businessNumber", e.target.value)
                   }
-                  placeholder="Enter your SIRET Number"
+                  placeholder="Enter your Business Registration Number"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.businessNumber ? "border-red-500" : "border-gray-300"
                   }`}
@@ -493,9 +564,16 @@ export default function SellerRegisterFlow() {
                   </span>
                 </div>
                 <p className="text-gray-500 text-sm mt-1">
-                  At least 8 characters with uppercase, lowercase, and numbers
+                  At least 8 characters with uppercase, lowercase, numbers and special character
                 </p>
-                {errors.password && (
+                {Array.isArray(errors.password) && errors.password.length > 0 && (
+                  <ul className="text-red-500 text-sm mt-1 list-disc list-inside">
+                    {errors.password.map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                )}
+                {typeof errors.password === 'string' && errors.password && (
                   <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                 )}
               </div>
@@ -584,7 +662,7 @@ export default function SellerRegisterFlow() {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SIRET Number *
+                  Business registeration number *
                 </label>
                 <input
                   type="text"
@@ -592,7 +670,7 @@ export default function SellerRegisterFlow() {
                   onChange={(e) =>
                     updateFormData("businessNumber", e.target.value)
                   }
-                  placeholder="Enter your SIRET Number"
+                  placeholder="Enter your Business Registeration Number"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.businessNumber ? "border-red-500" : "border-gray-300"
                   }`}
