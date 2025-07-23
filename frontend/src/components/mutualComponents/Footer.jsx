@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, Facebook, Instagram } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
@@ -13,33 +14,33 @@ export default function Footer() {
         <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
           <div className="text-[#00FFFF] font-semibold mb-2">For Clients</div>
           <ul className="space-y-1">
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Find Professionals</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">How It Works</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Success Stories</a></li>
+            <li><Link to="/find-professionals" className="hover:underline text-[#96C2DB]">Find Professionals</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">How It Works</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Success Stories</Link></li>
           </ul>
         </div>
         <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
           <div className="text-[#00FFFF] font-semibold mb-2">For Professionals</div>
           <ul className="space-y-1">
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Join as Professional</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Verification Process</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Resources</a></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Join as Professional</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Verification Process</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Resources</Link></li>
           </ul>
         </div>
         <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
           <div className="text-[#00FFFF] font-semibold mb-2">Support</div>
           <ul className="space-y-1">
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Help Center</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Contact Us</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Trust &amp; Safety</a></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Help Center</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Contact Us</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Trust &amp; Safety</Link></li>
           </ul>
         </div>
         <div className="flex-1 min-w-[140px]">
           <div className="text-[#00FFFF] font-semibold mb-2">Legal links</div>
           <ul className="space-y-1">
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Terms</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">Privacy</a></li>
-            <li><a href="#" className="hover:underline text-[#96C2DB]">GDPR</a></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Terms</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">Privacy</Link></li>
+            <li><Link to="#" className="hover:underline text-[#96C2DB]">GDPR</Link></li>
           </ul>
         </div>
       </div>
@@ -51,9 +52,9 @@ export default function Footer() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-white mr-2">Socials</span>
-          <a href="#" className="bg-[#E6F0FA] rounded-md p-1 flex items-center justify-center"><Facebook className="w-5 h-5 text-[#01257D]" /></a>
-          <a href="#" className="bg-[#E6F0FA] rounded-md p-1 flex items-center justify-center"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20" stroke="#01257D" strokeWidth="2" strokeLinecap="round"/></svg></a>
-          <a href="#" className="bg-[#E6F0FA] rounded-md p-1 flex items-center justify-center"><Instagram className="w-5 h-5 text-[#01257D]" /></a>
+          <Link to="#" className="bg-[#E6F0FA] rounded-md p-1 flex items-center justify-center"><Facebook className="w-5 h-5 text-[#01257D]" /></Link>
+          <Link to="#" className="bg-[#E6F0FA] rounded-md p-1 flex items-center justify-center"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20" stroke="#01257D" strokeWidth="2" strokeLinecap="round"/></svg></Link>
+          <Link to="#" className="bg-[#E6F0FA] rounded-md p-1 flex items-center justify-center"><Instagram className="w-5 h-5 text-[#01257D]" /></Link>
         </div>
       </div>
       <div className="text-center text-[#96C2DB] text-sm mt-6">© 2025 Safe Bill. All rights reserved.</div>
