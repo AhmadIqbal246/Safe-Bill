@@ -19,6 +19,8 @@ class User(AbstractUser):
     onboarding_complete = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    about = models.TextField(null=True, blank=True)
     # You can add more fields as needed for onboarding
 
     def __str__(self):
@@ -30,16 +32,12 @@ class BusinessDetail(models.Model):
     company_name = models.CharField(max_length=255)
     siret_number = models.CharField(max_length=50)
     full_address = models.TextField()
-    type_of_activity = models.CharField(max_length=255)
-    service_area = models.CharField(max_length=255)
+    type_of_activity = models.CharField(max_length=255, default='')
+    service_area = models.CharField(max_length=255, default='')
     siret_verified = models.BooleanField(default=False)
     company_contact_person = models.CharField(max_length=255, blank=True)
-    skills = ArrayField(
-        models.CharField(max_length=100),
-        blank=True,
-        default=list
-    )
-    
+
+
 
     def __str__(self):
         return f"{self.company_name} (SIRET: {self.siret_number})"

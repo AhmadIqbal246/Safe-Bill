@@ -12,6 +12,9 @@ import ProtectedRoute from "./store/ProtectedRoute";
 import DashboardPage from "./pages/DashboardPage";
 import MyQuotesPage from "./pages/MyQuotesPage";
 import ProjectCreationPage from "./pages/ProjectCreationPage";
+import CurrentProjects from "./pages/CurrentProjects";
+import CompletedProjects from "./pages/CompletedProjects";
+import MyProfile from "./pages/MyProfile";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -42,7 +45,9 @@ function App() {
           <Route path='/dashboard' element={<ProtectedRoute><DashboardPage/></ProtectedRoute>}/>
           <Route path='/my-quotes' element={<ProtectedRoute><MyQuotesPage/></ProtectedRoute>}/>
           <Route path='/project-creation' element={<ProtectedRoute><ProjectCreationPage/></ProtectedRoute>}/>
-
+          <Route path='/current-projects' element={<ProtectedRoute><CurrentProjects/></ProtectedRoute>}/>
+          <Route path='/completed-projects' element={<ProtectedRoute><CompletedProjects/></ProtectedRoute>}/>
+          <Route path='/profile' element={<ProtectedRoute><MyProfile/></ProtectedRoute>}/>
 
           {/* Add more routes as needed */}
         </Routes>

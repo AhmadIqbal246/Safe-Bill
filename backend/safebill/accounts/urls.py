@@ -11,7 +11,8 @@ from .views import (
     filter_sellers_by_service_type,
     filter_sellers_by_service_area,
     filter_sellers_by_type_and_area,
-    list_all_sellers
+    list_all_sellers,
+    UserProfileView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -23,7 +24,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
     path('onboarding-status/', OnboardingStatusView.as_view(), name='onboarding-status'),
-    path('profile/', ProfileView.as_view(), name='profile'),
+    path('profile/', UserProfileView.as_view(), name='user-profile'),
     path('password-reset-request/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('bank-account/', BankAccountView.as_view(), name='bank-account'),
