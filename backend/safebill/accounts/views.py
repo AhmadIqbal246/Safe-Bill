@@ -7,7 +7,8 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from .serializers import (
     RegistrationSerializer, UserTokenObtainPairSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, BankAccountSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, BankAccountSerializer,
+    UserProfileSerializer
 )
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -189,6 +190,21 @@ class BankAccountView(APIView):
             return Response(BankAccountSerializer(bank_account).data)
         except BankAccount.DoesNotExist:
             return Response({'detail': 'No bank account found.'}, status=404)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserProfileSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
