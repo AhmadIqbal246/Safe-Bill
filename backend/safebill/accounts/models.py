@@ -36,7 +36,7 @@ class BusinessDetail(models.Model):
     service_area = models.CharField(max_length=255, default='')
     siret_verified = models.BooleanField(default=False)
     company_contact_person = models.CharField(max_length=255, blank=True)
-
+    skills = models.JSONField(default=list, blank=True)
 
 
     def __str__(self):
