@@ -3,6 +3,7 @@ import authReducer from './slices/AuthSlices';
 import businessDetailReducer from './slices/BussinessDetailSlice';
 import filterReducer from './slices/FilterSlice';
 import projectReducer from './slices/ProjectSlice';
+import userProfileReducer from './slices/UserProfileSlice';
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -13,6 +14,7 @@ export const store = configureStore({
     businessDetail: businessDetailReducer,
     filter: filterReducer,
     project: projectReducer,
+    userProfile: userProfileReducer,
   },
 });
 
