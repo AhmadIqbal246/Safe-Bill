@@ -29,7 +29,7 @@ export default function LogInComp() {
         if (user.onboarding_complete === false) {
           navigate("/onboarding");
         } else {
-          navigate("/");
+          navigate("/dashboard");
         }
       }, 1500);
     } else if (error) {

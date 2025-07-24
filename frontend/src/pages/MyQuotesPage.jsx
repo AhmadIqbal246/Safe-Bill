@@ -1,14 +1,11 @@
 import React from 'react';
 import MainLayout from '../components/Layout/MainLayout';
-import ProjectCreation from '../components/Quotes/ProjectCreation';
+import QuoteManagement from '../components/Quotes/QuoteManagement';
 
 export default function MyQuotesPage() {
   return (
-    <MainLayout
-      hideSafeBillHeader
-      shiftNavbarLeft 
-    >
-      <ProjectCreation />
+    <MainLayout>
+      <QuoteManagement />
     </MainLayout>
   );
 }

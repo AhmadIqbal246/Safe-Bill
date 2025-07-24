@@ -170,3 +170,55 @@ class BankAccountSerializer(serializers.ModelSerializer):
                 'bic_swift': 'This BIC/SWIFT is already in use.'
             })
         return data 
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    type_of_activity = serializers.SerializerMethodField()
+    service_area = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
+    profile_pic = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'phone_number', 'type_of_activity',
+            'service_area', 'about', 'skills', 'profile_pic'
+        ]
+        read_only_fields = ['username', 'email']
+
+    def get_type_of_activity(self, obj):
+        try:
+            return obj.business_detail.type_of_activity
+        except BusinessDetail.DoesNotExist:
+            return None
+
+    def get_service_area(self, obj):
+        try:
+            return obj.business_detail.service_area
+        except BusinessDetail.DoesNotExist:
+            return None
+
+    def get_skills(self, obj):
+        try:
+            return obj.business_detail.skills
+        except BusinessDetail.DoesNotExist:
+            return []
+
+    def update(self, instance, validated_data):
+        # Update user fields
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.about = validated_data.get('about', instance.about)
+        profile_pic = validated_data.get('profile_pic', None)
+        if profile_pic is not None:
+            instance.profile_pic = profile_pic
+        instance.save()
+
+        # Update or create BusinessDetail
+        business_fields = ['type_of_activity', 'service_area', 'skills']
+        business_data = {field: self.initial_data.get(field) for field in business_fields if self.initial_data.get(field) is not None}
+        if business_data:
+            business_detail, created = BusinessDetail.objects.get_or_create(user=instance)
+            for field, value in business_data.items():
+                setattr(business_detail, field, value)
+            business_detail.save()
+        return instance 
