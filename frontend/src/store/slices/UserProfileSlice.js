@@ -117,4 +117,3 @@ const userProfileSlice = createSlice({
 
 export const { resetUserProfileState } = userProfileSlice.actions;
 export default userProfileSlice.reducer;
-export { fetchUserProfile, updateUserProfile };
