@@ -104,7 +104,7 @@ export default function DashboardPage() {
       ]
 
   return (
-    <MainLayout hideSafeBillHeader shiftNavbarLeft
+    <MainLayout showSafeBillHeaderOnMobile shiftNavbarLeft
     >
       {/* Dashboard content goes here */}
       <main className="flex-1 p-4 sm:p-8">

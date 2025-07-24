@@ -5,7 +5,7 @@ import ProjectCreation from '../components/Quotes/ProjectCreation';
 export default function MyQuotesPage() {
   return (
     <MainLayout
-      hideSafeBillHeader
+      showSafeBillHeaderOnMobile
       shiftNavbarLeft 
     >
       <ProjectCreation />
