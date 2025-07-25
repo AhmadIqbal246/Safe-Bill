@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserProfile, updateUserProfile } from '../../store/slices/UserProfileSlice';
+import { setUser } from '../../store/slices/AuthSlices';
 import { Dialog } from '@headlessui/react';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
@@ -57,6 +58,10 @@ export default function MyProfileComp() {
       setEditForm(null);
       setEditPicPreview(null);
       toast.success('Profile updated successfully!');
+      // Update auth.user in Redux
+      if (editForm) {
+        dispatch(setUser({ ...profile, ...editForm }));
+      }
     }
   }, [success]);
 
