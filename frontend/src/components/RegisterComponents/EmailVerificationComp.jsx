@@ -11,11 +11,13 @@ function EmailVerificationComp() {
   const token = searchParams.get('token');
   const navigate = useNavigate();
 
+  const backendBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     async function verifyEmail() {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/accounts/verify-email/?uid=${uid}&token=${token}`
+          `${backendBaseUrl}api/accounts/verify-email/?uid=${uid}&token=${token}`
         );
         setStatus('success');
         setMessage(res.data.detail || 'Your email has been verified!');

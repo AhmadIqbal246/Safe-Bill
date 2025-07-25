@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import axios from 'axios';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -26,24 +27,23 @@ export default function InviteViewProject() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
+        const res = await axios.get(
           `${backendBaseUrl}api/projects/invite/${token}/`,
           {
-            credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${sessionStorage.getItem('access')}`,
             },
+            withCredentials: true,
           }
         );
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.detail || 'Failed to fetch project');
-        }
-        const data = await res.json();
-        setProject(data);
+        setProject(res.data);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err.response && err.response.data && err.response.data.detail
+            ? err.response.data.detail
+            : err.message
+        );
       } finally {
         setLoading(false);
       }
