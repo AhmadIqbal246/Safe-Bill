@@ -130,55 +130,57 @@ export default function QuoteManagement() {
         ) : error ? (
           <div className="text-center text-red-500 py-12">{typeof error === 'string' ? error : 'Failed to load projects.'}</div>
         ) : (
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Quote Reference</th>
-                <th className="px-4 py-3 text-left font-semibold">Project Name</th>
-                <th className="px-4 py-3 text-left font-semibold">Client</th>
-                <th className="px-4 py-3 text-left font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left font-semibold">Creation Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProjects.map((p, i) => {
-                const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
-                return (
-                  <tr key={p.id} className="border-t border-gray-100">
-                    <td className="px-4 py-3 whitespace-nowrap">{p.quote && p.quote.reference_number}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{p.name}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{p.client_email}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}>{status}</span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap flex gap-2 items-center">
-                      <button className="p-1 hover:bg-gray-100 rounded" title="View"
-                        onClick={() => window.open(p.quote && p.quote.file, '_blank')}>
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <a className="p-1 hover:bg-gray-100 rounded" title="Download"
-                        href={p.quote && p.quote.file} download>
-                        <Download className="w-4 h-4" />
-                      </a>
-                      <button className="p-1 hover:bg-gray-100 rounded" title="Edit"><Edit className="w-4 h-4" /></button>
-                      <button
-                        className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${deletingId === p.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title="Delete"
-                        onClick={() => handleDelete(p.id)}
-                        disabled={deletingId === p.id}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className={filteredProjects.length > 10 ? 'max-h-96 overflow-y-auto' : ''}>
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold">Quote Reference</th>
+                  <th className="px-4 py-3 text-left font-semibold">Project Name</th>
+                  <th className="px-4 py-3 text-left font-semibold">Client</th>
+                  <th className="px-4 py-3 text-left font-semibold">Amount</th>
+                  <th className="px-4 py-3 text-left font-semibold">Creation Date</th>
+                  <th className="px-4 py-3 text-left font-semibold">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProjects.map((p, i) => {
+                  const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+                  return (
+                    <tr key={p.id} className="border-t border-gray-100">
+                      <td className="px-4 py-3 whitespace-nowrap">{p.quote && p.quote.reference_number}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{p.name}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{p.client_email}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}>{status}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap flex gap-2 items-center">
+                        <button className="p-1 hover:bg-gray-100 rounded" title="View"
+                          onClick={() => window.open(p.quote && p.quote.file, '_blank')}>
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <a className="p-1 hover:bg-gray-100 rounded" title="Download"
+                          href={p.quote && p.quote.file} download>
+                          <Download className="w-4 h-4" />
+                        </a>
+                        <button className="p-1 hover:bg-gray-100 rounded" title="Edit"><Edit className="w-4 h-4" /></button>
+                        <button
+                          className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${deletingId === p.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title="Delete"
+                          onClick={() => handleDelete(p.id)}
+                          disabled={deletingId === p.id}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
