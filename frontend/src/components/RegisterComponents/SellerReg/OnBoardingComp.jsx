@@ -291,7 +291,7 @@ export default function OnBoardingComp() {
             </p>
             <button
               className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md text-base hover:bg-[#2346a0] transition-colors cursor-pointer"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
             >
               Go to Dashboard
             </button>

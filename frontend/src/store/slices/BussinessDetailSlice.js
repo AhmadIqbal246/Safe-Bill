@@ -27,6 +27,28 @@ export const uploadBusinessDocuments = createAsyncThunk(
   }
 );
 
+export const fetchUserDocuments = createAsyncThunk(
+  'business/fetchUserDocuments',
+  async (accessToken, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}api/business-documents/my-documents/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Network error' });
+    }
+  }
+);
+
 const businessDetailSlice = createSlice({
   name: 'businessDetail',
   initialState: {
@@ -34,6 +56,7 @@ const businessDetailSlice = createSlice({
     error: null,
     success: false,
     uploadedDocs: null,
+    userDocuments: null,
   },
   reducers: {
     resetBusinessDetailState: (state) => {
@@ -41,6 +64,7 @@ const businessDetailSlice = createSlice({
       state.error = null;
       state.success = false;
       state.uploadedDocs = null;
+      state.userDocuments = null;
     },
   },
   extraReducers: (builder) => {
@@ -59,6 +83,18 @@ const businessDetailSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.success = false;
+      })
+      .addCase(fetchUserDocuments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserDocuments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.userDocuments = action.payload;
+      })
+      .addCase(fetchUserDocuments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

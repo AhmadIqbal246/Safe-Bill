@@ -8,7 +8,7 @@ const links = [
   { label: 'Current projects', to: '/current-projects' },
   { label: 'Completed projects', to: '/completed-projects' },
   { label: 'My profile', to: '/profile' },
-  { label: 'Documents', to: '/documents' },
+  { label: 'Documents', to: '/my-documents' },
   { label: 'Support', to: '/support' },
 ];
 
