@@ -105,24 +105,24 @@ export default function QuoteManagement() {
           {filters.map(f => (
             <button
               key={f}
-              className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${activeSort === f ? 'bg-[#E6F0FA] text-[#01257D] font-bold' : 'bg-[#E6F0FA] text-[#01257D]'}`}
+              className={`px-3 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${activeSort === f ? 'bg-[#E6F0FA] text-[#01257D] font-bold' : 'bg-[#E6F0FA] text-[#01257D]'}`}
               onClick={() => setActiveSort(f)}
             >
               {f}
             </button>
           ))}
         </div>
-        <div className="mb-6">
+        <div className="mb-6 flex justify-start sm:justify-center">
           <input
             type="text"
             placeholder="Search by client email or project name"
-            className="w-full px-4 py-3 rounded-md border border-gray-200 bg-[#E6F0FA] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+            className="w-[100%] sm:w-full px-3 py-3 rounded-md border border-gray-200 bg-[#E6F0FA] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white max-w-[300px] w-full mx-auto sm:max-w-full">
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
@@ -136,9 +136,9 @@ export default function QuoteManagement() {
                 <th className="px-4 py-3 text-left font-semibold">Quote Reference</th>
                 <th className="px-4 py-3 text-left font-semibold">Project Name</th>
                 <th className="px-4 py-3 text-left font-semibold">Client</th>
+                <th className="px-4 py-3 text-left font-semibold">Status</th>
                 <th className="px-4 py-3 text-left font-semibold">Amount</th>
                 <th className="px-4 py-3 text-left font-semibold">Creation Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
                 <th className="px-4 py-3 text-left font-semibold">Actions</th>
               </tr>
             </thead>
@@ -150,11 +150,11 @@ export default function QuoteManagement() {
                     <td className="px-4 py-3 whitespace-nowrap">{p.quote && p.quote.reference_number}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.name}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.client_email}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}>{status}</span>
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
                     <td className="px-4 py-3 whitespace-nowrap flex gap-2 items-center">
                       <button className="p-1 hover:bg-gray-100 rounded" title="View"
                         onClick={() => window.open(p.quote && p.quote.file, '_blank')}>
