@@ -53,7 +53,7 @@ export default function GeoFilterComponent() {
           <div className="w-full h-[300px] flex items-center justify-center">Loading...</div>
         )}
         <div className="mt-4 text-center text-[#01257D] font-medium">{address}</div>
-      </div>
+    </div>
     </section>
   );
 }

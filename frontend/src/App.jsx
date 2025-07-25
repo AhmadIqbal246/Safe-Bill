@@ -15,6 +15,7 @@ import ProjectCreationPage from "./pages/ProjectCreationPage";
 import CurrentProjects from "./pages/CurrentProjects";
 import CompletedProjects from "./pages/CompletedProjects";
 import MyProfile from "./pages/MyProfile";
+import MyDocuments from "./pages/MyDocuments";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -48,6 +49,7 @@ function App() {
           <Route path='/current-projects' element={<ProtectedRoute><CurrentProjects/></ProtectedRoute>}/>
           <Route path='/completed-projects' element={<ProtectedRoute><CompletedProjects/></ProtectedRoute>}/>
           <Route path='/profile' element={<ProtectedRoute><MyProfile/></ProtectedRoute>}/>
+          <Route path='/my-documents' element={<ProtectedRoute><MyDocuments/></ProtectedRoute>}/>
 
           {/* Add more routes as needed */}
         </Routes>
