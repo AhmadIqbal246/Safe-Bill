@@ -37,7 +37,11 @@ export const updateUserProfile = createAsyncThunk(
         dataToSend = new FormData();
         Object.entries(profileData).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            dataToSend.append(key, value);
+            if (key === 'skills' && Array.isArray(value)) {
+              dataToSend.append('skills', JSON.stringify(value));
+            } else {
+              dataToSend.append(key, value);
+            }
           }
         });
         headers = {

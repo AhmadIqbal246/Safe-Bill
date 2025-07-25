@@ -6,6 +6,7 @@ from .models import BusinessDetail
 from .models import BankAccount
 import requests
 from django.conf import settings
+import json
 
 
 def verify_siret_number(siret_number):
@@ -58,20 +59,20 @@ class RegistrationSerializer(serializers.Serializer):
             )
 
         # SIRET number
-        #if 'siret_number' in business_info and BusinessDetail.objects.filter(
-         #   siret_number=business_info['siret_number']
-        #).exists():
-          #  raise serializers.ValidationError(
-         #       {'siret_number': 'This SIRET number is already taken.'}
-        #    )
+        # if 'siret_number' in business_info and BusinessDetail.objects.filter(
+        #     siret_number=business_info['siret_number']
+        # ).exists():
+        #     raise serializers.ValidationError(
+        #         {'siret_number': 'This SIRET number is already taken.'}
+        #     )
 
         # SIRET number validation via INSEE API
-        #siret_number = business_info.get('siret_number')
-        #if siret_number:
-        #    if not verify_siret_number(siret_number):
-          #      raise serializers.ValidationError(
-         #           {'siret_number': 'Invalid SIRET number.'}
-        #        )
+        # siret_number = business_info.get('siret_number')
+        # if siret_number:
+        #     if not verify_siret_number(siret_number):
+        #         raise serializers.ValidationError(
+        #             {'siret_number': 'Invalid SIRET number.'}
+        #         )
 
         return data
 
@@ -184,7 +185,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'username', 'email', 'phone_number', 'type_of_activity',
             'service_area', 'about', 'skills', 'profile_pic'
         ]
-        read_only_fields = ['username', 'email']
+        read_only_fields = ['email']  # Only email is read-only now
 
     def get_type_of_activity(self, obj):
         try:
@@ -205,8 +206,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return []
 
     def update(self, instance, validated_data):
-        # Update user fields
-        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        # Allow username update with uniqueness check
+        new_username = validated_data.get('username', instance.username)
+        if new_username != instance.username:
+            if User.objects.filter(username=new_username).exclude(
+                pk=instance.pk
+            ).exists():
+                raise serializers.ValidationError({
+                    'username': 'This username is already taken.'
+                })
+            instance.username = new_username
+
+        instance.phone_number = validated_data.get(
+            'phone_number', instance.phone_number
+        )
         instance.about = validated_data.get('about', instance.about)
         profile_pic = validated_data.get('profile_pic', None)
         if profile_pic is not None:
@@ -215,9 +228,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         # Update or create BusinessDetail
         business_fields = ['type_of_activity', 'service_area', 'skills']
-        business_data = {field: self.initial_data.get(field) for field in business_fields if self.initial_data.get(field) is not None}
+        business_data = {
+            field: self.initial_data.get(field)
+            for field in business_fields if self.initial_data.get(field) is not None
+        }
+        # Ensure skills is always a list
+        if 'skills' in business_data:
+            skills = business_data['skills']
+            if isinstance(skills, str):
+                try:
+                    skills = json.loads(skills)
+                except Exception:
+                    skills = [s.strip() for s in skills.split(',') if s.strip()]
+                business_data['skills'] = skills
         if business_data:
-            business_detail, created = BusinessDetail.objects.get_or_create(user=instance)
+            business_detail, created = BusinessDetail.objects.get_or_create(
+                user=instance
+            )
             for field, value in business_data.items():
                 setattr(business_detail, field, value)
             business_detail.save()

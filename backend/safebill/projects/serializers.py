@@ -69,3 +69,4 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
     def get_total_amount(self, obj):
         return sum(float(inst.amount) for inst in obj.installments.all())
+ 

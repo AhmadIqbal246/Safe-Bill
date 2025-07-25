@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from .models import Document
+
 
 def validate_pdf(file):
     if file.content_type != 'application/pdf':
@@ -32,3 +34,9 @@ class MultiDocumentUploadSerializer(serializers.Serializer):
         required=True, validators=[validate_pdf]
     )
     # Add more fields if you add more document types 
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ['id', 'document_type', 'file', 'uploaded_at', 'is_verified'] 
