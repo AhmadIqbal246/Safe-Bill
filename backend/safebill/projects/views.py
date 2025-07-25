@@ -1,8 +1,14 @@
 from rest_framework import generics, permissions
 from .models import Project
-from .serializers import ProjectCreateSerializer, ProjectListSerializer
+from .serializers import (
+    ProjectCreateSerializer,
+    ProjectListSerializer
+)
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+from django.utils import timezone
 
 
 class ProjectCreateAPIView(generics.CreateAPIView):
@@ -63,3 +69,32 @@ class ProjectDeleteAPIView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(user=self.request.user)
+
+
+class ProjectInviteAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, token):
+        try:
+            project = Project.objects.get(invite_token=token)
+        except Project.DoesNotExist:
+            return Response(
+                {'detail': 'Invalid or expired invite link.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        # Check expiry
+        if (not project.invite_token_expiry or
+                project.invite_token_expiry < timezone.now()):
+            return Response(
+                {'detail': 'Invite link has expired.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Check that the logged-in user's email matches the client_email
+        if request.user.email.lower() != project.client_email.lower():
+            return Response(
+                {'detail': 'You are not authorized to view this project.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        # Return project details
+        serializer = ProjectListSerializer(project)
+        return Response(serializer.data, status=status.HTTP_200_OK)
