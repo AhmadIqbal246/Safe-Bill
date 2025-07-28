@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-10 md:gap-4">
         {/* Columns */}
         <div className="flex-1 min-w-[180px] mb-8 md:mb-0">
-          <div className="text-white font-semibold text-lg mb-2">Safe Bill</div>
+          <Link to="/" className="text-white font-semibold text-lg mb-2">Safe Bill</Link>
           <div className="text-[#96C2DB] text-sm mb-4">Connecting clients with trusted professionals worldwide through secure, verified transactions.</div>
         </div>
         <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
@@ -22,7 +22,7 @@ export default function Footer() {
         <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
           <div className="text-[#00FFFF] font-semibold mb-2">For Professionals</div>
           <ul className="space-y-1">
-            <li><Link to="#" className="hover:underline text-[#96C2DB]">Join as Professional</Link></li>
+            <li><Link to="/seller-register" className="hover:underline text-[#96C2DB]">Join as Professional</Link></li>
             <li><Link to="#" className="hover:underline text-[#96C2DB]">Verification Process</Link></li>
             <li><Link to="#" className="hover:underline text-[#96C2DB]">Resources</Link></li>
           </ul>

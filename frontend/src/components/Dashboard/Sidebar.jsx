@@ -17,7 +17,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 bg-[#F6FAFD] min-h-screen p-6 border-r border-gray-200">
-        <div className="text-xl font-bold mb-8">Safe Bill</div>
+        <Link to="/" className="text-xl font-bold mb-8 block  transition-colors cursor-pointer">Safe Bill</Link>
         <nav className="flex flex-col gap-2">
           {links.map(link => (
             link.to === "#" ? (
@@ -59,7 +59,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
         >
           <X className="w-6 h-6" />
         </button>
-        <div className="text-xl font-bold mb-8">Safe Bill</div>
+        <Link to="/dashboard" className="text-xl font-bold mb-8 block hover:text-[#01257D] transition-colors cursor-pointer">Safe Bill</Link>
         <nav className="flex flex-col gap-2">
           {links.map(link => (
             link.to === "#" ? (
