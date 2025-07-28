@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import axios from 'axios';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -26,24 +27,23 @@ export default function InviteViewProject() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(
+        const res = await axios.get(
           `${backendBaseUrl}api/projects/invite/${token}/`,
           {
-            credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${sessionStorage.getItem('access')}`,
             },
+            withCredentials: true,
           }
         );
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.detail || 'Failed to fetch project');
-        }
-        const data = await res.json();
-        setProject(data);
+        setProject(res.data);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err.response && err.response.data && err.response.data.detail
+            ? err.response.data.detail
+            : err.message
+        );
       } finally {
         setLoading(false);
       }
@@ -78,73 +78,110 @@ export default function InviteViewProject() {
   return (
     <>
       <SafeBillHeader />
-      <div className="max-w-3xl mx-auto py-10 px-4">
-        {/* Header */}
-        <div className="mb-8 border-b pb-4">
-          <h1 className="text-3xl font-bold mb-2 text-[#01257D]">{project.name}</h1>
-          <div className="flex flex-wrap gap-4 text-gray-600 text-sm">
-            <span>Reference: <span className="font-semibold">{project.reference_number}</span></span>
-            <span>Created: {project.created_at}</span>
-          </div>
-        </div>
+      <div className="max-w-4xl mx-auto py-10 px-4">
+        <h1 className="text-2xl font-bold mb-8">Review and Pay</h1>
 
-        {/* Client Email */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-1">Client Email</h2>
-          <div className="bg-gray-50 rounded px-4 py-2 text-gray-800 border border-gray-200 inline-block">
-            {project.client_email}
+        {/* Project Information */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-bold mb-4">Project Information</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-2">
+            <div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">Project Name</div>
+              <div className="text-gray-900 font-medium">{project.name}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">Client Email</div>
+              <div className="text-gray-900 font-medium">{project.client_email}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">Created At</div>
+              <div className="text-gray-900 font-medium">{project.created_at}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">Reference Number</div>
+              <div className="text-gray-900 font-medium">{project.reference_number}</div>
+            </div>
           </div>
         </div>
 
         {/* Quote Section */}
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-1">Signed Quote</h2>
-          <div className="flex items-center gap-4">
-            <a
-              href={getQuoteFileUrl(project.quote?.file)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors text-sm"
-            >
-              View Quote PDF
-            </a>
-            <span className="text-gray-600 text-sm">
-              Reference: <span className="font-medium">{project.quote?.reference_number}</span>
-            </span>
+          <h2 className="text-lg font-bold mb-4">Quote</h2>
+          <div className="flex flex-col items-center justify-center bg-[#F6F0F0] rounded-xl p-8 min-h-[400px]">
+            {project.quote?.file ? (
+              <div className="w-full text-center">
+                {/* PDF Preview Container */}
+                <div className="bg-white rounded-lg p-6 mb-4 shadow-sm border border-gray-200">
+                  <div className="flex items-center justify-center mb-4">
+                    <svg className="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="text-gray-700 mb-4">
+                    <div className="font-semibold text-lg mb-2">Quote Document</div>
+                    <div className="text-sm text-gray-500">Click below to view the full PDF document</div>
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href={getQuoteFileUrl(project.quote.file)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View Quote PDF
+                  </a>
+                  <a
+                    href={getQuoteFileUrl(project.quote.file)}
+                    download
+                    className="px-6 py-3 bg-gray-600 text-white rounded-md font-semibold hover:bg-gray-700 transition-colors text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download PDF
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-400">No quote file available.</div>
+            )}
           </div>
         </div>
 
-        {/* Installments Table */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-3">Payment Installments</h2>
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="min-w-full text-sm">
-              <thead className="bg-[#E6F0FA]">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Amount</th>
-                  <th className="px-4 py-3 text-left font-semibold">Trigger Step</th>
-                  <th className="px-4 py-3 text-left font-semibold">Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {project.installments?.map((row, i) => (
-                  <tr key={i} className="border-t border-gray-100">
-                    <td className="px-4 py-3">${parseFloat(row.amount).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-[#01257D] font-medium">{row.step}</td>
-                    <td className="px-4 py-3 text-gray-600">{row.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Payment Validation Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-bold mb-4">Payment Validation</h2>
+          <div className="mb-4">
+            <div className="text-xs text-gray-400 font-semibold mb-1">Total Amount</div>
+            <div className="text-gray-900 font-bold text-lg mb-2">${project.total_amount?.toLocaleString()}</div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+            {project.installments?.map((inst, idx) => (
+              <div key={idx} className="bg-[#F6F0F0] rounded-lg p-4">
+                <div className="font-semibold mb-1">Installment {idx + 1}</div>
+                <div className="text-gray-900 font-medium mb-1">${parseFloat(inst.amount).toLocaleString()}</div>
+                <div className="text-xs text-gray-500 mb-1">{inst.step}</div>
+                <div className="text-xs text-gray-400">{inst.description}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center mb-4">
+            <input type="checkbox" id="terms" className="mr-2" />
+            <label htmlFor="terms" className="text-sm text-gray-700">I agree to the terms and conditions of this project and payment schedule.</label>
+          </div>
+          <div className="flex gap-4">
+            <button className="px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors">Pay by Card</button>
+            <button className="px-6 py-2 bg-emerald-600 text-white rounded-md font-semibold hover:bg-emerald-700 transition-colors">Pay by Bank Transfer</button>
           </div>
         </div>
-
-        {/* Total Amount */}
-        <div className="flex justify-end">
-          <div className="bg-cyan-100 text-cyan-900 px-6 py-3 rounded-xl text-lg font-bold shadow">
-            Total: ${project.total_amount?.toLocaleString()}
-          </div>
-        </div>
+        <div className="text-center text-xs text-gray-400 mt-6">Secured with SSL encryption and processed through Stripe</div>
       </div>
     </>
   );

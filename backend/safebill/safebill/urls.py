@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/business-documents/', include('bussiness_documents.urls')),
     path('api/projects/', include('projects.urls')),
     path('api/notifications/', include('notifications.urls')),
+    path('api/feedback/', include('feedback.urls')),
     # Add other app urls here
 ]
 

@@ -5,6 +5,7 @@ import filterReducer from './slices/FilterSlice';
 import projectReducer from './slices/ProjectSlice';
 import userProfileReducer from './slices/UserProfileSlice';
 import notificationReducer from './slices/NotificationSlice';
+import feedbackReducer from './slices/FeedbackSlices';
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -17,6 +18,7 @@ export const store = configureStore({
     project: projectReducer,
     userProfile: userProfileReducer,
     notifications: notificationReducer,
+    feedback: feedbackReducer,
   },
 });
 

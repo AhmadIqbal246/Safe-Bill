@@ -40,7 +40,7 @@ class RegisterView(APIView):
             # verification_url = request.build_absolute_uri(
             #     reverse('accounts:verify-email') + f'?uid={uid}&token={token}'
             # )
-            frontend_url = f"{front_base_url}/email-verification/?uid={uid}&token={token}"
+            frontend_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
             send_mail(
                 subject='Verify your email',
                 message=(

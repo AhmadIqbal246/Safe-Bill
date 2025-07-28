@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserProfile, updateUserProfile } from '../../store/slices/UserProfileSlice';
 import { setUser } from '../../store/slices/AuthSlices';
+import { submitFeedback, resetFeedbackState } from '../../store/slices/FeedbackSlices';
 import { Dialog } from '@headlessui/react';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
@@ -43,9 +44,13 @@ const serviceAreaOptions = [
 export default function MyProfileComp() {
   const dispatch = useDispatch();
   const { profile, loading, error, success } = useSelector(state => state.userProfile);
+  const { loading: feedbackLoading, error: feedbackError, success: feedbackSuccess } = useSelector(state => state.feedback);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [editPicPreview, setEditPicPreview] = useState(null);
+  const [selectedRating, setSelectedRating] = useState(null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -64,6 +69,50 @@ export default function MyProfileComp() {
       }
     }
   }, [success]);
+
+  useEffect(() => {
+    if (feedbackSuccess) {
+      toast.success('Feedback submitted successfully!');
+      dispatch(resetFeedbackState());
+      setSelectedRating(null);
+      setFeedbackText('');
+      setFeedbackEmail('');
+    }
+    if (feedbackError) {
+      toast.error('Failed to submit feedback.');
+      dispatch(resetFeedbackState());
+    }
+  }, [feedbackSuccess, feedbackError, dispatch]);
+
+  const handleRatingClick = (rating) => {
+    setSelectedRating(rating);
+    
+    // Auto-populate feedback with starting points that users can modify
+    const feedbackMessages = {
+      'Excellent': 'The platform is working perfectly for my needs. Great user experience and all features are functioning well. ',
+      'Good': 'The platform is good overall. There are some minor improvements that could make it even better. ',
+      'Needs Improvement': 'I\'ve encountered some issues with the platform. There are several areas that need attention and improvement. '
+    };
+    
+    setFeedbackText(feedbackMessages[rating] || '');
+  };
+
+  const handleFeedbackSubmit = (e) => {
+    e.preventDefault();
+    if (!selectedRating) {
+      toast.error('Please select a rating first');
+      return;
+    }
+    if (!feedbackEmail) {
+      toast.error('Please provide your email address');
+      return;
+    }
+    
+    dispatch(submitFeedback({
+      email: feedbackEmail,
+      feedback: feedbackText,
+    }));
+  };
 
   if (loading) {
     return <div className="text-center py-12 text-gray-400">Loading...</div>;
@@ -192,25 +241,46 @@ export default function MyProfileComp() {
           {['Excellent', 'Good', 'Needs Improvement'].map((label) => (
             <button
               key={label}
-              className={`px-4 py-2 rounded-md border font-semibold text-sm transition-colors bg-white text-gray-700 border-gray-200 hover:bg-[#E6F0FA]`}
+              className={`px-4 py-2 rounded-md border font-semibold text-sm transition-colors bg-white text-gray-700 border-gray-200 hover:bg-[#E6F0FA] ${selectedRating === label ? 'bg-[#E6F0FA] text-[#01257D] border-[#01257D]' : ''}`}
               type="button"
+              onClick={() => handleRatingClick(label)}
             >
               {label}
             </button>
           ))}
         </div>
+        <div className="text-xs text-gray-500 mb-4">
+          💡 Select a rating to get started, then feel free to add your own thoughts below!
+        </div>
         <div className="mb-4">
           <textarea
             className="w-full min-h-[80px] rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
             placeholder="Feedback"
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
           />
         </div>
         <input
           type="email"
           className="w-full mb-4 rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
           placeholder="Your email address"
+          value={feedbackEmail}
+          onChange={(e) => setFeedbackEmail(e.target.value)}
         />
-        <button className="w-full bg-[#01257D] text-white font-semibold py-2 rounded-md hover:bg-[#2346a0] transition-colors">Submit Feedback</button>
+        <button 
+          className="w-full bg-[#01257D] text-white font-semibold py-2 rounded-md hover:bg-[#2346a0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" 
+          onClick={handleFeedbackSubmit}
+          disabled={feedbackLoading}
+        >
+          {feedbackLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Submitting...
+            </div>
+          ) : (
+            'Submit Feedback'
+          )}
+        </button>
       </div>
 
       {/* Edit Profile Modal */}

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProjects } from '../../store/slices/ProjectSlice';
 import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDialogue';
 import { useNavigate } from 'react-router-dom';
-import { fetchNotifications, markNotificationRead } from '../../store/slices/NotificationSlice';
+import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../../store/slices/NotificationSlice';
 import { CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -55,7 +55,7 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { projects, loading, error } = useSelector(state => state.project);
-  const { notifications, loading: notifLoading, error: notifError } = useSelector(state => state.notifications);
+  const { notifications, loading: notifLoading, error: notifError, markAllLoading } = useSelector(state => state.notifications);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
 
@@ -74,6 +74,14 @@ export default function Dashboard() {
     setDialogProject(project);
     setDialogOpen(true);
   };
+
+  // Handle mark all as read
+  const handleMarkAllAsRead = () => {
+    dispatch(markAllNotificationsRead());
+  };
+
+  // Check if there are any unread notifications
+  const hasUnreadNotifications = notifications && notifications.some(n => !n.is_read);
 
   // Notification UI rendering (shared for mobile and desktop)
   function renderNotifications(list = notifications) {
@@ -139,11 +147,21 @@ export default function Dashboard() {
           {/* Notifications section (mobile order: 2, desktop: right) */}
           <div className="block md:hidden w-full">
             <div className="bg-white rounded-lg border border-[#E6F0FA] p-2 sm:p-3 md:p-5 shadow-sm mt-2 w-full">
-              <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">Notifications</h2>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-base sm:text-lg font-bold">Notifications</h2>
+                {hasUnreadNotifications && (
+                  <button
+                    onClick={handleMarkAllAsRead}
+                    disabled={markAllLoading}
+                    className="text-xs sm:text-sm text-[#01257D] hover:text-[#2346a0] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {markAllLoading ? 'Marking...' : 'Mark all as read'}
+                  </button>
+                )}
+              </div>
               <div className="flex flex-col gap-3 sm:gap-4 mb-4 max-h-40 sm:max-h-48 md:max-h-64 overflow-y-auto w-full">
                 {renderNotifications(notifications.slice(0, 5))}
               </div>
-              {/* Optionally, add a mark all as read button here */}
             </div>
           </div>
           {/* Upcoming Deadlines section (mobile order: 3) */}
@@ -218,14 +236,24 @@ export default function Dashboard() {
         {/* Right: Notifications (desktop only) */}
         <div className="hidden md:block w-full md:w-80 flex-shrink-0 md:ml-8 mt-8 md:mt-0 order-2 md:order-none">
           <div className="bg-white rounded-lg border border-[#E6F0FA] p-5 shadow-sm">
-            <h2 className="text-lg font-bold mb-4">Notifications</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold">Notifications</h2>
+              {hasUnreadNotifications && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  disabled={markAllLoading}
+                  className="text-sm text-[#01257D] hover:text-[#2346a0] font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {markAllLoading ? 'Marking...' : 'Mark all as read'}
+                </button>
+              )}
+            </div>
             <div className="flex flex-col gap-4 mb-4 max-h-64 overflow-y-auto">
               {renderNotifications(notifications.slice(0, 5))}
             </div>
-            {/* Optionally, add a mark all as read button here */}
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

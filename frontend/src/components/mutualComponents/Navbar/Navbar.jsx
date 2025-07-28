@@ -33,6 +33,8 @@ export default function SafeBillHeader({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
+  // Add separate state for mobile notification dropdown
+  const [isMobileNotifDropdownOpen, setIsMobileNotifDropdownOpen] = useState(false);
 
   // Get auth state from Redux
   const user = useSelector(state => state.auth.user);
@@ -232,9 +234,25 @@ export default function SafeBillHeader({
             <div className="flex md:hidden items-center space-x-4">
               {isSignedIn ? (
                 <>
-                  <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-                    <Bell className="h-5 w-5" />
-                  </button>
+                  {/* Mobile Notification Bell with Dropdown */}
+                  <div className="relative">
+                    <button 
+                      className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                      onClick={() => setIsMobileNotifDropdownOpen(!isMobileNotifDropdownOpen)}
+                    >
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+                    {isMobileNotifDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                        <div className="py-2">{renderNotifications()}</div>
+                      </div>
+                    )}
+                  </div>
                   <div className="relative">
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -360,9 +378,25 @@ export default function SafeBillHeader({
                       <div className="text-base font-medium text-gray-800">{userName}</div>
                       <div className="text-sm font-medium text-gray-500">{userEmail}</div>
                     </button>
-                    <button className="ml-auto relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
-                      <Bell className="h-5 w-5" />
-                    </button>
+                    {/* Mobile Menu Notification Bell with Dropdown */}
+                    <div className="ml-auto relative">
+                      <button 
+                        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer"
+                        onClick={() => setIsMobileNotifDropdownOpen(!isMobileNotifDropdownOpen)}
+                      >
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </button>
+                      {isMobileNotifDropdownOpen && (
+                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                          <div className="py-2">{renderNotifications()}</div>
+                        </div>
+                      )}
+                    </div>
                     {/* Mobile Dropdown Menu */}
                     {isDropdownOpen && (
                       <div className="absolute right-4 top-20 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
@@ -417,6 +451,7 @@ export default function SafeBillHeader({
       {/* Overlay for dropdown */}
       {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
       {isNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsNotifDropdownOpen(false)}></div>}
+      {isMobileNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsMobileNotifDropdownOpen(false)}></div>}
     </header>
   )
 }

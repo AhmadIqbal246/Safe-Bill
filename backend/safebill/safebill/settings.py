@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # to allow all credentials (cookies, authorization headers, etc.) to be included in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'bussiness_documents',
     'projects',
     'notifications',
+    'feedback',
 ]
 
 MIDDLEWARE = [
@@ -68,7 +69,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
 ]
 
 ROOT_URLCONF = 'safebill.urls'
@@ -175,3 +176,5 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 FRONTEND_URL = env('FRONTEND_URL')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SIRET_VALIDATION_ACCESS_TOKEN = env('SIRET_VALIDATION_ACCESS_TOKEN')
+
+# X-Frame-Options disabled for PDF iframe embedding
