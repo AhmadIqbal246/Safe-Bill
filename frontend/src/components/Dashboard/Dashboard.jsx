@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchProjects } from '../../store/slices/ProjectSlice';
 import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDialogue';
 import { useNavigate } from 'react-router-dom';
+import { fetchNotifications, markNotificationRead } from '../../store/slices/NotificationSlice';
+import { CheckCircle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 const overviewData = [
   {
@@ -33,28 +36,14 @@ const deadlines = {
   change: '-2%',
 };
 
-const notifications = [
-  {
-    icon: '+',
-    text: "+ New project 'Project Alpha' created",
-    time: '2 hours ago',
-  },
-  {
-    icon: '✓',
-    text: "Quote for 'Tech Solutions Inc.' approved",
-    time: '5 hours ago',
-  },
-  {
-    icon: '⏰',
-    text: "Deadline approaching for 'Project Beta'",
-    time: '1 day ago',
-  },
-  {
-    icon: '$',
-    text: "Payment received for 'Project Gamma'",
-    time: '2 days ago',
-  },
-];
+// Icon selection based on message content (simple heuristic)
+function getNotificationIcon(message) {
+  if (message.toLowerCase().includes('project')) return '+';
+  if (message.toLowerCase().includes('approved')) return '✓';
+  if (message.toLowerCase().includes('deadline')) return '⏰';
+  if (message.toLowerCase().includes('payment')) return '$';
+  return '!';
+}
 
 const statusOptions = [
   { label: 'In Progress', color: 'bg-cyan-400 text-white' },
@@ -66,11 +55,13 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { projects, loading, error } = useSelector(state => state.project);
+  const { notifications, loading: notifLoading, error: notifError } = useSelector(state => state.notifications);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
 
   useEffect(() => {
     dispatch(fetchProjects());
+    dispatch(fetchNotifications());
   }, [dispatch]);
 
   // Sort projects by created_at descending (most recent first)
@@ -83,6 +74,41 @@ export default function Dashboard() {
     setDialogProject(project);
     setDialogOpen(true);
   };
+
+  // Notification UI rendering (shared for mobile and desktop)
+  function renderNotifications(list = notifications) {
+    if (notifLoading) {
+      return <div className="text-center text-gray-400">Loading...</div>;
+    }
+    if (notifError) {
+      return <div className="text-center text-red-500">{notifError}</div>;
+    }
+    if (!list || list.length === 0) {
+      return <div className="text-center text-gray-400">No notifications.</div>;
+    }
+    return list.map((n) => (
+      <div key={n.id} className="flex items-start gap-3">
+        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${n.is_read ? 'bg-gray-200 text-gray-400' : 'bg-[#E6F0FA] text-[#01257D]'} text-lg font-bold`}>
+          {getNotificationIcon(n.message)}
+        </div>
+        <div className="flex-1 flex flex-col">
+          <div className={`text-sm ${n.is_read ? 'text-gray-400' : 'text-gray-800'}`}>{n.message}</div>
+          <div className="text-xs text-gray-400 mt-1">
+            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+          </div>
+        </div>
+        {!n.is_read && (
+          <button
+            className="ml-2 text-green-600 hover:text-green-800 self-center"
+            title="Mark as read"
+            onClick={() => dispatch(markNotificationRead(n.id))}
+          >
+            <CheckCircle size={18} />
+          </button>
+        )}
+      </div>
+    ));
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto py-2 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
@@ -97,7 +123,7 @@ export default function Dashboard() {
               <h2 className="text-sm sm:text-lg font-bold mb-1 sm:mb-0">Overview</h2>
               <div className="flex gap-1 sm:gap-2">
                 <button className="px-2 sm:px-5 py-1 sm:py-2 bg-cyan-300 text-black rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-cyan-400 transition-colors cursor-pointer">New Project</button>
-                <button className="px-2 sm:px-5 py-1 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#2346a0] transition-colors cursor-pointer">New Quote</button>
+                <button onClick={() => navigate('/project-creation')} className="px-2 sm:px-5 py-1 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#2346a0] transition-colors cursor-pointer">New Quote</button>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 sm:gap-4 min-w-0">
@@ -113,20 +139,12 @@ export default function Dashboard() {
           </div>
           {/* Notifications section (mobile order: 2, desktop: right) */}
           <div className="block md:hidden">
-            <div className="bg-white rounded-lg border border-[#E6F0FA] p-2 sm:p-5 shadow-sm mt-2">
-              <h2 className="text-sm sm:text-lg font-bold mb-2 sm:mb-4">Notifications</h2>
-              <div className="flex flex-col gap-1 sm:gap-4 mb-2 sm:mb-4">
-                {notifications.map((n, idx) => (
-                  <div key={idx} className="flex items-start gap-2 sm:gap-3">
-                    <div className="flex items-center justify-center w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-xs sm:text-lg font-bold">{n.icon}</div>
-                    <div className="flex-1">
-                      <div className="text-xs sm:text-sm text-gray-800 mb-1">{n.text}</div>
-                      <div className="text-xs text-gray-400">{n.time}</div>
-                    </div>
-                  </div>
-                ))}
+            <div className="bg-white rounded-lg border border-[#E6F0FA] p-5 shadow-sm mt-2">
+              <h2 className="text-lg font-bold mb-4">Notifications</h2>
+              <div className="flex flex-col gap-4 mb-4 max-h-64 overflow-y-auto">
+                {renderNotifications(notifications.slice(0, 5))}
               </div>
-              <button className="w-full px-2 sm:px-4 py-1 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs sm:text-sm hover:bg-[#2346a0] transition-colors">Mark All as Read</button>
+              {/* Optionally, add a mark all as read button here */}
             </div>
           </div>
           {/* Upcoming Deadlines section (mobile order: 3) */}
@@ -139,46 +157,48 @@ export default function Dashboard() {
             <button className="w-full mt-auto px-2 sm:px-4 py-1 sm:py-2 bg-[#01257D] text-white rounded-full font-semibold text-xs sm:text-sm hover:bg-[#2346a0] transition-colors">View</button>
           </div>
           {/* Recent Projects Table (mobile order: 4) */}
-          <div className="mt-2 sm:mt-8 min-w-0">
-            <h2 className="text-sm sm:text-lg font-bold mb-2 sm:mb-4">Recent Projects</h2>
-            <div className="overflow-x-auto rounded-lg border border-[#E6F0FA] bg-white min-w-0 max-h-48 sm:max-h-96 overflow-y-auto">
-              <table className="w-full min-w-[250px] sm:min-w-[400px] text-xs sm:text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Project Name</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Client</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Status</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Amount</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr><td colSpan={5} className="text-center py-2 sm:py-6 text-gray-400 text-xs sm:text-sm">Loading...</td></tr>
-                  ) : error ? (
-                    <tr><td colSpan={5} className="text-center py-2 sm:py-6 text-red-500 text-xs sm:text-sm">{typeof error === 'string' ? error : 'Failed to load projects.'}</td></tr>
-                  ) : sortedProjects.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center py-2 sm:py-6 text-gray-400 text-xs sm:text-sm">No projects found.</td></tr>
-                  ) : (
-                    sortedProjects.slice(0, maxRows).map((proj, idx) => {
-                      const status = dummyStatus(idx);
-                      return (
-                        <tr key={proj.id} className="border-t border-gray-100">
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">{proj.name}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-blue-700 font-medium cursor-pointer hover:underline text-xs sm:text-sm">{proj.client_email}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">
-                            <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>{status.label}</span>
-                          </td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">${parseFloat(proj.total_amount).toLocaleString()}</td>
-                          <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">
-                            <button className="text-[#01257D] font-semibold hover:underline cursor-pointer text-xs sm:text-sm" onClick={() => handleViewDetails(proj)}>View</button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+          <div className="mt-8 min-w-0">
+            <h2 className="text-lg font-bold mb-4">Recent Projects</h2>
+            <div className="overflow-x-auto rounded-lg border border-[#E6F0FA] bg-white min-w-0">
+              <div className="max-h-64 overflow-y-auto">
+                <table className="w-full min-w-[400px] text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Project Name</th>
+                      <th className="px-4 py-3 text-left font-semibold">Client</th>
+                      <th className="px-4 py-3 text-left font-semibold">Status</th>
+                      <th className="px-4 py-3 text-left font-semibold">Amount</th>
+                      <th className="px-4 py-3 text-left font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr><td colSpan={5} className="text-center py-6 text-gray-400">Loading...</td></tr>
+                    ) : error ? (
+                      <tr><td colSpan={5} className="text-center py-6 text-red-500">{typeof error === 'string' ? error : 'Failed to load projects.'}</td></tr>
+                    ) : sortedProjects.length === 0 ? (
+                      <tr><td colSpan={5} className="text-center py-6 text-gray-400">No projects found.</td></tr>
+                    ) : (
+                      sortedProjects.slice(0, 5).map((proj, idx) => {
+                        const status = dummyStatus(idx);
+                        return (
+                          <tr key={proj.id} className="border-t border-gray-100">
+                            <td className="px-4 py-3 whitespace-nowrap">{proj.name}</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-blue-700 font-medium cursor-pointer hover:underline">{proj.client_email}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>{status.label}</span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">${parseFloat(proj.total_amount).toLocaleString()}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <button className="text-[#01257D] font-semibold hover:underline cursor-pointer" onClick={() => handleViewDetails(proj)}>View</button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="flex justify-end mt-2 sm:mt-4">
               <button
@@ -198,20 +218,12 @@ export default function Dashboard() {
         </div>
         {/* Right: Notifications (desktop only) */}
         <div className="hidden md:block w-full md:w-80 flex-shrink-0 md:ml-8 mt-8 md:mt-0 order-2 md:order-none">
-          <div className="bg-white rounded-lg border border-[#E6F0FA] p-3 sm:p-5 shadow-sm">
-            <h2 className="text-base sm:text-lg font-bold mb-2 sm:mb-4">Notifications</h2>
-            <div className="flex flex-col gap-2 sm:gap-4 mb-2 sm:mb-4">
-              {notifications.map((n, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-base sm:text-lg font-bold">{n.icon}</div>
-                  <div className="flex-1">
-                    <div className="text-xs sm:text-sm text-gray-800 mb-1">{n.text}</div>
-                    <div className="text-xs text-gray-400">{n.time}</div>
-                  </div>
-                </div>
-              ))}
+          <div className="bg-white rounded-lg border border-[#E6F0FA] p-5 shadow-sm">
+            <h2 className="text-lg font-bold mb-4">Notifications</h2>
+            <div className="flex flex-col gap-4 mb-4 max-h-64 overflow-y-auto">
+              {renderNotifications(notifications.slice(0, 5))}
             </div>
-            <button className="w-full px-2 sm:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors">Mark All as Read</button>
+            {/* Optionally, add a mark all as read button here */}
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
+import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
 
@@ -99,6 +100,7 @@ export default function ProjectCreation() {
       setProjectName('');
       setClientEmail('');
       setQuoteFile(null);
+      dispatch(fetchNotifications());
     } else if (error) {
       toast.error(
         typeof error === 'string'

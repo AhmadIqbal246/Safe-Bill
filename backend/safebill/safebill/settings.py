@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'accounts',
     'bussiness_documents',
     'projects',
+    'notifications',
 ]
 
 MIDDLEWARE = [

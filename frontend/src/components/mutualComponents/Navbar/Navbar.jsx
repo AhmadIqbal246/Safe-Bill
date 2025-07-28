@@ -1,9 +1,10 @@
-import React from 'react';
-import { useState } from "react"
-import { Bell, Menu, X } from "lucide-react"
+import React, { useState, useEffect } from 'react';
+import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
+import { fetchNotifications, markNotificationRead } from '../../../store/slices/NotificationSlice';
+import { formatDistanceToNow } from 'date-fns';
 
 export const signedOutNavItems = [
   { label: "Home", href: "/" },
@@ -31,6 +32,7 @@ export default function SafeBillHeader({
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
 
   // Get auth state from Redux
   const user = useSelector(state => state.auth.user);
@@ -41,6 +43,13 @@ export default function SafeBillHeader({
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Notifications
+  const { notifications } = useSelector(state => state.notifications);
+  useEffect(() => {
+    if (isSignedIn) dispatch(fetchNotifications());
+  }, [dispatch, isSignedIn]);
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
   const handleSignOut = () => {
     dispatch(logout());
@@ -59,6 +68,42 @@ export default function SafeBillHeader({
   const leftShiftClass = shiftNavbarLeft
     ? navbarRightClassName || 'pl-8 justify-start'
     : navbarRightClassName || 'justify-end';
+
+  // Notification icon logic (reuse from dashboard)
+  function getNotificationIcon(message) {
+    if (message.toLowerCase().includes('project')) return '+';
+    if (message.toLowerCase().includes('approved')) return '✓';
+    if (message.toLowerCase().includes('deadline')) return '⏰';
+    if (message.toLowerCase().includes('payment')) return '$';
+    return '!';
+  }
+
+  function renderNotifications(list = notifications) {
+    const unreadList = (list || []).filter(n => !n.is_read);
+    if (!unreadList || unreadList.length === 0) {
+      return <div className="text-center text-gray-400 p-4">No unread notifications.</div>;
+    }
+    return unreadList.slice(0, 5).map(n => (
+      <div key={n.id} className="flex items-start gap-3 p-2 hover:bg-gray-50">
+        <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold`}>
+          {getNotificationIcon(n.message)}
+        </div>
+        <div className="flex-1 flex flex-col">
+          <div className="text-sm text-gray-800">{n.message}</div>
+          <div className="text-xs text-gray-400 mt-1">
+            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+          </div>
+        </div>
+        <button
+          className="ml-2 text-green-600 hover:text-green-800 self-center"
+          title="Mark as read"
+          onClick={() => dispatch(markNotificationRead(n.id))}
+        >
+          <CheckCircle size={18} />
+        </button>
+      </div>
+    ));
+  }
 
   return (
     <header className="w-full bg-white border-b border-gray-200">
@@ -92,10 +137,25 @@ export default function SafeBillHeader({
           <div className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`} style={leftShiftStyle}>
             {isSignedIn ? (
               <>
-                {/* Notification Bell */}
-                <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-                  <Bell className="h-5 w-5" />
-                </button>
+                {/* Notification Bell with Dropdown */}
+                <div className="relative">
+                  <button
+                    className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                    onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  {isNotifDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                      <div className="py-2">{renderNotifications()}</div>
+                    </div>
+                  )}
+                </div>
                 {/* User Avatar with Dropdown */}
                 <div className="relative">
                   <button
@@ -356,6 +416,7 @@ export default function SafeBillHeader({
 
       {/* Overlay for dropdown */}
       {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
+      {isNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsNotifDropdownOpen(false)}></div>}
     </header>
   )
 }

@@ -6,6 +6,7 @@ from datetime import timedelta
 import secrets
 from django.core.mail import send_mail
 from django.conf import settings
+from notifications.models import Notification
 
 
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
@@ -68,6 +69,11 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[project.client_email],
             fail_silently=True,
+        )
+        # Create notification for the user
+        Notification.objects.create(
+            user=user,
+            message=f"New project '{project.name}' created."
         )
         return project
 

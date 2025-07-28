@@ -81,6 +81,10 @@ const authSlice = createSlice({
       sessionStorage.removeItem('refresh');
       sessionStorage.removeItem('user');
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+      sessionStorage.setItem('user', JSON.stringify(action.payload));
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -119,6 +123,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { resetAuthState, logout } = authSlice.actions;
+export const { resetAuthState, logout, setUser } = authSlice.actions;
 export default authSlice.reducer;
 

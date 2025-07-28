@@ -4,6 +4,7 @@ import businessDetailReducer from './slices/BussinessDetailSlice';
 import filterReducer from './slices/FilterSlice';
 import projectReducer from './slices/ProjectSlice';
 import userProfileReducer from './slices/UserProfileSlice';
+import notificationReducer from './slices/NotificationSlice';
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -15,6 +16,7 @@ export const store = configureStore({
     filter: filterReducer,
     project: projectReducer,
     userProfile: userProfileReducer,
+    notifications: notificationReducer,
   },
 });
 
