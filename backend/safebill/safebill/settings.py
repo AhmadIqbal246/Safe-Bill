@@ -68,7 +68,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
 ]
 
 ROOT_URLCONF = 'safebill.urls'
@@ -175,3 +175,5 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 FRONTEND_URL = env('FRONTEND_URL')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SIRET_VALIDATION_ACCESS_TOKEN = env('SIRET_VALIDATION_ACCESS_TOKEN')
+
+# X-Frame-Options disabled for PDF iframe embedding
