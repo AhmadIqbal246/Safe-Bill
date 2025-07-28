@@ -83,14 +83,31 @@ export default function SellerRegisterFlow() {
     } else if (confirmPassword === "") {
       confirmPasswordError = "Please confirm your password";
     }
+    // If passwordErrors is empty, set errors.password to empty string
     setErrors((prev) => ({
       ...prev,
-      password: passwordErrors,
+      password: passwordErrors.length > 0 ? passwordErrors : "",
       confirmPassword: confirmPasswordError,
     }));
   };
 
   const updateFormData = (field, value) => {
+    // Integer-only enforcement for businessNumber and phoneNumber
+    if ((field === "businessNumber" || field === "phoneNumber") && value !== "") {
+      // Allow only digits
+      if (!/^\d*$/.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: "Only numbers are Allowed",
+        }));
+        return;
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: "",
+        }));
+      }
+    }
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -100,7 +117,7 @@ export default function SellerRegisterFlow() {
       const pwd = field === "password" ? value : formData.password;
       const confPwd = field === "confirmPassword" ? value : formData.confirmPassword;
       validatePasswordRealtime(pwd, confPwd);
-    } else if (errors[field]) {
+    } else if (errors[field] && field !== "businessNumber" && field !== "phoneNumber") {
       setErrors((prev) => ({
         ...prev,
         [field]: "",
@@ -110,6 +127,19 @@ export default function SellerRegisterFlow() {
 
   const validateStep1 = () => {
     const newErrors = {};
+
+    // Integer validation for businessNumber
+    if (!formData.businessNumber.trim()) {
+      newErrors.businessNumber = "Business Registration Number is required";
+    } else if (!/^\d+$/.test(formData.businessNumber)) {
+      newErrors.businessNumber = "only numbers are allowed";
+    }
+    // Integer validation for phoneNumber
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!/^\d+$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "only numbers are allowed";
+    }
 
     // Password validation rules
     const passwordErrors = [];
@@ -136,9 +166,16 @@ export default function SellerRegisterFlow() {
       newErrors.password = passwordErrors;
     }
 
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    if (!formData.phoneNumber.trim())
-      newErrors.phoneNumber = "Phone number is required";
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else {
+      // Simple email regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = "Invalid email address";
+      }
+    }
     if (!formData.confirmPassword)
       newErrors.confirmPassword = "Please confirm your password";
     if (
@@ -316,13 +353,13 @@ export default function SellerRegisterFlow() {
                 <input
                   type="text"
                   value={formData.businessNumber}
-                  onChange={(e) =>
-                    updateFormData("businessNumber", e.target.value)
-                  }
+                  onChange={(e) => updateFormData("businessNumber", e.target.value)}
                   placeholder="Enter your Business Registration Number"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.businessNumber ? "border-red-500" : "border-gray-300"
                   }`}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                 />
                 {errors.businessNumber && (
                   <p className="text-red-500 text-sm mt-1">
@@ -404,9 +441,7 @@ export default function SellerRegisterFlow() {
                 <div className="flex">
                   <select
                     value={formData.countryCode}
-                    onChange={(e) =>
-                      updateFormData("countryCode", e.target.value)
-                    }
+                    onChange={(e) => updateFormData("countryCode", e.target.value)}
                     className="px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                   >
                     <option value="+33">+33</option>
@@ -414,15 +449,15 @@ export default function SellerRegisterFlow() {
                     <option value="+44">+44</option>
                   </select>
                   <input
-                    type="tel"
+                    type="text"
                     value={formData.phoneNumber}
-                    onChange={(e) =>
-                      updateFormData("phoneNumber", e.target.value)
-                    }
+                    onChange={(e) => updateFormData("phoneNumber", e.target.value)}
                     placeholder="Enter your phone number"
                     className={`flex-1 px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
                     }`}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                   />
                 </div>
                 {errors.phoneNumber && (
@@ -549,8 +584,9 @@ export default function SellerRegisterFlow() {
                     onChange={(e) => updateFormData("password", e.target.value)}
                     placeholder="Create a strong password"
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.password ? "border-red-500" : "border-gray-300"
+                      Array.isArray(errors.password) && errors.password.length > 0 ? "border-red-500" : "border-gray-300"
                     }`}
+                    inputMode="text"
                   />
                   <span
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"

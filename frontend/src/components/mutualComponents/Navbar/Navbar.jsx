@@ -24,6 +24,7 @@ export default function SafeBillHeader({
   onJoinNow,
   onSignOut,
   hideSafeBillHeader,
+  showSafeBillHeaderOnMobile,
   shiftNavbarLeft,
   navbarRightStyle,
   navbarRightClassName,
@@ -110,8 +111,12 @@ export default function SafeBillHeader({
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            {!hideSafeBillHeader && (
-              <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer">Safe Bill</Link>
+            {showSafeBillHeaderOnMobile ? (
+              <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer md:hidden">Safe Bill</Link>
+            ) : (
+              !hideSafeBillHeader && (
+                <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer">Safe Bill</Link>
+              )
             )}
           </div>
 

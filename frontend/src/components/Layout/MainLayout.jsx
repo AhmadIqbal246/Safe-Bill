@@ -5,12 +5,16 @@ import { Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { signedInNavItems, signedOutNavItems } from '../mutualComponents/Navbar/Navbar';
 
-export default function MainLayout({ children, hideSafeBillHeader, shiftNavbarLeft }) {
+export default function MainLayout({ children, hideSafeBillHeader }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Get user info from Redux
   const user = useSelector(state => state.auth.user);
   // Define nav items (copy from Navbar logic)
   const navItems = user ? signedInNavItems : signedOutNavItems;
+
+  // Always use these defaults
+  const shiftNavbarLeft = true;
+  const showSafeBillHeaderOnMobile = true;
 
   return (
     <div className="flex min-h-screen">
@@ -34,6 +38,7 @@ export default function MainLayout({ children, hideSafeBillHeader, shiftNavbarLe
           <div className="flex-1">
             <Navbar
               hideSafeBillHeader={hideSafeBillHeader}
+              showSafeBillHeaderOnMobile={showSafeBillHeaderOnMobile}
               shiftNavbarLeft={shiftNavbarLeft}
               navbarRightClassName={shiftNavbarLeft ? 'pl-45 justify-start' : ''}
               showMobileMenuButton={false}
