@@ -112,27 +112,27 @@ export default function ProjectCreation() {
   }, [success, error, dispatch]);
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8">Project Creation</h1>
+    <div className="max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
+      <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">Project Creation</h1>
 
       {/* Project Name Section */}
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Project Name</h2>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Project Name</h2>
         <input
           type="text"
           placeholder="Enter project name"
-          className="px-4 py-3 rounded-md border border-gray-200 bg-[#F6FAFD] text-gray-700 w-full max-w-lg focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+          className="px-3 sm:px-4 py-2 sm:py-3 rounded-md border border-gray-200 bg-[#F6FAFD] text-gray-700 w-full max-w-sm sm:max-w-lg focus:outline-none focus:ring-2 focus:ring-[#01257D] text-sm sm:text-base"
           value={projectName}
           onChange={e => setProjectName(e.target.value)}
         />
       </div>
 
       {/* Signed Quote Upload */}
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Signed Quote</h2>
-        <div className="border-2 border-dashed border-[#D1D5DB] rounded-xl p-8 flex flex-col items-center justify-center mb-2 min-h-[180px]">
-          <div className="font-semibold text-lg mb-1">Upload signed quote</div>
-          <div className="text-gray-500 mb-4 text-center">Drag and drop or browse to upload the signed quote.</div>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Signed Quote</h2>
+        <div className="border-2 border-dashed border-[#D1D5DB] rounded-xl p-4 sm:p-8 flex flex-col items-center justify-center mb-2 min-h-[120px] sm:min-h-[180px]">
+          <div className="font-semibold text-sm sm:text-lg mb-1">Upload signed quote</div>
+          <div className="text-gray-500 mb-3 sm:mb-4 text-center text-xs sm:text-sm">Drag and drop or browse to upload the signed quote.</div>
           <input
             type="file"
             accept="application/pdf"
@@ -142,26 +142,26 @@ export default function ProjectCreation() {
           />
           <button
             type="button"
-            className="px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
+            className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer text-sm sm:text-base"
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
           >
             {quoteFile ? 'Change File' : 'Upload'}
           </button>
-          {fileError && <div className="text-red-500 mt-2">{fileError}</div>}
+          {fileError && <div className="text-red-500 mt-2 text-xs sm:text-sm">{fileError}</div>}
           {quoteFile && !fileError && (
-            <div className="mt-4 flex flex-col items-center">
-              <span className="text-sm text-gray-700 font-medium">{quoteFile.name} ({(quoteFile.size / 1024).toFixed(1)} KB)</span>
+            <div className="mt-3 sm:mt-4 flex flex-col items-center">
+              <span className="text-xs sm:text-sm text-gray-700 font-medium">{quoteFile.name} ({(quoteFile.size / 1024).toFixed(1)} KB)</span>
               <div className="flex gap-2 mt-2">
                 <button
                   type="button"
-                  className="text-blue-600 underline text-sm cursor-pointer"
+                  className="text-blue-600 underline text-xs sm:text-sm cursor-pointer"
                   onClick={() => window.open(URL.createObjectURL(quoteFile), '_blank')}
                 >
                   View
                 </button>
                 <button
                   type="button"
-                  className="text-red-500 underline text-sm cursor-pointer"
+                  className="text-red-500 underline text-xs sm:text-sm cursor-pointer"
                   onClick={() => setQuoteFile(null)}
                 >
                   Remove
@@ -173,27 +173,27 @@ export default function ProjectCreation() {
       </div>
 
       {/* Payment Configuration */}
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Payment Configuration</h2>
-        <div className="flex gap-2 mb-4">
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Payment Configuration</h2>
+        <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4">
           {[1, 2, 3].map((n) => (
             <button
               key={n}
-              className={`px-4 py-2 rounded-md border text-sm font-medium transition-colors cursor-pointer ${installments === n ? 'bg-[#F6FAFD] border-[#01257D] text-[#01257D]' : 'bg-white border-gray-200 text-gray-700 hover:bg-[#F6FAFD]'}`}
+              className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md border text-xs sm:text-sm font-medium transition-colors cursor-pointer ${installments === n ? 'bg-[#F6FAFD] border-[#01257D] text-[#01257D]' : 'bg-white border-gray-200 text-gray-700 hover:bg-[#F6FAFD]'}`}
               onClick={() => setInstallments(n)}
             >
               {n} installment{n > 1 ? 's' : ''}
             </button>
           ))}
         </div>
-        <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="min-w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 max-w-[300px] sm:max-w-full mx-auto">
+          <table className="min-w-full text-xs sm:text-sm">
             <thead className="bg-[#E6F0FA]">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left font-semibold">Trigger Step</th>
-                <th className="px-4 py-3 text-left font-semibold">Description</th>
-                <th className="px-4 py-3 text-left font-semibold">Edit</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Amount</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Trigger Step</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Description</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Edit</th>
               </tr>
             </thead>
             <tbody>
@@ -201,42 +201,42 @@ export default function ProjectCreation() {
                 <tr key={i} className="border-t border-gray-100">
                   {editingIndex === i ? (
                     <>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input
                           type="number"
                           name="amount"
                           value={editRow.amount.replace(/[^0-9.]/g, '')}
                           onChange={handleEditChange}
-                          className="w-20 px-2 py-1 border rounded"
+                          className="w-16 sm:w-20 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input
                           type="text"
                           name="step"
                           value={editRow.step}
                           onChange={handleEditChange}
-                          className="w-32 px-2 py-1 border rounded"
+                          className="w-24 sm:w-32 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input
                           type="text"
                           name="desc"
                           value={editRow.desc}
                           onChange={handleEditChange}
-                          className="w-56 px-2 py-1 border rounded"
+                          className="w-40 sm:w-56 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-4 py-3 flex gap-2">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 flex gap-1 sm:gap-2">
                         <button
-                          className="px-2 py-1 bg-green-600 text-white rounded"
+                          className="px-1 sm:px-2 py-1 bg-green-600 text-white rounded text-xs sm:text-sm"
                           onClick={() => handleEditSave(i)}
                         >
                           Save
                         </button>
                         <button
-                          className="px-2 py-1 bg-gray-300 text-gray-700 rounded"
+                          className="px-1 sm:px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs sm:text-sm"
                           onClick={handleEditCancel}
                         >
                           Cancel
@@ -245,16 +245,16 @@ export default function ProjectCreation() {
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-3">{row.amount}</td>
-                      <td className="px-4 py-3 text-[#01257D] font-medium">{row.step}</td>
-                      <td className="px-4 py-3 text-gray-600">{row.desc}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 sm:px-4 py-2 sm:py-3">{row.amount}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{row.step}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{row.desc}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <button
                           className="p-1 hover:bg-gray-100 rounded cursor-pointer"
                           title="Edit"
                           onClick={() => handleEdit(i)}
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                       </td>
                     </>
@@ -267,19 +267,19 @@ export default function ProjectCreation() {
       </div>
 
       {/* Client Email and Send Button */}
-      <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Client</h2>
-        <form className="flex flex-col sm:flex-row gap-4 items-center" onSubmit={handleSubmit}>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Client</h2>
+        <form className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center" onSubmit={handleSubmit}>
           <input
             type="email"
             placeholder="Client's  email"
-            className="px-4 py-3 rounded-md border border-gray-200 bg-[#F6FAFD] text-gray-700 w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+            className="px-3 sm:px-4 py-2 sm:py-3 rounded-md border border-gray-200 bg-[#F6FAFD] text-gray-700 w-full max-w-sm sm:max-w-xs focus:outline-none focus:ring-2 focus:ring-[#01257D] text-sm sm:text-base"
             value={clientEmail}
             onChange={e => setClientEmail(e.target.value)}
           />
           <button
             type="submit"
-            className="px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors w-full sm:w-auto cursor-pointer"
+            className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors w-full sm:w-auto cursor-pointer text-sm sm:text-base"
             disabled={loading}
           >
             {loading ? 'Sending...' : 'Send Payment Invitation'}

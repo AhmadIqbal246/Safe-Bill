@@ -82,7 +82,7 @@ export default function CompletedProjectsComp() {
         </div>
       </div>
       <div className="mb-2 font-semibold">Projects</div>
-      <div className="overflow-x-auto rounded-lg border border-[#E6F0FA] bg-white">
+      <div className="overflow-x-auto rounded-lg border border-[#E6F0FA] bg-white max-w-[300px] w-full mx-auto sm:max-w-full">
         <table className="min-w-full text-sm">
           <thead className="bg-[#E6F0FA]">
             <tr>
