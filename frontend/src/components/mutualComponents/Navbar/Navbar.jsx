@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Menu, X, CheckCircle } from "lucide-react";
+import { Bell, Menu, X, CheckCircle, Link2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
@@ -188,9 +188,9 @@ export default function SafeBillHeader({
                           <p className="text-sm font-medium text-gray-900">{userName}</p>
                           <p className="text-xs text-gray-500">{userEmail}</p>
                         </button>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           Profile
-                        </a>
+                        </Link>
                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           Settings
                         </a>
@@ -282,9 +282,9 @@ export default function SafeBillHeader({
                             <p className="text-sm font-medium text-gray-900">{userName}</p>
                             <p className="text-xs text-gray-500">{userEmail}</p>
                           </button>
-                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             Profile
-                          </a>
+                          </Link>
                           <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             Settings
                           </a>

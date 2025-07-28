@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { CheckCircle, MapPin, Star } from "lucide-react";
 
 const professionals = [
@@ -72,7 +73,7 @@ export default function TrustedProfessionals() {
         ))}
       </div>
       <div className="flex justify-center">
-        <button className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md shadow-sm hover:bg-[#2346a0] transition-colors text-base">View All Professionals</button>
+        <Link to="/find-professionals" className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md shadow-sm hover:bg-[#2346a0] transition-colors text-base inline-block">View All Professionals</Link>
       </div>
     </section>
   );
