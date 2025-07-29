@@ -301,45 +301,42 @@ export default function SellerRegisterFlow() {
           </div>
 
           {/* Progress Steps */}
-          <div className="relative mb-8">
-            {/* Progress bar */}
-            <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full transform -translate-y-1/2" />
-            <div
-              className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300"
-              style={{
-                width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
-                maxWidth: "100%",
-                transform: "translateY(-50%)",
-              }}
-            />
-            {/* Step circles */}
-            <div className="relative flex justify-between">
+          <div className="mb-8">
+            {/* Step circles row */}
+            <div className="flex justify-between mb-2 relative z-10">
               {steps.map((step, idx) => (
-                <div
-                  key={step.number}
-                  className="flex flex-col items-center w-1/5"
-                >
+                <div key={step.number} className="flex flex-col items-center w-1/3">
                   <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium z-10
-            ${
-              currentStep === step.number
-                ? "bg-[#01257D] text-white"
-                : step.active
-                ? "bg-[#FFFFFF] border-2 border-[#01257D] text-[#01257D]"
-                : "bg-[#96C2DB] text-white"
-            }`}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full text-base font-bold transition-all duration-200
+                      ${currentStep === step.number
+                        ? 'bg-[#01257D] text-white shadow-lg'
+                        : step.active
+                        ? 'bg-white border-2 border-[#01257D] text-[#01257D]'
+                        : 'bg-[#96C2DB] text-white'}
+                    `}
                   >
                     {step.number}
                   </div>
                   <span
-                    className={`mt-2 text-xs font-medium text-center ${
-                      step.active ? "text-[#01257D]" : "text-[#96C2DB]"
+                    className={`mt-2 text-xs font-semibold text-center ${
+                      step.active ? 'text-[#01257D]' : 'text-[#96C2DB]'
                     }`}
                   >
                     {step.title}
                   </span>
                 </div>
               ))}
+            </div>
+            {/* Progress bar track */}
+            <div className="relative h-2 mt-2">
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full -translate-y-1/2" />
+              <div
+                className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300 -translate-y-1/2"
+                style={{
+                  width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+                  maxWidth: '100%',
+                }}
+              />
             </div>
           </div>
 

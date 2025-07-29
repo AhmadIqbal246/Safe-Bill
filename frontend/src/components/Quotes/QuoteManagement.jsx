@@ -75,13 +75,13 @@ export default function QuoteManagement() {
             <div className="mb-6">Are you sure you want to delete this project?</div>
             <div className="flex justify-end gap-2">
               <button
-                className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 cursor-pointer"
                 onClick={() => setConfirmModal({ open: false, projectId: null })}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700"
+                className="px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 cursor-pointerS"
                 onClick={confirmDelete}
                 disabled={deletingId === confirmModal.projectId}
               >
@@ -129,6 +129,8 @@ export default function QuoteManagement() {
           </div>
         ) : error ? (
           <div className="text-center text-red-500 py-12">{typeof error === 'string' ? error : 'Failed to load projects.'}</div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="text-center text-gray-400 py-12">No projects found.</div>
         ) : (
           <div className={filteredProjects.length > 10 ? 'max-h-96 overflow-y-auto' : ''}>
             <table className="min-w-full text-sm">

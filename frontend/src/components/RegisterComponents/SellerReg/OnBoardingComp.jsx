@@ -28,6 +28,7 @@ const requiredDocs = [
 ];
 
 export default function OnBoardingComp() {
+  const [currentStep, setCurrentStep] = useState(2);
   const [files, setFiles] = useState({});
   const [bank, setBank] = useState({
     account_holder: "",
@@ -39,7 +40,7 @@ export default function OnBoardingComp() {
     bank_name: "",
     bank_address: "",
   });
-  const [subStep, setSubStep] = useState(1); // 1: documents, 2: bank details
+  //const [subStep, setSubStep] = useState(1); // 1: documents, 2: bank details
   const [errors, setErrors] = useState({});
 
   const dispatch = useDispatch();
@@ -122,7 +123,7 @@ export default function OnBoardingComp() {
 
   useEffect(() => {
     if (success) {
-      setSubStep(3); // Go to verification step
+      setCurrentStep(3); // Go to verification step
       dispatch(resetBusinessDetailState());
       // Update onboarding_complete in sessionStorage user
       const userStr = sessionStorage.getItem('user');
@@ -146,6 +147,12 @@ export default function OnBoardingComp() {
     }
   }, [error]);
 
+  const steps = [
+    { number: 1, title: "Basic Information", active: currentStep >= 1 },
+    { number: 2, title: "Documents", active: false },
+    { number: 3, title: "Verification", active: false },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
       <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8 w-full max-w-2xl mx-auto">
@@ -155,15 +162,15 @@ export default function OnBoardingComp() {
             Join Safe Bill as a Service Provider
           </h1>
           <p className="text-[#111827]">
-            {subStep === 1
+            {currentStep === 1
               ? "Please upload the required documents to finish your registration."
-              : subStep === 3
+              : currentStep === 3
               ? "Documents uploaded successfully. Go to Dashboard to start receiving leads and growing your business."
               : ""}
           </p>
         </div>
         {/* Progress Steps */}
-        <div className="relative mb-8">
+        {/* <div className="relative mb-8">
           <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full transform -translate-y-1/2" />
           <div
             className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300"
@@ -199,9 +206,48 @@ export default function OnBoardingComp() {
               )
             )}
           </div>
-        </div>
+        </div> */}
+                  {/* Progress Steps */}
+                  <div className="mb-8">
+            {/* Step circles row */}
+            <div className="flex justify-between mb-2 relative z-10">
+              {steps.map((step, idx) => (
+                <div key={step.number} className="flex flex-col items-center w-1/3">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-full text-base font-bold transition-all duration-200
+                      ${currentStep === step.number
+                        ? 'bg-[#01257D] text-white shadow-lg'
+                        : step.active
+                        ? 'bg-white border-2 border-[#01257D] text-[#01257D]'
+                        : 'bg-white border-2 border-[#01257D] text-[#01257D]'}
+                    `}
+                  >
+                    {step.number}
+                  </div>
+                  <span
+                    className={`mt-2 text-xs font-semibold text-center ${
+                      step.active ? 'text-[#01257D]' : 'text-[#01257D]'
+                    }`}
+                  >
+                    {step.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* Progress bar track */}
+            <div className="relative h-2 mt-2">
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full -translate-y-1/2" />
+              <div
+                className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300 -translate-y-1/2"
+                style={{
+                  width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+                  maxWidth: '100%',
+                }}
+              />
+            </div>
+          </div>
         {/* SubStep 1: Document Uploads */}
-        {subStep === 1 && (
+        {currentStep === 2 && (
           <>
             <div className="mb-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -274,7 +320,7 @@ export default function OnBoardingComp() {
           </>
         )}
         {/* SubStep 3: Verification Success */}
-        {subStep === 3 && (
+        {currentStep === 3 && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="mb-6">
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#01257D]">

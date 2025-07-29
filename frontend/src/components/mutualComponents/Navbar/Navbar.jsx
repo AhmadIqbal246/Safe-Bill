@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Menu, X, CheckCircle, Link2 } from "lucide-react";
+import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
@@ -86,18 +86,18 @@ export default function SafeBillHeader({
       return <div className="text-center text-gray-400 p-4">No unread notifications.</div>;
     }
     return unreadList.slice(0, 5).map(n => (
-      <div key={n.id} className="flex items-start gap-3 p-2 hover:bg-gray-50">
-        <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold`}>
+      <div key={n.id} className="flex items-center gap-3 p-2 hover:bg-gray-50">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold flex-shrink-0">
           {getNotificationIcon(n.message)}
         </div>
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col justify-center">
           <div className="text-sm text-gray-800">{n.message}</div>
           <div className="text-xs text-gray-400 mt-1">
             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
           </div>
         </div>
         <button
-          className="ml-2 text-green-600 hover:text-green-800 self-center"
+          className="ml-1 mr-2 text-green-600 hover:text-green-800 self-center flex-shrink-0 cursor-pointer"
           title="Mark as read"
           onClick={() => dispatch(markNotificationRead(n.id))}
         >

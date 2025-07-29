@@ -194,7 +194,7 @@ export default function MyProfileComp() {
         <div className="text-gray-500 font-medium">Category: {capitalize(profile.type_of_activity)}</div>
         <div className="text-gray-400 text-sm mb-2">{capitalize(profile.service_area)}</div>
         <button
-          className="w-full max-w-xs bg-[#E6F0FA] text-[#01257D] font-semibold py-2 rounded-md mb-2 mt-2"
+          className="w-full max-w-xs bg-[#E6F0FA] text-[#01257D] font-semibold py-2 rounded-md mb-2 mt-2 cursor-pointer"
           onClick={openEditModal}
         >
           Edit
@@ -202,7 +202,9 @@ export default function MyProfileComp() {
       </div>
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-2">About</h2>
-        <p className="text-gray-700 leading-relaxed">{profile.about || 'No about info provided.'}</p>
+        <div className=" rounded-lg px-4 py-3 text-gray-700 break-words">
+          {profile.about || 'No about info provided.'}
+        </div>
       </div>
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-2">Skills</h2>
@@ -241,7 +243,7 @@ export default function MyProfileComp() {
           {['Excellent', 'Good', 'Needs Improvement'].map((label) => (
             <button
               key={label}
-              className={`px-4 py-2 rounded-md border font-semibold text-sm transition-colors bg-white text-gray-700 border-gray-200 hover:bg-[#E6F0FA] ${selectedRating === label ? 'bg-[#E6F0FA] text-[#01257D] border-[#01257D]' : ''}`}
+              className={`px-4 py-2 rounded-md border font-semibold text-sm transition-colors bg-white text-gray-700 border-gray-200 hover:bg-[#E6F0FA] cursor-pointer ${selectedRating === label ? 'bg-[#E6F0FA] text-[#01257D] border-[#01257D]' : ''}`}
               type="button"
               onClick={() => handleRatingClick(label)}
             >
@@ -262,7 +264,7 @@ export default function MyProfileComp() {
         </div>
         <input
           type="email"
-          className="w-full mb-4 rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+          className="w-full mb-4 rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D] cursor-pointer"
           placeholder="Your email address"
           value={feedbackEmail}
           onChange={(e) => setFeedbackEmail(e.target.value)}
@@ -306,7 +308,7 @@ export default function MyProfileComp() {
                   />
                   <button
                     type="button"
-                    className="px-3 py-1 bg-[#E6F0FA] text-[#01257D] rounded text-sm font-semibold"
+                    className="px-3 py-1 bg-[#E6F0FA] text-[#01257D] rounded text-sm font-semibold cursor-pointer"
                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
                   >
                     Upload New Picture
@@ -371,14 +373,14 @@ export default function MyProfileComp() {
                 <div className="flex justify-end gap-2 mt-6">
                   <button
                     type="button"
-                    className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                    className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 cursor-pointer"
                     onClick={handleEditCancel}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded bg-[#01257D] text-white font-semibold hover:bg-[#2346a0]"
+                    className="px-4 py-2 rounded bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] cursor-pointer"
                   >
                     Submit
                   </button>
