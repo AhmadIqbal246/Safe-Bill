@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, Eye, EyeOff } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Info } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   registerSellerWithBasicAndBussiness,
   resetAuthState,
+  verifySiret,
+  resetSiretVerification,
 } from "../../../store/slices/AuthSlices";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,18 +13,19 @@ import { ClipLoader } from "react-spinners";
 import Select from "react-select";
 import { Link } from "react-router-dom";
 
-const skillOptions = [
-  { value: "plumbing", label: "Plumbing" },
-  { value: "electrical", label: "Electrical" },
-  { value: "painting", label: "Painting" },
-  { value: "carpentry", label: "Carpentry" },
-  { value: "cleaning", label: "Cleaning" },
-  // ...add more
-];
+import {
+  skillOptions,
+  activityTypeOptions,
+  serviceAreaOptions,
+  countryCodeOptions,
+} from "../../../constants/registerationTypes";
 
 export default function SellerRegisterFlow() {
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.auth);
+  const siretVerification = useSelector(
+    (state) => state.auth.siretVerification
+  );
 
   const initialFormData = {
     email: "",
@@ -49,9 +52,14 @@ export default function SellerRegisterFlow() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [errors, setErrors] = useState({});
+  const [siretStatus, setSiretStatus] = useState("idle"); // idle | loading | success | error
+  const [siretError, setSiretError] = useState("");
+  const [fieldsDisabled, setFieldsDisabled] = useState(true);
+  const [siretVerified, setSiretVerified] = useState(false);
 
   // Password validation regex: at least 8 chars, one uppercase, one lowercase, one number, one special char
-  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
 
   // Real-time password validation
   const validatePasswordRealtime = (password, confirmPassword) => {
@@ -64,16 +72,22 @@ export default function SellerRegisterFlow() {
         passwordErrors.push("Password must be at least 8 characters long.");
       }
       if (!/[A-Z]/.test(password)) {
-        passwordErrors.push("Password should contain at least one uppercase letter.");
+        passwordErrors.push(
+          "Password should contain at least one uppercase letter."
+        );
       }
       if (!/[a-z]/.test(password)) {
-        passwordErrors.push("Password should contain at least one lowercase letter.");
+        passwordErrors.push(
+          "Password should contain at least one lowercase letter."
+        );
       }
       if (!/\d/.test(password)) {
         passwordErrors.push("Password should contain at least one number.");
       }
       if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-        passwordErrors.push("Password should contain at least one special character.");
+        passwordErrors.push(
+          "Password should contain at least one special character."
+        );
       }
     }
     if (confirmPassword) {
@@ -93,7 +107,10 @@ export default function SellerRegisterFlow() {
 
   const updateFormData = (field, value) => {
     // Integer-only enforcement for businessNumber and phoneNumber
-    if ((field === "businessNumber" || field === "phoneNumber") && value !== "") {
+    if (
+      (field === "businessNumber" || field === "phoneNumber") &&
+      value !== ""
+    ) {
       // Allow only digits
       if (!/^\d*$/.test(value)) {
         setErrors((prev) => ({
@@ -115,15 +132,57 @@ export default function SellerRegisterFlow() {
     // Real-time password validation
     if (field === "password" || field === "confirmPassword") {
       const pwd = field === "password" ? value : formData.password;
-      const confPwd = field === "confirmPassword" ? value : formData.confirmPassword;
+      const confPwd =
+        field === "confirmPassword" ? value : formData.confirmPassword;
       validatePasswordRealtime(pwd, confPwd);
-    } else if (errors[field] && field !== "businessNumber" && field !== "phoneNumber") {
+    } else if (
+      errors[field] &&
+      field !== "businessNumber" &&
+      field !== "phoneNumber"
+    ) {
       setErrors((prev) => ({
         ...prev,
         [field]: "",
       }));
     }
   };
+
+  const handleSiretChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ""); // Only digits
+    setFormData((prev) => ({ ...prev, businessNumber: value }));
+    setSiretError("");
+    setFieldsDisabled(true);
+    setSiretVerified(false);
+    dispatch(resetSiretVerification());
+    if (value.length !== 14) {
+      setSiretError("SIRET must be exactly 14 digits");
+    }
+  };
+
+  const verifySiretHandler = async () => {
+    if (formData.businessNumber.length !== 14) {
+      setSiretError("SIRET must be exactly 14 digits");
+      return;
+    }
+    setSiretError("");
+    dispatch(verifySiret(formData.businessNumber));
+  };
+
+  useEffect(() => {
+    if (siretVerification.result && siretVerification.result.valid) {
+      setFormData((prev) => ({
+        ...prev,
+        companyName: siretVerification.result.company_name || "",
+        address: siretVerification.result.address || "",
+      }));
+      setFieldsDisabled(false);
+      setSiretVerified(true);
+    } else if (siretVerification.error) {
+      setSiretError(siretVerification.error);
+      setFieldsDisabled(true);
+      setSiretVerified(false);
+    }
+  }, [siretVerification]);
 
   const validateStep1 = () => {
     const newErrors = {};
@@ -150,16 +209,22 @@ export default function SellerRegisterFlow() {
         passwordErrors.push("Password must be at least 8 characters long.");
       }
       if (!/[A-Z]/.test(formData.password)) {
-        passwordErrors.push("Password should contain at least one uppercase letter.");
+        passwordErrors.push(
+          "Password should contain at least one uppercase letter."
+        );
       }
       if (!/[a-z]/.test(formData.password)) {
-        passwordErrors.push("Password should contain at least one lowercase letter.");
+        passwordErrors.push(
+          "Password should contain at least one lowercase letter."
+        );
       }
       if (!/\d/.test(formData.password)) {
         passwordErrors.push("Password should contain at least one number.");
       }
       if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.password)) {
-        passwordErrors.push("Password should contain at least one special character.");
+        passwordErrors.push(
+          "Password should contain at least one special character."
+        );
       }
     }
     if (passwordErrors.length > 0) {
@@ -259,12 +324,13 @@ export default function SellerRegisterFlow() {
 
   useEffect(() => {
     console.log("Success:", success);
-    
+
     if (success) {
       toast.success(
         typeof success === "string"
           ? success
-          : success.detail || "Registration successful. Please check your email to verify your Email."
+          : success.detail ||
+              "Registration successful. Please check your email to verify your Email."
       );
       setFormData(initialFormData);
       setSelectedSkills([]);
@@ -305,21 +371,26 @@ export default function SellerRegisterFlow() {
             {/* Step circles row */}
             <div className="flex justify-between mb-2 relative z-10">
               {steps.map((step, idx) => (
-                <div key={step.number} className="flex flex-col items-center w-1/3">
+                <div
+                  key={step.number}
+                  className="flex flex-col items-center w-1/3"
+                >
                   <div
                     className={`flex items-center justify-center w-10 h-10 rounded-full text-base font-bold transition-all duration-200
-                      ${currentStep === step.number
-                        ? 'bg-[#01257D] text-white shadow-lg'
-                        : step.active
-                        ? 'bg-white border-2 border-[#01257D] text-[#01257D]'
-                        : 'bg-[#96C2DB] text-white'}
+                      ${
+                        currentStep === step.number
+                          ? "bg-[#01257D] text-white shadow-lg"
+                          : step.active
+                          ? "bg-white border-2 border-[#01257D] text-[#01257D]"
+                          : "bg-[#96C2DB] text-white"
+                      }
                     `}
                   >
                     {step.number}
                   </div>
                   <span
                     className={`mt-2 text-xs font-semibold text-center ${
-                      step.active ? 'text-[#01257D]' : 'text-[#96C2DB]'
+                      step.active ? "text-[#01257D]" : "text-[#96C2DB]"
                     }`}
                   >
                     {step.title}
@@ -334,7 +405,7 @@ export default function SellerRegisterFlow() {
                 className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300 -translate-y-1/2"
                 style={{
                   width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
-                  maxWidth: '100%',
+                  maxWidth: "100%",
                 }}
               />
             </div>
@@ -347,31 +418,55 @@ export default function SellerRegisterFlow() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Business Registration Number *
                 </label>
-                <input
-                  type="text"
-                  value={formData.businessNumber}
-                  onChange={(e) => updateFormData("businessNumber", e.target.value)}
-                  placeholder="Enter your Business Registration Number"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.businessNumber ? "border-red-500" : "border-gray-300"
-                  }`}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                />
-                {errors.businessNumber && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.businessNumber.replace(
-                      "Business number",
-                      "SIRET number"
-                    )}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.businessNumber}
+                    onChange={handleSiretChange}
+                    placeholder="Enter your Business Registration Number"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.businessNumber
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } ${siretVerified ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={14}
+                    disabled={siretVerified}
+                  />
+                  <button
+                    type="button"
+                    onClick={verifySiretHandler}
+                    className="ml-2 px-3 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] disabled:opacity-50 cursor-pointer"
+                    disabled={
+                      formData.businessNumber.length !== 14 ||
+                      siretVerification.loading ||
+                      siretVerified
+                    }
+                  >
+                    {siretVerification.loading ? "Verifying..." : siretVerified ? "Verified" : "Verify"}
+                  </button>
+                </div>
+                {siretError && (
+                  <p className="text-red-500 text-sm mt-1">{siretError}</p>
+                )}
+                {siretVerified && (
+                  <p className="text-green-600 text-sm mt-1">✓ SIRET number verified successfully</p>
                 )}
               </div>
 
-              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   Company Name *
+                  {fieldsDisabled && (
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Please verify your SIRET number to enter company details
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    </div>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -382,7 +477,8 @@ export default function SellerRegisterFlow() {
                   placeholder="Company name"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.companyName ? "border-red-500" : "border-gray-300"
-                  }`}
+                  } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  disabled={fieldsDisabled}
                 />
                 {errors.companyName && (
                   <p className="text-red-500 text-sm mt-1">
@@ -392,8 +488,17 @@ export default function SellerRegisterFlow() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   Full Address *
+                  {fieldsDisabled && (
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Please verify your SIRET number to enter address details
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    </div>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -402,7 +507,8 @@ export default function SellerRegisterFlow() {
                   placeholder="Enter the Address"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.address ? "border-red-500" : "border-gray-300"
-                  }`}
+                  } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  disabled={fieldsDisabled}
                 />
                 {errors.address && (
                   <p className="text-red-500 text-sm mt-1">{errors.address}</p>
@@ -438,17 +544,23 @@ export default function SellerRegisterFlow() {
                 <div className="flex">
                   <select
                     value={formData.countryCode}
-                    onChange={(e) => updateFormData("countryCode", e.target.value)}
+                    onChange={(e) =>
+                      updateFormData("countryCode", e.target.value)
+                    }
                     className="px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                   >
-                    <option value="+33">+33</option>
-                    <option value="+92">+92</option>
-                    <option value="+44">+44</option>
+                    {countryCodeOptions.map((country) => (
+                      <option key={country.value} value={country.value}>
+                        {country.label}
+                      </option>
+                    ))}
                   </select>
                   <input
                     type="text"
                     value={formData.phoneNumber}
-                    onChange={(e) => updateFormData("phoneNumber", e.target.value)}
+                    onChange={(e) =>
+                      updateFormData("phoneNumber", e.target.value)
+                    }
                     placeholder="Enter your phone number"
                     className={`flex-1 px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
@@ -496,12 +608,12 @@ export default function SellerRegisterFlow() {
                       errors.activityType ? "border-red-500" : "border-gray-300"
                     }`}
                   >
-                    <option value="">Choose a Activity</option>
-                    <option value="plumbing">Plumbing</option>
-                    <option value="electrical">Electrical</option>
-                    <option value="carpentry">Carpentry</option>
-                    <option value="painting">Painting</option>
-                    <option value="cleaning">Cleaning</option>
+                    <option value="">Choisir une activité</option>
+                    {activityTypeOptions.map((activity) => (
+                      <option key={activity.value} value={activity.value}>
+                        {activity.label}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                 </div>
@@ -553,12 +665,12 @@ export default function SellerRegisterFlow() {
                       errors.serviceArea ? "border-red-500" : "border-gray-300"
                     }`}
                   >
-                    <option value="">Service Area</option>
-                    <option value="paris">Paris</option>
-                    <option value="lyon">Lyon</option>
-                    <option value="marseille">Marseille</option>
-                    <option value="toulouse">Toulouse</option>
-                    <option value="nice">Nice</option>
+                    <option value="">Choisir une zone de service</option>
+                    {serviceAreaOptions.map((area) => (
+                      <option key={area.value} value={area.value}>
+                        {area.label}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                 </div>
@@ -569,7 +681,6 @@ export default function SellerRegisterFlow() {
                 )}
               </div>
 
-                
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password *
@@ -581,7 +692,10 @@ export default function SellerRegisterFlow() {
                     onChange={(e) => updateFormData("password", e.target.value)}
                     placeholder="Create a strong password"
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      Array.isArray(errors.password) && errors.password.length > 0 ? "border-red-500" : "border-gray-300"
+                      Array.isArray(errors.password) &&
+                      errors.password.length > 0
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                     inputMode="text"
                   />
@@ -597,16 +711,18 @@ export default function SellerRegisterFlow() {
                   </span>
                 </div>
                 <p className="text-gray-500 text-sm mt-1">
-                  At least 8 characters with uppercase, lowercase, numbers and special character
+                  At least 8 characters with uppercase, lowercase, numbers and
+                  special character
                 </p>
-                {Array.isArray(errors.password) && errors.password.length > 0 && (
-                  <ul className="text-red-500 text-sm mt-1 list-disc list-inside">
-                    {errors.password.map((err, idx) => (
-                      <li key={idx}>{err}</li>
-                    ))}
-                  </ul>
-                )}
-                {typeof errors.password === 'string' && errors.password && (
+                {Array.isArray(errors.password) &&
+                  errors.password.length > 0 && (
+                    <ul className="text-red-500 text-sm mt-1 list-disc list-inside">
+                      {errors.password.map((err, idx) => (
+                        <li key={idx}>{err}</li>
+                      ))}
+                    </ul>
+                  )}
+                {typeof errors.password === "string" && errors.password && (
                   <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                 )}
               </div>
@@ -619,10 +735,14 @@ export default function SellerRegisterFlow() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
-                    onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+                    onChange={(e) =>
+                      updateFormData("confirmPassword", e.target.value)
+                    }
                     placeholder="Confirm your password"
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                      errors.confirmPassword
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                   />
                   <span
@@ -692,6 +812,9 @@ export default function SellerRegisterFlow() {
 
           {/* Step 2: Business Details */}
           {/* {currentStep === 2 && (
+<option value="construction">Construction</option>
+                    <option value="building_maintenance">Building Maintenance</option>
+                    <option value="concrete_treatment">Concrete Treatment</option>
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -932,7 +1055,9 @@ export default function SellerRegisterFlow() {
 
             <button
               onClick={handleSubmit}
-              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#01257D] text-white hover:bg-[#2346a0] ${loading ? 'opacity-80' : ''}`}
+              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#01257D] text-white hover:bg-[#2346a0] ${
+                loading ? "opacity-80" : ""
+              }`}
               disabled={loading}
             >
               {loading ? (

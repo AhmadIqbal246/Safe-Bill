@@ -16,6 +16,11 @@ const initialState = {
   user: user ? JSON.parse(user) : null,
   access: access || null,
   refresh: refresh || null,
+  siretVerification: {
+    loading: false,
+    error: null,
+    result: null,
+  },
 };
 
 export const registerSellerWithBasicAndBussiness = createAsyncThunk(
@@ -61,6 +66,24 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const verifySiret = createAsyncThunk(
+  'auth/verifySiret',
+  async (siret, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}api/accounts/verify-siret/`,
+        { siret }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Network error' });
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -84,6 +107,9 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload;
       sessionStorage.setItem('user', JSON.stringify(action.payload));
+    },
+    resetSiretVerification: (state) => {
+      state.siretVerification = { loading: false, error: null, result: null };
     },
   },
   extraReducers: (builder) => {
@@ -119,10 +145,23 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.success = false;
+      })
+      .addCase(verifySiret.pending, (state) => {
+        state.siretVerification.loading = true;
+        state.siretVerification.error = null;
+        state.siretVerification.result = null;
+      })
+      .addCase(verifySiret.fulfilled, (state, action) => {
+        state.siretVerification.loading = false;
+        state.siretVerification.result = action.payload;
+      })
+      .addCase(verifySiret.rejected, (state, action) => {
+        state.siretVerification.loading = false;
+        state.siretVerification.error = action.payload?.detail || 'Failed to verify SIRET.';
       });
   },
 });
 
-export const { resetAuthState, logout, setUser } = authSlice.actions;
+export const { resetAuthState, logout, setUser, resetSiretVerification } = authSlice.actions;
 export default authSlice.reducer;
 
