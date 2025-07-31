@@ -155,14 +155,14 @@ export const skillOptions = [
   
   // Country codes
   export const countryCodeOptions = [
-    { value: "+33", label: "+33 (France)" },
-    { value: "+32", label: "+32 (Belgium)" },
-    { value: "+41", label: "+41 (Switzerland)" },
-    { value: "+49", label: "+49 (Germany)" },
-    { value: "+39", label: "+39 (Italy)" },
-    { value: "+34", label: "+34 (Spain)" },
+    { value: "+33", label: "+33 (Fr)" },
+    { value: "+32", label: "+32 (Belg)" },
+    { value: "+41", label: "+41 (Swi)" },
+    { value: "+49", label: "+49 (Ger)" },
+    { value: "+39", label: "+39 (Ita)" },
+    { value: "+34", label: "+34 (Spa)" },
     { value: "+44", label: "+44 (UK)" },
-    { value: "+92", label: "+92 (Pakistan)" }
+    { value: "+92", label: "+92 (Pak)" }
   ];
   
   // Service areas for France
