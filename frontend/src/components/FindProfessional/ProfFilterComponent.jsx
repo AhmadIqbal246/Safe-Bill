@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
+import { Search } from 'lucide-react';
 import {
   filterSellersByServiceType,
   filterSellersByServiceArea,
@@ -9,21 +10,10 @@ import {
   resetFilterState,
   fetchAllSellers
 } from '../../store/slices/FilterSlice';
+import { activityTypeOptions, serviceAreaOptions } from '../../constants/registerationTypes';
 
-const serviceTypeOptions = [
-  'Plumbing',
-  'Electrical',
-  'Carpentry',
-  'Painting',
-  'Cleaning',
-];
-const areaOptions = [
-  'Paris',
-  'Lyon',
-  'Marseille',
-  'Toulouse',
-  'Nice',
-];
+const serviceTypeOptions = activityTypeOptions.map(option => option.label);
+const areaOptions = serviceAreaOptions.map(option => option.label);
 
 const filters = [
   'Service type',
@@ -42,6 +32,7 @@ export default function ProfFilterComponent() {
   const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
   const [selectedServiceType, setSelectedServiceType] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Only fetch when Apply Filters is clicked
   const [appliedServiceType, setAppliedServiceType] = useState('');
@@ -101,41 +92,77 @@ export default function ProfFilterComponent() {
   // Dialog for filter selection
   const renderDialog = () => {
     if (!openFilter) return null;
+    
     let options = [];
     let onSelect = () => {};
     let selected = '';
     let label = '';
+    
     if (openFilter === 'serviceType') {
       options = serviceTypeOptions;
-      onSelect = (val) => { setSelectedServiceType(val); setOpenFilter(null); };
+      onSelect = (val) => { setSelectedServiceType(val); setOpenFilter(null); setSearchTerm(''); };
       selected = selectedServiceType;
       label = 'Select Service Type';
     } else if (openFilter === 'area') {
       options = areaOptions;
-      onSelect = (val) => { setSelectedArea(val); setOpenFilter(null); };
+      onSelect = (val) => { setSelectedArea(val); setOpenFilter(null); setSearchTerm(''); };
       selected = selectedArea;
       label = 'Select Area';
     }
+
+    // Filter options based on search term
+    const filteredOptions = options.filter(option =>
+      option.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
-      <Dialog open={!!openFilter} onClose={() => setOpenFilter(null)} className="relative z-50">
+      <Dialog open={!!openFilter} onClose={() => { setOpenFilter(null); setSearchTerm(''); }} className="relative z-50">
         <div className="fixed inset-0 bg-black/10 backdrop-blur-sm" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-xs rounded bg-white p-6">
+          <Dialog.Panel className="w-full max-w-sm rounded bg-white p-6 max-h-[80vh] flex flex-col">
             <Dialog.Title className="font-semibold text-[#01257D] mb-4">{label}</Dialog.Title>
-            <div className="flex flex-col gap-2">
-              {options.map((opt) => (
-                <button
-                  key={opt}
-                  className={`px-4 py-2 rounded-md text-left ${selected === opt ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' : 'hover:bg-[#F0F4F8] text-[#111827] cursor-pointer'}`}
-                  onClick={() => onSelect(opt)}
-                >
-                  {opt}
-                </button>
-              ))}
+            
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+              />
             </div>
+
+            {/* Options List with Scroll */}
+            <div className="flex-1 overflow-y-auto max-h-60">
+              <div className="flex flex-col gap-2">
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
+                        selected === opt 
+                          ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                          : 'text-[#111827] cursor-pointer'
+                      }`}
+                      onClick={() => onSelect(opt)}
+                    >
+                      {opt}
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    No options found for "{searchTerm}"
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Close Button */}
             <button
-              className="mt-6 w-full py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold"
-              onClick={() => setOpenFilter(null)}
+              className="mt-4 w-full py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold hover:bg-[#d1e6f5] transition-colors"
+              onClick={() => { setOpenFilter(null); setSearchTerm(''); }}
             >
               Close
             </button>

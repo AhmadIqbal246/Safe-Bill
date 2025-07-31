@@ -25,11 +25,30 @@ def validate_image(file):
         )
 
 
+def validate_id_document(file):
+    """Validate ID document - accepts both PDF and image files"""
+    allowed_types = [
+        'application/pdf',
+        'image/jpeg', 
+        'image/png', 
+        'image/tiff'
+    ]
+    if file.content_type not in allowed_types:
+        raise serializers.ValidationError(
+            'Only PDF, JPG, PNG, or TIFF files are allowed for ID '
+            'documents.'
+        )
+    if file.size > 7 * 1024 * 1024:
+        raise serializers.ValidationError(
+            'File size must be under 7 MB.'
+        )
+
+
 class MultiDocumentUploadSerializer(serializers.Serializer):
     kbis = serializers.FileField(required=True, validators=[validate_pdf])
     pro_insurance = serializers.FileField(required=True, validators=[validate_pdf])
     insurance = serializers.FileField(required=True, validators=[validate_pdf])
-    id = serializers.FileField(required=True, validators=[validate_image])
+    id = serializers.FileField(required=True, validators=[validate_id_document])
     rib = serializers.FileField(
         required=True, validators=[validate_pdf]
     )

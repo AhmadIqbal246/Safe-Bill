@@ -50,15 +50,44 @@ export default function OnBoardingComp() {
 
   const navigate = useNavigate();
 
+  const handleRoleBasedNavigation = () => {
+    const userStr = sessionStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+        if (userObj.role === 'seller') {
+          navigate('/dashboard');
+        } else if (userObj.role === 'professional-buyer') {
+          navigate('/');
+        } else {
+          // Default fallback
+          navigate('/dashboard');
+        }
+      } catch (e) {
+        // Fallback if user parsing fails
+        navigate('/dashboard');
+      }
+    } else {
+      // Fallback if no user in session
+      navigate('/dashboard');
+    }
+  };
+
   const validateFileTypeAndSize = (key, file) => {
     const maxSize = 7 * 1024 * 1024; // 7 MB
     if (key === "id_main_contact") {
-      // Only allow JPG, PNG, TIFF
-      if (!["image/jpeg", "image/png", "image/tiff"].includes(file.type)) {
-        return "Only JPG, PNG, or TIFF files are allowed for ID.";
+      // Allow both PDF and image files (JPG, PNG, TIFF) for ID
+      const allowedTypes = [
+        "application/pdf",
+        "image/jpeg", 
+        "image/png", 
+        "image/tiff"
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        return "Only PDF, JPG, PNG, or TIFF files are allowed for ID.";
       }
     } else {
-      // Only allow PDF
+      // Only allow PDF for other documents
       if (file.type !== "application/pdf") {
         return "Only PDF files are allowed for this document.";
       }
@@ -159,13 +188,13 @@ export default function OnBoardingComp() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-[#111827] mb-2">
-            Join Safe Bill as a Service Provider
+            Complete Your Registration
           </h1>
           <p className="text-[#111827]">
-            {currentStep === 1
+            {currentStep === 2
               ? "Please upload the required documents to finish your registration."
               : currentStep === 3
-              ? "Documents uploaded successfully. Go to Dashboard to start receiving leads and growing your business."
+              ? "Documents uploaded successfully. Go to Dashboard to start using the platform."
               : ""}
           </p>
         </div>
@@ -333,13 +362,39 @@ export default function OnBoardingComp() {
                 : success?.detail || 'We have got details successfully for Verification'}
             </h2>
             <p className="text-[#6B7280] mb-8 text-center">
-              Log in, to your dashboard now to start
+              {(() => {
+                const userStr = sessionStorage.getItem('user');
+                if (userStr) {
+                  try {
+                    const userObj = JSON.parse(userStr);
+                    if (userObj.role === 'seller') {
+                      return 'Go to your dashboard now to start receiving leads and growing your business';
+                    } else if (userObj.role === 'professional-buyer') {
+                      return 'Your registration is complete! You can now start using the platform';
+                    }
+                  } catch (e) {}
+                }
+                return 'Log in to your dashboard now to start';
+              })()}
             </p>
             <button
               className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md text-base hover:bg-[#2346a0] transition-colors cursor-pointer"
-              onClick={() => navigate('/dashboard')}
+              onClick={handleRoleBasedNavigation}
             >
-              Go to Dashboard
+              {(() => {
+                const userStr = sessionStorage.getItem('user');
+                if (userStr) {
+                  try {
+                    const userObj = JSON.parse(userStr);
+                    if (userObj.role === 'seller') {
+                      return 'Go to Dashboard';
+                    } else if (userObj.role === 'professional-buyer') {
+                      return 'Go to Home';
+                    }
+                  } catch (e) {}
+                }
+                return 'Go to Dashboard';
+              })()}
             </button>
           </div>
         )}

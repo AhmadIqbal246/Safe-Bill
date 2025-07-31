@@ -28,7 +28,7 @@ export const registerSellerWithBasicAndBussiness = createAsyncThunk(
   async (payload, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${BASE_URL}api/accounts/register/`,
+        `${BASE_URL}api/accounts/seller-register/`,
         payload
       );
       return response.data; 
@@ -73,6 +73,24 @@ export const verifySiret = createAsyncThunk(
       const response = await axios.post(
         `${BASE_URL}api/accounts/verify-siret/`,
         { siret }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Network error' });
+    }
+  }
+);
+
+export const registerBuyer = createAsyncThunk(
+  'auth/registerBuyer',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}api/accounts/buyer-register/`,
+        payload
       );
       return response.data;
     } catch (err) {
@@ -142,6 +160,20 @@ const authSlice = createSlice({
         state.refresh = action.payload.refresh;
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.success = false;
+      })
+      .addCase(registerBuyer.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(registerBuyer.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(registerBuyer.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.success = false;

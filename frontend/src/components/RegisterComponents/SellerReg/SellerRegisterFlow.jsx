@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, Eye, EyeOff, Info } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Info, Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   registerSellerWithBasicAndBussiness,
@@ -20,7 +20,7 @@ import {
   countryCodeOptions,
 } from "../../../constants/registerationTypes";
 
-export default function SellerRegisterFlow() {
+export default function SellerRegisterFlow({role = "seller"}) {
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.auth);
   const siretVerification = useSelector(
@@ -50,6 +50,10 @@ export default function SellerRegisterFlow() {
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [activitySearchTerm, setActivitySearchTerm] = useState('');
+  const [areaSearchTerm, setAreaSearchTerm] = useState('');
+  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [siretStatus, setSiretStatus] = useState("idle"); // idle | loading | success | error
@@ -285,6 +289,26 @@ export default function SellerRegisterFlow() {
     }
   };
 
+  const getTitle = () => {
+    switch (role) {
+      case "professional-buyer":
+        return "Join Safe Bill as a Professional Buyer";
+      case "seller":
+      default:
+        return "Join Safe Bill as a Service Provider";
+    }
+  };
+
+  const getDescription = () => {
+    switch (role) {
+      case "professional-buyer":
+        return "Complete your registration to start sourcing services and managing your business needs";
+      case "seller":
+      default:
+        return "Complete your registration to start receiving leads and growing your business";
+    }
+  };
+
   const handleSubmit = () => {
     // Always validate step 1 before submitting
     if (!validateStep1()) {
@@ -297,7 +321,7 @@ export default function SellerRegisterFlow() {
           email: formData.email,
           password: formData.password,
           phone_number: formData.phoneNumber,
-          role: "seller",
+          role: role,
         },
         Bussiness_information: {
           company_name: formData.companyName,
@@ -335,6 +359,10 @@ export default function SellerRegisterFlow() {
       setFormData(initialFormData);
       setSelectedSkills([]);
       setCurrentStep(1);
+      setActivitySearchTerm('');
+      setAreaSearchTerm('');
+      setShowActivityDropdown(false);
+      setShowAreaDropdown(false);
       dispatch(resetAuthState());
     } else if (error) {
       toast.error(
@@ -358,11 +386,10 @@ export default function SellerRegisterFlow() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-[#111827] mb-2">
-              Join Safe Bill as a Service Provider
+              {getTitle()}
             </h1>
             <p className="text-[#111827]">
-              Complete your registration to start receiving leads and growing
-              your business
+              {getDescription()}
             </p>
           </div>
 
@@ -599,23 +626,62 @@ export default function SellerRegisterFlow() {
                   Business Type *
                 </label>
                 <div className="relative">
-                  <select
-                    value={formData.activityType}
-                    onChange={(e) =>
-                      updateFormData("activityType", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent appearance-none bg-white ${
+                  <button
+                    type="button"
+                    className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.activityType ? "border-red-500" : "border-gray-300"
                     }`}
+                    onClick={() => setShowActivityDropdown(!showActivityDropdown)}
                   >
-                    <option value="">Choisir une activité</option>
-                    {activityTypeOptions.map((activity) => (
-                      <option key={activity.value} value={activity.value}>
-                        {activity.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <span className={formData.activityType ? 'text-gray-900' : 'text-gray-500'}>
+                      {formData.activityType ? 
+                        activityTypeOptions.find(opt => opt.value === formData.activityType)?.label || formData.activityType 
+                        : 'Select Activity'}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showActivityDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showActivityDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                      <div className="p-2 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search activity..."
+                            value={activitySearchTerm}
+                            onChange={(e) => setActivitySearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {activityTypeOptions
+                          .filter(option => 
+                            option.label.toLowerCase().includes(activitySearchTerm.toLowerCase())
+                          )
+                          .map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                formData.activityType === option.value 
+                                  ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                  : 'text-gray-700'
+                              }`}
+                              onClick={() => {
+                                updateFormData('activityType', option.value);
+                                setShowActivityDropdown(false);
+                                setActivitySearchTerm('');
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {errors.activityType && (
                   <p className="text-red-500 text-sm mt-1">
@@ -644,7 +710,56 @@ export default function SellerRegisterFlow() {
                   }}
                   className="basic-multi-select"
                   classNamePrefix="select"
-                  placeholder="Type or select skills"
+                  placeholder="Type or select skills..."
+                  isSearchable={true}
+                  isClearable={true}
+                  menuPlacement="auto"
+                  maxMenuHeight={200}
+                  noOptionsMessage={() => "No skills found"}
+                  loadingMessage={() => "Loading skills..."}
+                  closeMenuOnSelect={false}
+                  blurInputOnSelect={false}
+                  styles={{
+                    control: (provided, state) => ({
+                      ...provided,
+                      borderColor: state.isFocused ? '#01257D' : errors.skills ? '#ef4444' : '#d1d5db',
+                      boxShadow: state.isFocused ? '0 0 0 2px rgba(1, 37, 125, 0.2)' : 'none',
+                      '&:hover': {
+                        borderColor: errors.skills ? '#ef4444' : '#01257D'
+                      }
+                    }),
+                    option: (provided, state) => ({
+                      ...provided,
+                      backgroundColor: state.isSelected 
+                        ? '#E6F0FA' 
+                        : state.isFocused 
+                        ? '#F0F4F8' 
+                        : 'white',
+                      color: state.isSelected ? '#01257D' : '#374151',
+                      fontWeight: state.isSelected ? '600' : '400',
+                      '&:hover': {
+                        backgroundColor: '#F0F4F8'
+                      }
+                    }),
+                    multiValue: (provided) => ({
+                      ...provided,
+                      backgroundColor: '#E6F0FA',
+                      color: '#01257D'
+                    }),
+                    multiValueLabel: (provided) => ({
+                      ...provided,
+                      color: '#01257D',
+                      fontWeight: '600'
+                    }),
+                    multiValueRemove: (provided) => ({
+                      ...provided,
+                      color: '#01257D',
+                      '&:hover': {
+                        backgroundColor: '#d1e6f5',
+                        color: '#01257D'
+                      }
+                    })
+                  }}
                 />
                 {errors.skills && (
                   <p className="text-red-500 text-sm mt-1">{errors.skills}</p>
@@ -656,23 +771,62 @@ export default function SellerRegisterFlow() {
                   Service Area *
                 </label>
                 <div className="relative">
-                  <select
-                    value={formData.serviceArea}
-                    onChange={(e) =>
-                      updateFormData("serviceArea", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent appearance-none bg-white ${
+                  <button
+                    type="button"
+                    className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.serviceArea ? "border-red-500" : "border-gray-300"
                     }`}
+                    onClick={() => setShowAreaDropdown(!showAreaDropdown)}
                   >
-                    <option value="">Choisir une zone de service</option>
-                    {serviceAreaOptions.map((area) => (
-                      <option key={area.value} value={area.value}>
-                        {area.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <span className={formData.serviceArea ? 'text-gray-900' : 'text-gray-500'}>
+                      {formData.serviceArea ? 
+                        serviceAreaOptions.find(opt => opt.value === formData.serviceArea)?.label || formData.serviceArea 
+                        : 'Select Service Area'}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showAreaDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showAreaDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                      <div className="p-2 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search area..."
+                            value={areaSearchTerm}
+                            onChange={(e) => setAreaSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {serviceAreaOptions
+                          .filter(option => 
+                            option.label.toLowerCase().includes(areaSearchTerm.toLowerCase())
+                          )
+                          .map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                formData.serviceArea === option.value 
+                                  ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                  : 'text-gray-700'
+                              }`}
+                              onClick={() => {
+                                updateFormData('serviceArea', option.value);
+                                setShowAreaDropdown(false);
+                                setAreaSearchTerm('');
+                              }}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {errors.serviceArea && (
                   <p className="text-red-500 text-sm mt-1">

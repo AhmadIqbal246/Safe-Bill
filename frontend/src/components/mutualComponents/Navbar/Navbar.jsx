@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
 import { fetchNotifications, markNotificationRead } from '../../../store/slices/NotificationSlice';
 import { formatDistanceToNow } from 'date-fns';
+import SignUpPopup from './SignUpPopup';
 
 export const signedOutNavItems = [
   { label: "Home", href: "/" },
@@ -35,6 +36,7 @@ export default function SafeBillHeader({
   const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
   // Add separate state for mobile notification dropdown
   const [isMobileNotifDropdownOpen, setIsMobileNotifDropdownOpen] = useState(false);
+  const [isSignUpPopupOpen, setIsSignUpPopupOpen] = useState(false);
 
   // Get auth state from Redux
   const user = useSelector(state => state.auth.user);
@@ -220,10 +222,10 @@ export default function SafeBillHeader({
                   <Link to="/login">Sign In</Link>
                 </button>
                 <button
-                  onClick={onJoinNow}
+                  onClick={() => setIsSignUpPopupOpen(true)}
                   className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                 >
-                  <Link to="/seller-register">Sign Up</Link>
+                  Sign Up
                 </button>
               </>
             )}
@@ -313,10 +315,10 @@ export default function SafeBillHeader({
                     <Link to="/login">Sign In</Link>
                   </button>
                   <button
-                    onClick={onJoinNow}
+                    onClick={() => setIsSignUpPopupOpen(true)}
                     className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                   >
-                    <Link to="/seller-register">Sign Up</Link>
+                    Sign Up
                   </button>
                 </>
               )}
@@ -435,10 +437,10 @@ export default function SafeBillHeader({
                       <Link to="/login">Sign In</Link>
                     </button>
                     <button
-                      onClick={onJoinNow}
+                      onClick={() => setIsSignUpPopupOpen(true)}
                       className="w-full px-3 py-2 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-md"
                     >
-                      <Link to="/seller-register">Sign Up</Link>
+                      Sign Up
                     </button>
                   </div>
                 )}
@@ -452,6 +454,12 @@ export default function SafeBillHeader({
       {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
       {isNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsNotifDropdownOpen(false)}></div>}
       {isMobileNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsMobileNotifDropdownOpen(false)}></div>}
+      
+      {/* Sign Up Popup */}
+      <SignUpPopup 
+        isOpen={isSignUpPopupOpen} 
+        onClose={() => setIsSignUpPopupOpen(false)} 
+      />
     </header>
   )
 }
