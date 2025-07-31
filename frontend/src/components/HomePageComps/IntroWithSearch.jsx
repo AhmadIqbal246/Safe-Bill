@@ -20,7 +20,9 @@ export default function IntroWithSearch() {
 
   const handleSearch = () => {
     if (!user) {
-      navigate("/login");
+      // Capture the intended destination and redirect to login
+      const intendedUrl = `/find-professionals?serviceType=${serviceType}&area=${area}`;
+      navigate(`/login?redirect=${encodeURIComponent(intendedUrl)}`);
       return;
     }
     navigate(`/find-professionals?serviceType=${serviceType}&area=${area}`);
