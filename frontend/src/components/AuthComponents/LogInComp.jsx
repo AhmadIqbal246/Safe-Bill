@@ -3,14 +3,19 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, resetAuthState } from "../../store/slices/AuthSlices";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function LogInComp() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, error, success, user } = useSelector((state) => state.auth);
+
+  // Get the redirect URL from query parameters
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,11 +31,27 @@ export default function LogInComp() {
       toast.success("Login successful!");
       setTimeout(() => {
         dispatch(resetAuthState());
+        
+        // Determine where to redirect after successful login
+        let targetUrl = "/dashboard"; // default fallback
+        
         if (user.onboarding_complete === false) {
-          navigate("/onboarding");
-        } else {
-          navigate("/dashboard");
+          targetUrl = "/onboarding";
+        } else if (redirectUrl) {
+          // If there's a redirect URL, use it (with validation)
+          try {
+            const decodedUrl = decodeURIComponent(redirectUrl);
+            // Basic validation to ensure it's a relative URL
+            if (decodedUrl.startsWith('/') && !decodedUrl.includes('://')) {
+              targetUrl = decodedUrl;
+            }
+          } catch (error) {
+            console.warn('Invalid redirect URL:', redirectUrl);
+            // Fall back to dashboard
+          }
         }
+        
+        navigate(targetUrl);
       }, 1500);
     } else if (error) {
       toast.error(
@@ -40,7 +61,7 @@ export default function LogInComp() {
       );
       dispatch(resetAuthState());
     }
-  }, [success, error, user, dispatch, navigate]);
+  }, [success, error, user, dispatch, navigate, redirectUrl]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
