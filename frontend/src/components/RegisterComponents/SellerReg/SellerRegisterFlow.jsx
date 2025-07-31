@@ -578,7 +578,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     onChange={(e) =>
                       updateFormData("countryCode", e.target.value)
                     }
-                    className="px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
+                    className="px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white sm:w-auto w-36"
                   >
                     {countryCodeOptions.map((country) => (
                       <option key={country.value} value={country.value}>
@@ -595,7 +595,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     placeholder="Enter your phone number"
                     className={`flex-1 px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
-                    }`}
+                    } sm:w-full w-38`}
                     inputMode="numeric"
                     pattern="[0-9]*"
                   />
