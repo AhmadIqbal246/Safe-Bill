@@ -4,8 +4,6 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import BusinessDetail
 from .models import BankAccount
-import requests
-from django.conf import settings
 import json
 
 
@@ -14,8 +12,8 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         model = BusinessDetail
         fields = [
             'company_name', 'siret_number', 'full_address',
-            'type_of_activity', 'service_area', 'siret_verified',
-            'company_contact_person', 'skills'
+            'type_of_activity', 'service_area', 'department_numbers',
+            'siret_verified', 'company_contact_person', 'skills'
         ]
         read_only_fields = ['siret_verified']
 
@@ -31,9 +29,10 @@ class SellerRegistrationSerializer(serializers.Serializer):
         # Validate role
         role = basic_info.get('role', 'seller')
         if role not in ['seller', 'professional-buyer']:
-            raise serializers.ValidationError(
-                {'role': 'Invalid role. Must be either "seller" or "professional-buyer".'}
-            )
+            raise serializers.ValidationError({
+                'role': ('Invalid role. Must be either "seller" or '
+                        '"professional-buyer".')
+            })
 
         # Email
         if 'email' in basic_info and User.objects.filter(
@@ -85,6 +84,7 @@ class SellerRegistrationSerializer(serializers.Serializer):
             full_address=business_info['full_address'],
             type_of_activity=business_info['type_of_activity'],
             service_area=business_info['service_area'],
+            department_numbers=business_info.get('department_numbers', ''),
             siret_verified=True,
             company_contact_person=business_info.get(
                 'company_contact_person', ''),
@@ -199,6 +199,7 @@ class BankAccountSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     type_of_activity = serializers.SerializerMethodField()
     service_area = serializers.SerializerMethodField()
+    department_numbers = serializers.SerializerMethodField()
     skills = serializers.SerializerMethodField()
     profile_pic = serializers.ImageField(required=False, allow_null=True)
 
@@ -206,7 +207,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username', 'email', 'phone_number', 'type_of_activity',
-            'service_area', 'about', 'skills', 'profile_pic'
+            'service_area', 'department_numbers',
+            'about', 'skills', 'profile_pic'
         ]
         read_only_fields = ['email']  # Only email is read-only now
 
@@ -219,6 +221,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_service_area(self, obj):
         try:
             return obj.business_detail.service_area
+        except BusinessDetail.DoesNotExist:
+            return None
+
+    def get_department_numbers(self, obj):
+        try:
+            return obj.business_detail.department_numbers
         except BusinessDetail.DoesNotExist:
             return None
 
@@ -250,11 +258,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         # Update or create BusinessDetail
-        business_fields = ['type_of_activity', 'service_area', 'skills']
-        business_data = {
-            field: self.initial_data.get(field)
-            for field in business_fields if self.initial_data.get(field) is not None
+        business_data = {}
+        
+        # Map frontend field names to backend field names
+        field_mapping = {
+            'type_of_activity': 'type_of_activity',
+            'service_area': 'service_area',
+            'departmentNumbers': 'department_numbers',  # Map camelCase to snake_case
+            'skills': 'skills'
         }
+        
+        for frontend_field, backend_field in field_mapping.items():
+            value = self.initial_data.get(frontend_field)
+            if value is not None:
+                business_data[backend_field] = value
         # Ensure skills is always a list
         if 'skills' in business_data:
             skills = business_data['skills']

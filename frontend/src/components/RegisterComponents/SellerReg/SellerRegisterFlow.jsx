@@ -43,6 +43,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
     activityType: "",
     companyPhoneNumber: "",
     serviceArea: "",
+    departmentNumbers: "",
   };
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -276,6 +277,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
       newErrors.activityType = "Activity type is required";
     if (!formData.serviceArea)
       newErrors.serviceArea = "Service area is required";
+    if (!formData.departmentNumbers.trim())
+      newErrors.departmentNumbers = "Department numbers are required";
     // if (!formData.companyPhoneNumber.trim())
     //   newErrors.companyPhoneNumber = "Company phone number is required";
 
@@ -329,6 +332,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
           full_address: formData.address,
           type_of_activity: formData.activityType, // bussiness type
           service_area: formData.serviceArea,
+          department_numbers: formData.departmentNumbers,
           company_contact_person: formData.contactPerson,
           skills: formData.skills
             .split(",")
@@ -831,6 +835,29 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 {errors.serviceArea && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.serviceArea}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Department Numbers *
+                </label>
+                <input
+                  type="text"
+                  value={formData.departmentNumbers}
+                  onChange={(e) => updateFormData("departmentNumbers", e.target.value)}
+                  placeholder="Enter department numbers (e.g., 75, 69, 13)"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.departmentNumbers ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <p className="text-gray-500 text-sm mt-1">
+                  Enter the department numbers where you provide services (e.g., 75 for Paris, 69 for Lyon)
+                </p>
+                {errors.departmentNumbers && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.departmentNumbers}
                   </p>
                 )}
               </div>

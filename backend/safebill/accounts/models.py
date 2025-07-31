@@ -1,7 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 
@@ -30,12 +28,15 @@ class User(AbstractUser):
 
 
 class BusinessDetail(models.Model):
-    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='business_detail')
+    user = models.OneToOneField(
+        'User', on_delete=models.CASCADE, related_name='business_detail'
+    )
     company_name = models.CharField(max_length=255)
     siret_number = models.CharField(max_length=50)
     full_address = models.TextField()
     type_of_activity = models.CharField(max_length=255, default='')
     service_area = models.CharField(max_length=255, default='')
+    department_numbers = models.CharField(max_length=255, blank=True)
     siret_verified = models.BooleanField(default=False)
     company_contact_person = models.CharField(max_length=255, blank=True)
     skills = models.JSONField(default=list, blank=True)
@@ -47,9 +48,7 @@ class BusinessDetail(models.Model):
 
 class BankAccount(models.Model):
     user = models.OneToOneField(
-        'User',
-        on_delete=models.CASCADE,
-        related_name='bank_account'
+        'User', on_delete=models.CASCADE, related_name='bank_account'
     )
     account_holder_name = models.CharField(max_length=255)
     iban = models.CharField(max_length=34, blank=True, unique=True)
