@@ -10,18 +10,20 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('seller', 'Seller'),
         ('buyer', 'Buyer'),
+        ('professional-buyer', 'Professional Buyer'),
         ('admin', 'Admin'),
     ]
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     onboarding_complete = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    profile_pic = models.ImageField(
+        upload_to='profile_pics/', null=True, blank=True
+    )
     about = models.TextField(null=True, blank=True)
-    # You can add more fields as needed for onboarding
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -45,7 +47,7 @@ class BusinessDetail(models.Model):
 
 class BankAccount(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
+        'User',
         on_delete=models.CASCADE,
         related_name='bank_account'
     )
@@ -61,3 +63,13 @@ class BankAccount(models.Model):
 
     def __str__(self):
         return f"{self.account_holder_name} - {self.bank_name}"
+
+
+class BuyerModel(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='buyer_profile')
+    first_name = models.CharField(max_length=150, null=True, blank=True)
+    last_name = models.CharField(max_length=150, null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.user.email})"

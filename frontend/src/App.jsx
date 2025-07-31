@@ -18,6 +18,8 @@ import MyProfile from "./pages/MyProfile";
 import MyDocuments from "./pages/MyDocuments";
 import Support from "./pages/Support";
 import InviteViewProject from "./pages/InviteViewProject";
+import BuyerRegisterPage from "./pages/BuyerRegisterPage";
+import ProfessionalBuyerPage from "./pages/ProfessionalBuyerPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -41,6 +43,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/seller-register" element={<SellerRegisterPage />} />
+          <Route path="/buyer-register" element={<BuyerRegisterPage />} />
           <Route path='/email-verification' element={<EmailVerificationPage/>}/>
           <Route path='/login' element={<LogInPage/>}/>
           <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage/></ProtectedRoute>}/>
@@ -54,7 +57,8 @@ function App() {
           <Route path='/my-documents' element={<ProtectedRoute><MyDocuments/></ProtectedRoute>}/>
           <Route path='/support' element={<Support/>}/>
           <Route path='/project-invite' element={<ProtectedRoute><InviteViewProject/></ProtectedRoute>}/>
-
+          <Route path='/professional-buyer' element={<ProfessionalBuyerPage/>}/>
+          
           {/* Add more routes as needed */}
         </Routes>
       </Router>

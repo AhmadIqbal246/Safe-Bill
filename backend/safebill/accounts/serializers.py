@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, BuyerModel
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import BusinessDetail
@@ -7,21 +7,6 @@ from .models import BankAccount
 import requests
 from django.conf import settings
 import json
-
-
-def verify_siret_number(siret_number):
-    print("Sending Verification REQ:", siret_number)
-    url = (
-        f'https://api.insee.fr/entreprises/sirene/V3.11/siret/{siret_number}'
-    )
-    headers = {
-        'Accept': 'application/json',
-        'Authorization': f'Bearer {settings.SIRET_VALIDATION_ACCESS_TOKEN}',
-    }
-    response = requests.get(url, headers=headers)
-    print("Response for Verification[status-code]:", response.status_code)
-    print("Response for Verification:", response.text)
-    return response.status_code == 200
 
 
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -35,13 +20,20 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['siret_verified']
 
 
-class RegistrationSerializer(serializers.Serializer):
+class SellerRegistrationSerializer(serializers.Serializer):
     Basic_Information = serializers.DictField()
     Bussiness_information = serializers.DictField()
 
     def validate(self, data):
         basic_info = data.get('Basic_Information', {})
         business_info = data.get('Bussiness_information', {})
+
+        # Validate role
+        role = basic_info.get('role', 'seller')
+        if role not in ['seller', 'professional-buyer']:
+            raise serializers.ValidationError(
+                {'role': 'Invalid role. Must be either "seller" or "professional-buyer".'}
+            )
 
         # Email
         if 'email' in basic_info and User.objects.filter(
@@ -59,52 +51,83 @@ class RegistrationSerializer(serializers.Serializer):
             )
 
         # SIRET number
-        # if 'siret_number' in business_info and BusinessDetail.objects.filter(
-        #     siret_number=business_info['siret_number']
-        # ).exists():
-        #     raise serializers.ValidationError(
-        #         {'siret_number': 'This SIRET number is already taken.'}
-        #     )
-
-        # SIRET number validation via INSEE API
-        # siret_number = business_info.get('siret_number')
-        # if siret_number:
-        #     if not verify_siret_number(siret_number):
-        #         raise serializers.ValidationError(
-        #             {'siret_number': 'Invalid SIRET number.'}
-        #         )
+        if 'siret_number' in business_info and BusinessDetail.objects.filter(
+            siret_number=business_info['siret_number']
+        ).exists():
+            raise serializers.ValidationError(
+                {'siret_number': 'This SIRET number is already taken.'}
+            )
 
         return data
 
     def create(self, validated_data):
         basic_info = validated_data['Basic_Information']
         business_info = validated_data['Bussiness_information']
+        
+        # Get role from basic_info, default to 'seller'
+        role = basic_info.get('role', 'seller')
+        
         # Create user
         user = User.objects.create_user(
             username=basic_info['username'],
             email=basic_info['email'],
             password=basic_info['password'],
             phone_number=basic_info.get('phone_number', ''),
-            role=basic_info['role'],
+            role=role,  # Use the role from the request
             is_active=False
         )
+        
         # Create business detail
-        siret_number = business_info['siret_number']
-        #siret_verified = verify_siret_number(siret_number)
         BusinessDetail.objects.create(
             user=user,
             company_name=business_info['company_name'],
-            siret_number=siret_number,
+            siret_number=business_info['siret_number'],
             full_address=business_info['full_address'],
             type_of_activity=business_info['type_of_activity'],
             service_area=business_info['service_area'],
-            siret_verified=False,
+            siret_verified=True,
             company_contact_person=business_info.get(
                 'company_contact_person', ''),
             skills=business_info.get('skills', []),
         )
         return user
     
+
+
+class BuyerRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+    email = serializers.EmailField()
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    address = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'username', 'email', 'password', 'first_name', 'last_name', 'address'
+        ]
+
+    def create(self, validated_data):
+        # Remove buyer-specific fields from validated_data for User creation
+        first_name = validated_data.pop('first_name')
+        last_name = validated_data.pop('last_name')
+        address = validated_data.pop('address')
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            role='buyer',
+            is_active=False
+        )
+        BuyerModel.objects.create(
+            user=user,
+            first_name=first_name,
+            last_name=last_name,
+            address=address
+        )
+        return user
+
+
 
 class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Menu, X, CheckCircle, Link2 } from "lucide-react";
+import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
 import { fetchNotifications, markNotificationRead } from '../../../store/slices/NotificationSlice';
 import { formatDistanceToNow } from 'date-fns';
+import SignUpPopup from './SignUpPopup';
 
 export const signedOutNavItems = [
   { label: "Home", href: "/" },
@@ -35,6 +36,7 @@ export default function SafeBillHeader({
   const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
   // Add separate state for mobile notification dropdown
   const [isMobileNotifDropdownOpen, setIsMobileNotifDropdownOpen] = useState(false);
+  const [isSignUpPopupOpen, setIsSignUpPopupOpen] = useState(false);
 
   // Get auth state from Redux
   const user = useSelector(state => state.auth.user);
@@ -86,18 +88,18 @@ export default function SafeBillHeader({
       return <div className="text-center text-gray-400 p-4">No unread notifications.</div>;
     }
     return unreadList.slice(0, 5).map(n => (
-      <div key={n.id} className="flex items-start gap-3 p-2 hover:bg-gray-50">
-        <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold`}>
+      <div key={n.id} className="flex items-center gap-3 p-2 hover:bg-gray-50">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold flex-shrink-0">
           {getNotificationIcon(n.message)}
         </div>
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col justify-center">
           <div className="text-sm text-gray-800">{n.message}</div>
           <div className="text-xs text-gray-400 mt-1">
             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
           </div>
         </div>
         <button
-          className="ml-2 text-green-600 hover:text-green-800 self-center"
+          className="ml-1 mr-2 text-green-600 hover:text-green-800 self-center flex-shrink-0 cursor-pointer"
           title="Mark as read"
           onClick={() => dispatch(markNotificationRead(n.id))}
         >
@@ -220,10 +222,10 @@ export default function SafeBillHeader({
                   <Link to="/login">Sign In</Link>
                 </button>
                 <button
-                  onClick={onJoinNow}
+                  onClick={() => setIsSignUpPopupOpen(true)}
                   className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                 >
-                  <Link to="/seller-register">Sign Up</Link>
+                  Sign Up
                 </button>
               </>
             )}
@@ -313,10 +315,10 @@ export default function SafeBillHeader({
                     <Link to="/login">Sign In</Link>
                   </button>
                   <button
-                    onClick={onJoinNow}
+                    onClick={() => setIsSignUpPopupOpen(true)}
                     className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                   >
-                    <Link to="/seller-register">Sign Up</Link>
+                    Sign Up
                   </button>
                 </>
               )}
@@ -435,10 +437,10 @@ export default function SafeBillHeader({
                       <Link to="/login">Sign In</Link>
                     </button>
                     <button
-                      onClick={onJoinNow}
+                      onClick={() => setIsSignUpPopupOpen(true)}
                       className="w-full px-3 py-2 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-md"
                     >
-                      <Link to="/seller-register">Sign Up</Link>
+                      Sign Up
                     </button>
                   </div>
                 )}
@@ -452,6 +454,12 @@ export default function SafeBillHeader({
       {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
       {isNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsNotifDropdownOpen(false)}></div>}
       {isMobileNotifDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsMobileNotifDropdownOpen(false)}></div>}
+      
+      {/* Sign Up Popup */}
+      <SignUpPopup 
+        isOpen={isSignUpPopupOpen} 
+        onClose={() => setIsSignUpPopupOpen(false)} 
+      />
     </header>
   )
 }

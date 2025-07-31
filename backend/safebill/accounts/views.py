@@ -6,17 +6,18 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.urls import reverse
 from .serializers import (
-    RegistrationSerializer, UserTokenObtainPairSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, BankAccountSerializer,
-    UserProfileSerializer
+    SellerRegistrationSerializer, UserTokenObtainPairSerializer,
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+     BankAccountSerializer,
+    UserProfileSerializer, BuyerRegistrationSerializer
 )
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 
 User = get_user_model()
 
@@ -28,9 +29,9 @@ class UserTokenObtainPairView(TokenObtainPairView):
 
 
 
-class RegisterView(APIView):
+class SellerRegisterView(APIView):
     def post(self, request):
-        serializer = RegistrationSerializer(data=request.data)
+        serializer = SellerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             # Send verification email
@@ -53,6 +54,28 @@ class RegisterView(APIView):
                 {'detail': 'Registration successful. Please check your email to verify your account.'},
                 status=status.HTTP_201_CREATED
             )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BuyerRegistrationView(APIView):
+    def post(self, request):
+        serializer = BuyerRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # Send verification email
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            front_base_url = settings.FRONTEND_URL
+            frontend_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
+            send_mail(
+                subject='Verify your email',
+                message=(
+                    f'Click the link to verify your email: {frontend_url}'
+                ),
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[user.email],
+            )
+            return Response({'detail': 'Registration successful. Please check your email to verify your Email.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -286,4 +309,48 @@ def list_all_sellers(request):
         for s in sellers
     ]
     return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_siret_api(request):
+    siret = request.data.get('siret')
+    if not siret or not siret.isdigit() or len(siret) != 14:
+        return Response({'detail': 'SIRET must be exactly 14 digits.'}, status=400)
+    
+    import requests
+    from django.conf import settings
+    print(settings.SIRET_VALIDATION_ACCESS_TOKEN)
+    print(siret)
+    url = (
+        f'https://api.insee.fr/api-sirene/3.11/siret/{siret}'
+    )
+    headers = {
+        'Accept': 'application/json',
+        'X-INSEE-Api-Key-Integration': settings.SIRET_VALIDATION_ACCESS_TOKEN,
+    }
+    resp = requests.get(url, headers=headers)
+
+    print(resp.status_code)
+    print(resp.text)
+    if resp.status_code == 200:
+        data = resp.json()
+        etab = data.get('etablissement', {})
+        unite_legale = etab.get('uniteLegale', {})
+        adresse = etab.get('adresseEtablissement', {})
+        address = (
+            f"{adresse.get('numeroVoieEtablissement', '')} "
+            f"{adresse.get('typeVoieEtablissement', '')} "
+            f"{adresse.get('libelleVoieEtablissement', '')}, "
+            f"{adresse.get('codePostalEtablissement', '')} "
+            f"{adresse.get('libelleCommuneEtablissement', '')}"
+        ).strip()
+        return Response({
+            'valid': True,
+            'company_name': unite_legale.get('denominationUniteLegale') or unite_legale.get('nomUniteLegale'),
+            'address': address,
+            'raw': data
+        })
+    else:
+        return Response({'valid': False, 'detail': 'SIRET not found or invalid.'}, status=404)
 

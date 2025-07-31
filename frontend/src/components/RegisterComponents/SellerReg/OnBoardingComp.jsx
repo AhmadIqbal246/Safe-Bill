@@ -28,6 +28,7 @@ const requiredDocs = [
 ];
 
 export default function OnBoardingComp() {
+  const [currentStep, setCurrentStep] = useState(2);
   const [files, setFiles] = useState({});
   const [bank, setBank] = useState({
     account_holder: "",
@@ -39,7 +40,7 @@ export default function OnBoardingComp() {
     bank_name: "",
     bank_address: "",
   });
-  const [subStep, setSubStep] = useState(1); // 1: documents, 2: bank details
+  //const [subStep, setSubStep] = useState(1); // 1: documents, 2: bank details
   const [errors, setErrors] = useState({});
 
   const dispatch = useDispatch();
@@ -49,15 +50,44 @@ export default function OnBoardingComp() {
 
   const navigate = useNavigate();
 
+  const handleRoleBasedNavigation = () => {
+    const userStr = sessionStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+        if (userObj.role === 'seller') {
+          navigate('/dashboard');
+        } else if (userObj.role === 'professional-buyer') {
+          navigate('/');
+        } else {
+          // Default fallback
+          navigate('/dashboard');
+        }
+      } catch (e) {
+        // Fallback if user parsing fails
+        navigate('/dashboard');
+      }
+    } else {
+      // Fallback if no user in session
+      navigate('/dashboard');
+    }
+  };
+
   const validateFileTypeAndSize = (key, file) => {
     const maxSize = 7 * 1024 * 1024; // 7 MB
     if (key === "id_main_contact") {
-      // Only allow JPG, PNG, TIFF
-      if (!["image/jpeg", "image/png", "image/tiff"].includes(file.type)) {
-        return "Only JPG, PNG, or TIFF files are allowed for ID.";
+      // Allow both PDF and image files (JPG, PNG, TIFF) for ID
+      const allowedTypes = [
+        "application/pdf",
+        "image/jpeg", 
+        "image/png", 
+        "image/tiff"
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        return "Only PDF, JPG, PNG, or TIFF files are allowed for ID.";
       }
     } else {
-      // Only allow PDF
+      // Only allow PDF for other documents
       if (file.type !== "application/pdf") {
         return "Only PDF files are allowed for this document.";
       }
@@ -122,7 +152,7 @@ export default function OnBoardingComp() {
 
   useEffect(() => {
     if (success) {
-      setSubStep(3); // Go to verification step
+      setCurrentStep(3); // Go to verification step
       dispatch(resetBusinessDetailState());
       // Update onboarding_complete in sessionStorage user
       const userStr = sessionStorage.getItem('user');
@@ -146,24 +176,30 @@ export default function OnBoardingComp() {
     }
   }, [error]);
 
+  const steps = [
+    { number: 1, title: "Basic Information", active: currentStep >= 1 },
+    { number: 2, title: "Documents", active: false },
+    { number: 3, title: "Verification", active: false },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
       <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8 w-full max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-[#111827] mb-2">
-            Join Safe Bill as a Service Provider
+            Complete Your Registration
           </h1>
           <p className="text-[#111827]">
-            {subStep === 1
+            {currentStep === 2
               ? "Please upload the required documents to finish your registration."
-              : subStep === 3
-              ? "Documents uploaded successfully. Go to Dashboard to start receiving leads and growing your business."
+              : currentStep === 3
+              ? "Documents uploaded successfully. Go to Dashboard to start using the platform."
               : ""}
           </p>
         </div>
         {/* Progress Steps */}
-        <div className="relative mb-8">
+        {/* <div className="relative mb-8">
           <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full transform -translate-y-1/2" />
           <div
             className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300"
@@ -199,9 +235,48 @@ export default function OnBoardingComp() {
               )
             )}
           </div>
-        </div>
+        </div> */}
+                  {/* Progress Steps */}
+                  <div className="mb-8">
+            {/* Step circles row */}
+            <div className="flex justify-between mb-2 relative z-10">
+              {steps.map((step, idx) => (
+                <div key={step.number} className="flex flex-col items-center w-1/3">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-full text-base font-bold transition-all duration-200
+                      ${currentStep === step.number
+                        ? 'bg-[#01257D] text-white shadow-lg'
+                        : step.active
+                        ? 'bg-white border-2 border-[#01257D] text-[#01257D]'
+                        : 'bg-white border-2 border-[#01257D] text-[#01257D]'}
+                    `}
+                  >
+                    {step.number}
+                  </div>
+                  <span
+                    className={`mt-2 text-xs font-semibold text-center ${
+                      step.active ? 'text-[#01257D]' : 'text-[#01257D]'
+                    }`}
+                  >
+                    {step.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* Progress bar track */}
+            <div className="relative h-2 mt-2">
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-[#96C2DB] rounded-full -translate-y-1/2" />
+              <div
+                className="absolute top-1/2 left-0 h-1 bg-[#01257D] rounded-full transition-all duration-300 -translate-y-1/2"
+                style={{
+                  width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`,
+                  maxWidth: '100%',
+                }}
+              />
+            </div>
+          </div>
         {/* SubStep 1: Document Uploads */}
-        {subStep === 1 && (
+        {currentStep === 2 && (
           <>
             <div className="mb-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -274,7 +349,7 @@ export default function OnBoardingComp() {
           </>
         )}
         {/* SubStep 3: Verification Success */}
-        {subStep === 3 && (
+        {currentStep === 3 && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="mb-6">
               <div className="flex items-center justify-center w-20 h-20 rounded-full bg-[#01257D]">
@@ -287,13 +362,39 @@ export default function OnBoardingComp() {
                 : success?.detail || 'We have got details successfully for Verification'}
             </h2>
             <p className="text-[#6B7280] mb-8 text-center">
-              Log in, to your dashboard now to start
+              {(() => {
+                const userStr = sessionStorage.getItem('user');
+                if (userStr) {
+                  try {
+                    const userObj = JSON.parse(userStr);
+                    if (userObj.role === 'seller') {
+                      return 'Go to your dashboard now to start receiving leads and growing your business';
+                    } else if (userObj.role === 'professional-buyer') {
+                      return 'Your registration is complete! You can now start using the platform';
+                    }
+                  } catch (e) {}
+                }
+                return 'Log in to your dashboard now to start';
+              })()}
             </p>
             <button
               className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md text-base hover:bg-[#2346a0] transition-colors cursor-pointer"
-              onClick={() => navigate('/dashboard')}
+              onClick={handleRoleBasedNavigation}
             >
-              Go to Dashboard
+              {(() => {
+                const userStr = sessionStorage.getItem('user');
+                if (userStr) {
+                  try {
+                    const userObj = JSON.parse(userStr);
+                    if (userObj.role === 'seller') {
+                      return 'Go to Dashboard';
+                    } else if (userObj.role === 'professional-buyer') {
+                      return 'Go to Home';
+                    }
+                  } catch (e) {}
+                }
+                return 'Go to Dashboard';
+              })()}
             </button>
           </div>
         )}

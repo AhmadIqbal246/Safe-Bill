@@ -6,6 +6,8 @@ import { submitFeedback, resetFeedbackState } from '../../store/slices/FeedbackS
 import { Dialog } from '@headlessui/react';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
+import { Search, ChevronDown } from 'lucide-react';
+import { activityTypeOptions, serviceAreaOptions, skillOptions } from '../../constants/registerationTypes';
 
 function getDefaultAvatar(username) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'User')}&background=E6F0FA&color=01257D&size=96`;
@@ -15,31 +17,6 @@ function capitalize(str) {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
-
-const skillOptions = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'painting', label: 'Painting' },
-  { value: 'carpentry', label: 'Carpentry' },
-  { value: 'cleaning', label: 'Cleaning' },
-  // ...add more
-];
-
-const activityTypeOptions = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'carpentry', label: 'Carpentry' },
-  { value: 'painting', label: 'Painting' },
-  { value: 'cleaning', label: 'Cleaning' },
-];
-
-const serviceAreaOptions = [
-  { value: 'paris', label: 'Paris' },
-  { value: 'lyon', label: 'Lyon' },
-  { value: 'marseille', label: 'Marseille' },
-  { value: 'toulouse', label: 'Toulouse' },
-  { value: 'nice', label: 'Nice' },
-];
 
 export default function MyProfileComp() {
   const dispatch = useDispatch();
@@ -51,6 +28,10 @@ export default function MyProfileComp() {
   const [selectedRating, setSelectedRating] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [activitySearchTerm, setActivitySearchTerm] = useState('');
+  const [areaSearchTerm, setAreaSearchTerm] = useState('');
+  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -138,6 +119,10 @@ export default function MyProfileComp() {
     });
     setEditPicPreview(null);
     setEditModalOpen(true);
+    setActivitySearchTerm('');
+    setAreaSearchTerm('');
+    setShowActivityDropdown(false);
+    setShowAreaDropdown(false);
   };
 
   const handleEditChange = (field, value) => {
@@ -163,6 +148,10 @@ export default function MyProfileComp() {
     setEditModalOpen(false);
     setEditForm(null);
     setEditPicPreview(null);
+    setActivitySearchTerm('');
+    setAreaSearchTerm('');
+    setShowActivityDropdown(false);
+    setShowAreaDropdown(false);
   };
 
   const handleEditSubmit = (e) => {
@@ -191,10 +180,18 @@ export default function MyProfileComp() {
           className="w-24 h-24 rounded-full object-cover border-4 border-[#E6F0FA] mb-3"
         />
         <div className="text-xl font-bold text-gray-900">{profile.username}</div>
-        <div className="text-gray-500 font-medium">Category: {capitalize(profile.type_of_activity)}</div>
-        <div className="text-gray-400 text-sm mb-2">{capitalize(profile.service_area)}</div>
+        <div className="text-gray-500 font-medium">
+          Category: {profile.type_of_activity ? 
+            activityTypeOptions.find(opt => opt.value === profile.type_of_activity)?.label || capitalize(profile.type_of_activity) 
+            : 'Not specified'}
+        </div>
+        <div className="text-gray-400 text-sm mb-2">
+          {profile.service_area ? 
+            serviceAreaOptions.find(opt => opt.value === profile.service_area)?.label || capitalize(profile.service_area) 
+            : 'Service area not specified'}
+        </div>
         <button
-          className="w-full max-w-xs bg-[#E6F0FA] text-[#01257D] font-semibold py-2 rounded-md mb-2 mt-2"
+          className="w-full max-w-xs bg-[#E6F0FA] text-[#01257D] font-semibold py-2 rounded-md mb-2 mt-2 cursor-pointer"
           onClick={openEditModal}
         >
           Edit
@@ -202,7 +199,9 @@ export default function MyProfileComp() {
       </div>
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-2">About</h2>
-        <p className="text-gray-700 leading-relaxed">{profile.about || 'No about info provided.'}</p>
+        <div className=" rounded-lg px-4 py-3 text-gray-700 break-words">
+          {profile.about || 'No about info provided.'}
+        </div>
       </div>
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-2">Skills</h2>
@@ -241,7 +240,7 @@ export default function MyProfileComp() {
           {['Excellent', 'Good', 'Needs Improvement'].map((label) => (
             <button
               key={label}
-              className={`px-4 py-2 rounded-md border font-semibold text-sm transition-colors bg-white text-gray-700 border-gray-200 hover:bg-[#E6F0FA] ${selectedRating === label ? 'bg-[#E6F0FA] text-[#01257D] border-[#01257D]' : ''}`}
+              className={`px-4 py-2 rounded-md border font-semibold text-sm transition-colors bg-white text-gray-700 border-gray-200 hover:bg-[#E6F0FA] cursor-pointer ${selectedRating === label ? 'bg-[#E6F0FA] text-[#01257D] border-[#01257D]' : ''}`}
               type="button"
               onClick={() => handleRatingClick(label)}
             >
@@ -262,7 +261,7 @@ export default function MyProfileComp() {
         </div>
         <input
           type="email"
-          className="w-full mb-4 rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+          className="w-full mb-4 rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D] cursor-pointer"
           placeholder="Your email address"
           value={feedbackEmail}
           onChange={(e) => setFeedbackEmail(e.target.value)}
@@ -306,7 +305,7 @@ export default function MyProfileComp() {
                   />
                   <button
                     type="button"
-                    className="px-3 py-1 bg-[#E6F0FA] text-[#01257D] rounded text-sm font-semibold"
+                    className="px-3 py-1 bg-[#E6F0FA] text-[#01257D] rounded text-sm font-semibold cursor-pointer"
                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
                   >
                     Upload New Picture
@@ -323,29 +322,121 @@ export default function MyProfileComp() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Activity Type</label>
-                  <select
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={editForm.type_of_activity}
-                    onChange={e => handleEditChange('type_of_activity', e.target.value)}
-                  >
-                    <option value="">Choose Activity</option>
-                    {activityTypeOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                      onClick={() => setShowActivityDropdown(!showActivityDropdown)}
+                    >
+                      <span className={editForm.type_of_activity ? 'text-gray-900' : 'text-gray-500'}>
+                        {editForm.type_of_activity ? 
+                          activityTypeOptions.find(opt => opt.value === editForm.type_of_activity)?.label || editForm.type_of_activity 
+                          : 'Choose Activity'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showActivityDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showActivityDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Search activity..."
+                              value={activitySearchTerm}
+                              onChange={(e) => setActivitySearchTerm(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {activityTypeOptions
+                            .filter(option => 
+                              option.label.toLowerCase().includes(activitySearchTerm.toLowerCase())
+                            )
+                            .map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                  editForm.type_of_activity === option.value 
+                                    ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                    : 'text-gray-700'
+                                }`}
+                                onClick={() => {
+                                  handleEditChange('type_of_activity', option.value);
+                                  setShowActivityDropdown(false);
+                                  setActivitySearchTerm('');
+                                }}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Service Area</label>
-                  <select
-                    className="w-full px-3 py-2 border rounded-md"
-                    value={editForm.service_area}
-                    onChange={e => handleEditChange('service_area', e.target.value)}
-                  >
-                    <option value="">Service Area</option>
-                    {serviceAreaOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                      onClick={() => setShowAreaDropdown(!showAreaDropdown)}
+                    >
+                      <span className={editForm.service_area ? 'text-gray-900' : 'text-gray-500'}>
+                        {editForm.service_area ? 
+                          serviceAreaOptions.find(opt => opt.value === editForm.service_area)?.label || editForm.service_area 
+                          : 'Choose Service Area'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showAreaDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showAreaDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Search area..."
+                              value={areaSearchTerm}
+                              onChange={(e) => setAreaSearchTerm(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {serviceAreaOptions
+                            .filter(option => 
+                              option.label.toLowerCase().includes(areaSearchTerm.toLowerCase())
+                            )
+                            .map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                  editForm.service_area === option.value 
+                                    ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                    : 'text-gray-700'
+                                }`}
+                                onClick={() => {
+                                  handleEditChange('service_area', option.value);
+                                  setShowAreaDropdown(false);
+                                  setAreaSearchTerm('');
+                                }}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">About</label>
@@ -355,6 +446,7 @@ export default function MyProfileComp() {
                     onChange={e => handleEditChange('about', e.target.value)}
                   />
                 </div>
+                {/* Skills with Enhanced Search */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Skills</label>
                   <Select
@@ -365,20 +457,69 @@ export default function MyProfileComp() {
                     onChange={handleSkillChange}
                     className="basic-multi-select"
                     classNamePrefix="select"
-                    placeholder="Type or select skills"
+                    placeholder="Type or select skills..."
+                    isSearchable={true}
+                    isClearable={true}
+                    menuPlacement="auto"
+                    maxMenuHeight={200}
+                    noOptionsMessage={() => "No skills found"}
+                    loadingMessage={() => "Loading skills..."}
+                    closeMenuOnSelect={false}
+                    blurInputOnSelect={false}
+                    styles={{
+                      control: (provided, state) => ({
+                        ...provided,
+                        borderColor: state.isFocused ? '#01257D' : '#d1d5db',
+                        boxShadow: state.isFocused ? '0 0 0 2px rgba(1, 37, 125, 0.2)' : 'none',
+                        '&:hover': {
+                          borderColor: '#01257D'
+                        }
+                      }),
+                      option: (provided, state) => ({
+                        ...provided,
+                        backgroundColor: state.isSelected 
+                          ? '#E6F0FA' 
+                          : state.isFocused 
+                          ? '#F0F4F8' 
+                          : 'white',
+                        color: state.isSelected ? '#01257D' : '#374151',
+                        fontWeight: state.isSelected ? '600' : '400',
+                        '&:hover': {
+                          backgroundColor: '#F0F4F8'
+                        }
+                      }),
+                      multiValue: (provided) => ({
+                        ...provided,
+                        backgroundColor: '#E6F0FA',
+                        color: '#01257D'
+                      }),
+                      multiValueLabel: (provided) => ({
+                        ...provided,
+                        color: '#01257D',
+                        fontWeight: '600'
+                      }),
+                      multiValueRemove: (provided) => ({
+                        ...provided,
+                        color: '#01257D',
+                        '&:hover': {
+                          backgroundColor: '#d1e6f5',
+                          color: '#01257D'
+                        }
+                      })
+                    }}
                   />
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
                   <button
                     type="button"
-                    className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+                    className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 cursor-pointer"
                     onClick={handleEditCancel}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded bg-[#01257D] text-white font-semibold hover:bg-[#2346a0]"
+                    className="px-4 py-2 rounded bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] cursor-pointer"
                   >
                     Submit
                   </button>

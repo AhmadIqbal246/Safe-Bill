@@ -46,7 +46,7 @@ export default function LogInComp() {
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <div className="bg-white rounded-lg shadow-sm p-8 w-full max-w-md border border-gray-200">
         <div className="flex justify-center -mt-14 mb-4">
-          <div className="bg-[#0A1128] rounded-full p-5 flex items-center justify-center">
+          <div className="bg-[#01257D] rounded-full p-5 flex items-center justify-center">
             <Mail className="text-white w-10 h-10" />
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function LogInComp() {
           </div>
           <button
             type="submit"
-            className="w-full px-6 py-2 text-sm font-medium text-white bg-[#0A1128] hover:bg-[#001F54] rounded-md transition-colors flex items-center justify-center"
+            className="w-full px-6 py-2 text-sm font-medium text-white bg-[#01257D] rounded-md transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#01257D] cursor-pointer"
             disabled={loading}
           >
             {loading ? (

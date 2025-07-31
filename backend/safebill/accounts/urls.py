@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    RegisterView,
+    SellerRegisterView,
     VerifyEmailView,
     UserTokenObtainPairView,
     OnboardingStatusView,
@@ -13,13 +13,16 @@ from .views import (
     filter_sellers_by_type_and_area,
     list_all_sellers,
     UserProfileView,
+    verify_siret_api,
+    BuyerRegistrationView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='register'),
+    path('seller-register/', SellerRegisterView.as_view(), name='seller-register'),
+    path('buyer-register/', BuyerRegistrationView.as_view(), name='buyer-register'),
     path('login/', UserTokenObtainPairView.as_view(), name='login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
@@ -48,4 +51,5 @@ urlpatterns = [
         list_all_sellers,
         name='all-sellers'
     ),
+    path('verify-siret/', verify_siret_api, name='verify-siret'),
 ] 
