@@ -367,6 +367,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setAreaSearchTerm('');
       setShowActivityDropdown(false);
       setShowAreaDropdown(false);
+      setSiretVerified(false);
+      setSiretStatus("idle");
+      setSiretError("");
+      setFieldsDisabled(true);
       dispatch(resetAuthState());
     } else if (error) {
       toast.error(

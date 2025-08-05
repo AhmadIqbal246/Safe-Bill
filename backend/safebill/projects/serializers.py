@@ -93,7 +93,34 @@ class ProjectListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id', 'name', 'client_email', 'quote', 'installments',
+            'id', 'name', 'client_email', 'client', 'quote', 'installments',
+            'reference_number', 'total_amount', 'created_at'
+        ]
+
+    def get_reference_number(self, obj):
+        if hasattr(obj, 'quote') and obj.quote:
+            return obj.quote.reference_number
+        return None
+
+    def get_total_amount(self, obj):
+        return sum(float(inst.amount) for inst in obj.installments.all())
+
+
+class ClientProjectSerializer(serializers.ModelSerializer):
+    """
+    Serializer for projects where the current user is the client
+    """
+    reference_number = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
+    quote = QuoteSerializer()
+    installments = PaymentInstallmentSerializer(many=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    seller_name = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            'id', 'name', 'seller_name', 'quote', 'installments',
             'reference_number', 'total_amount', 'created_at'
         ]
 

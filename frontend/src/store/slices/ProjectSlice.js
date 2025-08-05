@@ -58,6 +58,28 @@ export const fetchProjects = createAsyncThunk(
   }
 );
 
+export const fetchClientProjects = createAsyncThunk(
+  'project/fetchClientProjects',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/projects/client-projects/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 export const deleteProject = createAsyncThunk(
   'project/deleteProject',
   async (projectId, { rejectWithValue }) => {
@@ -88,6 +110,9 @@ const projectSlice = createSlice({
     success: false,
     project: null,
     projects: [],
+    clientProjects: [],
+    clientProjectsLoading: false,
+    clientProjectsError: null,
   },
   reducers: {
     resetProjectState: (state) => {
@@ -127,6 +152,18 @@ const projectSlice = createSlice({
       .addCase(fetchProjects.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch projects';
+      })
+      .addCase(fetchClientProjects.pending, (state) => {
+        state.clientProjectsLoading = true;
+        state.clientProjectsError = null;
+      })
+      .addCase(fetchClientProjects.fulfilled, (state, action) => {
+        state.clientProjectsLoading = false;
+        state.clientProjects = action.payload;
+      })
+      .addCase(fetchClientProjects.rejected, (state, action) => {
+        state.clientProjectsLoading = false;
+        state.clientProjectsError = action.payload || 'Failed to fetch client projects';
       })
       .addCase(deleteProject.pending, (state) => {
         state.loading = true;

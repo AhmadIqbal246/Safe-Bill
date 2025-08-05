@@ -2,7 +2,8 @@ from rest_framework import generics, permissions
 from .models import Project
 from .serializers import (
     ProjectCreateSerializer,
-    ProjectListSerializer
+    ProjectListSerializer,
+    ClientProjectSerializer
 )
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -63,6 +64,17 @@ class ProjectListAPIView(generics.ListAPIView):
         return Project.objects.filter(user=self.request.user).order_by('-id')
 
 
+class ClientProjectListAPIView(generics.ListAPIView):
+    """
+    View for clients to list their projects
+    """
+    serializer_class = ClientProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(client=self.request.user).order_by('-id')
+
+
 class ProjectDeleteAPIView(generics.DestroyAPIView):
     serializer_class = ProjectListSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -95,6 +107,69 @@ class ProjectInviteAPIView(APIView):
                 {'detail': 'You are not authorized to view this project.'},
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        # Add the client to the project if not already added
+        if not project.client:
+            project.client = request.user
+            project.save()
+            
+            # Create notification for the buyer
+            from notifications.models import Notification
+            Notification.objects.create(
+                user=request.user,
+                message=f"You have been added to the project '{project.name}' by {project.user.username}."
+            )
+        
         # Return project details
         serializer = ProjectListSerializer(project)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, token):
+        """
+        Handle client acceptance of the project invite
+        """
+        try:
+            project = Project.objects.get(invite_token=token)
+        except Project.DoesNotExist:
+            return Response(
+                {'detail': 'Invalid or expired invite link.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check expiry
+        if (not project.invite_token_expiry or
+                project.invite_token_expiry < timezone.now()):
+            return Response(
+                {'detail': 'Invite link has expired.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check that the logged-in user's email matches the client_email
+        if request.user.email.lower() != project.client_email.lower():
+            return Response(
+                {'detail': 'You are not authorized to accept this project.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Add the client to the project
+        if not project.client:
+            project.client = request.user
+            project.save()
+            
+            # Create notification for the seller
+            from notifications.models import Notification
+            Notification.objects.create(
+                user=project.user,
+                message=f"Client {request.user.email} has accepted the project '{project.name}'."
+            )
+            
+            # Create notification for the buyer
+            Notification.objects.create(
+                user=request.user,
+                message=f"You have successfully accepted the project '{project.name}' from {project.user.username}."
+            )
+        
+        return Response(
+            {'detail': 'Project accepted successfully.'},
+            status=status.HTTP_200_OK
+        )

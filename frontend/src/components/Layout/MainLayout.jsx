@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../Dashboard/Sidebar';
+import Sidebar from '../SellerDashboard/Sidebar';
 import Navbar from '../mutualComponents/Navbar/Navbar';
 import { Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';

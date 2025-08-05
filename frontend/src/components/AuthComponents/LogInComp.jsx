@@ -33,9 +33,10 @@ export default function LogInComp() {
         dispatch(resetAuthState());
         
         // Determine where to redirect after successful login
-        let targetUrl = "/dashboard"; // default fallback
+        let targetUrl = "/"; // default fallback
         
-        if (user.onboarding_complete === false) {
+        if (user.onboarding_complete === false && 
+          (user.role === 'seller' || user.role === 'professional-buyer')) {
           targetUrl = "/onboarding";
         } else if (redirectUrl) {
           // If there's a redirect URL, use it (with validation)
@@ -49,6 +50,9 @@ export default function LogInComp() {
             console.warn('Invalid redirect URL:', redirectUrl);
             // Fall back to dashboard
           }
+        }else if (user.onboarding_complete !== false) {
+          // If onboarding is complete, redirect based on role or to dashboard
+          targetUrl = "/seller-dashboard";
         }
         
         navigate(targetUrl);

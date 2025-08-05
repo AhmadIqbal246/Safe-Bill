@@ -10,6 +10,14 @@ class Project(models.Model):
         on_delete=models.CASCADE,
         related_name='projects'
     )
+    client = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='client_projects',
+        null=True,
+        blank=True,
+        help_text="The buyer/client who accepted the project invite"
+    )
     name = models.CharField(max_length=255)
     client_email = models.EmailField()
     created_at = models.DateTimeField(auto_now_add=True)
