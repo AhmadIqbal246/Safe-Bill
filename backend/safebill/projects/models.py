@@ -91,6 +91,10 @@ class Milestone(models.Model):
         blank=True,
         help_text="Notice sent when milestone is completed"
     )
+    review_comment = models.TextField(
+        blank=True,
+        help_text="Comment from buyer when requesting review"
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     completion_date = models.DateTimeField(
         null=True,

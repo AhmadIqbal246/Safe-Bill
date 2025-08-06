@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchClientProjectsWithPendingMilestones, approveMilestone } from '../../store/slices/ProjectSlice';
+import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 
@@ -10,6 +11,9 @@ export default function MilestoneApproval() {
   const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [reviewComment, setReviewComment] = useState('');
+  const [viewCommentDialogOpen, setViewCommentDialogOpen] = useState(false);
+  const [selectedComment, setSelectedComment] = useState('');
 
   const {
     clientProjectsWithPending,
@@ -47,6 +51,7 @@ export default function MilestoneApproval() {
   const handleAction = (milestone, action) => {
     setSelectedMilestone(milestone);
     setPendingAction(action);
+    setReviewComment(''); // Reset comment
     setConfirmDialogOpen(true);
   };
 
@@ -54,10 +59,17 @@ export default function MilestoneApproval() {
     if (!selectedMilestone || !pendingAction) return;
 
     try {
-      await dispatch(approveMilestone({ 
+      const payload = {
         milestoneId: selectedMilestone.id, 
-        action: pendingAction 
-      })).unwrap();
+        action: pendingAction
+      };
+
+      // Add review comment if it's a review request and comment is provided
+      if (pendingAction === 'review_request' && reviewComment.trim()) {
+        payload.reviewComment = reviewComment.trim();
+      }
+
+      await dispatch(approveMilestone(payload)).unwrap();
       
       const actionMessages = {
         'approve': 'Milestone approved successfully!',
@@ -66,13 +78,17 @@ export default function MilestoneApproval() {
       };
       
       toast.success(actionMessages[pendingAction] || 'Action completed successfully!');
-      dispatch(fetchClientProjectsWithPendingMilestones()); // Refresh the list
+      
+      // Fetch updated data and notifications
+      dispatch(fetchClientProjectsWithPendingMilestones());
+      dispatch(fetchNotifications());
     } catch (err) {
       toast.error(typeof err === 'string' ? err : 'Failed to update milestone status');
     } finally {
       setConfirmDialogOpen(false);
       setSelectedMilestone(null);
       setPendingAction(null);
+      setReviewComment('');
     }
   };
 
@@ -100,6 +116,17 @@ export default function MilestoneApproval() {
       case 'review_request': return 'Are you sure you want to send this milestone for review?';
       default: return 'Are you sure you want to perform this action?';
     }
+  };
+
+  const capitalizeStatus = (status) => {
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
+  const handleViewComment = (comment) => {
+    setSelectedComment(comment);
+    setViewCommentDialogOpen(true);
   };
 
   if (clientProjectsWithPendingLoading) {
@@ -135,7 +162,7 @@ export default function MilestoneApproval() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px] h-[500px] flex flex-col">
-      <div className="font-semibold text-lg mb-4">Milestone Approval</div>
+      <div className="font-semibold text-lg mb-4">Milestone Approvals</div>
       
       {/* Search Bar */}
       <div className="mb-4">
@@ -198,6 +225,26 @@ export default function MilestoneApproval() {
                 </div>
               )}
               
+              {/* Review comment - if exists */}
+              {milestone.review_comment && (
+                <div className="mb-2 text-xs text-gray-600">
+                  <span className="font-medium">Review Comment:</span> 
+                  {milestone.review_comment.length > 50 ? (
+                    <>
+                      <span className="ml-1">{milestone.review_comment.substring(0, 50)}...</span>
+                      <button
+                        onClick={() => handleViewComment(milestone.review_comment)}
+                        className="ml-1 text-blue-600 underline text-xs hover:text-blue-800"
+                      >
+                        View Full Comment
+                      </button>
+                    </>
+                  ) : (
+                    <span className="ml-1">{milestone.review_comment}</span>
+                  )}
+                </div>
+              )}
+              
               {/* Action buttons - more compact */}
               <div className="flex gap-1.5 flex-wrap">
                 <button 
@@ -250,6 +297,25 @@ export default function MilestoneApproval() {
                   <p className="text-sm text-gray-600">Project: {selectedMilestone.project_name}</p>
                 </div>
               )}
+              
+              {/* Review Comment Input */}
+              {pendingAction === 'review_request' && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Review Comment (Optional)
+                  </label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Please provide feedback on what needs to be changed or improved..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent resize-none"
+                    rows={3}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This comment will be visible to the seller to understand your feedback.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3">
@@ -267,6 +333,40 @@ export default function MilestoneApproval() {
                 disabled={approveMilestoneLoading}
               >
                 {approveMilestoneLoading ? 'Processing...' : getActionButtonText(pendingAction)}
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* View Review Comment Dialog */}
+      <Dialog
+        open={viewCommentDialogOpen}
+        onClose={() => setViewCommentDialogOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
+              Review Comment
+            </Dialog.Title>
+            
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {selectedComment}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
+                onClick={() => setViewCommentDialogOpen(false)}
+              >
+                Close
               </button>
             </div>
           </Dialog.Panel>

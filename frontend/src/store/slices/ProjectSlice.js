@@ -185,12 +185,19 @@ export const deleteProject = createAsyncThunk(
 
 export const approveMilestone = createAsyncThunk(
   'project/approveMilestone',
-  async ({ milestoneId, action }, { rejectWithValue }) => {
+  async ({ milestoneId, action, reviewComment }, { rejectWithValue }) => {
     try {
       const token = sessionStorage.getItem('access');
+      const payload = { action };
+      
+      // Add review comment if provided
+      if (reviewComment) {
+        payload.review_comment = reviewComment;
+      }
+      
       const response = await axios.post(
         `${BASE_URL}api/projects/milestones/${milestoneId}/approve/`,
-        { action },
+        payload,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

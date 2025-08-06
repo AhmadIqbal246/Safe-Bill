@@ -37,7 +37,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
         model = Milestone
         fields = [
             'id', 'project', 'name', 'description', 'supporting_doc',
-            'completion_notice', 'created_date', 'completion_date',
+            'completion_notice', 'review_comment', 'created_date', 'completion_date',
             'status', 'relative_payment'
         ]
         read_only_fields = ['id', 'created_date']
@@ -60,7 +60,7 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
         model = Milestone
         fields = [
             'id', 'project', 'name', 'description', 'supporting_doc',
-            'completion_notice', 'created_date', 'completion_date',
+            'completion_notice', 'review_comment', 'created_date', 'completion_date',
             'status', 'relative_payment'
         ]
         read_only_fields = ['id', 'created_date', 'project']

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchMilestones, updateMilestone, approveMilestone } from '../store/slices/ProjectSlice';
+import { fetchNotifications } from '../store/slices/NotificationSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Dialog } from '@headlessui/react';
 import { toast } from 'react-toastify';
@@ -33,6 +34,10 @@ export default function MilestonePage() {
   // Confirmation dialog state
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  
+  // View comment dialog state
+  const [viewCommentDialogOpen, setViewCommentDialogOpen] = useState(false);
+  const [selectedComment, setSelectedComment] = useState('');
 
   useEffect(() => {
     if (project?.id) {
@@ -56,6 +61,17 @@ export default function MilestonePage() {
       default:
         return '';
     }
+  };
+
+  const capitalizeStatus = (status) => {
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
+  const handleViewComment = (comment) => {
+    setSelectedComment(comment);
+    setViewCommentDialogOpen(true);
   };
 
   // Handle edit functionality
@@ -152,7 +168,10 @@ export default function MilestonePage() {
         action: pendingAction.action 
       })).unwrap();
       toast.success('Milestone submitted for approval!');
+      
+      // Fetch updated data and notifications
       dispatch(fetchMilestones(project.id));
+      dispatch(fetchNotifications());
     } catch (err) {
       toast.error(
         typeof err === 'string' ? err : 'Failed to submit milestone for approval.'
@@ -213,7 +232,7 @@ export default function MilestonePage() {
                   <div className="text-lg font-semibold text-[#01257D]">{milestone.name}</div>
                   <div className="text-gray-500 text-sm">Status: <span className={
                     milestone.status === 'approved' ? 'text-green-600' : milestone.status === 'pending' ? 'text-yellow-600' : 'text-red-600'
-                  }>{milestone.status.replace('_', ' ')}</span></div>
+                  }>{capitalizeStatus(milestone.status)}</span></div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-lg font-semibold text-gray-800">${parseFloat(milestone.relative_payment).toLocaleString()}</div>
@@ -248,6 +267,24 @@ export default function MilestonePage() {
               {milestone.completion_notice && (
                 <div className="mb-2 text-sm text-gray-600">
                   <span className="font-medium">Completion Notice:</span> {milestone.completion_notice}
+                </div>
+              )}
+              {milestone.review_comment && (
+                <div className="mb-2 text-sm text-gray-600">
+                  <span className="font-medium">Review Comment:</span> 
+                  {milestone.review_comment.length > 100 ? (
+                    <>
+                      <span className="ml-1">{milestone.review_comment.substring(0, 100)}...</span>
+                      <button
+                        onClick={() => handleViewComment(milestone.review_comment)}
+                        className="ml-1 text-blue-600 underline text-sm hover:text-blue-800"
+                      >
+                        View Full Comment
+                      </button>
+                    </>
+                  ) : (
+                    <span className="ml-1">{milestone.review_comment}</span>
+                  )}
                 </div>
               )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-500 mt-2">
@@ -440,6 +477,40 @@ export default function MilestonePage() {
                 disabled={approveMilestoneLoading}
               >
                 {approveMilestoneLoading ? 'Submitting...' : 'Submit'}
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* View Review Comment Dialog */}
+      <Dialog
+        open={viewCommentDialogOpen}
+        onClose={() => setViewCommentDialogOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
+              Review Comment
+            </Dialog.Title>
+            
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {selectedComment}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
+                onClick={() => setViewCommentDialogOpen(false)}
+              >
+                Close
               </button>
             </div>
           </Dialog.Panel>

@@ -207,7 +207,10 @@ class MilestoneApprovalAPIView(APIView):
     def post(self, request, pk):
         """
         Approve, reject, or review a milestone.
-        Expects a JSON body: { "action": "approve" | "not_approved" | "review_request" | "pending"}
+        Expects a JSON body: { 
+            "action": "approve" | "not_approved" | "review_request" | "pending",
+            "review_comment": "string" (optional, only for review_request)
+        }
         """
         try:
             milestone = Milestone.objects.get(pk=pk)
@@ -227,6 +230,9 @@ class MilestoneApprovalAPIView(APIView):
         elif action_type == 'review_request':
             milestone.status = 'review_request'
             milestone.completion_date = None
+            # Save review comment if provided
+            review_comment = request.data.get('review_comment', '')
+            milestone.review_comment = review_comment
         elif action_type == 'pending':
             milestone.status = 'pending'
             milestone.completion_date = None
