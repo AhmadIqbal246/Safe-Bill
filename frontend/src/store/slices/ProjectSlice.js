@@ -80,6 +80,87 @@ export const fetchClientProjects = createAsyncThunk(
   }
 );
 
+export const fetchMilestones = createAsyncThunk(
+  'project/fetchMilestones',
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/projects/projects/${projectId}/milestones/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return { projectId, milestones: response.data };
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
+export const updateMilestone = createAsyncThunk(
+  'project/updateMilestone',
+  async ({ milestoneId, milestoneData }, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const formData = new FormData();
+      
+      // Add all milestone data to formData
+      Object.keys(milestoneData).forEach(key => {
+        if (milestoneData[key] !== null && milestoneData[key] !== undefined) {
+          if (key === 'supporting_doc' && milestoneData[key] instanceof File) {
+            formData.append(key, milestoneData[key]);
+          } else {
+            formData.append(key, milestoneData[key]);
+          }
+        }
+      });
+
+      const response = await axios.put(
+        `${BASE_URL}api/projects/milestones/${milestoneId}/`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
+export const deleteMilestone = createAsyncThunk(
+  'project/deleteMilestone',
+  async (milestoneId, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      await axios.delete(
+        `${BASE_URL}api/projects/milestones/${milestoneId}/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return milestoneId;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 export const deleteProject = createAsyncThunk(
   'project/deleteProject',
   async (projectId, { rejectWithValue }) => {
@@ -102,6 +183,52 @@ export const deleteProject = createAsyncThunk(
   }
 );
 
+export const approveMilestone = createAsyncThunk(
+  'project/approveMilestone',
+  async ({ milestoneId, action }, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.post(
+        `${BASE_URL}api/projects/milestones/${milestoneId}/approve/`,
+        { action },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return { milestoneId, action, data: response.data };
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
+export const fetchClientProjectsWithPendingMilestones = createAsyncThunk(
+  'project/fetchClientProjectsWithPendingMilestones',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/projects/client-projects-pending/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 const projectSlice = createSlice({
   name: 'project',
   initialState: {
@@ -113,6 +240,16 @@ const projectSlice = createSlice({
     clientProjects: [],
     clientProjectsLoading: false,
     clientProjectsError: null,
+    milestones: {}, // Store milestones by projectId
+    milestonesLoading: false,
+    milestonesError: null,
+    milestoneUpdateLoading: false,
+    milestoneUpdateError: null,
+    approveMilestoneLoading: false,
+    approveMilestoneError: null,
+    clientProjectsWithPending: [],
+    clientProjectsWithPendingLoading: false,
+    clientProjectsWithPendingError: null,
   },
   reducers: {
     resetProjectState: (state) => {
@@ -120,6 +257,10 @@ const projectSlice = createSlice({
       state.error = null;
       state.success = false;
       state.project = null;
+    },
+    clearMilestones: (state) => {
+      state.milestones = {};
+      state.milestonesError = null;
     },
   },
   extraReducers: (builder) => {
@@ -165,6 +306,57 @@ const projectSlice = createSlice({
         state.clientProjectsLoading = false;
         state.clientProjectsError = action.payload || 'Failed to fetch client projects';
       })
+      .addCase(fetchMilestones.pending, (state) => {
+        state.milestonesLoading = true;
+        state.milestonesError = null;
+      })
+      .addCase(fetchMilestones.fulfilled, (state, action) => {
+        state.milestonesLoading = false;
+        const { projectId, milestones } = action.payload;
+        state.milestones[projectId] = milestones;
+      })
+      .addCase(fetchMilestones.rejected, (state, action) => {
+        state.milestonesLoading = false;
+        state.milestonesError = action.payload || 'Failed to fetch milestones';
+      })
+      .addCase(updateMilestone.pending, (state) => {
+        state.milestoneUpdateLoading = true;
+        state.milestoneUpdateError = null;
+      })
+      .addCase(updateMilestone.fulfilled, (state, action) => {
+        state.milestoneUpdateLoading = false;
+        // Update the milestone in the appropriate project's milestones
+        const updatedMilestone = action.payload;
+        Object.keys(state.milestones).forEach(projectId => {
+          const projectMilestones = state.milestones[projectId];
+          const milestoneIndex = projectMilestones.findIndex(m => m.id === updatedMilestone.id);
+          if (milestoneIndex !== -1) {
+            state.milestones[projectId][milestoneIndex] = updatedMilestone;
+          }
+        });
+      })
+      .addCase(updateMilestone.rejected, (state, action) => {
+        state.milestoneUpdateLoading = false;
+        state.milestoneUpdateError = action.payload || 'Failed to update milestone';
+      })
+      .addCase(deleteMilestone.pending, (state) => {
+        state.milestoneUpdateLoading = true;
+        state.milestoneUpdateError = null;
+      })
+      .addCase(deleteMilestone.fulfilled, (state, action) => {
+        state.milestoneUpdateLoading = false;
+        const deletedMilestoneId = action.payload;
+        // Remove the milestone from all project milestone lists
+        Object.keys(state.milestones).forEach(projectId => {
+          state.milestones[projectId] = state.milestones[projectId].filter(
+            m => m.id !== deletedMilestoneId
+          );
+        });
+      })
+      .addCase(deleteMilestone.rejected, (state, action) => {
+        state.milestoneUpdateLoading = false;
+        state.milestoneUpdateError = action.payload || 'Failed to delete milestone';
+      })
       .addCase(deleteProject.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -172,13 +364,39 @@ const projectSlice = createSlice({
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.loading = false;
         state.projects = state.projects.filter(p => p.id !== action.payload);
+        // Also remove milestones for the deleted project
+        delete state.milestones[action.payload];
       })
       .addCase(deleteProject.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to delete project';
+      })
+      .addCase(approveMilestone.pending, (state) => {
+        state.approveMilestoneLoading = true;
+        state.approveMilestoneError = null;
+      })
+      .addCase(approveMilestone.fulfilled, (state, action) => {
+        state.approveMilestoneLoading = false;
+        // Optionally update milestone status in state here if needed
+      })
+      .addCase(approveMilestone.rejected, (state, action) => {
+        state.approveMilestoneLoading = false;
+        state.approveMilestoneError = action.payload || 'Failed to update milestone status';
+      })
+      .addCase(fetchClientProjectsWithPendingMilestones.pending, (state) => {
+        state.clientProjectsWithPendingLoading = true;
+        state.clientProjectsWithPendingError = null;
+      })
+      .addCase(fetchClientProjectsWithPendingMilestones.fulfilled, (state, action) => {
+        state.clientProjectsWithPendingLoading = false;
+        state.clientProjectsWithPending = action.payload;
+      })
+      .addCase(fetchClientProjectsWithPendingMilestones.rejected, (state, action) => {
+        state.clientProjectsWithPendingLoading = false;
+        state.clientProjectsWithPendingError = action.payload || 'Failed to fetch projects with pending milestones';
       });
   },
 });
 
-export const { resetProjectState } = projectSlice.actions;
+export const { resetProjectState, clearMilestones } = projectSlice.actions;
 export default projectSlice.reducer;

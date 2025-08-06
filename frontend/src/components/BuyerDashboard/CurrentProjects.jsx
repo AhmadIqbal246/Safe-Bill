@@ -13,9 +13,9 @@ export default function CurrentProjects({ projects = [] }) {
   const getStatusColor = (project) => {
     // For now, use a simple status based on progress
     const progress = getProgressPercentage(project);
-    if (progress >= 90) return '#0ec6b0'; // Green for near completion
-    if (progress >= 50) return '#0ec6b0'; // Green for active
-    return '#eab308'; // Yellow for review
+    if (progress >= 90) return 'bg-[#0ec6b0]'; // Green for near completion
+    if (progress >= 50) return 'bg-[#0ec6b0]'; // Green for active
+    return 'bg-yellow-500'; // Yellow for review
   };
 
   const getStatusText = (project) => {
@@ -26,69 +26,51 @@ export default function CurrentProjects({ projects = [] }) {
   };
 
   return (
-    <div style={{ 
-      flex: 1, 
-      borderRadius: 12, 
-      boxShadow: '0 1px 4px #e5e7eb', 
-      padding: 24, 
-      minWidth: 340,
-      maxHeight: 400,
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>Current Projects</div>
+    <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px] h-[500px] flex flex-col">
+      <div className="font-semibold text-lg mb-4">Current Projects</div>
       
       {projects.length > 0 ? (
-        <div style={{
-          overflowY: 'auto',
-          flex: 1,
-          paddingRight: 8,
-          marginRight: -8
-        }}>
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {projects.map((project, index) => {
             const progress = getProgressPercentage(project);
             const statusColor = getStatusColor(project);
             const statusText = getStatusText(project);
             
             return (
-              <div key={project.id} style={{ marginBottom: index < projects.length - 1 ? 20 : 0 }}>
-                <div style={{ fontWeight: 500 }}>
-                  {project.name} 
-                  <span style={{ 
-                    background: statusColor, 
-                    color: '#fff', 
-                    borderRadius: 8, 
-                    padding: '2px 10px', 
-                    fontSize: 12, 
-                    marginLeft: 8 
-                  }}>
-                    {statusText}
-                  </span>
+              <div key={project.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900 text-sm">{project.name}</span>
+                    <span className={`${statusColor} text-white rounded-full px-2 py-0.5 text-xs`}>
+                      {statusText}
+                    </span>
+                  </div>
+                  <div className="text-sm font-semibold text-gray-800">
+                    ${project.total_amount?.toFixed(2) || '0.00'}
+                  </div>
                 </div>
-                <div style={{ height: 8, background: '#e5e7eb', borderRadius: 4, margin: '8px 0' }}>
-                  <div style={{ 
-                    width: `${progress}%`, 
-                    height: '100%', 
-                    background: '#153A7D', 
-                    borderRadius: 4 
-                  }}></div>
+                
+                {/* Progress Bar */}
+                <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
+                  <div 
+                    className="h-2 bg-[#01257D] rounded-full transition-all"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
-                <div style={{ color: '#6b7280', fontSize: 13 }}>
+                
+                <div className="text-xs text-gray-600">
                   Due: {new Date(project.created_at).toLocaleDateString('en-US', { 
                     year: 'numeric', 
                     month: 'short', 
                     day: 'numeric' 
                   })}
                 </div>
-                <div style={{ float: 'right', fontWeight: 600 }}>
-                  ${project.total_amount?.toFixed(2) || '0.00'}
-                </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div style={{ color: '#6b7280', fontSize: 14, textAlign: 'center', padding: '20px 0' }}>
+        <div className="text-gray-500 text-center py-8">
           No active projects found
         </div>
       )}

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchProjects } from '../../store/slices/ProjectSlice';
 import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDialogue';
 
 export default function CurrentProjectsComp() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { projects, loading, error } = useSelector(state => state.project);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
@@ -28,6 +30,11 @@ export default function CurrentProjectsComp() {
   const handleViewDetails = (project) => {
     setDialogProject(project);
     setDialogOpen(true);
+  };
+
+  const handleViewMilestones = (project) => {
+    console.log("project", project);
+    navigate('/milestones', { state: { project } });
   };
 
   return (
@@ -57,12 +64,20 @@ export default function CurrentProjectsComp() {
               <div className="text-lg font-semibold text-[#01257D]">{currentProject.name}</div>
               <div className="text-gray-500 text-sm">Client: {currentProject.client_email}</div>
             </div>
-            <button
-              className="mt-2 md:mt-0 px-5 py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-sm cursor-pointer"
-              onClick={() => handleViewDetails(currentProject)}
-            >
-              View Details
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 mt-2 md:mt-0">
+              <button
+                className="px-4 py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-sm cursor-pointer"
+                onClick={() => handleViewDetails(currentProject)}
+              >
+                View Details
+              </button>
+              <button
+                className="px-4 py-2 bg-white text-[#01257D] border border-[#01257D] rounded-lg font-semibold hover:bg-[#E6F0FA] transition-colors text-sm cursor-pointer"
+                onClick={() => handleViewMilestones(currentProject)}
+              >
+                View Milestones
+              </button>
+            </div>
           </div>
           {/* Progress Bar (static for now) */}
           <div className="flex items-center gap-2 mt-2">
@@ -109,12 +124,20 @@ export default function CurrentProjectsComp() {
                 </div>
                 <div className="flex items-center gap-3 mt-2 sm:mt-0">
                   <div className="text-lg font-semibold text-[#01257D]">${parseFloat(proj.total_amount).toLocaleString()}</div>
-                  <button
-                    className="px-3 py-1 bg-[#01257D] text-white rounded-md font-medium hover:bg-[#2346a0] transition-colors text-sm cursor-pointer"
-                    onClick={() => handleViewDetails(proj)}
-                  >
-                    View
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      className="px-3 py-1 bg-[#01257D] text-white rounded-md font-medium hover:bg-[#2346a0] transition-colors text-sm cursor-pointer"
+                      onClick={() => handleViewDetails(proj)}
+                    >
+                      View
+                    </button>
+                    <button
+                      className="px-3 py-1 bg-white text-[#01257D] border border-[#01257D] rounded-md font-medium hover:bg-[#E6F0FA] transition-colors text-sm cursor-pointer"
+                      onClick={() => handleViewMilestones(proj)}
+                    >
+                      Milestones
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

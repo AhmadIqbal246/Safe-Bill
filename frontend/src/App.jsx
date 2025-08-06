@@ -22,6 +22,7 @@ import BuyerRegisterPage from "./pages/BuyerRegisterPage";
 import ProfessionalBuyerPage from "./pages/ProfessionalBuyerPage";
 import NotAuthorized from "./pages/NotAuthorized";
 import BuyerDashboardPage from "./pages/BuyerDashboardPage";
+import MilestonePage from "./pages/MilestonePage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -57,6 +58,7 @@ function App() {
           <Route path='/completed-projects' element={<ProtectedRoute requiredRole="seller"><CompletedProjects/></ProtectedRoute>}/>
           <Route path='/profile' element={<ProtectedRoute requiredRole="seller"><MyProfile/></ProtectedRoute>}/>
           <Route path='/my-documents' element={<ProtectedRoute requiredRole="seller"><MyDocuments/></ProtectedRoute>}/>
+          <Route path='/milestones' element={<ProtectedRoute requiredRole="seller"><MilestonePage/></ProtectedRoute>}/>
           <Route path='/support' element={<Support/>}/>
           <Route path='/project-invite' element={<ProtectedRoute><InviteViewProject/></ProtectedRoute>}/>
           <Route path='/professional-buyer' element={<ProfessionalBuyerPage/>}/>

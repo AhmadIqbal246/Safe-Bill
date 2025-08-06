@@ -74,7 +74,7 @@ export default function BuyerDashboardPage() {
         {/* Main Content - Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <CurrentProjects projects={clientProjects} />
-          <MilestoneApproval projects={clientProjects} />
+          <MilestoneApproval />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">

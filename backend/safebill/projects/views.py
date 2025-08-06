@@ -1,15 +1,15 @@
-from rest_framework import generics, permissions
-from .models import Project
-from .serializers import (
-    ProjectCreateSerializer,
-    ProjectListSerializer,
-    ClientProjectSerializer
-)
+from rest_framework import generics, permissions, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
+from .models import Project, Quote, PaymentInstallment, Milestone
+from .serializers import (
+    ProjectCreateSerializer, ProjectListSerializer, ClientProjectSerializer,
+    MilestoneSerializer, MilestoneUpdateSerializer
+)
+from notifications.models import Notification
 
 
 class ProjectCreateAPIView(generics.CreateAPIView):
@@ -83,6 +83,34 @@ class ProjectDeleteAPIView(generics.DestroyAPIView):
         return Project.objects.filter(user=self.request.user)
 
 
+class MilestoneListAPIView(generics.ListAPIView):
+    """
+    List milestones for a specific project
+    """
+    serializer_class = MilestoneSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_id = self.kwargs.get('project_id')
+        return Milestone.objects.filter(project_id=project_id).order_by('created_date')
+
+
+class MilestoneDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update, or delete a milestone
+    """
+    serializer_class = MilestoneUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Milestone.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return MilestoneUpdateSerializer
+        return MilestoneSerializer
+
+
 class ProjectInviteAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -114,7 +142,6 @@ class ProjectInviteAPIView(APIView):
             project.save()
             
             # Create notification for the buyer
-            from notifications.models import Notification
             Notification.objects.create(
                 user=request.user,
                 message=f"You have been added to the project '{project.name}' by {project.user.username}."
@@ -157,7 +184,6 @@ class ProjectInviteAPIView(APIView):
             project.save()
             
             # Create notification for the seller
-            from notifications.models import Notification
             Notification.objects.create(
                 user=project.user,
                 message=f"Client {request.user.email} has accepted the project '{project.name}'."
@@ -173,3 +199,73 @@ class ProjectInviteAPIView(APIView):
             {'detail': 'Project accepted successfully.'},
             status=status.HTTP_200_OK
         )
+
+
+class MilestoneApprovalAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        """
+        Approve, reject, or review a milestone.
+        Expects a JSON body: { "action": "approve" | "not_approved" | "review_request" | "pending"}
+        """
+        try:
+            milestone = Milestone.objects.get(pk=pk)
+        except Milestone.DoesNotExist:
+            return Response({"detail": "Milestone not found."}, status=404)
+
+        action_type = request.data.get('action')
+        if action_type not in ['approve', 'not_approved', 'review_request', 'pending']:
+            return Response({"detail": "Invalid action."}, status=400)
+
+        if action_type == 'approve':
+            milestone.status = 'approved'
+            milestone.completion_date = timezone.now()
+        elif action_type == 'not_approved':
+            milestone.status = 'not_approved'
+            milestone.completion_date = None
+        elif action_type == 'review_request':
+            milestone.status = 'review_request'
+            milestone.completion_date = None
+        elif action_type == 'pending':
+            milestone.status = 'pending'
+            milestone.completion_date = None
+        milestone.save()
+
+        project = milestone.project
+        status_msg = {
+            'approve': 'approved',
+            'not_approved': 'not approved',
+            'review_request': 'sent for review',
+            'pending': 'submitted for approval'
+        }.get(action_type, milestone.status)
+
+        # Notify seller
+        if project.user:
+            Notification.objects.create(
+                user=project.user,
+                message=f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}."
+            )
+        # Notify buyer/client
+        if project.client:
+            Notification.objects.create(
+                user=project.client,
+                message=f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}."
+            )
+
+        return Response({"detail": f"Milestone status updated to {milestone.status}."}, status=200)
+
+
+class ClientProjectsWithPendingMilestonesAPIView(generics.ListAPIView):
+    """
+    View for clients to list their projects that have pending milestones
+    """
+    serializer_class = ClientProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Get projects where the current user is the client and has pending milestones
+        return Project.objects.filter(
+            client=self.request.user,
+            milestones__status='pending'
+        ).distinct()
