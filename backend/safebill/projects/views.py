@@ -264,14 +264,24 @@ class MilestoneApprovalAPIView(APIView):
 
 class ClientProjectsWithPendingMilestonesAPIView(generics.ListAPIView):
     """
-    View for clients to list their projects that have pending milestones
+    View for clients to list projects that have pending milestones
     """
     serializer_class = ClientProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Get projects where the current user is the client and has pending milestones
         return Project.objects.filter(
             client=self.request.user,
             milestones__status='pending'
-        ).distinct()
+        ).distinct().order_by('-id')
+
+
+class ClientProjectDetailAPIView(generics.RetrieveAPIView):
+    """
+    View for clients to get detailed project information
+    """
+    serializer_class = ClientProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(client=self.request.user)

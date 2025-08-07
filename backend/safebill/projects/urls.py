@@ -6,6 +6,7 @@ from .views import (
     ProjectInviteAPIView,
     ClientProjectListAPIView,
     ClientProjectsWithPendingMilestonesAPIView,
+    ClientProjectDetailAPIView,
     MilestoneListAPIView,
     MilestoneDetailAPIView,
     MilestoneApprovalAPIView
@@ -16,6 +17,7 @@ urlpatterns = [
     path('my-projects/', ProjectListAPIView.as_view(), name='project-list'),
     path('client-projects/', ClientProjectListAPIView.as_view(), name='client-project-list'),
     path('client-projects-pending/', ClientProjectsWithPendingMilestonesAPIView.as_view(), name='client-projects-pending'),
+    path('client-projects/<int:pk>/', ClientProjectDetailAPIView.as_view(), name='client-project-detail'),
     path('delete/<int:pk>/', ProjectDeleteAPIView.as_view(), name='project-delete'),
     path('invite/<str:token>/', ProjectInviteAPIView.as_view(), name='project-invite'),
     

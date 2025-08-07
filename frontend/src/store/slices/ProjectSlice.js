@@ -236,6 +236,28 @@ export const fetchClientProjectsWithPendingMilestones = createAsyncThunk(
   }
 );
 
+export const fetchClientProjectDetail = createAsyncThunk(
+  'project/fetchClientProjectDetail',
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/projects/client-projects/${projectId}/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 const projectSlice = createSlice({
   name: 'project',
   initialState: {
@@ -257,6 +279,9 @@ const projectSlice = createSlice({
     clientProjectsWithPending: [],
     clientProjectsWithPendingLoading: false,
     clientProjectsWithPendingError: null,
+    clientProjectDetail: null,
+    clientProjectDetailLoading: false,
+    clientProjectDetailError: null,
   },
   reducers: {
     resetProjectState: (state) => {
@@ -401,6 +426,19 @@ const projectSlice = createSlice({
       .addCase(fetchClientProjectsWithPendingMilestones.rejected, (state, action) => {
         state.clientProjectsWithPendingLoading = false;
         state.clientProjectsWithPendingError = action.payload || 'Failed to fetch projects with pending milestones';
+      })
+      .addCase(fetchClientProjectDetail.pending, (state) => {
+        state.clientProjectDetailLoading = true;
+        state.clientProjectDetailError = null;
+        state.clientProjectDetail = null;
+      })
+      .addCase(fetchClientProjectDetail.fulfilled, (state, action) => {
+        state.clientProjectDetailLoading = false;
+        state.clientProjectDetail = action.payload;
+      })
+      .addCase(fetchClientProjectDetail.rejected, (state, action) => {
+        state.clientProjectDetailLoading = false;
+        state.clientProjectDetailError = action.payload || 'Failed to fetch client project detail';
       });
   },
 });

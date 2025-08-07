@@ -176,10 +176,10 @@ export default function InviteViewProject() {
             <input type="checkbox" id="terms" className="mr-2" />
             <label htmlFor="terms" className="text-sm text-gray-700">I agree to the terms and conditions of this project and payment schedule.</label>
           </div>
-          <div className="flex gap-4">
+          {/* <div className="flex gap-4">
             <button className="px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors">Pay by Card</button>
             <button className="px-6 py-2 bg-emerald-600 text-white rounded-md font-semibold hover:bg-emerald-700 transition-colors">Pay by Bank Transfer</button>
-          </div>
+          </div> */}
         </div>
         <div className="text-center text-xs text-gray-400 mt-6">Secured with SSL encryption and processed through Stripe</div>
       </div>

@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CurrentProjects({ projects = [] }) {
+  const navigate = useNavigate();
+
   const getProgressPercentage = (project) => {
     // For now, use a simple calculation based on installments
     const totalInstallments = project.installments?.length || 1;
@@ -25,6 +28,10 @@ export default function CurrentProjects({ projects = [] }) {
     return 'Planning';
   };
 
+  const handleProjectClick = (project) => {
+    navigate(`/project/${project.id}`);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px] h-[500px] flex flex-col">
       <div className="font-semibold text-lg mb-4">Current Projects</div>
@@ -37,7 +44,11 @@ export default function CurrentProjects({ projects = [] }) {
             const statusText = getStatusText(project);
             
             return (
-              <div key={project.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div 
+                key={project.id} 
+                className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-[#01257D] hover:shadow-md transition-all cursor-pointer"
+                onClick={() => handleProjectClick(project)}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-900 text-sm">{project.name}</span>
