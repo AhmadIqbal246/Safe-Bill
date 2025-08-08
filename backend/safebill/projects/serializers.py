@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Project, Quote, PaymentInstallment
+from .models import Project, Quote, PaymentInstallment, Milestone
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import timedelta
@@ -21,6 +21,69 @@ class QuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
         fields = ['file', 'reference_number']
+
+
+class MilestoneSerializer(serializers.ModelSerializer):
+    created_date = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M:%S", 
+        read_only=True
+    )
+    completion_date = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M:%S", 
+        required=False
+    )
+
+    class Meta:
+        model = Milestone
+        fields = [
+            'id', 'project', 'name', 'description', 'supporting_doc',
+            'completion_notice', 'review_comment', 'created_date', 'completion_date',
+            'status', 'relative_payment'
+        ]
+        read_only_fields = ['id', 'created_date']
+
+
+class MilestoneUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating milestones and their corresponding installments
+    """
+    created_date = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M:%S", 
+        read_only=True
+    )
+    completion_date = serializers.DateTimeField(
+        format="%Y-%m-%d %H:%M:%S", 
+        required=False
+    )
+
+    class Meta:
+        model = Milestone
+        fields = [
+            'id', 'project', 'name', 'description', 'supporting_doc',
+            'completion_notice', 'review_comment', 'created_date', 'completion_date',
+            'status', 'relative_payment'
+        ]
+        read_only_fields = ['id', 'created_date', 'project']
+
+    def update(self, instance, validated_data):
+        # Update milestone fields
+        milestone = super().update(instance, validated_data)
+        
+        # Update corresponding installment if it exists
+        if milestone.related_installment:
+            installment = milestone.related_installment
+            
+            # Update installment fields that correspond to milestone fields
+            if 'name' in validated_data:
+                installment.step = validated_data['name']
+            if 'description' in validated_data:
+                installment.description = validated_data['description']
+            if 'relative_payment' in validated_data:
+                installment.amount = validated_data['relative_payment']
+            
+            installment.save()
+        
+        return milestone
 
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
@@ -52,8 +115,23 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         Quote.objects.create(
             project=project, reference_number=ref_number, **quote_data
         )
+        
+        # Create installments and corresponding milestones
         for inst in installments_data:
-            PaymentInstallment.objects.create(project=project, **inst)
+            # Create the payment installment
+            installment = PaymentInstallment.objects.create(project=project, **inst)
+            
+            # Create milestone based on the installment
+            Milestone.objects.create(
+                project=project,
+                related_installment=installment,  # Link to the installment
+                name=inst['step'],  # Use step as milestone name
+                description=inst['description'],  # Use description as
+                relative_payment=inst['amount'],  # Use amount as relative
+                status='not_submitted',  # Default status
+                # Other fields will be empty and can be edited later
+            )
+        
         # Send invite email to client
         frontend_url = settings.FRONTEND_URL.rstrip('/')
         invite_link = f"{frontend_url}/project-invite?token={invite_token}"
@@ -93,7 +171,35 @@ class ProjectListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id', 'name', 'client_email', 'quote', 'installments',
+            'id', 'name', 'client_email', 'client', 'quote', 'installments',
+            'reference_number', 'total_amount', 'created_at'
+        ]
+
+    def get_reference_number(self, obj):
+        if hasattr(obj, 'quote') and obj.quote:
+            return obj.quote.reference_number
+        return None
+
+    def get_total_amount(self, obj):
+        return sum(float(inst.amount) for inst in obj.installments.all())
+
+
+class ClientProjectSerializer(serializers.ModelSerializer):
+    """
+    Serializer for projects where the current user is the client
+    """
+    reference_number = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
+    quote = QuoteSerializer()
+    installments = PaymentInstallmentSerializer(many=True)
+    milestones = MilestoneSerializer(many=True, read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    seller_name = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            'id', 'name', 'seller_name', 'quote', 'installments', 'milestones',
             'reference_number', 'total_amount', 'created_at'
         ]
 

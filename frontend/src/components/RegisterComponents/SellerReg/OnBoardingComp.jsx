@@ -56,20 +56,20 @@ export default function OnBoardingComp() {
       try {
         const userObj = JSON.parse(userStr);
         if (userObj.role === 'seller') {
-          navigate('/dashboard');
+          navigate('/seller-dashboard');
         } else if (userObj.role === 'professional-buyer') {
           navigate('/');
         } else {
           // Default fallback
-          navigate('/dashboard');
+          navigate('/seller-dashboard');
         }
       } catch (e) {
         // Fallback if user parsing fails
-        navigate('/dashboard');
+        navigate('/seller-dashboard');
       }
     } else {
       // Fallback if no user in session
-      navigate('/dashboard');
+      navigate('/seller-dashboard');
     }
   };
 

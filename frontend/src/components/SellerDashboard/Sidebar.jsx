@@ -3,10 +3,11 @@ import { NavLink, Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 
 const links = [
-  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Dashboard', to: '/seller-dashboard' },
   { label: 'My quotes', to: '/my-quotes' },
   { label: 'Current projects', to: '/current-projects' },
   { label: 'Completed projects', to: '/completed-projects' },
+  { label: 'Disputes', to: '/seller-disputes' },
   { label: 'My profile', to: '/profile' },
   { label: 'Documents', to: '/my-documents' },
   { label: 'Support', to: '/support' },
@@ -59,7 +60,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
         >
           <X className="w-6 h-6" />
         </button>
-        <Link to="/dashboard" className="text-xl font-bold mb-8 block hover:text-[#01257D] transition-colors cursor-pointer">Safe Bill</Link>
+        <Link to="/seller-dashboard" className="text-xl font-bold mb-8 block hover:text-[#01257D] transition-colors cursor-pointer">Safe Bill</Link>
         <nav className="flex flex-col gap-2">
           {links.map(link => (
             link.to === "#" ? (
