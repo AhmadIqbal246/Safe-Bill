@@ -7,6 +7,7 @@ const links = [
   { label: 'My quotes', to: '/my-quotes' },
   { label: 'Current projects', to: '/current-projects' },
   { label: 'Completed projects', to: '/completed-projects' },
+  { label: 'Disputes', to: '/seller-disputes' },
   { label: 'My profile', to: '/profile' },
   { label: 'Documents', to: '/my-documents' },
   { label: 'Support', to: '/support' },

@@ -6,6 +6,7 @@ import projectReducer from './slices/ProjectSlice';
 import userProfileReducer from './slices/UserProfileSlice';
 import notificationReducer from './slices/NotificationSlice';
 import feedbackReducer from './slices/FeedbackSlices';
+import disputeReducer from './slices/DisputeSlice';
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -19,6 +20,7 @@ export const store = configureStore({
     userProfile: userProfileReducer,
     notifications: notificationReducer,
     feedback: feedbackReducer,
+    dispute: disputeReducer,
   },
 });
 

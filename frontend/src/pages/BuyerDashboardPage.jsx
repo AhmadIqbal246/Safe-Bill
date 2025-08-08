@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchClientProjects } from '../store/slices/ProjectSlice';
 import DashboardSummary from '../components/BuyerDashboard/DashboardSummary';
 import CurrentProjects from '../components/BuyerDashboard/CurrentProjects';
@@ -10,6 +11,7 @@ import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 
 export default function BuyerDashboardPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { clientProjects, clientProjectsLoading, clientProjectsError } = useSelector(
     (state) => state.project
   );
@@ -63,8 +65,18 @@ export default function BuyerDashboardPage() {
     <>
       <SafeBillHeader />
       <div className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
-        <div className="text-gray-500 mb-6 sm:mb-8">Track and manage your service projects</div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
+            <div className="text-gray-500">Track and manage your service projects</div>
+          </div>
+          <button 
+            onClick={() => navigate('/disputes')}
+            className="mt-4 sm:mt-0 px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
+          >
+            View All Disputes
+          </button>
+        </div>
         
         {/* Dashboard Summary - Responsive Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">

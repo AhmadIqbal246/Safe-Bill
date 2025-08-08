@@ -119,7 +119,7 @@ export default function ProjectDetailPage() {
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
-            className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
           >
             ← Back to Dashboard
           </button>
@@ -150,10 +150,13 @@ export default function ProjectDetailPage() {
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                   In Progress
                 </span>
-                <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors">
+                <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
                   Contact Seller
                 </button>
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <button 
+                  onClick={() => navigate('/dispute-submit', { state: { project } })}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+                >
                   Raise Dispute
                 </button>
               </div>
@@ -174,6 +177,10 @@ export default function ProjectDetailPage() {
                       const isCompleted = milestone?.status === 'approved';
                       const isCurrent = milestone?.status === 'pending';
                       const isFuture = !isCompleted && !isCurrent;
+                      
+                      // Determine if the line to the next stage should be colored
+                      // Only color the line if this stage is completed
+                      const shouldColorLine = isCompleted;
                       
                       return (
                         <div key={installment.id} className="flex flex-col items-center relative">
@@ -198,10 +205,10 @@ export default function ProjectDetailPage() {
                             </div>
                           </div>
                           
-                          {/* Connecting Line */}
+                          {/* Connecting Line - only show colored line if this stage is completed */}
                           {index < project.installments.length - 1 && (
                             <div className={`absolute top-6 left-full w-full h-0.5 ${
-                              isCompleted ? 'bg-[#01257D]' : 'bg-gray-300'
+                              shouldColorLine ? 'bg-[#01257D]' : 'bg-gray-300'
                             }`} style={{ width: 'calc(100% - 3rem)' }}></div>
                           )}
                         </div>
@@ -246,7 +253,7 @@ export default function ProjectDetailPage() {
                           </td>
                           <td className="py-3 px-4">
                             {milestone.status === 'pending' && (
-                              <button className="text-[#01257D] hover:text-[#2346a0] text-sm">
+                              <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
                                 Review
                               </button>
                             )}
@@ -262,7 +269,7 @@ export default function ProjectDetailPage() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-gray-900">Project Documents</h2>
-                  <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors">
+                  <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
                     Download All
                   </button>
                 </div>
@@ -274,7 +281,7 @@ export default function ProjectDetailPage() {
                         <div className="text-sm text-gray-600">{formatDate(project.created_at)}</div>
                       </div>
                       <div className="flex gap-2">
-                        <button className="text-[#01257D] hover:text-[#2346a0] text-sm">
+                        <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
                           Preview
                         </button>
                         <a
@@ -297,7 +304,7 @@ export default function ProjectDetailPage() {
                           <div className="text-sm text-gray-600">{formatDate(milestone.created_date)}</div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="text-[#01257D] hover:text-[#2346a0] text-sm">
+                          <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
                             Preview
                           </button>
                           <a
@@ -340,7 +347,7 @@ export default function ProjectDetailPage() {
                     <div className="font-semibold text-gray-900">${pendingAmount > 0 ? project.installments?.find(inst => inst.step !== 'Project Completion')?.amount || 0 : 0}</div>
                     <div className="text-xs text-gray-500">Development milestone</div>
                   </div>
-                  <button className="w-full mt-4 px-4 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium">
+                  <button className="w-full mt-4 px-4 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer">
                     Pay Now
                   </button>
                 </div>
@@ -369,7 +376,10 @@ export default function ProjectDetailPage() {
                       <span className="font-medium">Active</span>
                     </div>
                   </div>
-                  <button className="w-full mt-4 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                  <button 
+                    onClick={() => navigate('/dispute-submit', { state: { project } })}
+                    className="w-full mt-4 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
+                  >
                     Dispute
                   </button>
                 </div>

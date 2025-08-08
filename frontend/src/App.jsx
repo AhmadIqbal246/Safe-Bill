@@ -24,6 +24,10 @@ import NotAuthorized from "./pages/NotAuthorized";
 import BuyerDashboardPage from "./pages/BuyerDashboardPage";
 import MilestonePage from "./pages/MilestonePage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
+import DisputeSubmit from "./pages/DisputeSubmit";
+import DisputesPage from "./pages/DisputesPage";
+import DisputeDetailPage from "./pages/DisputeDetailPage";
+import SellerDisputesPage from "./pages/SellerDisputesPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -66,6 +70,10 @@ function App() {
           <Route path='/not-authorized' element={<NotAuthorized/>}/>
           <Route path='/buyer-dashboard' element={<ProtectedRoute requiredRole="buyer"><BuyerDashboardPage/></ProtectedRoute>}/>
           <Route path='/project/:projectId' element={<ProtectedRoute requiredRole="buyer"><ProjectDetailPage/></ProtectedRoute>}/>
+          <Route path='/dispute-submit' element={<ProtectedRoute requiredRole="buyer"><DisputeSubmit/></ProtectedRoute>}/>
+          <Route path='/disputes' element={<ProtectedRoute><DisputesPage/></ProtectedRoute>}/>
+          <Route path='/seller-disputes' element={<ProtectedRoute requiredRole="seller"><SellerDisputesPage/></ProtectedRoute>}/>
+          <Route path='/dispute/:disputeId' element={<ProtectedRoute><DisputeDetailPage/></ProtectedRoute>}/>
           {/* Add more routes as needed */}
         </Routes>
       </Router>
