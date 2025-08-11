@@ -38,6 +38,10 @@ export default function MilestonePage() {
   // View comment dialog state
   const [viewCommentDialogOpen, setViewCommentDialogOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState('');
+  
+  // View description dialog state
+  const [viewDescriptionDialogOpen, setViewDescriptionDialogOpen] = useState(false);
+  const [selectedDescription, setSelectedDescription] = useState('');
 
   useEffect(() => {
     if (project?.id) {
@@ -72,6 +76,11 @@ export default function MilestonePage() {
   const handleViewComment = (comment) => {
     setSelectedComment(comment);
     setViewCommentDialogOpen(true);
+  };
+
+  const handleViewDescription = (description) => {
+    setSelectedDescription(description);
+    setViewDescriptionDialogOpen(true);
   };
 
   // Handle edit functionality
@@ -251,7 +260,28 @@ export default function MilestonePage() {
                   {renderMilestoneActions(milestone)}
                 </div>
               </div>
-              <div className="text-gray-700 mb-2">{milestone.description}</div>
+              <div className="text-gray-700 mb-2">
+                <span className="font-medium">Description:</span> 
+                <div className="mt-1">
+                  {milestone.description.length > 100 ? (
+                    <>
+                      <div className="text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
+                        {milestone.description.substring(0, 100)}...
+                      </div>
+                      <button
+                        onClick={() => handleViewDescription(milestone.description)}
+                        className="text-blue-600 underline text-sm hover:text-blue-800 mt-1 cursor-pointer"
+                      >
+                        View Full Description
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-gray-700 break-words max-w-full">
+                      {milestone.description}
+                    </div>
+                  )}
+                </div>
+              </div>
               {milestone.supporting_doc && (
                 <div className="mb-2">
                   <a
@@ -272,19 +302,25 @@ export default function MilestonePage() {
               {milestone.review_comment && (
                 <div className="mb-2 text-sm text-gray-600">
                   <span className="font-medium">Review Comment:</span> 
-                  {milestone.review_comment.length > 100 ? (
-                    <>
-                      <span className="ml-1">{milestone.review_comment.substring(0, 100)}...</span>
-                      <button
-                        onClick={() => handleViewComment(milestone.review_comment)}
-                        className="ml-1 text-blue-600 underline text-sm hover:text-blue-800"
-                      >
-                        View Full Comment
-                      </button>
-                    </>
-                  ) : (
-                    <span className="ml-1">{milestone.review_comment}</span>
-                  )}
+                  <div className="mt-1">
+                    {milestone.review_comment.length > 100 ? (
+                      <>
+                        <div className="text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
+                          {milestone.review_comment.substring(0, 100)}...
+                        </div>
+                        <button
+                          onClick={() => handleViewComment(milestone.review_comment)}
+                          className="text-blue-600 underline text-sm hover:text-blue-800 mt-1 cursor-pointer"
+                        >
+                          View Full Comment
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-gray-700 break-words max-w-full">
+                        {milestone.review_comment}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-500 mt-2">
@@ -491,14 +527,14 @@ export default function MilestonePage() {
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
               Review Comment
             </Dialog.Title>
             
             <div className="mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">
                   {selectedComment}
                 </p>
               </div>
@@ -509,6 +545,40 @@ export default function MilestonePage() {
                 type="button"
                 className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                 onClick={() => setViewCommentDialogOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* View Description Dialog */}
+      <Dialog
+        open={viewDescriptionDialogOpen}
+        onClose={() => setViewDescriptionDialogOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
+              Milestone Description
+            </Dialog.Title>
+            
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">
+                  {selectedDescription}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
+                onClick={() => setViewDescriptionDialogOpen(false)}
               >
                 Close
               </button>
