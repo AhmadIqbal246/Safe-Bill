@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDisputeDetail } from '../store/slices/DisputeSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import { Dialog } from '@headlessui/react';
 import { 
   ArrowLeft, 
   FileText, 
@@ -20,6 +21,10 @@ export default function DisputeDetailPage() {
   const { disputeId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
+  // View description dialog state
+  const [viewDescriptionDialogOpen, setViewDescriptionDialogOpen] = useState(false);
+  const [selectedDescription, setSelectedDescription] = useState('');
   
   const {
     disputeDetail,
@@ -71,6 +76,11 @@ export default function DisputeDetailPage() {
       case 'comment_added': return <MessageCircle className="w-5 h-5" />;
       default: return <Clock className="w-5 h-5" />;
     }
+  };
+
+  const handleViewDescription = (description) => {
+    setSelectedDescription(description);
+    setViewDescriptionDialogOpen(true);
   };
 
   if (disputeDetailLoading) {
@@ -174,7 +184,25 @@ export default function DisputeDetailPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{dispute.description}</p>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      {dispute.description.length > 150 ? (
+                        <>
+                          <p className="text-gray-900 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
+                            {dispute.description.substring(0, 150)}...
+                          </p>
+                          <button
+                            onClick={() => handleViewDescription(dispute.description)}
+                            className="text-blue-600 underline text-sm hover:text-blue-800 mt-2 cursor-pointer"
+                          >
+                            View Full Description
+                          </button>
+                        </>
+                      ) : (
+                        <p className="text-gray-900 break-words max-w-full">
+                          {dispute.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -335,6 +363,40 @@ export default function DisputeDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* View Description Dialog */}
+      <Dialog
+        open={viewDescriptionDialogOpen}
+        onClose={() => setViewDescriptionDialogOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
+              Dispute Description
+            </Dialog.Title>
+            
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">
+                  {selectedDescription}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
+                onClick={() => setViewDescriptionDialogOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </>
   );
 } 

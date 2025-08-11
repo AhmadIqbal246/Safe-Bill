@@ -14,6 +14,8 @@ export default function MilestoneApproval() {
   const [reviewComment, setReviewComment] = useState('');
   const [viewCommentDialogOpen, setViewCommentDialogOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState('');
+  const [viewDescriptionDialogOpen, setViewDescriptionDialogOpen] = useState(false);
+  const [selectedDescription, setSelectedDescription] = useState('');
 
   const {
     clientProjectsWithPending,
@@ -129,6 +131,11 @@ export default function MilestoneApproval() {
     setViewCommentDialogOpen(true);
   };
 
+  const handleViewDescription = (description) => {
+    setSelectedDescription(description);
+    setViewDescriptionDialogOpen(true);
+  };
+
   if (clientProjectsWithPendingLoading) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px]">
@@ -206,8 +213,27 @@ export default function MilestoneApproval() {
               
               {/* Description - only show if exists */}
               {milestone.description && (
-                <div className="text-gray-700 mb-2 text-xs leading-relaxed">
-                  {milestone.description}
+                <div className="text-gray-700 mb-2 text-xs">
+                  <span className="font-medium">Description:</span> 
+                  <div className="mt-1">
+                    {milestone.description.length > 50 ? (
+                      <>
+                        <div className="text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
+                          {milestone.description.substring(0, 50)}...
+                        </div>
+                        <button
+                          onClick={() => handleViewDescription(milestone.description)}
+                          className="text-blue-600 underline text-xs hover:text-blue-800 mt-1 cursor-pointer"
+                        >
+                          View Full Description
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-gray-700 break-words max-w-full">
+                        {milestone.description}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               
@@ -225,25 +251,7 @@ export default function MilestoneApproval() {
                 </div>
               )}
               
-              {/* Review comment - if exists */}
-              {milestone.review_comment && (
-                <div className="mb-2 text-xs text-gray-600">
-                  <span className="font-medium">Review Comment:</span> 
-                  {milestone.review_comment.length > 50 ? (
-                    <>
-                      <span className="ml-1">{milestone.review_comment.substring(0, 50)}...</span>
-                      <button
-                        onClick={() => handleViewComment(milestone.review_comment)}
-                        className="ml-1 text-blue-600 underline text-xs hover:text-blue-800"
-                      >
-                        View Full Comment
-                      </button>
-                    </>
-                  ) : (
-                    <span className="ml-1">{milestone.review_comment}</span>
-                  )}
-                </div>
-              )}
+
               
               {/* Action buttons - more compact */}
               <div className="flex gap-1.5 flex-wrap">
@@ -347,14 +355,14 @@ export default function MilestoneApproval() {
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
               Review Comment
             </Dialog.Title>
             
             <div className="mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">
                   {selectedComment}
                 </p>
               </div>
@@ -365,6 +373,40 @@ export default function MilestoneApproval() {
                 type="button"
                 className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                 onClick={() => setViewCommentDialogOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* View Description Dialog */}
+      <Dialog
+        open={viewDescriptionDialogOpen}
+        onClose={() => setViewDescriptionDialogOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
+              Milestone Description
+            </Dialog.Title>
+            
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">
+                  {selectedDescription}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
+                onClick={() => setViewDescriptionDialogOpen(false)}
               >
                 Close
               </button>

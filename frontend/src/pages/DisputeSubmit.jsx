@@ -25,6 +25,10 @@ export default function DisputeSubmit() {
   const [documents, setDocuments] = useState([]);
   const [errors, setErrors] = useState({});
 
+  // Character limits
+  const TITLE_MAX_LENGTH = 100;
+  const DESCRIPTION_MAX_LENGTH = 1000;
+
   // Redux state
   const {
     availableProjects,
@@ -91,9 +95,13 @@ export default function DisputeSubmit() {
     }
     if (!formData.title.trim()) {
       newErrors.title = 'Please enter a title for the dispute';
+    } else if (formData.title.length > TITLE_MAX_LENGTH) {
+      newErrors.title = `Title must be ${TITLE_MAX_LENGTH} characters or less`;
     }
     if (!formData.description.trim()) {
       newErrors.description = 'Please provide a description of the dispute';
+    } else if (formData.description.length > DESCRIPTION_MAX_LENGTH) {
+      newErrors.description = `Description must be ${DESCRIPTION_MAX_LENGTH} characters or less`;
     }
 
     setErrors(newErrors);
@@ -243,16 +251,26 @@ export default function DisputeSubmit() {
                   value={formData.title}
                   onChange={handleInputChange}
                   placeholder="Enter a brief title for the dispute"
+                  maxLength={TITLE_MAX_LENGTH}
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#01257D] focus:border-[#01257D] transition-colors ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.title}
-                  </p>
-                )}
+                <div className="flex justify-between items-center mt-1">
+                  <div>
+                    {errors.title && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.title}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`text-xs ${
+                    formData.title.length > TITLE_MAX_LENGTH * 0.9 ? 'text-orange-600' : 'text-gray-500'
+                  }`}>
+                    {formData.title.length}/{TITLE_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
 
               {/* Description */}
@@ -265,17 +283,27 @@ export default function DisputeSubmit() {
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={6}
+                  maxLength={DESCRIPTION_MAX_LENGTH}
                   placeholder="Please provide a detailed description of the dispute, including relevant facts, timeline, and any supporting information..."
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#01257D] focus:border-[#01257D] transition-colors resize-none ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.description}
-                  </p>
-                )}
+                <div className="flex justify-between items-center mt-1">
+                  <div>
+                    {errors.description && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors.description}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`text-xs ${
+                    formData.description.length > DESCRIPTION_MAX_LENGTH * 0.9 ? 'text-orange-600' : 'text-gray-500'
+                  }`}>
+                    {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
+                  </span>
+                </div>
               </div>
 
               {/* File Upload */}
