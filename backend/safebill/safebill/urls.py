@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/disputes/', include('disputes.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/feedback/', include('feedback.urls')),
+    path('api/', include('chat.urls')),
     # Add other app urls here
 ]
 

@@ -60,6 +60,9 @@ INSTALLED_APPS = [
     'notifications',
     'feedback',
     'disputes',
+    # Channels / Chat
+    'channels',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -90,7 +93,9 @@ TEMPLATES = [
     },
 ]
 
+# ASGI/WSGI
 WSGI_APPLICATION = 'safebill.wsgi.application'
+ASGI_APPLICATION = 'safebill.asgi.application'
 
 
 # Database
@@ -165,6 +170,13 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# Channels / Redis layer (use in-memory if REDIS_URL not provided)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
 }
 
 # Email backend for development

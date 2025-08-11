@@ -7,6 +7,7 @@ import userProfileReducer from './slices/UserProfileSlice';
 import notificationReducer from './slices/NotificationSlice';
 import feedbackReducer from './slices/FeedbackSlices';
 import disputeReducer from './slices/DisputeSlice';
+import chatReducer from './slices/ChatSlice';
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -21,6 +22,7 @@ export const store = configureStore({
     notifications: notificationReducer,
     feedback: feedbackReducer,
     dispute: disputeReducer,
+    chat: chatReducer,
   },
 });
 
