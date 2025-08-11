@@ -50,9 +50,17 @@ export default function LogInComp() {
             console.warn('Invalid redirect URL:', redirectUrl);
             // Fall back to dashboard
           }
-        }else if (user.onboarding_complete !== false) {
-          // If onboarding is complete, redirect based on role or to dashboard
-          targetUrl = "/seller-dashboard";
+        } else if (user.onboarding_complete !== false) {
+          // Role-based default landing pages
+          if (user.role === 'admin') {
+            targetUrl = '/admin';
+          } else if (user.role === 'buyer') {
+            targetUrl = '/buyer-dashboard';
+          } else if (user.role === 'seller') {
+            targetUrl = '/seller-dashboard';
+          } else if (user.role === 'professional-buyer') {
+            targetUrl = '/professional-buyer';
+          }
         }
         
         navigate(targetUrl);

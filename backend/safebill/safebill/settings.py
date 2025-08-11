@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     # Channels / Chat
     'channels',
     'chat',
+    'adminpanelApp',
 ]
 
 MIDDLEWARE = [
