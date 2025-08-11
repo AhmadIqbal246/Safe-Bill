@@ -27,8 +27,16 @@ urlpatterns = [
     path('api/disputes/', include('disputes.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/feedback/', include('feedback.urls')),
+    path('api/', include('chat.urls')),
+    path(
+        'api/admin/',
+        include('adminpanelApp.urls')
+    ),
     # Add other app urls here
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )

@@ -1,0 +1,296 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
+
+// Static data for now; can be replaced by API data later
+const useStaticAdminData = () => {
+  return useMemo(() => ({
+    kpis: {
+      userCount: 1234,
+      transactions: 5678,
+      disputes: 12,
+    },
+    registrationTrend: [
+      { month: 'Jan', value: 48 },
+      { month: 'Feb', value: 42 },
+      { month: 'Mar', value: 55 },
+      { month: 'Apr', value: 50 },
+      { month: 'May', value: 60 },
+      { month: 'Jun', value: 38 },
+      { month: 'Jul', value: 58 },
+    ],
+    revenueBars: [
+      { month: 'Jan', revenue: 8 },
+      { month: 'Feb', revenue: 8 },
+      { month: 'Mar', revenue: 8 },
+      { month: 'Apr', revenue: 8 },
+      { month: 'May', revenue: 8 },
+      { month: 'Jun', revenue: 8 },
+      { month: 'Jul', revenue: 8 },
+    ],
+    professionals: [
+      { id: 1, name: 'Sophia Clark', email: 'sophia.clark@example.com', status: 'Active' },
+      { id: 2, name: 'Ethan Carter', email: 'ethan.carter@example.com', status: 'Inactive' },
+      { id: 3, name: 'Olivia Bennett', email: 'olivia.bennett@example.com', status: 'Active' },
+      { id: 4, name: 'Liam Foster', email: 'liam.foster@example.com', status: 'Active' },
+      { id: 5, name: 'Ava Harper', email: 'ava.harper@example.com', status: 'Inactive' },
+    ],
+    clients: [
+      { id: 11, name: 'Noah Turner', email: 'noah.turner@example.com', status: 'Active' },
+      { id: 12, name: 'Isabella Reed', email: 'isabella.reed@example.com', status: 'Active' },
+      { id: 13, name: 'Jackson Hayes', email: 'jackson.hayes@example.com', status: 'Inactive' },
+    ],
+    kycQueue: [
+      { id: 101, name: 'Noah Turner', document: 'ID Card', status: 'Pending' },
+      { id: 102, name: 'Isabella Reed', document: 'Passport', status: 'Pending' },
+      { id: 103, name: 'Jackson Hayes', document: "Driver's License", status: 'Pending' },
+    ],
+  }), []);
+};
+
+const StatCard = ({ title, value }) => (
+  <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5">
+    <div className="text-xs text-gray-500 mb-2">{title}</div>
+    <div className="text-2xl font-semibold">{value.toLocaleString()}</div>
+  </div>
+);
+
+const Pill = ({ children, type }) => {
+  const map = {
+    Active: 'bg-emerald-100 text-emerald-700',
+    Inactive: 'bg-gray-200 text-gray-700',
+    Pending: 'bg-sky-100 text-sky-700',
+  };
+  return (
+    <span className={`px-3 py-1 text-xs rounded-full inline-block ${map[type] || 'bg-gray-100 text-gray-700'}`}>
+      {children}
+    </span>
+  );
+};
+
+export default function AdminDashboard() {
+  const staticData = useStaticAdminData();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [overview, setOverview] = useState(staticData);
+  const [professionals, setProfessionals] = useState(staticData.professionals);
+  const [clients, setClients] = useState(staticData.clients);
+  const [tab, setTab] = useState('professionals');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const access = sessionStorage.getItem('access');
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const headers = access ? { Authorization: `Bearer ${access}` } : {};
+
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError(null);
+        // Overview
+        const o = await fetch(`${BASE_URL}api/admin/overview/`, { headers });
+        if (o.ok) {
+          const json = await o.json();
+          setOverview({
+            ...staticData,
+            kpis: json.kpis,
+            registrationTrend: json.registrationTrend,
+            revenueBars: json.revenueBars,
+          });
+        }
+        // Users
+        const [proRes, clientRes] = await Promise.all([
+          fetch(`${BASE_URL}api/admin/users/?role=seller`, { headers }),
+          fetch(`${BASE_URL}api/admin/users/?role=buyer`, { headers }),
+        ]);
+        if (proRes.ok) {
+          const j = await proRes.json();
+          setProfessionals(j.results || staticData.professionals);
+        }
+        if (clientRes.ok) {
+          const j = await clientRes.json();
+          setClients(j.results || staticData.clients);
+        }
+      } catch (e) {
+        setError('Failed to load admin overview');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [staticData]);
+
+  return (
+    <div className="w-full max-w-7xl mx-auto py-6">
+      <h1 className="text-xl sm:text-2xl font-semibold mb-4">Administration</h1>
+
+      {loading && (
+        <div className="mb-4 text-sm text-gray-500">Loading admin overview...</div>
+      )}
+      {error && (
+        <div className="mb-4 text-sm text-red-600">{error}</div>
+      )}
+
+      {/* KPI Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <StatCard title="User Count" value={overview.kpis.userCount} />
+        <StatCard title="Transactions" value={overview.kpis.transactions} />
+        <StatCard title="Disputes" value={overview.kpis.disputes} />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="mb-2">
+            <div className="text-sm font-medium">Registration Trends</div>
+            <div className="text-xs text-gray-500">
+              {overview.registrationChangePercent >= 0 ? '+' : ''}
+              {overview.registrationChangePercent}% • Last 30 Days {overview.registrationChangePercent >= 0 ? '+' : ''}{overview.registrationChangePercent}%
+            </div>
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={overview.registrationTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="value" stroke="#01257D" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="mb-2">
+            <div className="text-sm font-medium">Revenue</div>
+            <div className="text-xs text-gray-500">
+              {overview.revenueChangePercent >= 0 ? '+' : ''}
+              {overview.revenueChangePercent}% • Last 30 Days {overview.revenueChangePercent >= 0 ? '+' : ''}{overview.revenueChangePercent}%
+            </div>
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={overview.revenueBars} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="revenue" fill="#94A3B8" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* User Management */}
+      <div className="bg-white rounded-xl border border-gray-200 mb-8">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div className="font-medium">User Management</div>
+            <div className="w-full md:w-72">
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex gap-6 text-sm">
+            <button
+              className={`pb-2 border-b-2 ${tab === 'professionals' ? 'border-[#01257D] text-[#01257D]' : 'border-transparent text-gray-500'}`}
+              onClick={() => setTab('professionals')}
+            >
+              Professionals
+            </button>
+            <button
+              className={`pb-2 border-b-2 ${tab === 'clients' ? 'border-[#01257D] text-[#01257D]' : 'border-transparent text-gray-500'}`}
+              onClick={() => setTab('clients')}
+            >
+              Clients
+            </button>
+          </div>
+        </div>
+        <div className="overflow-x-auto max-h-80 overflow-y-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="text-left font-medium px-4 py-3">Name</th>
+                <th className="text-left font-medium px-4 py-3">Email</th>
+                <th className="text-left font-medium px-4 py-3">Status</th>
+                {/* <th className="text-left font-medium px-4 py-3">Actions</th> */}
+              </tr>
+            </thead>
+            <tbody>
+              {(tab === 'professionals' ? professionals : clients)
+                .filter(row => {
+                  if (!search) return true;
+                  const q = search.toLowerCase();
+                  return (
+                    row.name?.toLowerCase().includes(q) ||
+                    row.email?.toLowerCase().includes(q)
+                  );
+                })
+                .map(row => (
+                <tr key={`${tab}-${row.id}`} className="border-t border-gray-100">
+                  <td className="px-4 py-3">{row.name}</td>
+                  <td className="px-4 py-3 text-gray-500">{row.email}</td>
+                  <td className="px-4 py-3"><Pill type={row.status}>{row.status}</Pill></td>
+                  {/* <td className="px-4 py-3">
+                    <button className="text-xs text-gray-700 hover:text-[#01257D] cursor-pointer">Moderate</button>
+                  </td> */}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* KYC Validation */}
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="px-4 py-3 border-b border-gray-200 font-medium">KYC Validation</div>
+        <div className="overflow-x-auto max-h-80 overflow-y-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="text-left font-medium px-4 py-3">Name</th>
+                <th className="text-left font-medium px-4 py-3">Document Type</th>
+                <th className="text-left font-medium px-4 py-3">Status</th>
+                <th className="text-left font-medium px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {overview.kycQueue.map(row => (
+                <tr key={`kyc-${row.id}`} className="border-t border-gray-100">
+                  <td className="px-4 py-3">{row.name}</td>
+                  <td className="px-4 py-3 text-gray-500">{row.document}</td>
+                  <td className="px-4 py-3"><Pill type={row.status}>{row.status}</Pill></td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2 text-xs">
+                      <button className="text-emerald-600 hover:underline cursor-pointer">Validate</button>
+                      <span className="text-gray-300">|</span>
+                      <button className="text-rose-600 hover:underline cursor-pointer">Reject</button>
+                      <span className="text-gray-300">|</span>
+                      <button className="text-[#01257D] hover:underline cursor-pointer">Request Info</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
