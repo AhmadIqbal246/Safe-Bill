@@ -12,7 +12,11 @@ import {
 } from '../../store/slices/FilterSlice';
 import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
 
-const serviceTypeOptions = businessActivityStructure.map(option => option.label);
+// Create a flattened array of service type options with both id and label
+const serviceTypeOptions = businessActivityStructure.map(option => ({
+  id: option.id,
+  label: option.label
+}));
 const areaOptions = serviceAreaOptions.map(option => option.value);
 
 const filters = [
@@ -31,6 +35,7 @@ export default function ProfFilterComponent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
   const [selectedServiceType, setSelectedServiceType] = useState('');
+  const [selectedServiceTypeLabel, setSelectedServiceTypeLabel] = useState(''); // Store the display label
   const [selectedArea, setSelectedArea] = useState('');
   const [selectedAreaLabel, setSelectedAreaLabel] = useState(''); // Store the display label
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,9 +105,14 @@ export default function ProfFilterComponent() {
     let label = '';
     
     if (openFilter === 'serviceType') {
-      options = serviceTypeOptions;
-      onSelect = (val) => { setSelectedServiceType(val); setOpenFilter(null); setSearchTerm(''); };
-      selected = selectedServiceType;
+      options = serviceTypeOptions; // Now contains objects with id and label
+      onSelect = (option) => { 
+        setSelectedServiceType(option.id); 
+        setSelectedServiceTypeLabel(option.label);
+        setOpenFilter(null); 
+        setSearchTerm(''); 
+      };
+      selected = selectedServiceTypeLabel;
       label = 'Select Service Type';
     } else if (openFilter === 'area') {
       options = serviceAreaOptions.map(option => option.label); // Show labels in dropdown
@@ -118,9 +128,13 @@ export default function ProfFilterComponent() {
     }
 
     // Filter options based on search term
-    const filteredOptions = options.filter(option =>
-      option.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOptions = options.filter(option => {
+      if (openFilter === 'serviceType') {
+        return option.label.toLowerCase().includes(searchTerm.toLowerCase());
+      } else {
+        return option.toLowerCase().includes(searchTerm.toLowerCase());
+      }
+    });
 
     return (
       <Dialog open={!!openFilter} onClose={() => { setOpenFilter(null); setSearchTerm(''); }} className="relative z-50">
@@ -145,19 +159,37 @@ export default function ProfFilterComponent() {
             <div className="flex-1 overflow-y-auto max-h-60">
               <div className="flex flex-col gap-2">
                 {filteredOptions.length > 0 ? (
-                  filteredOptions.map((opt) => (
-                    <button
-                      key={opt}
-                      className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
-                        selected === opt 
-                          ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
-                          : 'text-[#111827] cursor-pointer'
-                      }`}
-                      onClick={() => onSelect(opt)}
-                    >
-                      {opt}
-                    </button>
-                  ))
+                  filteredOptions.map((opt) => {
+                    if (openFilter === 'serviceType') {
+                      return (
+                        <button
+                          key={opt.id}
+                          className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
+                            selected === opt.label 
+                              ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                              : 'text-[#111827] cursor-pointer'
+                          }`}
+                          onClick={() => onSelect(opt)}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    } else {
+                      return (
+                        <button
+                          key={opt}
+                          className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
+                            selected === opt 
+                              ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                              : 'text-[#111827] cursor-pointer'
+                          }`}
+                          onClick={() => onSelect(opt)}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    }
+                  })
                 ) : (
                   <div className="text-center text-gray-500 py-4">
                     No options found for "{searchTerm}"
@@ -189,7 +221,7 @@ export default function ProfFilterComponent() {
           let display = f;
           if (f === 'Service type' && selectedServiceType) {
             isActive = true;
-            display = selectedServiceType;
+            display = selectedServiceTypeLabel;
           }
           if (f === 'Area' && selectedArea) {
             isActive = true;
@@ -228,6 +260,7 @@ export default function ProfFilterComponent() {
           className="px-5 py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold text-sm cursor-pointer"
           onClick={() => {
             setSelectedServiceType('');
+            setSelectedServiceTypeLabel(''); // Clear the label
             setSelectedArea('');
             setSelectedAreaLabel(''); // Clear the label
             setAppliedServiceType('');
