@@ -10,10 +10,10 @@ import {
   resetFilterState,
   fetchAllSellers
 } from '../../store/slices/FilterSlice';
-import { activityTypeOptions, serviceAreaOptions } from '../../constants/registerationTypes';
+import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
 
-const serviceTypeOptions = activityTypeOptions.map(option => option.label);
-const areaOptions = serviceAreaOptions.map(option => option.label);
+const serviceTypeOptions = businessActivityStructure.map(option => option.label);
+const areaOptions = serviceAreaOptions.map(option => option.value);
 
 const filters = [
   'Service type',
@@ -32,6 +32,7 @@ export default function ProfFilterComponent() {
   const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
   const [selectedServiceType, setSelectedServiceType] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
+  const [selectedAreaLabel, setSelectedAreaLabel] = useState(''); // Store the display label
   const [searchTerm, setSearchTerm] = useState('');
 
   // Only fetch when Apply Filters is clicked
@@ -104,9 +105,15 @@ export default function ProfFilterComponent() {
       selected = selectedServiceType;
       label = 'Select Service Type';
     } else if (openFilter === 'area') {
-      options = areaOptions;
-      onSelect = (val) => { setSelectedArea(val); setOpenFilter(null); setSearchTerm(''); };
-      selected = selectedArea;
+      options = serviceAreaOptions.map(option => option.label); // Show labels in dropdown
+      onSelect = (val) => { 
+        const areaOption = serviceAreaOptions.find(opt => opt.label === val);
+        setSelectedArea(areaOption ? areaOption.value : val); 
+        setSelectedAreaLabel(val);
+        setOpenFilter(null); 
+        setSearchTerm(''); 
+      };
+      selected = selectedAreaLabel;
       label = 'Select Area';
     }
 
@@ -186,7 +193,7 @@ export default function ProfFilterComponent() {
           }
           if (f === 'Area' && selectedArea) {
             isActive = true;
-            display = selectedArea;
+            display = selectedAreaLabel;
           }
           return (
             <button
@@ -222,6 +229,7 @@ export default function ProfFilterComponent() {
           onClick={() => {
             setSelectedServiceType('');
             setSelectedArea('');
+            setSelectedAreaLabel(''); // Clear the label
             setAppliedServiceType('');
             setAppliedArea('');
             dispatch(resetFilterState());
