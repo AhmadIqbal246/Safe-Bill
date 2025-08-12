@@ -10,7 +10,6 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ClipLoader } from "react-spinners";
-import Select from "react-select";
 import { Link } from "react-router-dom";
 
 import {
@@ -50,7 +49,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialFormData);
-  const [selectedSkills, setSelectedSkills] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
@@ -68,6 +66,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
   // New state for multiple service area selection
   const [showServiceAreasDropdown, setShowServiceAreasDropdown] = useState(false);
   const [serviceAreasSearchTerm, setServiceAreasSearchTerm] = useState('');
+  
+  // New state for skills dropdown
+  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
+  const [skillsSearchTerm, setSkillsSearchTerm] = useState('');
 
   const [errors, setErrors] = useState({});
   const [siretStatus, setSiretStatus] = useState("idle"); // idle | loading | success | error
@@ -376,7 +378,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
               "Registration successful. Please check your email to verify your Email."
       );
       setFormData(initialFormData);
-      setSelectedSkills([]);
       setCurrentStep(1);
       setActivitySearchTerm('');
       setAreaSearchTerm('');
@@ -385,10 +386,12 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setShowCategoriesDropdown(false);
       setShowSubcategoriesDropdown(false);
       setShowServiceAreasDropdown(false);
+      setShowSkillsDropdown(false);
       setBusinessActivitySearchTerm('');
       setCategorySearchTerm('');
       setSubcategorySearchTerm('');
       setServiceAreasSearchTerm('');
+      setSkillsSearchTerm('');
       setSiretVerified(false);
       setSiretStatus("idle");
       setSiretError("");
@@ -937,73 +940,108 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Skills *
                 </label>
-                <Select
-                  isMulti
-                  name="skills"
-                  options={skillOptions}
-                  value={selectedSkills}
-                  onChange={(selected) => {
-                    setSelectedSkills(selected);
-                    updateFormData(
-                      "skills",
-                      selected && selected.length > 0
-                        ? selected.map((s) => s.label).join(",")
-                        : ""
-                    );
-                  }}
-                  className="basic-multi-select"
-                  classNamePrefix="select"
-                  placeholder="Type or select skills..."
-                  isSearchable={true}
-                  isClearable={true}
-                  menuPlacement="auto"
-                  maxMenuHeight={200}
-                  noOptionsMessage={() => "No skills found"}
-                  loadingMessage={() => "Loading skills..."}
-                  closeMenuOnSelect={false}
-                  blurInputOnSelect={false}
-                  styles={{
-                    control: (provided, state) => ({
-                      ...provided,
-                      borderColor: state.isFocused ? '#01257D' : errors.skills ? '#ef4444' : '#d1d5db',
-                      boxShadow: state.isFocused ? '0 0 0 2px rgba(1, 37, 125, 0.2)' : 'none',
-                      '&:hover': {
-                        borderColor: errors.skills ? '#ef4444' : '#01257D'
-                      }
-                    }),
-                    option: (provided, state) => ({
-                      ...provided,
-                      backgroundColor: state.isSelected 
-                        ? '#E6F0FA' 
-                        : state.isFocused 
-                        ? '#F0F4F8' 
-                        : 'white',
-                      color: state.isSelected ? '#01257D' : '#374151',
-                      fontWeight: state.isSelected ? '600' : '400',
-                      '&:hover': {
-                        backgroundColor: '#F0F4F8'
-                      }
-                    }),
-                    multiValue: (provided) => ({
-                      ...provided,
-                      backgroundColor: '#E6F0FA',
-                      color: '#01257D'
-                    }),
-                    multiValueLabel: (provided) => ({
-                      ...provided,
-                      color: '#01257D',
-                      fontWeight: '600'
-                    }),
-                    multiValueRemove: (provided) => ({
-                      ...provided,
-                      color: '#01257D',
-                      '&:hover': {
-                        backgroundColor: '#d1e6f5',
-                        color: '#01257D'
-                      }
-                    })
-                  }}
-                />
+                <div className="relative">
+                  <button
+                    type="button"
+                    className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.skills ? "border-red-500" : "border-gray-300"
+                    }`}
+                    onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
+                  >
+                    <span className={formData.skills ? 'text-gray-900' : 'text-gray-500'}>
+                      {formData.skills ? 
+                        `${formData.skills.split(',').filter(Boolean).length} skill(s) selected`
+                        : 'Select Skills'}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showSkillsDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                      <div className="p-2 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search skills..."
+                            value={skillsSearchTerm}
+                            onChange={(e) => setSkillsSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {skillOptions
+                          .filter(option => 
+                            option.label.toLowerCase().includes(skillsSearchTerm.toLowerCase())
+                          )
+                          .map((option) => {
+                            const isSelected = formData.skills && 
+                              formData.skills.split(',').map(s => s.trim()).includes(option.label);
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                  isSelected
+                                    ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                    : 'text-gray-700'
+                                }`}
+                                onClick={() => {
+                                  const currentSkills = formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                  let newSkills;
+                                  if (isSelected) {
+                                    newSkills = currentSkills.filter(skill => skill !== option.label);
+                                  } else {
+                                    newSkills = [...currentSkills, option.label];
+                                  }
+                                  updateFormData('skills', newSkills.join(', '));
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{option.label}</span>
+                                  {isSelected && (
+                                    <span className="text-[#01257D]">✓</span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Display selected skills as tags */}
+                {formData.skills && formData.skills.split(',').filter(Boolean).length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.skills.split(',').map((skill, index) => {
+                      const trimmedSkill = skill.trim();
+                      if (!trimmedSkill) return null;
+                      return (
+                        <span
+                          key={index}
+                          className="bg-[#E6F0FA] text-[#01257D] px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                        >
+                          {trimmedSkill}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currentSkills = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
+                              const newSkills = currentSkills.filter(s => s !== trimmedSkill);
+                              updateFormData('skills', newSkills.join(', '));
+                            }}
+                            className="text-[#01257D] hover:text-[#2346a0] font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                
                 {errors.skills && (
                   <p className="text-red-500 text-sm mt-1">{errors.skills}</p>
                 )}

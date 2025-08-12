@@ -438,7 +438,7 @@ export default function SafeBillHeader({
                     </button>
                     <button
                       onClick={() => setIsSignUpPopupOpen(true)}
-                      className="w-full px-3 py-2 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-md"
+                      className="w-full px-3 py-2 text-base font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md"
                     >
                       Sign Up
                     </button>
