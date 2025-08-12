@@ -261,7 +261,7 @@ def filter_sellers_by_service_area(request):
             status=400
         )
     sellers = BusinessDetail.objects.filter(
-        service_area__iexact=service_area,
+        selected_service_areas__contains=[service_area],
         user__role='seller'
     )
     data = [
@@ -285,7 +285,7 @@ def filter_sellers_by_type_and_area(request):
         )
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
-        service_area__iexact=service_area,
+        selected_service_areas__contains=[service_area],
         user__role='seller'
     )
     data = [

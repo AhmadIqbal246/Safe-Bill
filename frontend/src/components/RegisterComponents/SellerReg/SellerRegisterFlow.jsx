@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 
 import {
   skillOptions,
-  activityTypeOptions,
+  businessActivityStructure,
   serviceAreaOptions,
   countryCodeOptions,
 } from "../../../constants/registerationTypes";
@@ -40,9 +40,11 @@ export default function SellerRegisterFlow({role = "seller"}) {
     address: "",
     contactPerson: "",
     skills: "",
-    activityType: "",
+    businessActivity: "",
+    selectedCategories: [],
+    selectedSubcategories: [],
     companyPhoneNumber: "",
-    serviceArea: "",
+    selectedServiceAreas: [],
     departmentNumbers: "",
   };
 
@@ -54,7 +56,18 @@ export default function SellerRegisterFlow({role = "seller"}) {
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
   const [areaSearchTerm, setAreaSearchTerm] = useState('');
   const [showActivityDropdown, setShowActivityDropdown] = useState(false);
-  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+  
+  // New state for hierarchical business activity selection
+  const [showBusinessActivityDropdown, setShowBusinessActivityDropdown] = useState(false);
+  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
+  const [showSubcategoriesDropdown, setShowSubcategoriesDropdown] = useState(false);
+  const [businessActivitySearchTerm, setBusinessActivitySearchTerm] = useState('');
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
+  const [subcategorySearchTerm, setSubcategorySearchTerm] = useState('');
+  
+  // New state for multiple service area selection
+  const [showServiceAreasDropdown, setShowServiceAreasDropdown] = useState(false);
+  const [serviceAreasSearchTerm, setServiceAreasSearchTerm] = useState('');
 
   const [errors, setErrors] = useState({});
   const [siretStatus, setSiretStatus] = useState("idle"); // idle | loading | success | error
@@ -273,10 +286,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
     if (!formData.contactPerson.trim())
       newErrors.contactPerson = "Contact perso name is required";
     if (!formData.skills.trim()) newErrors.skills = "Skills are required";
-    if (!formData.activityType)
-      newErrors.activityType = "Activity type is required";
-    if (!formData.serviceArea)
-      newErrors.serviceArea = "Service area is required";
+    if (!formData.businessActivity)
+      newErrors.businessActivity = "Business activity is required";
+    if (!formData.selectedServiceAreas || formData.selectedServiceAreas.length === 0)
+      newErrors.selectedServiceAreas = "Service areas are required";
     if (!formData.departmentNumbers.trim())
       newErrors.departmentNumbers = "Department numbers are required";
     // if (!formData.companyPhoneNumber.trim())
@@ -330,8 +343,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
           company_name: formData.companyName,
           siret_number: formData.businessNumber,
           full_address: formData.address,
-          type_of_activity: formData.activityType, // bussiness type
-          service_area: formData.serviceArea,
+          type_of_activity: formData.businessActivity,
+          selected_categories: formData.selectedCategories,
+          selected_subcategories: formData.selectedSubcategories,
+          selected_service_areas: formData.selectedServiceAreas,
           department_numbers: formData.departmentNumbers,
           company_contact_person: formData.contactPerson,
           skills: formData.skills
@@ -366,7 +381,14 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setActivitySearchTerm('');
       setAreaSearchTerm('');
       setShowActivityDropdown(false);
-      setShowAreaDropdown(false);
+      setShowBusinessActivityDropdown(false);
+      setShowCategoriesDropdown(false);
+      setShowSubcategoriesDropdown(false);
+      setShowServiceAreasDropdown(false);
+      setBusinessActivitySearchTerm('');
+      setCategorySearchTerm('');
+      setSubcategorySearchTerm('');
+      setServiceAreasSearchTerm('');
       setSiretVerified(false);
       setSiretStatus("idle");
       setSiretError("");
@@ -552,7 +574,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact First Name *
+                  Contact Name *
                 </label>
                 <input
                   type="text"
@@ -629,59 +651,62 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 )}
               </div>
 
+              {/* Business Activity Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business Type *
+                  Business Activity *
                 </label>
                 <div className="relative">
                   <button
                     type="button"
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.activityType ? "border-red-500" : "border-gray-300"
+                      errors.businessActivity ? "border-red-500" : "border-gray-300"
                     }`}
-                    onClick={() => setShowActivityDropdown(!showActivityDropdown)}
+                    onClick={() => setShowBusinessActivityDropdown(!showBusinessActivityDropdown)}
                   >
-                    <span className={formData.activityType ? 'text-gray-900' : 'text-gray-500'}>
-                      {formData.activityType ? 
-                        activityTypeOptions.find(opt => opt.value === formData.activityType)?.label || formData.activityType 
-                        : 'Select Activity'}
+                    <span className={formData.businessActivity ? 'text-gray-900' : 'text-gray-500'}>
+                      {formData.businessActivity ? 
+                        businessActivityStructure.find(opt => opt.id === formData.businessActivity)?.label || formData.businessActivity 
+                        : 'Select Business Activity'}
                     </span>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showActivityDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showBusinessActivityDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   
-                  {showActivityDropdown && (
+                  {showBusinessActivityDropdown && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
                       <div className="p-2 border-b">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search activity..."
-                            value={activitySearchTerm}
-                            onChange={(e) => setActivitySearchTerm(e.target.value)}
+                            placeholder="Search business activity..."
+                            value={businessActivitySearchTerm}
+                            onChange={(e) => setBusinessActivitySearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                             autoFocus
                           />
                         </div>
                       </div>
                       <div className="max-h-48 overflow-y-auto">
-                        {activityTypeOptions
+                        {businessActivityStructure
                           .filter(option => 
-                            option.label.toLowerCase().includes(activitySearchTerm.toLowerCase())
+                            option.label.toLowerCase().includes(businessActivitySearchTerm.toLowerCase())
                           )
                           .map((option) => (
                             <button
-                              key={option.value}
+                              key={option.id}
                               type="button"
                               className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
-                                formData.activityType === option.value 
+                                formData.businessActivity === option.id 
                                   ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
                                   : 'text-gray-700'
                               }`}
                               onClick={() => {
-                                updateFormData('activityType', option.value);
-                                setShowActivityDropdown(false);
-                                setActivitySearchTerm('');
+                                updateFormData('businessActivity', option.id);
+                                updateFormData('selectedCategories', []);
+                                updateFormData('selectedSubcategories', []);
+                                setShowBusinessActivityDropdown(false);
+                                setBusinessActivitySearchTerm('');
                               }}
                             >
                               {option.label}
@@ -691,12 +716,222 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     </div>
                   )}
                 </div>
-                {errors.activityType && (
+                {errors.businessActivity && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.activityType}
+                    {errors.businessActivity}
                   </p>
                 )}
               </div>
+
+              {/* Categories Selection (Optional) */}
+              {formData.businessActivity && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Categories (Optional)
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                      onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                    >
+                      <span className={formData.selectedCategories.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+                        {formData.selectedCategories.length > 0 
+                          ? `${formData.selectedCategories.length} category(ies) selected`
+                          : 'Select Categories (Optional)'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showCategoriesDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Search categories..."
+                              value={categorySearchTerm}
+                              onChange={(e) => setCategorySearchTerm(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {businessActivityStructure
+                            .find(activity => activity.id === formData.businessActivity)
+                            ?.categories
+                            .filter(category => 
+                              category.label.toLowerCase().includes(categorySearchTerm.toLowerCase())
+                            )
+                            .map((category) => (
+                              <button
+                                key={category.id}
+                                type="button"
+                                className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                  formData.selectedCategories.includes(category.id)
+                                    ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                    : 'text-gray-700'
+                                }`}
+                                onClick={() => {
+                                  const newCategories = formData.selectedCategories.includes(category.id)
+                                    ? formData.selectedCategories.filter(id => id !== category.id)
+                                    : [...formData.selectedCategories, category.id];
+                                  updateFormData('selectedCategories', newCategories);
+                                  // Clear subcategories when categories change
+                                  updateFormData('selectedSubcategories', []);
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{category.label}</span>
+                                  {formData.selectedCategories.includes(category.id) && (
+                                    <span className="text-[#01257D]">✓</span>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {formData.selectedCategories.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formData.selectedCategories.map(categoryId => {
+                        const category = businessActivityStructure
+                          .find(activity => activity.id === formData.businessActivity)
+                          ?.categories.find(cat => cat.id === categoryId);
+                        return category ? (
+                          <span
+                            key={categoryId}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#E6F0FA] text-[#01257D]"
+                          >
+                            {category.label}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newCategories = formData.selectedCategories.filter(id => id !== categoryId);
+                                updateFormData('selectedCategories', newCategories);
+                                // Clear subcategories when categories change
+                                updateFormData('selectedSubcategories', []);
+                              }}
+                              className="ml-1 text-[#01257D] hover:text-[#2346a0]"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Subcategories Selection (Optional) */}
+              {formData.selectedCategories.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subcategories (Optional)
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                      onClick={() => setShowSubcategoriesDropdown(!showSubcategoriesDropdown)}
+                    >
+                      <span className={formData.selectedSubcategories.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
+                        {formData.selectedSubcategories.length > 0 
+                          ? `${formData.selectedSubcategories.length} subcategory(ies) selected`
+                          : 'Select Subcategories (Optional)'}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showSubcategoriesDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {showSubcategoriesDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Search subcategories..."
+                              value={subcategorySearchTerm}
+                              onChange={(e) => setSubcategorySearchTerm(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto">
+                          {formData.selectedCategories.flatMap(categoryId => {
+                            const category = businessActivityStructure
+                              .find(activity => activity.id === formData.businessActivity)
+                              ?.categories.find(cat => cat.id === categoryId);
+                            return category?.subcategories || [];
+                          })
+                          .filter(subcategory => 
+                            subcategory.label.toLowerCase().includes(subcategorySearchTerm.toLowerCase())
+                          )
+                          .map((subcategory) => (
+                            <button
+                              key={subcategory.id}
+                              type="button"
+                              className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
+                                formData.selectedSubcategories.includes(subcategory.id)
+                                  ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                                  : 'text-gray-700'
+                              }`}
+                              onClick={() => {
+                                const newSubcategories = formData.selectedSubcategories.includes(subcategory.id)
+                                  ? formData.selectedSubcategories.filter(id => id !== subcategory.id)
+                                  : [...formData.selectedSubcategories, subcategory.id];
+                                updateFormData('selectedSubcategories', newSubcategories);
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span>{subcategory.label}</span>
+                                {formData.selectedSubcategories.includes(subcategory.id) && (
+                                  <span className="text-[#01257D]">✓</span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {formData.selectedSubcategories.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formData.selectedSubcategories.map(subcategoryId => {
+                        const subcategory = formData.selectedCategories.flatMap(categoryId => {
+                          const category = businessActivityStructure
+                            .find(activity => activity.id === formData.businessActivity)
+                            ?.categories.find(cat => cat.id === categoryId);
+                          return category?.subcategories || [];
+                        }).find(sub => sub.id === subcategoryId);
+                        return subcategory ? (
+                          <span
+                            key={subcategoryId}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#E6F0FA] text-[#01257D]"
+                          >
+                            {subcategory.label}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSubcategories = formData.selectedSubcategories.filter(id => id !== subcategoryId);
+                                updateFormData('selectedSubcategories', newSubcategories);
+                              }}
+                              className="ml-1 text-[#01257D] hover:text-[#2346a0]"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -776,7 +1011,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Service Area *
+                  Service Areas *
                 </label>
                 <div className="relative">
                   <button
@@ -784,26 +1019,26 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.serviceArea ? "border-red-500" : "border-gray-300"
                     }`}
-                    onClick={() => setShowAreaDropdown(!showAreaDropdown)}
+                    onClick={() => setShowServiceAreasDropdown(!showServiceAreasDropdown)}
                   >
-                    <span className={formData.serviceArea ? 'text-gray-900' : 'text-gray-500'}>
-                      {formData.serviceArea ? 
-                        serviceAreaOptions.find(opt => opt.value === formData.serviceArea)?.label || formData.serviceArea 
-                        : 'Select Service Area'}
+                    <span className="text-gray-500">
+                      {formData.selectedServiceAreas && formData.selectedServiceAreas.length > 0
+                        ? `${formData.selectedServiceAreas.length} selected`
+                        : 'Choose Service Areas'}
                     </span>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showAreaDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showServiceAreasDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   
-                  {showAreaDropdown && (
+                  {showServiceAreasDropdown && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
                       <div className="p-2 border-b">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search area..."
-                            value={areaSearchTerm}
-                            onChange={(e) => setAreaSearchTerm(e.target.value)}
+                            placeholder="Search service areas..."
+                            value={serviceAreasSearchTerm}
+                            onChange={(e) => setServiceAreasSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                             autoFocus
                           />
@@ -812,21 +1047,23 @@ export default function SellerRegisterFlow({role = "seller"}) {
                       <div className="max-h-48 overflow-y-auto">
                         {serviceAreaOptions
                           .filter(option => 
-                            option.label.toLowerCase().includes(areaSearchTerm.toLowerCase())
+                            option.label.toLowerCase().includes(serviceAreasSearchTerm.toLowerCase())
                           )
                           .map((option) => (
                             <button
                               key={option.value}
                               type="button"
                               className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
-                                formData.serviceArea === option.value 
+                                formData.selectedServiceAreas?.includes(option.value)
                                   ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
                                   : 'text-gray-700'
                               }`}
                               onClick={() => {
-                                updateFormData('serviceArea', option.value);
-                                setShowAreaDropdown(false);
-                                setAreaSearchTerm('');
+                                const currentServiceAreas = formData.selectedServiceAreas || [];
+                                const newServiceAreas = currentServiceAreas.includes(option.value)
+                                  ? currentServiceAreas.filter(id => id !== option.value)
+                                  : [...currentServiceAreas, option.value];
+                                updateFormData('selectedServiceAreas', newServiceAreas);
                               }}
                             >
                               {option.label}
@@ -836,6 +1073,34 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     </div>
                   )}
                 </div>
+                
+                {/* Display selected service areas as tags */}
+                {formData.selectedServiceAreas && formData.selectedServiceAreas.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.selectedServiceAreas.map(serviceAreaId => {
+                      const serviceArea = serviceAreaOptions.find(opt => opt.value === serviceAreaId);
+                      return (
+                        <span
+                          key={serviceAreaId}
+                          className="bg-[#E6F0FA] text-[#01257D] px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                        >
+                          {serviceArea?.label || serviceAreaId}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newServiceAreas = formData.selectedServiceAreas.filter(id => id !== serviceAreaId);
+                              updateFormData('selectedServiceAreas', newServiceAreas);
+                            }}
+                            className="text-[#01257D] hover:text-[#2346a0] font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                
                 {errors.serviceArea && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.serviceArea}
@@ -994,225 +1259,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
               </div>
             </div>
           )}
-
-          {/* Step 2: Business Details */}
-          {/* {currentStep === 2 && (
-<option value="construction">Construction</option>
-                    <option value="building_maintenance">Building Maintenance</option>
-                    <option value="concrete_treatment">Concrete Treatment</option>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business registeration number *
-                </label>
-                <input
-                  type="text"
-                  value={formData.businessNumber}
-                  onChange={(e) =>
-                    updateFormData("businessNumber", e.target.value)
-                  }
-                  placeholder="Enter your Business Registeration Number"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.businessNumber ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.businessNumber && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.businessNumber.replace(
-                      "Business number",
-                      "SIRET number"
-                    )}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.companyName}
-                  onChange={(e) =>
-                    updateFormData("companyName", e.target.value)
-                  }
-                  placeholder="Company name"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.companyName ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.companyName && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyName}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address *
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => updateFormData("address", e.target.value)}
-                  placeholder="Enter the Address"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.address ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.address && (
-                  <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Enter Contact Person *
-                </label>
-                <input
-                  type="text"
-                  value={formData.contactPerson}
-                  onChange={(e) =>
-                    updateFormData("contactPerson", e.target.value)
-                  }
-                  placeholder="Enter Name"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.contactPerson ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.contactPerson && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.contactPerson}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skills *
-                </label>
-                <Select
-                  isMulti
-                  name="skills"
-                  options={skillOptions}
-                  value={selectedSkills}
-                  onChange={(selected) => {
-                    setSelectedSkills(selected);
-                    updateFormData(
-                      "skills",
-                      selected && selected.length > 0
-                        ? selected.map((s) => s.label).join(",")
-                        : ""
-                    );
-                  }}
-                  className="basic-multi-select"
-                  classNamePrefix="select"
-                  placeholder="Type or select skills"
-                />
-                {errors.skills && (
-                  <p className="text-red-500 text-sm mt-1">{errors.skills}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business Type *
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.activityType}
-                    onChange={(e) =>
-                      updateFormData("activityType", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent appearance-none bg-white ${
-                      errors.activityType ? "border-red-500" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Choose a Activity</option>
-                    <option value="plumbing">Plumbing</option>
-                    <option value="electrical">Electrical</option>
-                    <option value="carpentry">Carpentry</option>
-                    <option value="painting">Painting</option>
-                    <option value="cleaning">Cleaning</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-                {errors.activityType && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.activityType}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Phone Number *
-                </label>
-                <div className="flex">
-                  <select
-                    value={formData.companyCountryCode}
-                    onChange={(e) =>
-                      updateFormData("companyCountryCode", e.target.value)
-                    }
-                    className="px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
-                  >
-                    <option value="+33">+33</option>
-                    <option value="+92">+92</option>
-                    <option value="+44">+44</option>
-                  </select>
-                  <input
-                    type="tel"
-                    value={formData.companyPhoneNumber}
-                    onChange={(e) =>
-                      updateFormData("companyPhoneNumber", e.target.value)
-                    }
-                    placeholder="Enter company phone number"
-                    className={`flex-1 px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.companyPhoneNumber
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                  />
-                </div>
-                {errors.companyPhoneNumber && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyPhoneNumber}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Service Area *
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.serviceArea}
-                    onChange={(e) =>
-                      updateFormData("serviceArea", e.target.value)
-                    }
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent appearance-none bg-white ${
-                      errors.serviceArea ? "border-red-500" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Service Area</option>
-                    <option value="paris">Paris</option>
-                    <option value="lyon">Lyon</option>
-                    <option value="marseille">Marseille</option>
-                    <option value="toulouse">Toulouse</option>
-                    <option value="nice">Nice</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-                {errors.serviceArea && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.serviceArea}
-                  </p>
-                )}
-              </div>
-            </div>
-          )} */}
 
           {/* Navigation Buttons */}
           <div className="flex flex-col md:flex-row justify-between items-center mt-8 gap-4">
