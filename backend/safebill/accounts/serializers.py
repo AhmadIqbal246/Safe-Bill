@@ -12,7 +12,8 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         model = BusinessDetail
         fields = [
             'company_name', 'siret_number', 'full_address',
-            'type_of_activity', 'service_area', 'department_numbers',
+            'type_of_activity', 'selected_categories',
+            'selected_subcategories', 'service_area', 'department_numbers',
             'siret_verified', 'company_contact_person', 'skills'
         ]
         read_only_fields = ['siret_verified']
@@ -200,6 +201,9 @@ class BankAccountSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     type_of_activity = serializers.SerializerMethodField()
+    type_of_activity = serializers.SerializerMethodField()
+    selected_categories = serializers.SerializerMethodField()
+    selected_subcategories = serializers.SerializerMethodField()
     service_area = serializers.SerializerMethodField()
     department_numbers = serializers.SerializerMethodField()
     skills = serializers.SerializerMethodField()
@@ -208,7 +212,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'phone_number', 'type_of_activity',
+            'username', 'email', 'phone_number',
+            'type_of_activity', 'selected_categories', 'selected_subcategories',
             'service_area', 'department_numbers',
             'about', 'skills', 'profile_pic'
         ]
@@ -219,6 +224,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return obj.business_detail.type_of_activity
         except BusinessDetail.DoesNotExist:
             return None
+
+    def get_selected_categories(self, obj):
+        try:
+            return obj.business_detail.selected_categories
+        except BusinessDetail.DoesNotExist:
+            return []
+
+    def get_selected_subcategories(self, obj):
+        try:
+            return obj.business_detail.selected_subcategories
+        except BusinessDetail.DoesNotExist:
+            return []
 
     def get_service_area(self, obj):
         try:
@@ -265,6 +282,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         # Map frontend field names to backend field names
         field_mapping = {
             'type_of_activity': 'type_of_activity',
+            'selected_categories': 'selected_categories',
+            'selected_subcategories': 'selected_subcategories',
             'service_area': 'service_area',
             'departmentNumbers': 'department_numbers',  # Map camelCase to snake_case
             'skills': 'skills'
