@@ -85,6 +85,8 @@ class SellerRegistrationSerializer(serializers.Serializer):
             type_of_activity=business_info['type_of_activity'],
             service_area=business_info['service_area'],
             department_numbers=business_info.get('department_numbers', ''),
+            selected_categories=business_info.get('selected_categories', []),
+            selected_subcategories=business_info.get('selected_subcategories', []),
             siret_verified=True,
             company_contact_person=business_info.get(
                 'company_contact_person', ''),

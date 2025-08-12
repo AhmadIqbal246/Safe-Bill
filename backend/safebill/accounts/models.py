@@ -35,12 +35,17 @@ class BusinessDetail(models.Model):
     siret_number = models.CharField(max_length=50)
     full_address = models.TextField()
     type_of_activity = models.CharField(max_length=255, default='')
+    selected_categories = models.JSONField(
+        default=list, blank=True
+    )
+    selected_subcategories = models.JSONField(
+        default=list, blank=True
+    )
     service_area = models.CharField(max_length=255, default='')
     department_numbers = models.CharField(max_length=255, blank=True)
     siret_verified = models.BooleanField(default=False)
     company_contact_person = models.CharField(max_length=255, blank=True)
     skills = models.JSONField(default=list, blank=True)
-
 
     def __str__(self):
         return f"{self.company_name} (SIRET: {self.siret_number})"
