@@ -201,7 +201,6 @@ class BankAccountSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     type_of_activity = serializers.SerializerMethodField()
-    type_of_activity = serializers.SerializerMethodField()
     selected_categories = serializers.SerializerMethodField()
     selected_subcategories = serializers.SerializerMethodField()
     service_area = serializers.SerializerMethodField()

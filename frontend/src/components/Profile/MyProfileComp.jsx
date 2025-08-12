@@ -30,6 +30,12 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// Utility function to safely get array fields from profile
+function getSafeArrayField(profile, fieldName) {
+  const value = profile[fieldName];
+  return Array.isArray(value) ? value : [];
+}
+
 export default function MyProfileComp() {
   const dispatch = useDispatch();
   const { profile, loading, error, success } = useSelector(
@@ -66,12 +72,12 @@ export default function MyProfileComp() {
       setEditForm(null);
       setEditPicPreview(null);
       toast.success("Profile updated successfully!");
-      // Update auth.user in Redux
-      if (editForm) {
-        dispatch(setUser({ ...profile, ...editForm }));
-      }
+      // Refresh the profile data from the API to get the latest data
+      dispatch(fetchUserProfile());
+      console.log(profile);
+      
     }
-  }, [success]);
+  }, [success, dispatch]);
 
   useEffect(() => {
     if (feedbackSuccess) {
@@ -132,8 +138,16 @@ export default function MyProfileComp() {
     );
   }
   if (!profile) {
-    return null;
+    return <div className="text-center py-12 text-gray-400">No profile data available.</div>;
   }
+
+  // Ensure profile has required fields with safe defaults
+  const safeProfile = {
+    ...profile,
+    selected_categories: getSafeArrayField(profile, 'selected_categories'),
+    selected_subcategories: getSafeArrayField(profile, 'selected_subcategories'),
+    skills: getSafeArrayField(profile, 'skills'),
+  };
 
   const avatarSrc = profile.profile_pic || getDefaultAvatar(profile.username);
 
@@ -142,12 +156,12 @@ export default function MyProfileComp() {
     setEditForm({
       username: profile.username || "",
       type_of_activity: profile.type_of_activity || "",
-      selected_categories: Array.isArray(profile.selected_categories) ? profile.selected_categories : [],
-      selected_subcategories: Array.isArray(profile.selected_subcategories) ? profile.selected_subcategories : [],
+      selected_categories: safeProfile.selected_categories,
+      selected_subcategories: safeProfile.selected_subcategories,
       service_area: profile.service_area || "",
       departmentNumbers: profile.department_numbers || "",
       about: profile.about || "",
-      skills: Array.isArray(profile.skills) ? profile.skills : [],
+      skills: safeProfile.skills,
       profile_pic: null,
     });
     setEditPicPreview(null);
@@ -242,33 +256,33 @@ export default function MyProfileComp() {
               )?.label || capitalize(profile.type_of_activity)
             : "Not specified"}
         </div>
-        {profile.selected_categories && profile.selected_categories.length > 0 && (
-          <div className="text-gray-500 font-medium">
-            Categories:{" "}
-            {profile.selected_categories.map(catId => {
-              const activity = businessActivityStructure.find(
-                opt => opt.id === profile.type_of_activity
-              );
-              const category = activity?.categories?.find(cat => cat.id === catId);
-              return category?.label || catId;
-            }).join(", ")}
-          </div>
-        )}
-        {profile.selected_subcategories && profile.selected_subcategories.length > 0 && (
-          <div className="text-gray-500 font-medium">
-            Subcategories:{" "}
-            {profile.selected_subcategories.map(subcatId => {
-              const activity = businessActivityStructure.find(
-                opt => opt.id === profile.type_of_activity
-              );
-              for (const cat of activity?.categories || []) {
-                const subcategory = cat.subcategories?.find(sub => sub.id === subcatId);
-                if (subcategory) return subcategory.label;
-              }
-              return subcatId;
-            }).join(", ")}
-          </div>
-        )}
+                 {safeProfile.selected_categories.length > 0 && (
+           <div className="text-gray-500 font-medium">
+             Categories:{" "}
+             {safeProfile.selected_categories.map(catId => {
+               const activity = businessActivityStructure.find(
+                 opt => opt.id === profile.type_of_activity
+               );
+               const category = activity?.categories?.find(cat => cat.id === catId);
+               return category?.label || catId;
+             }).join(", ")}
+           </div>
+         )}
+         {safeProfile.selected_subcategories.length > 0 && (
+           <div className="text-gray-500 font-medium">
+             Subcategories:{" "}
+             {safeProfile.selected_subcategories.map(subcatId => {
+               const activity = businessActivityStructure.find(
+                 opt => opt.id === profile.type_of_activity
+               );
+               for (const cat of activity?.categories || []) {
+                 const subcategory = cat.subcategories?.find(sub => sub.id === subcatId);
+                 if (subcategory) return subcategory.label;
+               }
+               return subcatId;
+             }).join(", ")}
+           </div>
+         )}
         <div className="text-gray-400 text-sm mb-2">
           {profile.service_area
             ? `Service Area: ${serviceAreaOptions.find(
@@ -294,25 +308,25 @@ export default function MyProfileComp() {
           {profile.about || "No about info provided."}
         </div>
       </div>
-      <div className="mb-6">
-        <h2 className="text-lg font-bold mb-2">Skills</h2>
-        <div className="flex flex-wrap gap-2">
-          {(Array.isArray(profile.skills) ? profile.skills : []).length > 0 ? (
-            (Array.isArray(profile.skills) ? profile.skills : []).map(
-              (skill) => (
-                <span
-                  key={skill}
-                  className="bg-[#E6F0FA] text-[#01257D] px-3 py-1 rounded-full text-sm font-semibold"
-                >
-                  {skill}
-                </span>
-              )
-            )
-          ) : (
-            <span className="text-gray-400">No skills listed.</span>
-          )}
-        </div>
-      </div>
+             <div className="mb-6">
+         <h2 className="text-lg font-bold mb-2">Skills</h2>
+         <div className="flex flex-wrap gap-2">
+           {safeProfile.skills.length > 0 ? (
+             safeProfile.skills.map(
+               (skill) => (
+                 <span
+                   key={skill}
+                   className="bg-[#E6F0FA] text-[#01257D] px-3 py-1 rounded-full text-sm font-semibold"
+                 >
+                   {skill}
+                 </span>
+               )
+             )
+           ) : (
+             <span className="text-gray-400">No skills listed.</span>
+           )}
+         </div>
+       </div>
       <div className="mb-8">
         <h2 className="text-lg font-bold mb-2">Contact</h2>
         <div className="flex flex-col sm:flex-row gap-6 text-gray-700">

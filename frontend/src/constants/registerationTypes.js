@@ -35,7 +35,7 @@ export const skillOptions = [
   { value: "energy_audit", label: "Energy Audit" },
   // ...add more
 ];
-
+  
 // New hierarchical business activity structure based on French classifications
 export const businessActivityStructure = [
   {
@@ -726,39 +726,39 @@ export const activityTypeOptions = businessActivityStructure.map(activity => ({
   value: activity.id,
   label: activity.label
 }));
-
-// Country codes
-export const countryCodeOptions = [
-  { value: "+33", label: "+33 (Fr)" },
-  { value: "+32", label: "+32 (Belg)" },
-  { value: "+41", label: "+41 (Swi)" },
-  { value: "+49", label: "+49 (Ger)" },
-  { value: "+39", label: "+39 (Ita)" },
-  { value: "+34", label: "+34 (Spa)" },
-  { value: "+44", label: "+44 (UK)" },
-  { value: "+92", label: "+92 (Pak)" }
-];
-
-// Service areas for France
-export const serviceAreaOptions = [
-  { value: "paris", label: "Paris" },
-  { value: "lyon", label: "Lyon" },
-  { value: "marseille", label: "Marseille" },
-  { value: "toulouse", label: "Toulouse" },
-  { value: "nice", label: "Nice" },
-  { value: "nantes", label: "Nantes" },
-  { value: "montpellier", label: "Montpellier" },
-  { value: "strasbourg", label: "Strasbourg" },
-  { value: "bordeaux", label: "Bordeaux" },
-  { value: "lille", label: "Lille" },
-  { value: "rennes", label: "Rennes" },
-  { value: "reims", label: "Reims" },
-  { value: "le_havre", label: "Le Havre" },
-  { value: "saint_etienne", label: "Saint-Étienne" },
-  { value: "toulon", label: "Toulon" },
-  { value: "grenoble", label: "Grenoble" },
-  { value: "dijon", label: "Dijon" },
-  { value: "angers", label: "Angers" },
-  { value: "nimes", label: "Nîmes" },
-  { value: "villeurbanne", label: "Villeurbanne" }
-];
+  
+  // Country codes
+  export const countryCodeOptions = [
+    { value: "+33", label: "+33 (Fr)" },
+    { value: "+32", label: "+32 (Belg)" },
+    { value: "+41", label: "+41 (Swi)" },
+    { value: "+49", label: "+49 (Ger)" },
+    { value: "+39", label: "+39 (Ita)" },
+    { value: "+34", label: "+34 (Spa)" },
+    { value: "+44", label: "+44 (UK)" },
+    { value: "+92", label: "+92 (Pak)" }
+  ];
+  
+  // Service areas for France
+  export const serviceAreaOptions = [
+    { value: "paris", label: "Paris" },
+    { value: "lyon", label: "Lyon" },
+    { value: "marseille", label: "Marseille" },
+    { value: "toulouse", label: "Toulouse" },
+    { value: "nice", label: "Nice" },
+    { value: "nantes", label: "Nantes" },
+    { value: "montpellier", label: "Montpellier" },
+    { value: "strasbourg", label: "Strasbourg" },
+    { value: "bordeaux", label: "Bordeaux" },
+    { value: "lille", label: "Lille" },
+    { value: "rennes", label: "Rennes" },
+    { value: "reims", label: "Reims" },
+    { value: "le_havre", label: "Le Havre" },
+    { value: "saint_etienne", label: "Saint-Étienne" },
+    { value: "toulon", label: "Toulon" },
+    { value: "grenoble", label: "Grenoble" },
+    { value: "dijon", label: "Dijon" },
+    { value: "angers", label: "Angers" },
+    { value: "nimes", label: "Nîmes" },
+    { value: "villeurbanne", label: "Villeurbanne" }
+  ];
