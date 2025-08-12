@@ -44,7 +44,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
     selectedCategories: [],
     selectedSubcategories: [],
     companyPhoneNumber: "",
-    serviceArea: "",
+    selectedServiceAreas: [],
     departmentNumbers: "",
   };
 
@@ -56,7 +56,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
   const [areaSearchTerm, setAreaSearchTerm] = useState('');
   const [showActivityDropdown, setShowActivityDropdown] = useState(false);
-  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
   
   // New state for hierarchical business activity selection
   const [showBusinessActivityDropdown, setShowBusinessActivityDropdown] = useState(false);
@@ -65,6 +64,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
   const [businessActivitySearchTerm, setBusinessActivitySearchTerm] = useState('');
   const [categorySearchTerm, setCategorySearchTerm] = useState('');
   const [subcategorySearchTerm, setSubcategorySearchTerm] = useState('');
+  
+  // New state for multiple service area selection
+  const [showServiceAreasDropdown, setShowServiceAreasDropdown] = useState(false);
+  const [serviceAreasSearchTerm, setServiceAreasSearchTerm] = useState('');
 
   const [errors, setErrors] = useState({});
   const [siretStatus, setSiretStatus] = useState("idle"); // idle | loading | success | error
@@ -285,8 +288,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
     if (!formData.skills.trim()) newErrors.skills = "Skills are required";
     if (!formData.businessActivity)
       newErrors.businessActivity = "Business activity is required";
-    if (!formData.serviceArea)
-      newErrors.serviceArea = "Service area is required";
+    if (!formData.selectedServiceAreas || formData.selectedServiceAreas.length === 0)
+      newErrors.selectedServiceAreas = "Service areas are required";
     if (!formData.departmentNumbers.trim())
       newErrors.departmentNumbers = "Department numbers are required";
     // if (!formData.companyPhoneNumber.trim())
@@ -343,7 +346,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
           type_of_activity: formData.businessActivity,
           selected_categories: formData.selectedCategories,
           selected_subcategories: formData.selectedSubcategories,
-          service_area: formData.serviceArea,
+          selected_service_areas: formData.selectedServiceAreas,
           department_numbers: formData.departmentNumbers,
           company_contact_person: formData.contactPerson,
           skills: formData.skills
@@ -378,13 +381,14 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setActivitySearchTerm('');
       setAreaSearchTerm('');
       setShowActivityDropdown(false);
-      setShowAreaDropdown(false);
       setShowBusinessActivityDropdown(false);
       setShowCategoriesDropdown(false);
       setShowSubcategoriesDropdown(false);
+      setShowServiceAreasDropdown(false);
       setBusinessActivitySearchTerm('');
       setCategorySearchTerm('');
       setSubcategorySearchTerm('');
+      setServiceAreasSearchTerm('');
       setSiretVerified(false);
       setSiretStatus("idle");
       setSiretError("");
@@ -1007,7 +1011,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Service Area *
+                  Service Areas *
                 </label>
                 <div className="relative">
                   <button
@@ -1015,26 +1019,26 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.serviceArea ? "border-red-500" : "border-gray-300"
                     }`}
-                    onClick={() => setShowAreaDropdown(!showAreaDropdown)}
+                    onClick={() => setShowServiceAreasDropdown(!showServiceAreasDropdown)}
                   >
-                    <span className={formData.serviceArea ? 'text-gray-900' : 'text-gray-500'}>
-                      {formData.serviceArea ? 
-                        serviceAreaOptions.find(opt => opt.value === formData.serviceArea)?.label || formData.serviceArea 
-                        : 'Select Service Area'}
+                    <span className="text-gray-500">
+                      {formData.selectedServiceAreas && formData.selectedServiceAreas.length > 0
+                        ? `${formData.selectedServiceAreas.length} selected`
+                        : 'Choose Service Areas'}
                     </span>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showAreaDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showServiceAreasDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   
-                  {showAreaDropdown && (
+                  {showServiceAreasDropdown && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
                       <div className="p-2 border-b">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search area..."
-                            value={areaSearchTerm}
-                            onChange={(e) => setAreaSearchTerm(e.target.value)}
+                            placeholder="Search service areas..."
+                            value={serviceAreasSearchTerm}
+                            onChange={(e) => setServiceAreasSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                             autoFocus
                           />
@@ -1043,21 +1047,23 @@ export default function SellerRegisterFlow({role = "seller"}) {
                       <div className="max-h-48 overflow-y-auto">
                         {serviceAreaOptions
                           .filter(option => 
-                            option.label.toLowerCase().includes(areaSearchTerm.toLowerCase())
+                            option.label.toLowerCase().includes(serviceAreasSearchTerm.toLowerCase())
                           )
                           .map((option) => (
                             <button
                               key={option.value}
                               type="button"
                               className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
-                                formData.serviceArea === option.value 
+                                formData.selectedServiceAreas?.includes(option.value)
                                   ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
                                   : 'text-gray-700'
                               }`}
                               onClick={() => {
-                                updateFormData('serviceArea', option.value);
-                                setShowAreaDropdown(false);
-                                setAreaSearchTerm('');
+                                const currentServiceAreas = formData.selectedServiceAreas || [];
+                                const newServiceAreas = currentServiceAreas.includes(option.value)
+                                  ? currentServiceAreas.filter(id => id !== option.value)
+                                  : [...currentServiceAreas, option.value];
+                                updateFormData('selectedServiceAreas', newServiceAreas);
                               }}
                             >
                               {option.label}
@@ -1067,6 +1073,34 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     </div>
                   )}
                 </div>
+                
+                {/* Display selected service areas as tags */}
+                {formData.selectedServiceAreas && formData.selectedServiceAreas.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.selectedServiceAreas.map(serviceAreaId => {
+                      const serviceArea = serviceAreaOptions.find(opt => opt.value === serviceAreaId);
+                      return (
+                        <span
+                          key={serviceAreaId}
+                          className="bg-[#E6F0FA] text-[#01257D] px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                        >
+                          {serviceArea?.label || serviceAreaId}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newServiceAreas = formData.selectedServiceAreas.filter(id => id !== serviceAreaId);
+                              updateFormData('selectedServiceAreas', newServiceAreas);
+                            }}
+                            className="text-[#01257D] hover:text-[#2346a0] font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                
                 {errors.serviceArea && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.serviceArea}

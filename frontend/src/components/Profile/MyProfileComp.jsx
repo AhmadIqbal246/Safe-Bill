@@ -55,11 +55,11 @@ export default function MyProfileComp() {
   const [businessActivitySearchTerm, setBusinessActivitySearchTerm] = useState("");
   const [categorySearchTerm, setCategorySearchTerm] = useState("");
   const [subcategorySearchTerm, setSubcategorySearchTerm] = useState("");
-  const [areaSearchTerm, setAreaSearchTerm] = useState("");
+  const [serviceAreasSearchTerm, setServiceAreasSearchTerm] = useState("");
   const [showBusinessActivityDropdown, setShowBusinessActivityDropdown] = useState(false);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
   const [showSubcategoriesDropdown, setShowSubcategoriesDropdown] = useState(false);
-  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+  const [showServiceAreasDropdown, setShowServiceAreasDropdown] = useState(false);
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -144,8 +144,10 @@ export default function MyProfileComp() {
   // Ensure profile has required fields with safe defaults
   const safeProfile = {
     ...profile,
+    type_of_activity: profile.type_of_activity || profile.type_of_activity || "",
     selected_categories: getSafeArrayField(profile, 'selected_categories'),
     selected_subcategories: getSafeArrayField(profile, 'selected_subcategories'),
+    selected_service_areas: getSafeArrayField(profile, 'selected_service_areas'),
     skills: getSafeArrayField(profile, 'skills'),
   };
 
@@ -158,7 +160,7 @@ export default function MyProfileComp() {
       type_of_activity: profile.type_of_activity || "",
       selected_categories: safeProfile.selected_categories,
       selected_subcategories: safeProfile.selected_subcategories,
-      service_area: profile.service_area || "",
+      selected_service_areas: safeProfile.selected_service_areas,
       departmentNumbers: profile.department_numbers || "",
       about: profile.about || "",
       skills: safeProfile.skills,
@@ -169,11 +171,11 @@ export default function MyProfileComp() {
     setBusinessActivitySearchTerm("");
     setCategorySearchTerm("");
     setSubcategorySearchTerm("");
-    setAreaSearchTerm("");
+    setServiceAreasSearchTerm("");
     setShowBusinessActivityDropdown(false);
     setShowCategoriesDropdown(false);
     setShowSubcategoriesDropdown(false);
-    setShowAreaDropdown(false);
+    setShowServiceAreasDropdown(false);
   };
 
   const handleEditChange = (field, value) => {
@@ -202,11 +204,11 @@ export default function MyProfileComp() {
     setBusinessActivitySearchTerm("");
     setCategorySearchTerm("");
     setSubcategorySearchTerm("");
-    setAreaSearchTerm("");
+    setServiceAreasSearchTerm("");
     setShowBusinessActivityDropdown(false);
     setShowCategoriesDropdown(false);
     setShowSubcategoriesDropdown(false);
-    setShowAreaDropdown(false);
+    setShowServiceAreasDropdown(false);
   };
 
   const handleEditSubmit = (e) => {
@@ -222,7 +224,9 @@ export default function MyProfileComp() {
       selected_subcategories: editForm.selected_subcategories && editForm.selected_subcategories.length > 0
         ? editForm.selected_subcategories
         : profile.selected_subcategories,
-      service_area: editForm.service_area || profile.service_area,
+      selected_service_areas: editForm.selected_service_areas && editForm.selected_service_areas.length > 0
+        ? editForm.selected_service_areas
+        : profile.selected_service_areas,
       departmentNumbers:
         editForm.departmentNumbers || profile.department_numbers || "",
       about: editForm.about || profile.about,
@@ -283,13 +287,14 @@ export default function MyProfileComp() {
              }).join(", ")}
            </div>
          )}
-        <div className="text-gray-400 text-sm mb-2">
-          {profile.service_area
-            ? `Service Area: ${serviceAreaOptions.find(
-                (opt) => opt.value === profile.service_area
-              )?.label || capitalize(profile.service_area)}`
-            : "Service area not specified"}
-        </div>
+        {safeProfile.selected_service_areas.length > 0 && (
+          <div className="text-gray-400 text-sm mb-2">
+            Service Areas: {safeProfile.selected_service_areas.map(areaId => {
+              const area = serviceAreaOptions.find(opt => opt.value === areaId);
+              return area?.label || areaId;
+            }).join(", ")}
+          </div>
+        )}
         <div className="text-gray-400 text-sm mb-2">
           {profile.department_numbers
             ? `Service Area Department: ${profile.department_numbers}`
@@ -776,45 +781,37 @@ export default function MyProfileComp() {
                 )}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Service Area
+                    Service Areas
                   </label>
                   <div className="relative">
                     <button
                       type="button"
                       className="w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
-                      onClick={() => setShowAreaDropdown(!showAreaDropdown)}
+                      onClick={() => setShowServiceAreasDropdown(!showServiceAreasDropdown)}
                     >
-                      <span
-                        className={
-                          editForm.service_area
-                            ? "text-gray-900"
-                            : "text-gray-500"
-                        }
-                      >
-                        {editForm.service_area
-                          ? serviceAreaOptions.find(
-                              (opt) => opt.value === editForm.service_area
-                            )?.label || editForm.service_area
-                          : "Choose Service Area"}
+                      <span className="text-gray-500">
+                        {editForm.selected_service_areas && editForm.selected_service_areas.length > 0
+                          ? `${editForm.selected_service_areas.length} selected`
+                          : "Choose Service Areas"}
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 text-gray-400 transition-transform ${
-                          showAreaDropdown ? "rotate-180" : ""
+                          showServiceAreasDropdown ? "rotate-180" : ""
                         }`}
                       />
                     </button>
 
-                    {showAreaDropdown && (
+                    {showServiceAreasDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
                         <div className="p-2 border-b">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                               type="text"
-                              placeholder="Search area..."
-                              value={areaSearchTerm}
+                              placeholder="Search areas..."
+                              value={serviceAreasSearchTerm}
                               onChange={(e) =>
-                                setAreaSearchTerm(e.target.value)
+                                setServiceAreasSearchTerm(e.target.value)
                               }
                               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
                               autoFocus
@@ -826,24 +823,23 @@ export default function MyProfileComp() {
                             .filter((option) =>
                               option.label
                                 .toLowerCase()
-                                .includes(areaSearchTerm.toLowerCase())
+                                .includes(serviceAreasSearchTerm.toLowerCase())
                             )
                             .map((option) => (
                               <button
                                 key={option.value}
                                 type="button"
                                 className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
-                                  editForm.service_area === option.value
+                                  editForm.selected_service_areas?.includes(option.value)
                                     ? "bg-[#E6F0FA] text-[#01257D] font-semibold"
                                     : "text-gray-700"
                                 }`}
                                 onClick={() => {
-                                  handleEditChange(
-                                    "service_area",
-                                    option.value
-                                  );
-                                  setShowAreaDropdown(false);
-                                  setAreaSearchTerm("");
+                                  const currentServiceAreas = editForm.selected_service_areas || [];
+                                  const newServiceAreas = currentServiceAreas.includes(option.value)
+                                    ? currentServiceAreas.filter(id => id !== option.value)
+                                    : [...currentServiceAreas, option.value];
+                                  handleEditChange("selected_service_areas", newServiceAreas);
                                 }}
                               >
                                 {option.label}
@@ -853,6 +849,32 @@ export default function MyProfileComp() {
                       </div>
                     )}
                   </div>
+                  {/* Display selected service areas as tags */}
+                  {editForm.selected_service_areas && editForm.selected_service_areas.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {editForm.selected_service_areas.map(areaId => {
+                        const area = serviceAreaOptions.find(opt => opt.value === areaId);
+                        return (
+                          <span
+                            key={areaId}
+                            className="bg-[#E6F0FA] text-[#01257D] px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                          >
+                            {area?.label || areaId}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newServiceAreas = editForm.selected_service_areas.filter(id => id !== areaId);
+                                handleEditChange("selected_service_areas", newServiceAreas);
+                              }}
+                              className="text-[#01257D] hover:text-[#2346D] font-bold"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
