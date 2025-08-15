@@ -64,6 +64,135 @@ export default function Dashboard() {
     dispatch(fetchNotifications());
   }, [dispatch]);
 
+  // Show loading state for the entire dashboard
+  if (loading) {
+    return (
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">Dashboard</h1>
+        
+        {/* Loading Overview Section */}
+        <div className="flex flex-col gap-2 min-w-0 w-full mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+            <h2 className="text-base sm:text-lg font-bold mb-2 sm:mb-0">Overview</h2>
+            <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4 min-w-0 w-full">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-lg border border-[#E6F0FA] bg-white p-2 sm:p-3 md:p-5 flex flex-col items-start shadow-sm flex-1 min-w-0 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-20 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-full mt-auto"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Loading Main Content */}
+        <div className="flex flex-col md:flex-row md:items-start gap-4 sm:gap-8">
+          <div className="flex-1 flex flex-col gap-4 sm:gap-6 order-1 md:order-none min-w-0 w-full">
+            {/* Loading Notifications (Mobile) */}
+            <div className="block md:hidden w-full">
+              <div className="bg-white rounded-lg border border-[#E6F0FA] p-2 sm:p-3 md:p-5 shadow-sm mt-2 w-full animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center space-x-3">
+                      <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Loading Upcoming Deadlines */}
+            <div className="rounded-lg border border-[#E6F0FA] bg-white p-2 sm:p-3 md:p-5 shadow-sm flex flex-col justify-between min-w-0 w-full animate-pulse" style={{ minHeight: '120px' }}>
+              <div>
+                <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+                <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-20 mb-4"></div>
+              </div>
+              <div className="h-8 bg-gray-200 rounded w-full"></div>
+            </div>
+
+            {/* Loading Recent Projects Table */}
+            <div className="mt-6 sm:mt-8 min-w-0 w-full">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+              <div className="overflow-x-auto rounded-lg border border-[#E6F0FA] bg-white min-w-0 w-full animate-pulse">
+                <div className="p-4">
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex items-center space-x-4 py-2">
+                        <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        <div className="h-4 bg-gray-200 rounded w-16"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end mt-3 sm:mt-4">
+                <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading Notifications (Desktop) */}
+          <div className="hidden md:block w-full md:w-80 flex-shrink-0 md:ml-8 mt-8 md:mt-0 order-2 md:order-none">
+            <div className="bg-white rounded-lg border border-[#E6F0FA] p-5 shadow-sm animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state for the entire dashboard
+  if (error) {
+    return (
+      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">Dashboard</h1>
+        
+        {/* Error Message */}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg sm:text-xl font-semibold text-red-800 mb-2">Failed to Load Dashboard</h3>
+          <p className="text-red-600 mb-4">
+            {typeof error === 'string' ? error : 'An unexpected error occurred while loading your dashboard data.'}
+          </p>
+          <button 
+            onClick={() => dispatch(fetchProjects())}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Sort projects by created_at descending (most recent first)
   const sortedProjects = (projects || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   // Show up to 7 projects in the table, scroll if more
@@ -189,11 +318,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {loading ? (
-                      <tr><td colSpan={5} className="text-center py-4 sm:py-6 text-gray-400 text-xs sm:text-sm">Loading...</td></tr>
-                    ) : error ? (
-                      <tr><td colSpan={5} className="text-center py-4 sm:py-6 text-red-500 text-xs sm:text-sm">{typeof error === 'string' ? error : 'Failed to load projects.'}</td></tr>
-                    ) : sortedProjects.length === 0 ? (
+                    {sortedProjects.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-4 sm:py-6 text-gray-400 text-xs sm:text-sm">No projects found.</td></tr>
                     ) : (
                       sortedProjects.slice(0, 5).map((proj, idx) => {
