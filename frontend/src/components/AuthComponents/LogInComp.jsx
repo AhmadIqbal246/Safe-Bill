@@ -164,11 +164,11 @@ export default function LogInComp() {
               "Sign In"
             )}
           </button>
-          <div className="text-center">
+          {/* <div className="text-center">
             <a href="/forgot-password" className="text-sm text-[#0A1128] hover:underline">
               Forgot password?
             </a>
-          </div>
+          </div> */}
           
           {/* Debug button - remove in production */}
           {process.env.NODE_ENV === 'development' && (
