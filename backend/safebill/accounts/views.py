@@ -275,6 +275,35 @@ def filter_sellers_by_service_area(request):
 
 
 @api_view(['GET'])
+def filter_sellers_by_skills(request):
+    skills = request.GET.get('skills')
+    if not skills:
+        return Response(
+            {'detail': 'skills query param is required.'},
+            status=400
+        )
+    
+    # Parse skills as comma-separated values
+    skills_list = [skill.strip() for skill in skills.split(',') if skill.strip()]
+    print(skills_list)
+    
+    # Filter sellers who have any of the specified skills
+    sellers = BusinessDetail.objects.filter(
+        skills__overlap=skills_list,
+        user__role='seller'
+    )
+    print(sellers)
+    data = [
+        {
+            'name': s.user.username,
+            'business_type': s.type_of_activity
+        }
+        for s in sellers
+    ]
+    return Response(data)
+
+
+@api_view(['GET'])
 def filter_sellers_by_type_and_area(request):
     service_type = request.GET.get('service_type')
     service_area = request.GET.get('service_area')
@@ -288,6 +317,41 @@ def filter_sellers_by_type_and_area(request):
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
+    data = [
+        {
+            'name': s.user.username,
+            'business_type': s.type_of_activity
+        }
+        for s in sellers
+    ]
+    return Response(data)
+
+
+@api_view(['GET'])
+def filter_sellers_by_type_area_and_skills(request):
+    service_type = request.GET.get('service_type')
+    service_area = request.GET.get('service_area')
+    skills = request.GET.get('skills')
+    
+    if not service_type or not service_area:
+        return Response(
+            {'detail': 'Both service_type and service_area query params are required.'},
+            status=400
+        )
+    
+    # Build the base query
+    query = BusinessDetail.objects.filter(
+        type_of_activity__iexact=service_type,
+        selected_service_areas__contains=[service_area],
+        user__role='seller'
+    )
+    
+    # Add skills filter if provided
+    if skills:
+        skills_list = [skill.strip() for skill in skills.split(',') if skill.strip()]
+        query = query.filter(skills__overlap=skills_list)
+    
+    sellers = query
     data = [
         {
             'name': s.user.username,

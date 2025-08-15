@@ -4,13 +4,14 @@ from .views import (
     VerifyEmailView,
     UserTokenObtainPairView,
     OnboardingStatusView,
-    ProfileView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
     BankAccountView,
     filter_sellers_by_service_type,
     filter_sellers_by_service_area,
     filter_sellers_by_type_and_area,
+    filter_sellers_by_skills,
+    filter_sellers_by_type_area_and_skills,
     list_all_sellers,
     UserProfileView,
     verify_siret_api,
@@ -28,8 +29,10 @@ urlpatterns = [
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
     path('onboarding-status/', OnboardingStatusView.as_view(), name='onboarding-status'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
-    path('password-reset-request/', PasswordResetRequestView.as_view(), name='password-reset-request'),
-    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('password-reset-request/', PasswordResetRequestView.as_view(), 
+         name='password-reset-request'),
+    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), 
+         name='password-reset-confirm'),
     path('bank-account/', BankAccountView.as_view(), name='bank-account'),
     path(
         'filter-sellers-by-service-type/',
@@ -45,6 +48,16 @@ urlpatterns = [
         'filter-sellers-by-type-and-area/',
         filter_sellers_by_type_and_area,
         name='filter-sellers-by-type-and-area'
+    ),
+    path(
+        'filter-sellers-by-skills/',
+        filter_sellers_by_skills,
+        name='filter-sellers-by-skills'
+    ),
+    path(
+        'filter-sellers-by-type-area-and-skills/',
+        filter_sellers_by_type_area_and_skills,
+        name='filter-sellers-by-type-area-and-skills'
     ),
     path(
         'all-sellers/',
