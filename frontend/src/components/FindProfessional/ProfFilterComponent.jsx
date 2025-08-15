@@ -29,20 +29,48 @@ const filters = [
 
 const RESULTS_PER_PAGE = 5;
 
-export default function ProfFilterComponent() {
+export default function ProfFilterComponent({ initialFilters = {} }) {
   const dispatch = useDispatch();
   const { sellers, loading, error } = useSelector((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
   const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
-  const [selectedServiceType, setSelectedServiceType] = useState('');
+  const [selectedServiceType, setSelectedServiceType] = useState(initialFilters.serviceType || '');
   const [selectedServiceTypeLabel, setSelectedServiceTypeLabel] = useState(''); // Store the display label
-  const [selectedArea, setSelectedArea] = useState('');
+  const [selectedArea, setSelectedArea] = useState(initialFilters.area || '');
   const [selectedAreaLabel, setSelectedAreaLabel] = useState(''); // Store the display label
   const [searchTerm, setSearchTerm] = useState('');
 
   // Only fetch when Apply Filters is clicked
-  const [appliedServiceType, setAppliedServiceType] = useState('');
-  const [appliedArea, setAppliedArea] = useState('');
+  const [appliedServiceType, setAppliedServiceType] = useState(initialFilters.serviceType || '');
+  const [appliedArea, setAppliedArea] = useState(initialFilters.area || '');
+
+  // Set labels when initial filters are provided
+  useEffect(() => {
+    if (initialFilters.serviceType) {
+      const option = serviceTypeOptions.find(opt => opt.id === initialFilters.serviceType);
+      if (option) {
+        setSelectedServiceTypeLabel(option.label);
+      }
+    }
+    if (initialFilters.area) {
+      const option = serviceAreaOptions.find(opt => opt.value === initialFilters.area);
+      if (option) {
+        setSelectedAreaLabel(option.label);
+      }
+    }
+  }, [initialFilters]);
+
+  // Auto-apply initial filters
+  useEffect(() => {
+    if (initialFilters.serviceType || initialFilters.area) {
+      // Auto-apply the filters after a short delay to ensure labels are set
+      const timer = setTimeout(() => {
+        setAppliedServiceType(initialFilters.serviceType || '');
+        setAppliedArea(initialFilters.area || '');
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialFilters]);
 
   // Fetch all sellers on mount and when all filters are cleared
   useEffect(() => {
@@ -200,7 +228,7 @@ export default function ProfFilterComponent() {
 
             {/* Close Button */}
             <button
-              className="mt-4 w-full py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold hover:bg-[#d1e6f5] transition-colors"
+              className="mt-4 w-full py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold hover:bg-[#d1e6f5] transition-colors cursor-pointer"
               onClick={() => { setOpenFilter(null); setSearchTerm(''); }}
             >
               Close
@@ -215,6 +243,44 @@ export default function ProfFilterComponent() {
     <section className="w-full max-w-7xl mx-auto py-10 px-4">
       {renderDialog()}
       <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">Find local professionals</h2>
+      
+      {/* Show pre-applied filters indicator */}
+      {(initialFilters.serviceType || initialFilters.area) && (
+        <div className="mb-4 p-3 bg-[#E6F0FA] border border-[#01257D] rounded-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[#01257D] text-sm">
+              <Search className="w-4 h-4" />
+              <span className="font-medium">Pre-applied filters from home page search:</span>
+              {initialFilters.serviceType && (
+                <span className="px-2 py-1 bg-white rounded text-xs">
+                  {serviceTypeOptions.find(opt => opt.id === initialFilters.serviceType)?.label}
+                </span>
+              )}
+              {initialFilters.area && (
+                <span className="px-2 py-1 bg-white rounded text-xs">
+                  {serviceAreaOptions.find(opt => opt.value === initialFilters.area)?.label}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                setSelectedServiceType('');
+                setSelectedServiceTypeLabel('');
+                setSelectedArea('');
+                setSelectedAreaLabel('');
+                setAppliedServiceType('');
+                setAppliedArea('');
+                dispatch(resetFilterState());
+                dispatch(fetchAllSellers());
+              }}
+              className="text-[#01257D] hover:text-[#2346a0] text-xs font-medium underline cursor-pointer"
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => {
           let isActive = false;
