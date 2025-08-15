@@ -45,7 +45,98 @@ export default function BuyerDashboardPage() {
       <>
         <SafeBillHeader />
         <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
-          <div>Loading dashboard...</div>
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Loading Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
+                <div className="text-gray-500">Track and manage your service projects</div>
+              </div>
+              <div className="mt-4 sm:mt-0 px-6 py-3 bg-gray-200 text-gray-400 rounded-lg font-medium">
+                View All Disputes
+              </div>
+            </div>
+            
+            {/* Loading Dashboard Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-20"></div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Loading Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              {/* Loading Current Projects */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Loading Milestone Approval */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-40 mb-4"></div>
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="border border-gray-100 rounded p-3">
+                      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-2/3 mb-2"></div>
+                      <div className="h-8 bg-gray-200 rounded w-20"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              {/* Loading Payment Tracking */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-36 mb-4"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <div className="h-4 bg-gray-200 rounded w-24"></div>
+                      <div className="h-4 bg-gray-200 rounded w-16"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Loading Documents Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center space-x-3">
+                      <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Loading Support Button */}
+            <div className="flex justify-center mt-8 sm:mt-10">
+              <div className="h-12 bg-gray-200 rounded-lg w-40"></div>
+            </div>
+          </div>
         </div>
       </>
     );
@@ -56,7 +147,34 @@ export default function BuyerDashboardPage() {
       <>
         <SafeBillHeader />
         <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
-          <div>Error loading dashboard: {clientProjectsError}</div>
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Error Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
+                <div className="text-gray-500">Track and manage your service projects</div>
+              </div>
+            </div>
+            
+            {/* Error Message */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg sm:text-xl font-semibold text-red-800 mb-2">Failed to Load Dashboard</h3>
+              <p className="text-red-600 mb-4">
+                {typeof clientProjectsError === 'string' ? clientProjectsError : 'An unexpected error occurred while loading your dashboard data.'}
+              </p>
+              <button 
+                onClick={() => dispatch(fetchClientProjects())}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
         </div>
       </>
     );

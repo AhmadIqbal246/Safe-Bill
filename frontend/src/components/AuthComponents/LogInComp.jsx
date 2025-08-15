@@ -169,19 +169,6 @@ export default function LogInComp() {
               Forgot password?
             </a>
           </div> */}
-          
-          {/* Debug button - remove in production */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={debugUserData}
-                className="w-full px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Debug: Check User Data
-              </button>
-            </div>
-          )}
         </form>
       </div>
     </div>
