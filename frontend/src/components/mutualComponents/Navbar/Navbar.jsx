@@ -191,7 +191,11 @@ export default function SafeBillHeader({
                           <p className="text-xs text-gray-500">{userEmail}</p>
                         </button>
                         <Link 
-                          to={user.role === 'seller' ? '/profile' : '/buyer-dashboard'} 
+                          to={
+                            user.role === 'seller' ? '/profile' : 
+                            user.role === 'admin' ? '/admin' : 
+                            '/buyer-dashboard'
+                          } 
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           Profile
@@ -288,7 +292,11 @@ export default function SafeBillHeader({
                             <p className="text-xs text-gray-500">{userEmail}</p>
                           </button>
                           <Link 
-                            to={user.role === 'seller' ? '/profile' : '/buyer-dashboard'} 
+                            to={
+                              user.role === 'seller' ? '/profile' : 
+                              user.role === 'admin' ? '/admin' : 
+                              '/buyer-dashboard'
+                            } 
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             Profile
@@ -414,7 +422,11 @@ export default function SafeBillHeader({
                             <p className="text-xs text-gray-500">{userEmail}</p>
                           </div>
                           <Link 
-                            to={user.role === 'seller' ? '/profile' : '/buyer-dashboard'} 
+                            to={
+                              user.role === 'seller' ? '/profile' : 
+                              user.role === 'admin' ? '/admin' : 
+                              '/buyer-dashboard'
+                            } 
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             Profile
