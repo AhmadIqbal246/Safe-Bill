@@ -44,7 +44,7 @@ const ChatButton = () => {
       </button>
 
       {/* Debug info - only show in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* {process.env.NODE_ENV === 'development' && (
         <div className="absolute bottom-20 right-0 bg-white border border-gray-200 rounded-lg p-2 text-xs text-gray-600 shadow-lg min-w-[200px]">
           <div className="font-semibold mb-1">Debug Info:</div>
           <div>Contacts: {chatContacts.length}</div>
@@ -58,7 +58,7 @@ const ChatButton = () => {
             Refresh
           </button>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
