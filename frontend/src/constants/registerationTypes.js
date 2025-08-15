@@ -206,7 +206,7 @@ export const skillOptions = [
   { value: "renovation_traditionnelle", label: "Rénovation" },
   { value: "audit_energetique", label: "Audit énergétique" }
 ];
-
+  
 // New hierarchical business activity structure based on French classifications
 export const businessActivityStructure = [
   {

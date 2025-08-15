@@ -3,8 +3,10 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.db.models import Q, Max, Count
 
-from .models import Conversation, Message
-from .serializers import MessageSerializer, ConversationSerializer
+from .models import Conversation, Message, ChatContact
+from .serializers import (
+    MessageSerializer, ConversationSerializer, ChatContactSerializer
+)
 from projects.models import Project
 
 
@@ -100,12 +102,29 @@ class MarkReadAPIView(EnsureConversationMixin, generics.UpdateAPIView):
         last_id = request.data.get("last_read_message_id")
         if not last_id:
             return Response({"detail": "last_read_message_id required"}, status=400)
-        Message.objects.filter(
+        
+        # Mark messages as read
+        unread_messages = Message.objects.filter(
             conversation=conversation,
             sender__ne=request.user,
             id__lte=last_id,
             read_at__isnull=True,
-        ).update(read_at=timezone.now())
+        )
+        unread_messages.update(read_at=timezone.now())
+        
+        # Update chat contact unread count
+        other_participant = conversation.get_other_participant(request.user)
+        if other_participant:
+            try:
+                chat_contact = ChatContact.objects.get(
+                    user=request.user,
+                    contact=other_participant,
+                    project=conversation.project
+                )
+                chat_contact.reset_unread_count()
+            except ChatContact.DoesNotExist:
+                pass
+        
         return Response({"status": "ok"})
 
 
@@ -125,3 +144,61 @@ class InboxListAPIView(generics.ListAPIView):
             )
             .order_by("-last_time")
         )
+
+
+class ChatContactListAPIView(generics.ListAPIView):
+    """
+    Get all chat contacts for the current user (WhatsApp-like chat list).
+    This shows all users the current user has chatted with through projects.
+    """
+    serializer_class = ChatContactSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatContact.objects.filter(user=user).order_by('-last_message_at')
+
+
+class ChatContactDetailAPIView(generics.RetrieveAPIView):
+    """
+    Get detailed information about a specific chat contact.
+    """
+    serializer_class = ChatContactSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatContact.objects.filter(user=user)
+
+
+class MarkContactReadAPIView(generics.UpdateAPIView):
+    """
+    Mark all messages from a specific contact as read.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        contact_id = kwargs.get("contact_id")
+        try:
+            chat_contact = ChatContact.objects.get(
+                id=contact_id,
+                user=request.user
+            )
+            
+            # Mark all unread messages from this contact as read
+            unread_messages = Message.objects.filter(
+                conversation__project=chat_contact.project,
+                sender=chat_contact.contact,
+                read_at__isnull=True
+            )
+            unread_messages.update(read_at=timezone.now())
+            
+            # Reset unread count for this contact
+            chat_contact.reset_unread_count()
+            
+            return Response({"status": "ok"})
+        except ChatContact.DoesNotExist:
+            return Response(
+                {"detail": "Chat contact not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )

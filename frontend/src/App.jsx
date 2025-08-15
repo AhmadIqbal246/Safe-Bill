@@ -69,9 +69,9 @@ function App() {
           <Route path='/project-invite' element={<ProtectedRoute><InviteViewProject/></ProtectedRoute>}/>
           <Route path='/professional-buyer' element={<ProfessionalBuyerPage/>}/>
           <Route path='/not-authorized' element={<NotAuthorized/>}/>
-          <Route path='/buyer-dashboard' element={<ProtectedRoute requiredRole="buyer"><BuyerDashboardPage/></ProtectedRoute>}/>
-          <Route path='/project/:projectId' element={<ProtectedRoute requiredRole="buyer"><ProjectDetailPage/></ProtectedRoute>}/>
-          <Route path='/dispute-submit' element={<ProtectedRoute requiredRole="buyer"><DisputeSubmit/></ProtectedRoute>}/>
+          <Route path='/buyer-dashboard' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><BuyerDashboardPage/></ProtectedRoute>}/>
+          <Route path='/project/:projectId' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><ProjectDetailPage/></ProtectedRoute>}/>
+          <Route path='/dispute-submit' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><DisputeSubmit/></ProtectedRoute>}/>
           <Route path='/disputes' element={<ProtectedRoute><DisputesPage/></ProtectedRoute>}/>
           <Route path='/seller-disputes' element={<ProtectedRoute requiredRole="seller"><SellerDisputesPage/></ProtectedRoute>}/>
           <Route path='/dispute/:disputeId' element={<ProtectedRoute><DisputeDetailPage/></ProtectedRoute>}/>

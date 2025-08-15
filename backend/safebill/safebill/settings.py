@@ -42,7 +42,9 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # Application definition
 
 INSTALLED_APPS = [
-
+    # Channels must be first for WebSocket routing to work
+    'channels',
+    
     'corsheaders',
 
     'django.contrib.admin',
@@ -60,8 +62,7 @@ INSTALLED_APPS = [
     'notifications',
     'feedback',
     'disputes',
-    # Channels / Chat
-    'channels',
+    # Chat
     'chat',
     'adminpanelApp',
 ]
@@ -98,6 +99,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'safebill.wsgi.application'
 ASGI_APPLICATION = 'safebill.asgi.application'
 
+# Django Channels Configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
+# Ensure channels middleware is loaded
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

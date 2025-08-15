@@ -26,9 +26,33 @@ export default function LogInComp() {
     dispatch(loginUser(form));
   };
 
+  // Debug function to check current user data
+  const debugUserData = () => {
+    const storedUser = sessionStorage.getItem('user');
+    const storedAccess = sessionStorage.getItem('access');
+    console.log('=== DEBUG USER DATA ===');
+    console.log('Stored user:', storedUser);
+    console.log('Stored access:', storedAccess);
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      console.log('Parsed user:', parsedUser);
+      console.log('User role:', parsedUser.role);
+      console.log('Role comparison tests:');
+      console.log('role === "buyer":', parsedUser.role === 'buyer');
+      console.log('role === "professional-buyer":', parsedUser.role === 'professional-buyer');
+      console.log('role.includes("buyer"):', parsedUser.role && parsedUser.role.includes('buyer'));
+    }
+    console.log('=====================');
+  };
+
   useEffect(() => {
     if (success && user) {
       toast.success("Login successful!");
+      console.log("User data:", user);
+      console.log("User role:", user.role);
+      console.log("User role type:", typeof user.role);
+      console.log("User onboarding status:", user.onboarding_complete);
+      
       setTimeout(() => {
         dispatch(resetAuthState());
         
@@ -54,13 +78,15 @@ export default function LogInComp() {
           // Role-based default landing pages
           if (user.role === 'admin') {
             targetUrl = '/admin';
-          } else if (user.role === 'buyer') {
+          } else if (user.role === 'professional-buyer') {
             targetUrl = '/buyer-dashboard';
           } else if (user.role === 'seller') {
             targetUrl = '/seller-dashboard';
-          } else if (user.role === 'professional-buyer') {
-            targetUrl = '/professional-buyer';
           }
+        } else if (user.role === 'buyer') {
+          targetUrl = '/buyer-dashboard';
+        } else if (user.role === 'admin') {
+          targetUrl = '/admin';
         }
         
         navigate(targetUrl);
@@ -143,6 +169,19 @@ export default function LogInComp() {
               Forgot password?
             </a>
           </div>
+          
+          {/* Debug button - remove in production */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={debugUserData}
+                className="w-full px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Debug: Check User Data
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
