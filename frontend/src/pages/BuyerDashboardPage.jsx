@@ -8,6 +8,7 @@ import MilestoneApproval from '../components/BuyerDashboard/MilestoneApproval';
 import PaymentTracking from '../components/BuyerDashboard/PaymentTracking';
 import DocumentsSection from '../components/BuyerDashboard/DocumentsSection';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import Chat from '../components/mutualComponents/Chat/Chat';
 
 export default function BuyerDashboardPage() {
   const dispatch = useDispatch();
@@ -100,6 +101,9 @@ export default function BuyerDashboardPage() {
           </button>
         </div>
       </div>
+      
+      {/* Chat Component */}
+      <Chat />
     </>
   );
 }

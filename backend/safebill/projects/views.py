@@ -10,6 +10,7 @@ from .serializers import (
     MilestoneSerializer, MilestoneUpdateSerializer
 )
 from notifications.models import Notification
+from chat.models import ChatContact, Conversation
 
 
 class ProjectCreateAPIView(generics.CreateAPIView):
@@ -141,6 +142,9 @@ class ProjectInviteAPIView(APIView):
             project.client = request.user
             project.save()
             
+            # Create chat contacts for both seller and buyer
+            self._create_chat_contacts(project)
+            
             # Create notification for the buyer
             Notification.objects.create(
                 user=request.user,
@@ -183,6 +187,9 @@ class ProjectInviteAPIView(APIView):
             project.client = request.user
             project.save()
             
+            # Create chat contacts for both seller and buyer
+            self._create_chat_contacts(project)
+            
             # Create notification for the seller
             Notification.objects.create(
                 user=project.user,
@@ -198,6 +205,52 @@ class ProjectInviteAPIView(APIView):
         return Response(
             {'detail': 'Project accepted successfully.'},
             status=status.HTTP_200_OK
+        )
+
+    def _create_chat_contacts(self, project):
+        """
+        Create chat contacts for both seller and buyer when a project is accepted
+        """
+        seller = project.user
+        buyer = project.client
+        
+        if not seller or not buyer:
+            return
+        
+        # Create or get conversation for this project
+        conversation, created = Conversation.objects.get_or_create(
+            project=project,
+            defaults={
+                'last_message_at': timezone.now(),
+                'last_message_text': f"Project '{project.name}' started"
+            }
+        )
+        
+        # Add participants to conversation if not already added
+        conversation.participants.add(seller, buyer)
+        
+        # Create chat contact for seller (seller sees buyer as contact)
+        ChatContact.objects.get_or_create(
+            user=seller,
+            contact=buyer,
+            project=project,
+            defaults={
+                'last_message_at': timezone.now(),
+                'last_message_text': f"Project '{project.name}' started",
+                'unread_count': 0
+            }
+        )
+        
+        # Create chat contact for buyer (buyer sees seller as contact)
+        ChatContact.objects.get_or_create(
+            user=buyer,
+            contact=seller,
+            project=project,
+            defaults={
+                'last_message_at': timezone.now(),
+                'last_message_text': f"Project '{project.name}' started",
+                'unread_count': 0
+            }
         )
 
 

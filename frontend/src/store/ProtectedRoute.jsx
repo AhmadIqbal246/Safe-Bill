@@ -15,9 +15,21 @@ export default function ProtectedRoute({ children, redirectTo = "/login", requir
   }
 
   // Role-based protection
-  if (requiredRole && user?.role !== requiredRole) {
-    // Redirect to not-authorized page if user doesn't have the required role
-    return <Navigate to="/not-authorized" replace />;
+  if (requiredRole) {
+    const userRole = user?.role;
+    let hasRequiredRole = false;
+
+    // Handle both single role (string) and multiple roles (array)
+    if (Array.isArray(requiredRole)) {
+      hasRequiredRole = requiredRole.includes(userRole);
+    } else {
+      hasRequiredRole = userRole === requiredRole;
+    }
+
+    if (!hasRequiredRole) {
+      // Redirect to not-authorized page if user doesn't have the required role
+      return <Navigate to="/not-authorized" replace />;
+    }
   }
 
   // If using as a wrapper for nested routes:
