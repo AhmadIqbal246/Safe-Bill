@@ -1,6 +1,7 @@
 .env
 # Python cache files
 __pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 *.so
@@ -20,3 +21,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Django specific
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/

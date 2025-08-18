@@ -18,6 +18,23 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
 from rest_framework.decorators import api_view, permission_classes
+import re
+import unicodedata
+
+
+def _get_seller_data(seller):
+    """Helper function to standardize seller data response"""
+    return {
+        'id': seller.user.id,
+        'name': seller.user.username,
+        'business_type': seller.type_of_activity,
+        'about': seller.user.about,
+        'profile_pic': seller.user.profile_pic.url if seller.user.profile_pic else None,
+        'skills': seller.skills,
+        'selected_service_areas': seller.selected_service_areas,
+        'full_address': seller.full_address,
+        'company_name': seller.company_name
+    }
 
 User = get_user_model()
 
@@ -242,13 +259,7 @@ def filter_sellers_by_service_type(request):
         type_of_activity__iexact=service_type,
         user__role='seller'
     )
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -264,13 +275,7 @@ def filter_sellers_by_service_area(request):
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -293,13 +298,7 @@ def filter_sellers_by_skills(request):
         user__role='seller'
     )
     print(sellers)
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -317,13 +316,7 @@ def filter_sellers_by_type_and_area(request):
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -352,26 +345,99 @@ def filter_sellers_by_type_area_and_skills(request):
         query = query.filter(skills__overlap=skills_list)
     
     sellers = query
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
 @api_view(['GET'])
 def list_all_sellers(request):
     sellers = BusinessDetail.objects.filter(user__role='seller')
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
+    return Response(data)
+
+
+@api_view(['GET'])
+def get_seller_details(request, seller_id):
+    """Get detailed information for a specific seller"""
+    try:
+        seller = BusinessDetail.objects.get(user__id=seller_id, user__role='seller')
+        data = _get_seller_data(seller)
+        return Response(data)
+    except BusinessDetail.DoesNotExist:
+        return Response(
+            {'detail': 'Seller not found.'},
+            status=404
+        )
+
+
+def _normalize_label(text: str) -> str:
+    if not text:
+        return ''
+    # Remove accents, lowercase, replace non-alphanum with underscores, collapse repeats
+    text = unicodedata.normalize('NFD', text)
+    text = ''.join(ch for ch in text if unicodedata.category(ch) != 'Mn')
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]+", "_", text)
+    text = re.sub(r"_+", "_", text).strip('_')
+    return text
+
+
+@api_view(['GET'])
+def filter_sellers_by_location(request):
+    """
+    Flexible location-based filtering using map selection details.
+
+    Query params (all optional but at least one of city/postal_code/address is recommended):
+      - city
+      - postal_code
+      - address (formatted)
+      - lat
+      - lng
+
+    Strategy:
+      1) If city and postal_code are provided, build a candidate service-area value
+         (e.g., "le_mans_72100") and match against selected_service_areas.
+      2) Fallbacks if no direct service-area match:
+         - Match by department number (first two digits of postal_code) in department_numbers
+         - Match full_address icontains city or postal_code
+    """
+    city = (request.GET.get('city') or '').strip()
+    postal_code = (request.GET.get('postal_code') or '').strip()
+    address = (request.GET.get('address') or '').strip()
+
+    # Base queryset: sellers only
+    qs = BusinessDetail.objects.filter(user__role='seller')
+
+    # Attempt 1: service area value derived from city + postal
+    matched = None
+    if city and postal_code and postal_code.isdigit():
+        candidate_value = f"{_normalize_label(city)}_{postal_code}"
+        direct = qs.filter(selected_service_areas__contains=[candidate_value])
+        if direct.exists():
+            matched = direct
+
+    # Attempt 2: by department number
+    if matched is None and postal_code and len(postal_code) >= 2 and postal_code[:2].isdigit():
+        dept = postal_code[:2]
+        dept_match = qs.filter(department_numbers__icontains=dept)
+        if dept_match.exists():
+            matched = dept_match
+
+    # Attempt 3: by full address icontains city or postal code
+    if matched is None and (city or postal_code or address):
+        addr_qs = qs
+        if city:
+            addr_qs = addr_qs.filter(full_address__icontains=city)
+        if postal_code:
+            addr_qs = addr_qs | qs.filter(full_address__icontains=postal_code)
+        if address:
+            addr_qs = addr_qs | qs.filter(full_address__icontains=address)
+        addr_qs = addr_qs.distinct()
+        if addr_qs.exists():
+            matched = addr_qs
+
+    sellers = matched if matched is not None else qs.none()
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 

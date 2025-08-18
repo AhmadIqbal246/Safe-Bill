@@ -1,0 +1,250 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Star, ChevronLeft, MapPin, Shield, FileCheck, Users } from 'lucide-react';
+import axios from 'axios';
+import SafeBillHeader from '../mutualComponents/Navbar/Navbar';
+import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Helper function to get default avatar
+function getDefaultAvatar(username) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    username || "User"
+  )}&background=E6F0FA&color=01257D&size=96`;
+}
+
+// Helper function to safely get array fields
+function getSafeArrayField(profile, fieldName) {
+  const value = profile[fieldName];
+  return Array.isArray(value) ? value : [];
+}
+
+// Helper function to get business activity label
+function getBusinessActivityLabel(activityId) {
+  const activity = businessActivityStructure.find(opt => opt.id === activityId);
+  return activity?.label || activityId;
+}
+
+// Helper function to get service area label
+function getServiceAreaLabel(areaId) {
+  const area = serviceAreaOptions.find(opt => opt.value === areaId);
+  return area?.label || areaId;
+}
+
+export default function ProfessionalDetailPage() {
+  const { professionalId } = useParams();
+  const navigate = useNavigate();
+  const [professional, setProfessional] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfessionalDetails = async () => {
+      try {
+        setLoading(true);
+        // Use the new API endpoint to fetch only the specific seller's details
+        const response = await axios.get(`${BASE_URL}api/accounts/seller/${professionalId}/`);
+        
+        if (response.data) {
+          setProfessional(response.data);
+        } else {
+          setError('Professional not found');
+        }
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          setError('Professional not found');
+        } else {
+          setError('Failed to load professional details');
+        }
+        console.error('Error fetching professional details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfessionalDetails();
+  }, [professionalId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !professional) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">{error || 'Professional not found'}</div>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-[#01257D] text-white rounded-md hover:bg-[#2346a0] transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Ensure professional has required fields with safe defaults
+  const safeProfessional = {
+    ...professional,
+    skills: getSafeArrayField(professional, 'skills'),
+    selected_service_areas: getSafeArrayField(professional, 'selected_service_areas'),
+  };
+
+  // Get profile picture
+  const getProfilePicture = () => {
+    if (professional.profile_pic) {
+      // Handle both relative and absolute URLs
+      if (professional.profile_pic.startsWith('http')) {
+        return professional.profile_pic;
+      } else {
+        // If it's a relative path, prepend the base URL
+        // Remove leading slash from profile_pic to avoid double slashes
+        const cleanPath = professional.profile_pic.startsWith('/') 
+          ? professional.profile_pic.slice(1) 
+          : professional.profile_pic;
+        return `${BASE_URL}${cleanPath}`;
+      }
+    }
+    return getDefaultAvatar(professional.name);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <SafeBillHeader />
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <img
+                src={getProfilePicture()}
+                alt={professional.name}
+                className="w-24 h-24 rounded-full object-cover border-4 border-[#E6F0FA]"
+              />
+            </div>
+
+            <h1 className="text-3xl font-bold text-[#111827] mb-2">
+              {professional.name}
+            </h1>
+
+            <p className="text-lg text-gray-600 mb-3">
+              {getBusinessActivityLabel(professional.business_type) || "Professional Services"}
+            </p>
+
+            <div className="flex items-center justify-center mb-4">
+              <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+              <span className="text-gray-600 mr-4">
+                {safeProfessional.selected_service_areas.length > 0 
+                  ? `Serving ${safeProfessional.selected_service_areas.length} areas`
+                  : "Service areas not specified"
+                }
+              </span>
+              {/* <div className="flex items-center">
+                <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
+                <span className="font-semibold text-[#111827]">4.8</span>
+                <span className="text-gray-500 ml-1">(24 reviews)</span>
+              </div> */}
+            </div>
+
+            <button className="bg-[#01257D] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] transition-colors">
+              Request Quote
+            </button>
+          </div>
+        </div>
+
+        {/* About Section */}
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+          <h2 className="text-2xl font-bold text-[#111827] mb-4">
+            About {professional.name}
+          </h2>
+          <p className="text-gray-700 leading-relaxed">
+            {professional.about || "No about information provided."}
+          </p>
+        </div>
+
+        {/* Skills Section */}
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">
+            Skills & Services
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {safeProfessional.skills.length > 0 ? (
+              safeProfessional.skills.map((skill, index) => (
+                <span
+                  key={`skill-${index}`}
+                  className="px-4 py-2 bg-[#E6F0FA] text-[#01257D] rounded-full text-sm font-medium"
+                >
+                  {skill}
+                </span>
+              ))
+            ) : (
+              <span className="text-gray-400">No skills listed.</span>
+            )}
+          </div>
+        </div>
+
+        {/* Service Areas Section */}
+        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">
+            Service Areas
+          </h2>
+          {/* <div className="relative mb-4">
+            <input
+              type="text"
+              placeholder="Enter your location to check availability"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+            />
+            <ChevronLeft className="absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-5 h-5 text-gray-400" />
+          </div> */}
+          <div className="flex flex-wrap gap-2">
+            {safeProfessional.selected_service_areas.length > 0 ? (
+              safeProfessional.selected_service_areas.map((areaId, index) => (
+                <span
+                  key={`area-${index}`}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                >
+                  {getServiceAreaLabel(areaId)}
+                </span>
+              ))
+            ) : (
+              <span className="text-gray-400">No service areas specified.</span>
+            )}
+          </div>
+        </div>
+
+        {/* Guarantees Section */}
+        <div className="bg-white rounded-xl shadow-sm p-8">
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">
+            Guarantees
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <FileCheck className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
+              <p className="font-semibold text-[#111827]">KYC Validated</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <Shield className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
+              <p className="font-semibold text-[#111827]">Insured</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <Shield className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
+              <p className="font-semibold text-[#111827]">Professional Liability</p>
+            </div>
+            <div className="border border-gray-200 rounded-lg p-4 text-center">
+              <Users className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
+              <p className="font-semibold text-[#111827]">Trusted by ProConnect</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
