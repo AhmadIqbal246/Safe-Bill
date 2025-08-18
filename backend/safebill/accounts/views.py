@@ -21,6 +21,21 @@ from rest_framework.decorators import api_view, permission_classes
 import re
 import unicodedata
 
+
+def _get_seller_data(seller):
+    """Helper function to standardize seller data response"""
+    return {
+        'id': seller.user.id,
+        'name': seller.user.username,
+        'business_type': seller.type_of_activity,
+        'about': seller.user.about,
+        'profile_pic': seller.user.profile_pic.url if seller.user.profile_pic else None,
+        'skills': seller.skills,
+        'selected_service_areas': seller.selected_service_areas,
+        'full_address': seller.full_address,
+        'company_name': seller.company_name
+    }
+
 User = get_user_model()
 
 
@@ -244,13 +259,7 @@ def filter_sellers_by_service_type(request):
         type_of_activity__iexact=service_type,
         user__role='seller'
     )
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -266,13 +275,7 @@ def filter_sellers_by_service_area(request):
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -295,13 +298,7 @@ def filter_sellers_by_skills(request):
         user__role='seller'
     )
     print(sellers)
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -319,13 +316,7 @@ def filter_sellers_by_type_and_area(request):
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
@@ -354,27 +345,29 @@ def filter_sellers_by_type_area_and_skills(request):
         query = query.filter(skills__overlap=skills_list)
     
     sellers = query
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
 @api_view(['GET'])
 def list_all_sellers(request):
     sellers = BusinessDetail.objects.filter(user__role='seller')
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
+
+
+@api_view(['GET'])
+def get_seller_details(request, seller_id):
+    """Get detailed information for a specific seller"""
+    try:
+        seller = BusinessDetail.objects.get(user__id=seller_id, user__role='seller')
+        data = _get_seller_data(seller)
+        return Response(data)
+    except BusinessDetail.DoesNotExist:
+        return Response(
+            {'detail': 'Seller not found.'},
+            status=404
+        )
 
 
 def _normalize_label(text: str) -> str:
@@ -444,13 +437,7 @@ def filter_sellers_by_location(request):
             matched = addr_qs
 
     sellers = matched if matched is not None else qs.none()
-    data = [
-        {
-            'name': s.user.username,
-            'business_type': s.type_of_activity
-        }
-        for s in sellers
-    ]
+    data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
 
