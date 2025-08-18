@@ -42,7 +42,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 # Application definition
 
 INSTALLED_APPS = [
-    # Channels must be first for WebSocket routing to work
+    'daphne',
     'channels',
     
     'corsheaders',

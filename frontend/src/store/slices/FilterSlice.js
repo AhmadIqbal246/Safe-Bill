@@ -96,6 +96,21 @@ export const filterSellersByTypeAreaAndSkills = createAsyncThunk(
   }
 );
 
+export const filterSellersByLocation = createAsyncThunk(
+  'filter/filterSellersByLocation',
+  async ({ city, postalCode, address }, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}api/accounts/filter-sellers-by-location/`,
+        { params: { city, postal_code: postalCode, address } }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || 'Network error');
+    }
+  }
+);
+
 const filterSlice = createSlice({
   name: 'filter',
   initialState: {
@@ -181,6 +196,18 @@ const filterSlice = createSlice({
         state.sellers = action.payload;
       })
       .addCase(filterSellersByTypeAreaAndSkills.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(filterSellersByLocation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(filterSellersByLocation.fulfilled, (state, action) => {
+        state.loading = false;
+        state.sellers = action.payload;
+      })
+      .addCase(filterSellersByLocation.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

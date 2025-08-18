@@ -15,7 +15,8 @@ from .views import (
     list_all_sellers,
     UserProfileView,
     verify_siret_api,
-    BuyerRegistrationView
+    BuyerRegistrationView,
+    filter_sellers_by_location
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -63,6 +64,11 @@ urlpatterns = [
         'all-sellers/',
         list_all_sellers,
         name='all-sellers'
+    ),
+    path(
+        'filter-sellers-by-location/',
+        filter_sellers_by_location,
+        name='filter-sellers-by-location'
     ),
     path('verify-siret/', verify_siret_api, name='verify-siret'),
 ] 

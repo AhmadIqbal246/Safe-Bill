@@ -307,7 +307,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
       <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">Find local professionals</h2>
       
       {/* Show pre-applied filters indicator */}
-      {(initialFilters.serviceType || initialFilters.area || initialFilters.skills) && (
+      {/* {(initialFilters.serviceType || initialFilters.area || initialFilters.skills) && (
         <div className="mb-4 p-3 bg-[#E6F0FA] border border-[#01257D] rounded-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#01257D] text-sm">
@@ -350,7 +350,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             </button>
           </div>
         </div>
-      )}
+      )} */}
       
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => {
