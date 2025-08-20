@@ -14,7 +14,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             'company_name', 'siret_number', 'full_address',
             'type_of_activity', 'selected_categories',
             'selected_subcategories',
-            'selected_service_areas', 'department_numbers',
+            'selected_service_areas',
             'siret_verified', 'company_contact_person', 'skills'
         ]
         read_only_fields = ['siret_verified']
@@ -85,7 +85,7 @@ class SellerRegistrationSerializer(serializers.Serializer):
             siret_number=business_info['siret_number'],
             full_address=business_info['full_address'],
             type_of_activity=business_info['type_of_activity'],
-            department_numbers=business_info.get('department_numbers', ''),
+            #department_numbers=business_info.get('department_numbers', ''),
             selected_categories=business_info.get('selected_categories', []),
             selected_subcategories=business_info.get('selected_subcategories', []),
             selected_service_areas=business_info.get('selected_service_areas', []),
@@ -205,7 +205,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     selected_categories = serializers.SerializerMethodField()
     selected_subcategories = serializers.SerializerMethodField()
     selected_service_areas = serializers.SerializerMethodField()
-    department_numbers = serializers.SerializerMethodField()
+    #department_numbers = serializers.SerializerMethodField()
     skills = serializers.SerializerMethodField()
     profile_pic = serializers.ImageField(required=False, allow_null=True)
 
@@ -214,7 +214,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'email', 'phone_number',
             'type_of_activity', 'selected_categories', 'selected_subcategories',
-             'selected_service_areas', 'department_numbers',
+             'selected_service_areas',
             'about', 'skills', 'profile_pic'
         ]
         read_only_fields = ['email']  # Only email is read-only now
@@ -248,12 +248,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return obj.business_detail.selected_service_areas
         except BusinessDetail.DoesNotExist:
             return []
-
-    def get_department_numbers(self, obj):
-        try:
-            return obj.business_detail.department_numbers
-        except BusinessDetail.DoesNotExist:
-            return None
 
     def get_skills(self, obj):
         try:
@@ -291,7 +285,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'selected_categories': 'selected_categories',
             'selected_subcategories': 'selected_subcategories',
             'selected_service_areas': 'selected_service_areas',
-            'departmentNumbers': 'department_numbers',  # Map camelCase to snake_case
             'skills': 'skills'
         }
         

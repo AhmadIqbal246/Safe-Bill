@@ -32,28 +32,42 @@ export const updateUserProfile = createAsyncThunk(
       const token = sessionStorage.getItem('access');
       let dataToSend;
       let headers;
+      
       if (profileData.profile_pic) {
         // If updating profile_pic, use FormData
         dataToSend = new FormData();
+        
         Object.entries(profileData).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            if (key === 'skills' && Array.isArray(value)) {
-              dataToSend.append('skills', JSON.stringify(value));
+            if (key === 'profile_pic') {
+              // Handle file directly
+              dataToSend.append(key, value);
+            } else if (Array.isArray(value)) {
+              // Handle ALL arrays the same way - append each item individually
+              // This matches how skills is being handled in your current working case
+              value.forEach((item, index) => {
+                dataToSend.append(`${key}[${index}]`, item);
+              });
+              // OR if your backend expects JSON strings for all arrays:
+              // dataToSend.append(key, JSON.stringify(value));
             } else {
               dataToSend.append(key, value);
             }
           }
         });
+        
         headers = {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+          // Don't set Content-Type for FormData - let browser handle it
         };
       } else {
         dataToSend = profileData;
         headers = {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         };
       }
+      
       const response = await axios.patch(
         `${BASE_URL}api/accounts/profile/`,
         dataToSend,
@@ -67,6 +81,7 @@ export const updateUserProfile = createAsyncThunk(
     }
   }
 );
+
 
 const userProfileSlice = createSlice({
   name: 'userProfile',

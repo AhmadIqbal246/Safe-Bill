@@ -161,7 +161,7 @@ export default function MyProfileComp() {
       selected_categories: safeProfile.selected_categories,
       selected_subcategories: safeProfile.selected_subcategories,
       selected_service_areas: safeProfile.selected_service_areas,
-      departmentNumbers: profile.department_numbers || "",
+      //departmentNumbers: profile.department_numbers || "",
       about: profile.about || "",
       skills: safeProfile.skills,
       profile_pic: null,
@@ -211,33 +211,50 @@ export default function MyProfileComp() {
     setShowServiceAreasDropdown(false);
   };
 
+
   const handleEditSubmit = (e) => {
     e.preventDefault();
     if (!editForm) return;
-    // Use existing values for any blank fields
+  
+    // Create a more robust data preparation that preserves form values
     const data = {
       username: editForm.username || profile.username,
       type_of_activity: editForm.type_of_activity || profile.type_of_activity,
-      selected_categories: editForm.selected_categories && editForm.selected_categories.length > 0
-        ? editForm.selected_categories
-        : profile.selected_categories,
-      selected_subcategories: editForm.selected_subcategories && editForm.selected_subcategories.length > 0
-        ? editForm.selected_subcategories
-        : profile.selected_subcategories,
-      selected_service_areas: editForm.selected_service_areas && editForm.selected_service_areas.length > 0
-        ? editForm.selected_service_areas
-        : profile.selected_service_areas,
-      departmentNumbers:
-        editForm.departmentNumbers || profile.department_numbers || "",
-      about: editForm.about || profile.about,
-      skills:
-        editForm.skills && editForm.skills.length > 0
-          ? editForm.skills
-          : profile.skills,
+      about: editForm.about !== undefined ? editForm.about : profile.about,
     };
+  
+    // Handle array fields more carefully - preserve form values if they exist, even if empty
+    // Only fall back to profile values if the form field is null/undefined
+    if (editForm.selected_categories !== undefined) {
+      data.selected_categories = editForm.selected_categories;
+    } else {
+      data.selected_categories = profile.selected_categories || [];
+    }
+  
+    if (editForm.selected_subcategories !== undefined) {
+      data.selected_subcategories = editForm.selected_subcategories;
+    } else {
+      data.selected_subcategories = profile.selected_subcategories || [];
+    }
+  
+    if (editForm.selected_service_areas !== undefined) {
+      data.selected_service_areas = editForm.selected_service_areas;
+    } else {
+      data.selected_service_areas = profile.selected_service_areas || [];
+    }
+  
+    if (editForm.skills !== undefined) {
+      data.skills = editForm.skills;
+    } else {
+      data.skills = profile.skills || [];
+    }
+  
+    // Add profile picture if it exists
     if (editForm.profile_pic) {
       data.profile_pic = editForm.profile_pic;
     }
+  
+    console.log('Submitting data:', data); // Debug log to verify data
     dispatch(updateUserProfile(data));
   };
 
@@ -295,11 +312,11 @@ export default function MyProfileComp() {
             }).join(", ")}
           </div>
         )}
-        <div className="text-gray-400 text-sm mb-2">
+        {/* <div className="text-gray-400 text-sm mb-2">
           {profile.department_numbers
             ? `Service Area Department: ${profile.department_numbers}`
             : "Department numbers not specified"}
-        </div>
+        </div> */}
         <button
           className="w-full max-w-xs bg-[#E6F0FA] text-[#01257D] font-semibold py-2 rounded-md mb-2 mt-2 cursor-pointer"
           onClick={openEditModal}
@@ -876,7 +893,7 @@ export default function MyProfileComp() {
                     </div>
                   )}
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium mb-1">
                     Department Numbers (Text Input)
                   </label>
@@ -893,7 +910,7 @@ export default function MyProfileComp() {
                     Enter the department numbers where you provide services
                     (e.g., 75 for Paris, 69 for Lyon)
                   </p>
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     About
