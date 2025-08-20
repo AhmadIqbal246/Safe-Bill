@@ -10,7 +10,6 @@ from .views import (
     filter_sellers_by_service_type,
     filter_sellers_by_service_area,
     filter_sellers_by_type_and_area,
-    filter_sellers_by_skills,
     filter_sellers_by_type_area_and_skills,
     list_all_sellers,
     UserProfileView,
@@ -50,11 +49,6 @@ urlpatterns = [
         'filter-sellers-by-type-and-area/',
         filter_sellers_by_type_and_area,
         name='filter-sellers-by-type-and-area'
-    ),
-    path(
-        'filter-sellers-by-skills/',
-        filter_sellers_by_skills,
-        name='filter-sellers-by-skills'
     ),
     path(
         'filter-sellers-by-type-area-and-skills/',

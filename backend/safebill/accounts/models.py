@@ -47,7 +47,7 @@ class BusinessDetail(models.Model):
     #department_numbers = models.CharField(max_length=255, blank=True)
     siret_verified = models.BooleanField(default=False)
     company_contact_person = models.CharField(max_length=255, blank=True)
-    skills = models.JSONField(default=list, blank=True)
+    #skills = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         siret_info = (f"(SIRET: "

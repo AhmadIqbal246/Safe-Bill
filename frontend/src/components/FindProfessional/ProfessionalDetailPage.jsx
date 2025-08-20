@@ -1,9 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Star, ChevronLeft, MapPin, Shield, FileCheck, Users } from 'lucide-react';
-import axios from 'axios';
-import SafeBillHeader from '../mutualComponents/Navbar/Navbar';
-import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Star,
+  ChevronLeft,
+  MapPin,
+  Shield,
+  FileCheck,
+  Users,
+} from "lucide-react";
+import axios from "axios";
+import SafeBillHeader from "../mutualComponents/Navbar/Navbar";
+import {
+  businessActivityStructure,
+  serviceAreaOptions,
+} from "../../constants/registerationTypes";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -22,13 +32,40 @@ function getSafeArrayField(profile, fieldName) {
 
 // Helper function to get business activity label
 function getBusinessActivityLabel(activityId) {
-  const activity = businessActivityStructure.find(opt => opt.id === activityId);
+  const activity = businessActivityStructure.find(
+    (opt) => opt.id === activityId
+  );
   return activity?.label || activityId;
+}
+
+function getCategoryLabel(categoryId) {
+  for (const activity of businessActivityStructure) {
+    const category = activity.categories.find((cat) => cat.id === categoryId);
+    if (category) {
+      return category.label;
+    }
+  }
+  return categoryId; // fallback to ID if not found
+}
+
+// Helper function to get subcategory label from businessActivityStructure
+function getSubcategoryLabel(subcategoryId) {
+  for (const activity of businessActivityStructure) {
+    for (const category of activity.categories) {
+      const subcategory = category.subcategories.find(
+        (sub) => sub.id === subcategoryId
+      );
+      if (subcategory) {
+        return subcategory.label;
+      }
+    }
+  }
+  return subcategoryId; // fallback to ID if not found
 }
 
 // Helper function to get service area label
 function getServiceAreaLabel(areaId) {
-  const area = serviceAreaOptions.find(opt => opt.value === areaId);
+  const area = serviceAreaOptions.find((opt) => opt.value === areaId);
   return area?.label || areaId;
 }
 
@@ -44,20 +81,22 @@ export default function ProfessionalDetailPage() {
       try {
         setLoading(true);
         // Use the new API endpoint to fetch only the specific seller's details
-        const response = await axios.get(`${BASE_URL}api/accounts/seller/${professionalId}/`);
-        
+        const response = await axios.get(
+          `${BASE_URL}api/accounts/seller/${professionalId}/`
+        );
+
         if (response.data) {
           setProfessional(response.data);
         } else {
-          setError('Professional not found');
+          setError("Professional not found");
         }
       } catch (err) {
         if (err.response && err.response.status === 404) {
-          setError('Professional not found');
+          setError("Professional not found");
         } else {
-          setError('Failed to load professional details');
+          setError("Failed to load professional details");
         }
-        console.error('Error fetching professional details:', err);
+        console.error("Error fetching professional details:", err);
       } finally {
         setLoading(false);
       }
@@ -78,7 +117,9 @@ export default function ProfessionalDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">{error || 'Professional not found'}</div>
+          <div className="text-red-500 text-xl mb-4">
+            {error || "Professional not found"}
+          </div>
           <button
             onClick={() => navigate(-1)}
             className="px-4 py-2 bg-[#01257D] text-white rounded-md hover:bg-[#2346a0] transition-colors"
@@ -93,21 +134,26 @@ export default function ProfessionalDetailPage() {
   // Ensure professional has required fields with safe defaults
   const safeProfessional = {
     ...professional,
-    skills: getSafeArrayField(professional, 'skills'),
-    selected_service_areas: getSafeArrayField(professional, 'selected_service_areas'),
+    // skills: getSafeArrayField(professional, 'skills'),
+    selected_service_areas: getSafeArrayField(
+      professional,
+      "selected_service_areas"
+    ),
+    categories: getSafeArrayField(professional, "categories"),
+    subcategories: getSafeArrayField(professional, "subcategories"),
   };
 
   // Get profile picture
   const getProfilePicture = () => {
     if (professional.profile_pic) {
       // Handle both relative and absolute URLs
-      if (professional.profile_pic.startsWith('http')) {
+      if (professional.profile_pic.startsWith("http")) {
         return professional.profile_pic;
       } else {
         // If it's a relative path, prepend the base URL
         // Remove leading slash from profile_pic to avoid double slashes
-        const cleanPath = professional.profile_pic.startsWith('/') 
-          ? professional.profile_pic.slice(1) 
+        const cleanPath = professional.profile_pic.startsWith("/")
+          ? professional.profile_pic.slice(1)
           : professional.profile_pic;
         return `${BASE_URL}${cleanPath}`;
       }
@@ -136,16 +182,16 @@ export default function ProfessionalDetailPage() {
             </h1>
 
             <p className="text-lg text-gray-600 mb-3">
-              {getBusinessActivityLabel(professional.business_type) || "Professional Services"}
+              {getBusinessActivityLabel(professional.business_type) ||
+                "Professional Services"}
             </p>
 
             <div className="flex items-center justify-center mb-4">
               <MapPin className="w-4 h-4 text-gray-500 mr-2" />
               <span className="text-gray-600 mr-4">
-                {safeProfessional.selected_service_areas.length > 0 
+                {safeProfessional.selected_service_areas.length > 0
                   ? `Serving ${safeProfessional.selected_service_areas.length} areas`
-                  : "Service areas not specified"
-                }
+                  : "Service areas not specified"}
               </span>
               {/* <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
@@ -171,7 +217,7 @@ export default function ProfessionalDetailPage() {
         </div>
 
         {/* Skills Section */}
-        <div className="p-8 mb-8">
+        {/* <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-6">
             Skills & Services
           </h2>
@@ -187,6 +233,40 @@ export default function ProfessionalDetailPage() {
               ))
             ) : (
               <span className="text-gray-400">No skills listed.</span>
+            )}
+          </div>
+        </div> */}
+        <div className="p-8 mb-8 flex flex-col gap-4">
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">Categories</h2>
+          <div className="flex flex-wrap gap-2">
+            {safeProfessional.categories.length > 0 ? (
+              safeProfessional.categories.map((category, index) => (
+                <span
+                  key={`category-${index}`}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                >
+                  {getCategoryLabel(category)}
+                </span>
+              ))
+            ) : (
+              <span className="text-gray-400">No categories listed.</span>
+            )}
+          </div>
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">
+            Subcategories
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {safeProfessional.subcategories.length > 0 ? (
+              safeProfessional.subcategories.map((subcategory, index) => (
+                <span
+                  key={`subcategory-${index}`}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                >
+                  {getSubcategoryLabel(subcategory)}
+                </span>
+              ))
+            ) : (
+              <span className="text-gray-400">No subcategories listed.</span>
             )}
           </div>
         </div>
@@ -222,9 +302,7 @@ export default function ProfessionalDetailPage() {
 
         {/* Guarantees Section */}
         <div className="p-8">
-          <h2 className="text-2xl font-bold text-[#111827] mb-6">
-            Guarantees
-          </h2>
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">Guarantees</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <FileCheck className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
@@ -236,11 +314,15 @@ export default function ProfessionalDetailPage() {
             </div>
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <Shield className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
-              <p className="font-semibold text-[#111827]">Professional Liability</p>
+              <p className="font-semibold text-[#111827]">
+                Professional Liability
+              </p>
             </div>
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <Users className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
-              <p className="font-semibold text-[#111827]">Trusted by ProConnect</p>
+              <p className="font-semibold text-[#111827]">
+                Trusted by ProConnect
+              </p>
             </div>
           </div>
         </div>
