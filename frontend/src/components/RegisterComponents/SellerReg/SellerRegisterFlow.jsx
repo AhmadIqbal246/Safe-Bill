@@ -35,7 +35,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
     receiveMarketing: false,
     businessNumber: "",
     companyName: "",
-    address: "",
+    streetAddress: "",
+    postalCode: "",
+    cityRegion: "",
     contactPersonFirstName: "",
     contactPersonLastName: "",
     businessActivity: "",
@@ -187,7 +189,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setFormData((prev) => ({
         ...prev,
         companyName: siretVerification.result.company_name || "",
-        address: siretVerification.result.address || "",
+        streetAddress: siretVerification.result.street_address || "",
+        postalCode: siretVerification.result.postal_code || "",
+        cityRegion: siretVerification.result.region || "",
       }));
       setFieldsDisabled(false);
       setSiretVerified(true);
@@ -278,7 +282,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
       newErrors.businessNumber = "Business number / SIRET is required";
     if (!formData.companyName.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.streetAddress.trim()) newErrors.streetAddress = "Street address is required";
+    if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
+    if (!formData.cityRegion.trim()) newErrors.cityRegion = "City/Region is required";
     if (!formData.contactPersonFirstName.trim())
       newErrors.contactPersonFirstName = "First name is required";
     if (!formData.contactPersonLastName.trim())
@@ -335,7 +341,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
         Bussiness_information: {
           company_name: formData.companyName,
           siret_number: formData.businessNumber,
-          full_address: formData.address,
+          full_address: `${formData.streetAddress}, ${formData.postalCode}, ${formData.cityRegion}`,
           type_of_activity: formData.businessActivity,
           selected_categories: formData.selectedCategories,
           selected_subcategories: formData.selectedSubcategories,
@@ -534,7 +540,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Full Address *
+                  Street Address *
                   {fieldsDisabled && (
                     <div className="relative group">
                       <Info className="w-4 h-4 text-gray-400 cursor-help" />
@@ -547,17 +553,81 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 </label>
                 <input
                   type="text"
-                  value={formData.address}
-                  onChange={(e) => updateFormData("address", e.target.value)}
-                  placeholder="Enter the Address"
+                  value={formData.streetAddress}
+                  onChange={(e) => updateFormData("streetAddress", e.target.value)}
+                  placeholder="Enter the Street Address"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.address ? "border-red-500" : "border-gray-300"
+                    errors.streetAddress ? "border-red-500" : "border-gray-300"
                   } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
                   disabled={fieldsDisabled}
                 />
-                {errors.address && (
-                  <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                {errors.streetAddress && (
+                  <p className="text-red-500 text-sm mt-1">{errors.streetAddress}</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  Postal Code *
+                  {fieldsDisabled && (
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Please verify your SIRET number to enter postal code
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    </div>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={formData.postalCode}
+                  onChange={(e) => updateFormData("postalCode", e.target.value)}
+                  placeholder="Enter the Postal Code"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.postalCode ? "border-red-500" : "border-gray-300"
+                  } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  disabled={fieldsDisabled}
+                />
+                {errors.postalCode && (
+                  <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  City/Region *
+                  {fieldsDisabled && (
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Please verify your SIRET number to enter city/region
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    </div>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={formData.cityRegion}
+                  onChange={(e) => updateFormData("cityRegion", e.target.value)}
+                  placeholder="Enter the City/Region"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.cityRegion ? "border-red-500" : "border-gray-300"
+                  } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  disabled={fieldsDisabled}
+                />
+                {errors.cityRegion && (
+                  <p className="text-red-500 text-sm mt-1">{errors.cityRegion}</p>
+                )}
+                {siretVerified && (
+                  <p className="text-green-600 text-sm mt-1">
+                    ✓ Address components automatically populated from SIRET verification
+                  </p>
+                )}
+                <p className="text-gray-500 text-sm mt-1">
+                  These fields will be automatically combined into a formatted address when you submit the form.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

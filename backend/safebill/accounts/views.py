@@ -437,12 +437,30 @@ def verify_siret_api(request):
             f"{adresse.get('codePostalEtablissement', '')} "
             f"{adresse.get('libelleCommuneEtablissement', '')}"
         ).strip()
+        
+        # Parse address components
+        postal_code = adresse.get('codePostalEtablissement', '')
+        region = adresse.get('libelleCommuneEtablissement', '')
+        
+        # Build street address (number + type + street name)
+        street_address = (
+            f"{adresse.get('numeroVoieEtablissement', '')} "
+            f"{adresse.get('typeVoieEtablissement', '')} "
+            f"{adresse.get('libelleVoieEtablissement', '')}"
+        ).strip()
+        
         return Response({
             'valid': True,
             'company_name': unite_legale.get('denominationUniteLegale') or unite_legale.get('nomUniteLegale'),
             'address': address,
+            'street_address': street_address,
+            'postal_code': postal_code,
+            'region': region,
             'raw': data
         })
     else:
-        return Response({'valid': False, 'detail': 'SIRET not found or invalid.'}, status=404)
+        return Response(
+            {'valid': False, 'detail': 'SIRET not found or invalid.'}, 
+            status=404
+        )
 
