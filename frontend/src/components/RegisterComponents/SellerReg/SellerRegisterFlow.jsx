@@ -36,7 +36,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
     businessNumber: "",
     companyName: "",
     address: "",
-    contactPerson: "",
+    contactPersonFirstName: "",
+    contactPersonLastName: "",
     businessActivity: "",
     selectedCategories: [],
     selectedSubcategories: [],
@@ -278,8 +279,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
     if (!formData.companyName.trim())
       newErrors.companyName = "Company name is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
-    if (!formData.contactPerson.trim())
-      newErrors.contactPerson = "Contact perso name is required";
+    if (!formData.contactPersonFirstName.trim())
+      newErrors.contactPersonFirstName = "First name is required";
+    if (!formData.contactPersonLastName.trim())
+      newErrors.contactPersonLastName = "Last name is required";
     if (!formData.businessActivity)
       newErrors.businessActivity = "Business activity is required";
     if (!formData.selectedServiceAreas || formData.selectedServiceAreas.length === 0)
@@ -337,7 +340,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
           selected_categories: formData.selectedCategories,
           selected_subcategories: formData.selectedSubcategories,
           selected_service_areas: formData.selectedServiceAreas,
-          company_contact_person: formData.contactPerson,
+          company_contact_person_first_name: formData.contactPersonFirstName,
+          company_contact_person_last_name: formData.contactPersonLastName,
         },
       };
       dispatch(registerSellerWithBasicAndBussiness(payload));
@@ -556,26 +560,49 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.contactPerson}
-                  onChange={(e) =>
-                    updateFormData("contactPerson", e.target.value)
-                  }
-                  placeholder="Enter Name"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.contactPerson ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.contactPerson && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.contactPerson}
-                  </p>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact First Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contactPersonFirstName}
+                    onChange={(e) =>
+                      updateFormData("contactPersonFirstName", e.target.value)
+                    }
+                    placeholder="Enter First Name"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.contactPersonFirstName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.contactPersonFirstName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.contactPersonFirstName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contactPersonLastName}
+                    onChange={(e) =>
+                      updateFormData("contactPersonLastName", e.target.value)
+                    }
+                    placeholder="Enter Last Name"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.contactPersonLastName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.contactPersonLastName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.contactPersonLastName}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div>

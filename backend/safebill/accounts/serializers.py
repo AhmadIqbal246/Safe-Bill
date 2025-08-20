@@ -15,7 +15,8 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             'type_of_activity', 'selected_categories',
             'selected_subcategories',
             'selected_service_areas',
-            'siret_verified', 'company_contact_person',
+            'siret_verified', 'company_contact_person_first_name',
+           'company_contact_person_last_name',
         ]
         read_only_fields = ['siret_verified']
 
@@ -90,8 +91,10 @@ class SellerRegistrationSerializer(serializers.Serializer):
             selected_subcategories=business_info.get('selected_subcategories', []),
             selected_service_areas=business_info.get('selected_service_areas', []),
             siret_verified=True,
-            company_contact_person=business_info.get(
-                'company_contact_person', ''),
+            company_contact_person_first_name=business_info.get(
+                'company_contact_person_first_name', ''),
+            company_contact_person_last_name=business_info.get(
+                'company_contact_person_last_name', ''),
         )
         return user
     
