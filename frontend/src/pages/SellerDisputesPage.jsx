@@ -5,6 +5,7 @@ import { fetchDisputes } from '../store/slices/DisputeSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Sidebar from '../components/SellerDashboard/Sidebar';
 import { Search, ChevronDown, Calendar, User, FileText } from 'lucide-react';
+import MainLayout from '../components/Layout/MainLayout';
 
 export default function SellerDisputesPage() {
   const dispatch = useDispatch();
@@ -124,10 +125,8 @@ export default function SellerDisputesPage() {
   }
 
   return (
-    <>
-      <SafeBillHeader />
+        <MainLayout>
       <div className="flex">
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         <div className="flex-1 min-h-screen bg-gray-50 p-2 sm:p-4">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
@@ -307,6 +306,6 @@ export default function SellerDisputesPage() {
           </div>
         </div>
       </div>
-    </>
+      </MainLayout>
   );
 }
