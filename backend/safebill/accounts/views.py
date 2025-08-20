@@ -30,10 +30,11 @@ def _get_seller_data(seller):
         'business_type': seller.type_of_activity,
         'about': seller.user.about,
         'profile_pic': seller.user.profile_pic.url if seller.user.profile_pic else None,
-        'skills': seller.skills,
         'selected_service_areas': seller.selected_service_areas,
         'full_address': seller.full_address,
-        'company_name': seller.company_name
+        'company_name': seller.company_name,
+        'categories': seller.selected_categories,
+        'subcategories': seller.selected_subcategories,
     }
 
 User = get_user_model()
@@ -280,29 +281,6 @@ def filter_sellers_by_service_area(request):
 
 
 @api_view(['GET'])
-def filter_sellers_by_skills(request):
-    skills = request.GET.get('skills')
-    if not skills:
-        return Response(
-            {'detail': 'skills query param is required.'},
-            status=400
-        )
-    
-    # Parse skills as comma-separated values
-    skills_list = [skill.strip() for skill in skills.split(',') if skill.strip()]
-    print(skills_list)
-    
-    # Filter sellers who have any of the specified skills
-    sellers = BusinessDetail.objects.filter(
-        skills__overlap=skills_list,
-        user__role='seller'
-    )
-    print(sellers)
-    data = [_get_seller_data(seller) for seller in sellers]
-    return Response(data)
-
-
-@api_view(['GET'])
 def filter_sellers_by_type_and_area(request):
     service_type = request.GET.get('service_type')
     service_area = request.GET.get('service_area')
@@ -319,12 +297,10 @@ def filter_sellers_by_type_and_area(request):
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
-
 @api_view(['GET'])
 def filter_sellers_by_type_area_and_skills(request):
     service_type = request.GET.get('service_type')
     service_area = request.GET.get('service_area')
-    skills = request.GET.get('skills')
     
     if not service_type or not service_area:
         return Response(
@@ -338,11 +314,6 @@ def filter_sellers_by_type_area_and_skills(request):
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
-    
-    # Add skills filter if provided
-    if skills:
-        skills_list = [skill.strip() for skill in skills.split(',') if skill.strip()]
-        query = query.filter(skills__overlap=skills_list)
     
     sellers = query
     data = [_get_seller_data(seller) for seller in sellers]
@@ -397,9 +368,7 @@ def filter_sellers_by_location(request):
     Strategy:
       1) If city and postal_code are provided, build a candidate service-area value
          (e.g., "le_mans_72100") and match against selected_service_areas.
-      2) Fallbacks if no direct service-area match:
-         - Match by department number (first two digits of postal_code) in department_numbers
-         - Match full_address icontains city or postal_code
+      2) Fallback: Match full_address icontains city or postal_code
     """
     city = (request.GET.get('city') or '').strip()
     postal_code = (request.GET.get('postal_code') or '').strip()
@@ -416,7 +385,7 @@ def filter_sellers_by_location(request):
         if direct.exists():
             matched = direct
 
-    # Attempt 3: by full address icontains city or postal code
+    # Attempt 2: by full address icontains city or postal code
     if matched is None and (city or postal_code or address):
         addr_qs = qs
         if city:
@@ -468,12 +437,30 @@ def verify_siret_api(request):
             f"{adresse.get('codePostalEtablissement', '')} "
             f"{adresse.get('libelleCommuneEtablissement', '')}"
         ).strip()
+        
+        # Parse address components
+        postal_code = adresse.get('codePostalEtablissement', '')
+        region = adresse.get('libelleCommuneEtablissement', '')
+        
+        # Build street address (number + type + street name)
+        street_address = (
+            f"{adresse.get('numeroVoieEtablissement', '')} "
+            f"{adresse.get('typeVoieEtablissement', '')} "
+            f"{adresse.get('libelleVoieEtablissement', '')}"
+        ).strip()
+        
         return Response({
             'valid': True,
             'company_name': unite_legale.get('denominationUniteLegale') or unite_legale.get('nomUniteLegale'),
             'address': address,
+            'street_address': street_address,
+            'postal_code': postal_code,
+            'region': region,
             'raw': data
         })
     else:
-        return Response({'valid': False, 'detail': 'SIRET not found or invalid.'}, status=404)
+        return Response(
+            {'valid': False, 'detail': 'SIRET not found or invalid.'}, 
+            status=404
+        )
 

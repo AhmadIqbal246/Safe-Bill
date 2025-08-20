@@ -13,7 +13,6 @@ import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
 
 import {
-  skillOptions,
   businessActivityStructure,
   serviceAreaOptions,
   countryCodeOptions,
@@ -36,15 +35,16 @@ export default function SellerRegisterFlow({role = "seller"}) {
     receiveMarketing: false,
     businessNumber: "",
     companyName: "",
-    address: "",
-    contactPerson: "",
-    skills: "",
+    streetAddress: "",
+    postalCode: "",
+    cityRegion: "",
+    contactPersonFirstName: "",
+    contactPersonLastName: "",
     businessActivity: "",
     selectedCategories: [],
     selectedSubcategories: [],
     companyPhoneNumber: "",
     selectedServiceAreas: [],
-    // departmentNumbers: "",
   };
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -66,10 +66,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
   // New state for multiple service area selection
   const [showServiceAreasDropdown, setShowServiceAreasDropdown] = useState(false);
   const [serviceAreasSearchTerm, setServiceAreasSearchTerm] = useState('');
-  
-  // New state for skills dropdown
-  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
-  const [skillsSearchTerm, setSkillsSearchTerm] = useState('');
 
   const [errors, setErrors] = useState({});
   const [siretStatus, setSiretStatus] = useState("idle"); // idle | loading | success | error
@@ -193,7 +189,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setFormData((prev) => ({
         ...prev,
         companyName: siretVerification.result.company_name || "",
-        address: siretVerification.result.address || "",
+        streetAddress: siretVerification.result.street_address || "",
+        postalCode: siretVerification.result.postal_code || "",
+        cityRegion: siretVerification.result.region || "",
       }));
       setFieldsDisabled(false);
       setSiretVerified(true);
@@ -284,18 +282,17 @@ export default function SellerRegisterFlow({role = "seller"}) {
       newErrors.businessNumber = "Business number / SIRET is required";
     if (!formData.companyName.trim())
       newErrors.companyName = "Company name is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
-    if (!formData.contactPerson.trim())
-      newErrors.contactPerson = "Contact perso name is required";
-    if (!formData.skills.trim()) newErrors.skills = "Skills are required";
+    if (!formData.streetAddress.trim()) newErrors.streetAddress = "Street address is required";
+    if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
+    if (!formData.cityRegion.trim()) newErrors.cityRegion = "City/Region is required";
+    if (!formData.contactPersonFirstName.trim())
+      newErrors.contactPersonFirstName = "First name is required";
+    if (!formData.contactPersonLastName.trim())
+      newErrors.contactPersonLastName = "Last name is required";
     if (!formData.businessActivity)
       newErrors.businessActivity = "Business activity is required";
     if (!formData.selectedServiceAreas || formData.selectedServiceAreas.length === 0)
       newErrors.selectedServiceAreas = "Service areas are required";
-      // if (!formData.departmentNumbers.trim())
-      //   newErrors.departmentNumbers = "Department numbers are required";
-    // if (!formData.companyPhoneNumber.trim())
-    //   newErrors.companyPhoneNumber = "Company phone number is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -344,17 +341,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
         Bussiness_information: {
           company_name: formData.companyName,
           siret_number: formData.businessNumber,
-          full_address: formData.address,
+          full_address: `${formData.streetAddress}, ${formData.postalCode}, ${formData.cityRegion}`,
           type_of_activity: formData.businessActivity,
           selected_categories: formData.selectedCategories,
           selected_subcategories: formData.selectedSubcategories,
           selected_service_areas: formData.selectedServiceAreas,
-          // department_numbers: formData.departmentNumbers,
-          company_contact_person: formData.contactPerson,
-          skills: formData.skills
-            .split(",")
-            .map((skill) => skill.trim())
-            .filter(Boolean),
+          company_contact_person_first_name: formData.contactPersonFirstName,
+          company_contact_person_last_name: formData.contactPersonLastName,
         },
       };
       dispatch(registerSellerWithBasicAndBussiness(payload));
@@ -386,12 +379,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setShowCategoriesDropdown(false);
       setShowSubcategoriesDropdown(false);
       setShowServiceAreasDropdown(false);
-      setShowSkillsDropdown(false);
       setBusinessActivitySearchTerm('');
       setCategorySearchTerm('');
       setSubcategorySearchTerm('');
       setServiceAreasSearchTerm('');
-      setSkillsSearchTerm('');
       setSiretVerified(false);
       setSiretStatus("idle");
       setSiretError("");
@@ -549,7 +540,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Full Address *
+                  Street Address *
                   {fieldsDisabled && (
                     <div className="relative group">
                       <Info className="w-4 h-4 text-gray-400 cursor-help" />
@@ -562,39 +553,126 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 </label>
                 <input
                   type="text"
-                  value={formData.address}
-                  onChange={(e) => updateFormData("address", e.target.value)}
-                  placeholder="Enter the Address"
+                  value={formData.streetAddress}
+                  onChange={(e) => updateFormData("streetAddress", e.target.value)}
+                  placeholder="Enter the Street Address"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.address ? "border-red-500" : "border-gray-300"
+                    errors.streetAddress ? "border-red-500" : "border-gray-300"
                   } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
                   disabled={fieldsDisabled}
                 />
-                {errors.address && (
-                  <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                {errors.streetAddress && (
+                  <p className="text-red-500 text-sm mt-1">{errors.streetAddress}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Name *
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  Postal Code *
+                  {fieldsDisabled && (
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Please verify your SIRET number to enter postal code
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    </div>
+                  )}
                 </label>
                 <input
                   type="text"
-                  value={formData.contactPerson}
-                  onChange={(e) =>
-                    updateFormData("contactPerson", e.target.value)
-                  }
-                  placeholder="Enter Name"
+                  value={formData.postalCode}
+                  onChange={(e) => updateFormData("postalCode", e.target.value)}
+                  placeholder="Enter the Postal Code"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.contactPerson ? "border-red-500" : "border-gray-300"
-                  }`}
+                    errors.postalCode ? "border-red-500" : "border-gray-300"
+                  } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  disabled={fieldsDisabled}
                 />
-                {errors.contactPerson && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.contactPerson}
+                {errors.postalCode && (
+                  <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  City/Region *
+                  {fieldsDisabled && (
+                    <div className="relative group">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                        Please verify your SIRET number to enter city/region
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    </div>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={formData.cityRegion}
+                  onChange={(e) => updateFormData("cityRegion", e.target.value)}
+                  placeholder="Enter the City/Region"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                    errors.cityRegion ? "border-red-500" : "border-gray-300"
+                  } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                  disabled={fieldsDisabled}
+                />
+                {errors.cityRegion && (
+                  <p className="text-red-500 text-sm mt-1">{errors.cityRegion}</p>
+                )}
+                {siretVerified && (
+                  <p className="text-green-600 text-sm mt-1">
+                    ✓ Address components automatically populated from SIRET verification
                   </p>
                 )}
+                <p className="text-gray-500 text-sm mt-1">
+                  These fields will be automatically combined into a formatted address when you submit the form.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact First Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contactPersonFirstName}
+                    onChange={(e) =>
+                      updateFormData("contactPersonFirstName", e.target.value)
+                    }
+                    placeholder="Enter First Name"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.contactPersonFirstName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.contactPersonFirstName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.contactPersonFirstName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.contactPersonLastName}
+                    onChange={(e) =>
+                      updateFormData("contactPersonLastName", e.target.value)
+                    }
+                    placeholder="Enter Last Name"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                      errors.contactPersonLastName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.contactPersonLastName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.contactPersonLastName}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -938,117 +1016,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Skills *
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.skills ? "border-red-500" : "border-gray-300"
-                    }`}
-                    onClick={() => setShowSkillsDropdown(!showSkillsDropdown)}
-                  >
-                    <span className={formData.skills ? 'text-gray-900' : 'text-gray-500'}>
-                      {formData.skills ? 
-                        `${formData.skills.split(',').filter(Boolean).length} skill(s) selected`
-                        : 'Select Skills'}
-                    </span>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showSkillsDropdown ? 'rotate-180' : ''}`} />
-                  </button>
-                  
-                  {showSkillsDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
-                      <div className="p-2 border-b">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <input
-                            type="text"
-                            placeholder="Search skills..."
-                            value={skillsSearchTerm}
-                            onChange={(e) => setSkillsSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                            autoFocus
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {skillOptions
-                          .filter(option => 
-                            option.label.toLowerCase().includes(skillsSearchTerm.toLowerCase())
-                          )
-                          .map((option) => {
-                            const isSelected = formData.skills && 
-                              formData.skills.split(',').map(s => s.trim()).includes(option.label);
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                className={`w-full px-4 py-2 text-left hover:bg-[#F0F4F8] transition-colors ${
-                                  isSelected
-                                    ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
-                                    : 'text-gray-700'
-                                }`}
-                                onClick={() => {
-                                  const currentSkills = formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                  let newSkills;
-                                  if (isSelected) {
-                                    newSkills = currentSkills.filter(skill => skill !== option.label);
-                                  } else {
-                                    newSkills = [...currentSkills, option.label];
-                                  }
-                                  updateFormData('skills', newSkills.join(', '));
-                                }}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span>{option.label}</span>
-                                  {isSelected && (
-                                    <span className="text-[#01257D]">✓</span>
-                                  )}
-                                </div>
-                              </button>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Display selected skills as tags */}
-                {formData.skills && formData.skills.split(',').filter(Boolean).length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.skills.split(',').map((skill, index) => {
-                      const trimmedSkill = skill.trim();
-                      if (!trimmedSkill) return null;
-                      return (
-                        <span
-                          key={index}
-                          className="bg-[#E6F0FA] text-[#01257D] px-2 py-1 rounded-full text-sm font-medium flex items-center gap-1"
-                        >
-                          {trimmedSkill}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const currentSkills = formData.skills.split(',').map(s => s.trim()).filter(Boolean);
-                              const newSkills = currentSkills.filter(s => s !== trimmedSkill);
-                              updateFormData('skills', newSkills.join(', '));
-                            }}
-                            className="text-[#01257D] hover:text-[#2346a0] font-bold"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                {errors.skills && (
-                  <p className="text-red-500 text-sm mt-1">{errors.skills}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Service Areas *
                 </label>
                 <div className="relative">
@@ -1145,29 +1112,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   </p>
                 )}
               </div>
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Department Numbers *
-                </label>
-                <input
-                  type="text"
-                  value={formData.departmentNumbers}
-                  onChange={(e) => updateFormData("departmentNumbers", e.target.value)}
-                  placeholder="Enter department numbers (e.g., 75, 69, 13)"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                    errors.departmentNumbers ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                <p className="text-gray-500 text-sm mt-1">
-                  Enter the department numbers where you provide services (e.g., 75 for Paris, 69 for Lyon)
-                </p>
-                {errors.departmentNumbers && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentNumbers}
-                  </p>
-                )}
-              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

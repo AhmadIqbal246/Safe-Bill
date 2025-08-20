@@ -15,7 +15,8 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             'type_of_activity', 'selected_categories',
             'selected_subcategories',
             'selected_service_areas',
-            'siret_verified', 'company_contact_person', 'skills'
+            'siret_verified', 'company_contact_person_first_name',
+           'company_contact_person_last_name',
         ]
         read_only_fields = ['siret_verified']
 
@@ -90,9 +91,10 @@ class SellerRegistrationSerializer(serializers.Serializer):
             selected_subcategories=business_info.get('selected_subcategories', []),
             selected_service_areas=business_info.get('selected_service_areas', []),
             siret_verified=True,
-            company_contact_person=business_info.get(
-                'company_contact_person', ''),
-            skills=business_info.get('skills', []),
+            company_contact_person_first_name=business_info.get(
+                'company_contact_person_first_name', ''),
+            company_contact_person_last_name=business_info.get(
+                'company_contact_person_last_name', ''),
         )
         return user
     
@@ -206,7 +208,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     selected_subcategories = serializers.SerializerMethodField()
     selected_service_areas = serializers.SerializerMethodField()
     #department_numbers = serializers.SerializerMethodField()
-    skills = serializers.SerializerMethodField()
     profile_pic = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
@@ -215,7 +216,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'username', 'email', 'phone_number',
             'type_of_activity', 'selected_categories', 'selected_subcategories',
              'selected_service_areas',
-            'about', 'skills', 'profile_pic'
+            'about', 'profile_pic'
         ]
         read_only_fields = ['email']  # Only email is read-only now
 
@@ -249,12 +250,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         except BusinessDetail.DoesNotExist:
             return []
 
-    def get_skills(self, obj):
-        try:
-            return obj.business_detail.skills
-        except BusinessDetail.DoesNotExist:
-            return []
-
     def update(self, instance, validated_data):
         # Allow username update with uniqueness check
         new_username = validated_data.get('username', instance.username)
@@ -285,22 +280,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'selected_categories': 'selected_categories',
             'selected_subcategories': 'selected_subcategories',
             'selected_service_areas': 'selected_service_areas',
-            'skills': 'skills'
         }
         
         for frontend_field, backend_field in field_mapping.items():
             value = self.initial_data.get(frontend_field)
             if value is not None:
                 business_data[backend_field] = value
-        # Ensure skills is always a list
-        if 'skills' in business_data:
-            skills = business_data['skills']
-            if isinstance(skills, str):
-                try:
-                    skills = json.loads(skills)
-                except Exception:
-                    skills = [s.strip() for s in skills.split(',') if s.strip()]
-                business_data['skills'] = skills
+
         if business_data:
             business_detail, created = BusinessDetail.objects.get_or_create(
                 user=instance

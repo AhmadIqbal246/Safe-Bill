@@ -148,7 +148,7 @@ export default function MyProfileComp() {
     selected_categories: getSafeArrayField(profile, 'selected_categories'),
     selected_subcategories: getSafeArrayField(profile, 'selected_subcategories'),
     selected_service_areas: getSafeArrayField(profile, 'selected_service_areas'),
-    skills: getSafeArrayField(profile, 'skills'),
+    // skills: getSafeArrayField(profile, 'skills'),
   };
 
   const avatarSrc = profile.profile_pic || getDefaultAvatar(profile.username);
@@ -163,7 +163,7 @@ export default function MyProfileComp() {
       selected_service_areas: safeProfile.selected_service_areas,
       //departmentNumbers: profile.department_numbers || "",
       about: profile.about || "",
-      skills: safeProfile.skills,
+      // skills: safeProfile.skills,
       profile_pic: null,
     });
     setEditPicPreview(null);
@@ -215,6 +215,29 @@ export default function MyProfileComp() {
   const handleEditSubmit = (e) => {
     e.preventDefault();
     if (!editForm) return;
+
+    // Validation for required fields
+    const validationErrors = [];
+    
+    if (!editForm.username || editForm.username.trim() === '') {
+      validationErrors.push('Username is required');
+    }
+    
+    if (!editForm.type_of_activity || editForm.type_of_activity.trim() === '') {
+      validationErrors.push('Business activity is required');
+    }
+    
+    if (!editForm.selected_service_areas || editForm.selected_service_areas.length === 0) {
+      validationErrors.push('At least one service area is required');
+    }
+    
+    // If there are validation errors, show them and return
+    if (validationErrors.length > 0) {
+      validationErrors.forEach(error => {
+        toast.error(error);
+      });
+      return;
+    }
   
     // Create a more robust data preparation that preserves form values
     const data = {
@@ -241,12 +264,6 @@ export default function MyProfileComp() {
       data.selected_service_areas = editForm.selected_service_areas;
     } else {
       data.selected_service_areas = profile.selected_service_areas || [];
-    }
-  
-    if (editForm.skills !== undefined) {
-      data.skills = editForm.skills;
-    } else {
-      data.skills = profile.skills || [];
     }
   
     // Add profile picture if it exists
@@ -330,7 +347,7 @@ export default function MyProfileComp() {
           {profile.about || "No about info provided."}
         </div>
       </div>
-             <div className="mb-6">
+             {/* <div className="mb-6">
          <h2 className="text-lg font-bold mb-2">Skills</h2>
          <div className="flex flex-wrap gap-2">
            {safeProfile.skills.length > 0 ? (
@@ -348,7 +365,7 @@ export default function MyProfileComp() {
              <span className="text-gray-400">No skills listed.</span>
            )}
          </div>
-       </div>
+       </div> */}
       <div className="mb-8">
         <h2 className="text-lg font-bold mb-2">Contact</h2>
         <div className="flex flex-col sm:flex-row gap-6 text-gray-700">
@@ -432,6 +449,11 @@ export default function MyProfileComp() {
             </div>
             {editForm && (
               <form id="edit-profile-form" onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Required fields note */}
+                <div className="text-sm text-gray-600 mb-4">
+                  <span className="text-red-500">*</span> indicates required fields
+                </div>
+                
                 <div className="flex flex-col items-center mb-4">
                   <img
                     src={
@@ -461,7 +483,7 @@ export default function MyProfileComp() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Username
+                    Username *
                   </label>
                   <input
                     type="text"
@@ -475,7 +497,7 @@ export default function MyProfileComp() {
                 {/* Business Activity Selection */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Business Activity
+                    Business Activity *
                   </label>
                   <div className="relative">
                     <button
@@ -798,7 +820,7 @@ export default function MyProfileComp() {
                 )}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Service Areas
+                    Service Areas *
                   </label>
                   <div className="relative">
                     <button
@@ -922,7 +944,7 @@ export default function MyProfileComp() {
                   />
                 </div>
                 {/* Skills with Enhanced Search */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium mb-1">
                     Skills
                   </label>
@@ -993,7 +1015,7 @@ export default function MyProfileComp() {
                       }),
                     }}
                   />
-                </div>
+                </div> */}
               </form>
             )}
             {/* Fixed footer with buttons */}

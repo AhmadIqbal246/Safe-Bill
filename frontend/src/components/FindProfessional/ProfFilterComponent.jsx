@@ -9,11 +9,10 @@ import {
   filterSellersByServiceArea,
   filterSellersByTypeAndArea,
   filterSellersByTypeAreaAndSkills,
-  filterSellersBySkills,
   resetFilterState,
   fetchAllSellers
 } from '../../store/slices/FilterSlice';
-import { businessActivityStructure, serviceAreaOptions, skillOptions } from '../../constants/registerationTypes';
+import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
 
 // Create a flattened array of service type options with both id and label
 const serviceTypeOptions = businessActivityStructure.map(option => ({
@@ -56,7 +55,6 @@ function getProfilePicture(professional) {
 const filters = [
   'Service type',
   'Area',
-  // 'Skills',
   'Radius',
   'Rating',
   'Availability',
@@ -69,19 +67,16 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   const navigate = useNavigate();
   const { sellers, loading, error } = useSelector((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
-  const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | 'skills' | null
+  const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
   const [selectedServiceType, setSelectedServiceType] = useState(initialFilters.serviceType || '');
   const [selectedServiceTypeLabel, setSelectedServiceTypeLabel] = useState(''); // Store the display label
   const [selectedArea, setSelectedArea] = useState(initialFilters.area || '');
   const [selectedAreaLabel, setSelectedAreaLabel] = useState(''); // Store the display label
-  const [selectedSkills, setSelectedSkills] = useState([]);
-  const [selectedSkillsLabels, setSelectedSkillsLabels] = useState([]); // Store the display labels
   const [searchTerm, setSearchTerm] = useState('');
 
   // Only fetch when Apply Filters is clicked
   const [appliedServiceType, setAppliedServiceType] = useState(initialFilters.serviceType || '');
   const [appliedArea, setAppliedArea] = useState(initialFilters.area || '');
-  const [appliedSkills, setAppliedSkills] = useState([]);
 
   // Set labels when initial filters are provided
   useEffect(() => {
@@ -113,48 +108,26 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
 
   // Fetch all sellers on mount and when all filters are cleared
   useEffect(() => {
-    if (!appliedServiceType && !appliedArea && appliedSkills.length === 0) {
+    if (!appliedServiceType && !appliedArea) {
       dispatch(resetFilterState());
       dispatch(fetchAllSellers());
       return;
     }
     
     // Determine which filter combination to use
-    if (appliedServiceType && appliedArea && appliedSkills.length > 0) {
-      dispatch(filterSellersByTypeAreaAndSkills({
-        serviceType: appliedServiceType,
-        serviceArea: appliedArea,
-        skills: appliedSkills
-      }));
-    } else if (appliedServiceType && appliedArea) {
+    if (appliedServiceType && appliedArea) {
       dispatch(filterSellersByTypeAndArea({
         serviceType: appliedServiceType,
         serviceArea: appliedArea
-      }));
-    } else if (appliedServiceType && appliedSkills.length > 0) {
-      // Filter by service type and skills
-      dispatch(filterSellersByTypeAreaAndSkills({
-        serviceType: appliedServiceType,
-        serviceArea: '',
-        skills: appliedSkills
-      }));
-    } else if (appliedArea && appliedSkills.length > 0) {
-      // Filter by area and skills
-      dispatch(filterSellersByTypeAreaAndSkills({
-        serviceType: '',
-        serviceArea: appliedArea,
-        skills: appliedSkills
       }));
     } else if (appliedServiceType) {
       dispatch(filterSellersByServiceType(appliedServiceType));
     } else if (appliedArea) {
       dispatch(filterSellersByServiceArea(appliedArea));
-    } else if (appliedSkills.length > 0) {
-      dispatch(filterSellersBySkills(appliedSkills));
     }
     setCurrentPage(1);
     // eslint-disable-next-line
-  }, [appliedServiceType, appliedArea, appliedSkills, dispatch]);
+  }, [appliedServiceType, appliedArea, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -216,28 +189,11 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
       };
       selected = selectedAreaLabel;
       label = 'Select Area';
-    } else if (openFilter === 'skills') {
-      options = skillOptions; // Contains objects with value and label
-      onSelect = (option) => {
-        // Toggle skill selection (add if not present, remove if present)
-        if (selectedSkills.includes(option.value)) {
-          setSelectedSkills(selectedSkills.filter(skill => skill !== option.value));
-          setSelectedSkillsLabels(selectedSkillsLabels.filter(label => label !== option.label));
-        } else {
-          setSelectedSkills([...selectedSkills, option.value]);
-          setSelectedSkillsLabels([...selectedSkillsLabels, option.label]);
-        }
-        // Don't close dialog for skills - allow multiple selection
-      };
-      selected = selectedSkillsLabels.join(', ');
-      label = 'Select Skills (Multiple)';
     }
 
     // Filter options based on search term
     const filteredOptions = options.filter(option => {
       if (openFilter === 'serviceType') {
-        return option.label.toLowerCase().includes(searchTerm.toLowerCase());
-      } else if (openFilter === 'skills') {
         return option.label.toLowerCase().includes(searchTerm.toLowerCase());
       } else {
         return option.toLowerCase().includes(searchTerm.toLowerCase());
@@ -274,21 +230,6 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                           key={opt.id}
                           className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
                             selected === opt.label 
-                              ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
-                              : 'text-[#111827] cursor-pointer'
-                          }`}
-                          onClick={() => onSelect(opt)}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    } else if (openFilter === 'skills') {
-                      const isSelected = selectedSkills.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
-                            isSelected
                               ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
                               : 'text-[#111827] cursor-pointer'
                           }`}
@@ -339,52 +280,6 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
       {renderDialog()}
       <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">Find local professionals</h2>
       
-      {/* Show pre-applied filters indicator */}
-      {/* {(initialFilters.serviceType || initialFilters.area || initialFilters.skills) && (
-        <div className="mb-4 p-3 bg-[#E6F0FA] border border-[#01257D] rounded-md">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[#01257D] text-sm">
-              <Search className="w-4 h-4" />
-              <span className="font-medium">Pre-applied filters from home page search:</span>
-              {initialFilters.serviceType && (
-                <span className="px-2 py-1 bg-white rounded text-xs">
-                  {serviceTypeOptions.find(opt => opt.id === initialFilters.serviceType)?.label}
-                </span>
-              )}
-              {initialFilters.area && (
-                <span className="px-2 py-1 bg-white rounded text-xs">
-                  {serviceAreaOptions.find(opt => opt.value === initialFilters.area)?.label}
-                </span>
-              )}
-              {initialFilters.skills && initialFilters.skills.length > 0 && (
-                <span className="px-2 py-1 bg-white rounded text-xs">
-                  Skills: {initialFilters.skills.slice(0, 2).join(', ')}
-                  {initialFilters.skills.length > 2 && ` +${initialFilters.skills.length - 2} more`}
-                </span>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                setSelectedServiceType('');
-                setSelectedServiceTypeLabel('');
-                setSelectedArea('');
-                setSelectedAreaLabel('');
-                setSelectedSkills([]);
-                setSelectedSkillsLabels([]);
-                setAppliedServiceType('');
-                setAppliedArea('');
-                setAppliedSkills([]);
-                dispatch(resetFilterState());
-                dispatch(fetchAllSellers());
-              }}
-              className="text-[#01257D] hover:text-[#2346a0] text-xs font-medium underline cursor-pointer"
-            >
-              Clear filters
-            </button>
-          </div>
-        </div>
-      )} */}
-      
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => {
           let isActive = false;
@@ -397,26 +292,19 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             isActive = true;
             display = selectedAreaLabel;
           }
-          if (f === 'Skills' && selectedSkills.length > 0) {
-            isActive = true;
-            display = selectedSkillsLabels.length > 2 
-              ? `${selectedSkillsLabels.slice(0, 2).join(', ')} +${selectedSkillsLabels.length - 2} more`
-              : selectedSkillsLabels.join(', ');
-          }
           return (
             <button
               key={f}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors focus:outline-none cursor-pointer ${
-                (f === 'Service type' || f === 'Area' || f === 'Skills')
+                (f === 'Service type' || f === 'Area')
                   ? 'bg-[#E6F0FA] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
                   : 'bg-[#E6F0FA] text-[#01257D] cursor-not-allowed opacity-70'
               }`}
               onClick={() => {
                 if (f === 'Service type') setOpenFilter('serviceType');
                 else if (f === 'Area') setOpenFilter('area');
-                else if (f === 'Skills') setOpenFilter('skills');
               }}
-              disabled={!(f === 'Service type' || f === 'Area' || f === 'Skills')}
+              disabled={!(f === 'Service type' || f === 'Area')}
             >
               {display}
             </button>
@@ -429,7 +317,6 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           onClick={() => {
             setAppliedServiceType(selectedServiceType);
             setAppliedArea(selectedArea);
-            setAppliedSkills(selectedSkills);
           }}
         >
           Apply Filters
@@ -441,11 +328,8 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             setSelectedServiceTypeLabel(''); // Clear the label
             setSelectedArea('');
             setSelectedAreaLabel(''); // Clear the label
-            setSelectedSkills([]);
-            setSelectedSkillsLabels([]);
             setAppliedServiceType('');
             setAppliedArea('');
-            setAppliedSkills([]);
             dispatch(resetFilterState());
             dispatch(fetchAllSellers());
           }}
