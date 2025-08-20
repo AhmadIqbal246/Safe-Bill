@@ -56,7 +56,7 @@ function getProfilePicture(professional) {
 const filters = [
   'Service type',
   'Area',
-  'Skills',
+  // 'Skills',
   'Radius',
   'Rating',
   'Availability',
