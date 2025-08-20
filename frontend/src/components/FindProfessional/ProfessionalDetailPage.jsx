@@ -121,7 +121,7 @@ export default function ProfessionalDetailPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+        <div className="p-8 mb-8">
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <img
@@ -154,14 +154,14 @@ export default function ProfessionalDetailPage() {
               </div> */}
             </div>
 
-            <button className="bg-[#01257D] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] transition-colors">
+            <button className="bg-[#E2F4FE] text-[#01257D] px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] hover:text-white transition-colors cursor-pointer">
               Request Quote
             </button>
           </div>
         </div>
 
         {/* About Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+        <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-4">
             About {professional.name}
           </h2>
@@ -171,7 +171,7 @@ export default function ProfessionalDetailPage() {
         </div>
 
         {/* Skills Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+        <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-6">
             Skills & Services
           </h2>
@@ -192,7 +192,7 @@ export default function ProfessionalDetailPage() {
         </div>
 
         {/* Service Areas Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
+        <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-6">
             Service Areas
           </h2>
@@ -221,7 +221,7 @@ export default function ProfessionalDetailPage() {
         </div>
 
         {/* Guarantees Section */}
-        <div className="bg-white rounded-xl shadow-sm p-8">
+        <div className="p-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-6">
             Guarantees
           </h2>

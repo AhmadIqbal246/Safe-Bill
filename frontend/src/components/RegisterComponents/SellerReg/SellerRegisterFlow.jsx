@@ -44,7 +44,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
     selectedSubcategories: [],
     companyPhoneNumber: "",
     selectedServiceAreas: [],
-    departmentNumbers: "",
+    // departmentNumbers: "",
   };
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -292,8 +292,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
       newErrors.businessActivity = "Business activity is required";
     if (!formData.selectedServiceAreas || formData.selectedServiceAreas.length === 0)
       newErrors.selectedServiceAreas = "Service areas are required";
-    if (!formData.departmentNumbers.trim())
-      newErrors.departmentNumbers = "Department numbers are required";
+      // if (!formData.departmentNumbers.trim())
+      //   newErrors.departmentNumbers = "Department numbers are required";
     // if (!formData.companyPhoneNumber.trim())
     //   newErrors.companyPhoneNumber = "Company phone number is required";
 
@@ -349,7 +349,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
           selected_categories: formData.selectedCategories,
           selected_subcategories: formData.selectedSubcategories,
           selected_service_areas: formData.selectedServiceAreas,
-          department_numbers: formData.departmentNumbers,
+          // department_numbers: formData.departmentNumbers,
           company_contact_person: formData.contactPerson,
           skills: formData.skills
             .split(",")
@@ -1146,7 +1146,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 )}
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Department Numbers *
                 </label>
@@ -1167,7 +1167,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     {errors.departmentNumbers}
                   </p>
                 )}
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
