@@ -416,13 +416,6 @@ def filter_sellers_by_location(request):
         if direct.exists():
             matched = direct
 
-    # Attempt 2: by department number
-    if matched is None and postal_code and len(postal_code) >= 2 and postal_code[:2].isdigit():
-        dept = postal_code[:2]
-        dept_match = qs.filter(department_numbers__icontains=dept)
-        if dept_match.exists():
-            matched = dept_match
-
     # Attempt 3: by full address icontains city or postal code
     if matched is None and (city or postal_code or address):
         addr_qs = qs
