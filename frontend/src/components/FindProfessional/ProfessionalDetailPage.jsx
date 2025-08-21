@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import SafeBillHeader from "../mutualComponents/Navbar/Navbar";
+import QuoteRequestDialog from "./QuoteRequestDialog";
 import {
   businessActivityStructure,
   serviceAreaOptions,
@@ -75,6 +76,7 @@ export default function ProfessionalDetailPage() {
   const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfessionalDetails = async () => {
@@ -161,6 +163,10 @@ export default function ProfessionalDetailPage() {
     return getDefaultAvatar(professional.name);
   };
 
+  const handleRequestQuote = () => {
+    setIsQuoteDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <SafeBillHeader />
@@ -200,7 +206,10 @@ export default function ProfessionalDetailPage() {
               </div> */}
             </div>
 
-            <button className="bg-[#E2F4FE] text-[#01257D] px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] hover:text-white transition-colors cursor-pointer">
+            <button
+              onClick={handleRequestQuote}
+              className="bg-[#E2F4FE] text-[#01257D] px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] hover:text-white transition-colors cursor-pointer"
+            >
               Request Quote
             </button>
           </div>
@@ -327,6 +336,13 @@ export default function ProfessionalDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Quote Request Dialog */}
+      <QuoteRequestDialog
+        isOpen={isQuoteDialogOpen}
+        onClose={() => setIsQuoteDialogOpen(false)}
+        professional={professional}
+      />
     </div>
   );
 }

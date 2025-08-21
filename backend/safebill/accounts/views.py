@@ -27,6 +27,7 @@ def _get_seller_data(seller):
     return {
         'id': seller.user.id,
         'name': seller.user.username,
+        'email': seller.user.email,  # Add email for quote requests
         'business_type': seller.type_of_activity,
         'about': seller.user.about,
         'profile_pic': seller.user.profile_pic.url if seller.user.profile_pic else None,
