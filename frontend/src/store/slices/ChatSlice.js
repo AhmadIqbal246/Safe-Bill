@@ -6,10 +6,17 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const authHeader = () => ({ Authorization: `Bearer ${sessionStorage.getItem('access')}` });
 
+// Helper function to get current user ID
+const getCurrentUserId = () => {
+  const user = sessionStorage.getItem('user');
+  return user ? JSON.parse(user).user_id : null;
+};
+
 export const fetchMessages = createAsyncThunk(
   'chat/fetchMessages',
   async (projectId, { rejectWithValue }) => {
     try {
+      console.log('Fetching messages for project:', projectId);
       const res = await axios.get(
         `${BASE_URL}api/projects/${projectId}/chat/messages/`,
         { headers: authHeader() }
@@ -25,6 +32,7 @@ export const sendTextMessage = createAsyncThunk(
   'chat/sendTextMessage',
   async ({ projectId, messageData }, { rejectWithValue, dispatch }) => {
     try {
+      console.log('Sending message for project:', projectId);
       // Send via WebSocket for real-time delivery
       const token = sessionStorage.getItem('access');
       websocketService.connect(projectId, token);
@@ -49,6 +57,7 @@ export const sendTextMessage = createAsyncThunk(
 export const connectToProjectChat = createAsyncThunk(
   'chat/connectToProjectChat',
   async ({ projectId }, { dispatch }) => {
+    console.log('Connecting to project chat:', projectId);
     const token = sessionStorage.getItem('access');
     
     // Connect to WebSocket
@@ -77,6 +86,7 @@ export const connectToProjectChat = createAsyncThunk(
 export const disconnectFromProjectChat = createAsyncThunk(
   'chat/disconnectFromProjectChat',
   async () => {
+    console.log('Disconnecting from project chat');
     websocketService.disconnect();
     return {};
   }
@@ -86,6 +96,7 @@ export const fetchChatContacts = createAsyncThunk(
   'chat/fetchChatContacts',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Fetching chat contacts');
       const res = await axios.get(
         `${BASE_URL}api/chat/contacts/`,
         { headers: authHeader() }
@@ -101,6 +112,7 @@ export const markContactAsRead = createAsyncThunk(
   'chat/markContactAsRead',
   async (contactId, { rejectWithValue }) => {
     try {
+      console.log('Marking contact as read:', contactId);
       await axios.post(
         `${BASE_URL}api/chat/contacts/${contactId}/mark-read/`,
         {},
@@ -129,17 +141,30 @@ const chatSlice = createSlice({
   reducers: {
     addIncomingMessage: (state, action) => {
       const { projectId, message } = action.payload;
+      const currentUserId = getCurrentUserId();
+      
       if (!state.messages[projectId]) {
         state.messages[projectId] = [];
       }
-      state.messages[projectId].push(message);
       
-      // Update unread count for the contact
-      const contact = state.chatContacts.find(c => c.project_info.id === projectId);
-      if (contact) {
-        contact.unread_count += 1;
-        contact.last_message_text = message.content;
-        contact.last_message_at = message.created_at;
+      // Check if message already exists (prevent duplication)
+      const existingMessage = state.messages[projectId].find(
+        msg => msg.id === message.id || 
+               (msg.client_message_id && msg.client_message_id === message.client_message_id)
+      );
+      
+      if (!existingMessage) {
+        state.messages[projectId].push(message);
+        
+        // Only update unread count if the message is not from the current user
+        if (message.sender !== currentUserId) {
+          const contact = state.chatContacts.find(c => c.project_info.id === projectId);
+          if (contact) {
+            contact.unread_count += 1;
+            contact.last_message_text = message.content;
+            contact.last_message_at = message.created_at;
+          }
+        }
       }
     },
     clearChatErrors: (state) => {
@@ -180,19 +205,23 @@ const chatSlice = createSlice({
       .addCase(fetchMessages.fulfilled, (state, action) => {
         const { projectId, messages } = action.payload;
         state.messagesLoading = false;
-        state.messages[projectId] = messages.reverse(); // Reverse to show oldest first
+        
+        // Only set messages if we don't already have messages for this project
+        // This prevents refetching and re-displaying existing messages
+        if (!state.messages[projectId] || state.messages[projectId].length === 0) {
+          state.messages[projectId] = messages.reverse(); // Reverse to show oldest first
+        }
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.messagesLoading = false;
         state.messagesError = action.payload || 'Failed to fetch messages';
       })
-      // Send Message
+      // Send Message - Remove the automatic push to prevent duplication
+      // The message will be added via WebSocket addIncomingMessage instead
       .addCase(sendTextMessage.fulfilled, (state, action) => {
-        const { projectId, message } = action.payload;
-        if (!state.messages[projectId]) {
-          state.messages[projectId] = [];
-        }
-        state.messages[projectId].push(message);
+        // Don't add the message here as it will come through WebSocket
+        // This prevents the duplication issue
+        console.log('Message sent successfully via API');
       })
       // Fetch Chat Contacts
       .addCase(fetchChatContacts.pending, (state) => {
@@ -238,6 +267,5 @@ export const {
   closeContactList,
   updateContactUnreadCount
 } = chatSlice.actions;
-
 
 export default chatSlice.reducer;

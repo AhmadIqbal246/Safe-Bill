@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { X, Send, Paperclip } from 'lucide-react';
 import { 
-  closeChat, 
+  sendTextMessage, 
   fetchMessages, 
-  sendTextMessage,
-  addIncomingMessage,
-  connectToProjectChat,
-  disconnectFromProjectChat
+  connectToProjectChat, 
+  disconnectFromProjectChat 
 } from '../../../store/slices/ChatSlice';
 import { formatDistanceToNow } from 'date-fns';
+import { X, Paperclip, Send } from 'lucide-react';
+import { closeChat } from '../../../store/slices/ChatSlice';
+
+// Helper function to get current user ID
+const getCurrentUserId = () => {
+  const user = sessionStorage.getItem('user');
+  return user ? JSON.parse(user).user_id : null;
+};
 
 const ChatWindow = () => {
   const dispatch = useDispatch();
@@ -128,29 +133,34 @@ const ChatWindow = () => {
               <p className="text-sm">Start the conversation!</p>
             </div>
           ) : (
-            currentMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === selectedContact.contact_info.id ? 'justify-start' : 'justify-end'}`}
-              >
+            currentMessages.map((message) => {
+              const currentUserId = getCurrentUserId();
+              const isCurrentUserMessage = message.sender === currentUserId;
+              
+              return (
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.sender === selectedContact.contact_info.id
-                      ? 'bg-white border border-gray-200'
-                      : 'bg-[#01257D] text-white'
-                  }`}
+                  key={message.id}
+                  className={`flex ${isCurrentUserMessage ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="text-sm break-words">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.sender === selectedContact.contact_info.id
-                      ? 'text-gray-500'
-                      : 'text-blue-100'
-                  }`}>
-                    {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                  </p>
+                  <div
+                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      isCurrentUserMessage
+                        ? 'bg-[#01257D] text-white'
+                        : 'bg-white border border-gray-200'
+                    }`}
+                  >
+                    <p className="text-sm break-words">{message.content}</p>
+                    <p className={`text-xs mt-1 ${
+                      isCurrentUserMessage
+                        ? 'text-blue-100'
+                        : 'text-gray-500'
+                    }`}>
+                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           <div ref={messagesEndRef} />
         </div>
