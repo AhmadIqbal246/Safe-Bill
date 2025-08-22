@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { X, Send, User, Mail } from 'lucide-react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     subject: '',
     body: ''
@@ -42,17 +44,17 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
     e.preventDefault();
     
     if (!formData.subject.trim() || !formData.body.trim()) {
-      setError('Please fill in all required fields.');
+      setError(t('quote_request.fill_required_fields'));
       return;
     }
 
     if (!currentUserEmail) {
-      setError('Unable to get your email. Please log in again.');
+      setError(t('quote_request.unable_get_email'));
       return;
     }
 
     if (!professionalEmail) {
-      setError('Unable to get professional\'s email.');
+      setError(t('quote_request.unable_get_professional_email'));
       return;
     }
 
@@ -83,7 +85,7 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
       }
     } catch (err) {
       console.error('Error sending quote request:', err);
-      setError(err.response?.data?.detail || 'Failed to send quote request. Please try again.');
+      setError(err.response?.data?.detail || t('quote_request.failed_send_request'));
     } finally {
       setLoading(false);
     }
@@ -105,7 +107,7 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Request Quote</h2>
+          <h2 className="text-lg font-semibold text-gray-800">{t('quote_request.title')}</h2>
           <button
             onClick={handleClose}
             disabled={loading}
@@ -120,10 +122,10 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg mx-4 mt-4">
             <div className="flex items-center text-green-800">
               <Send className="w-5 h-5 mr-2" />
-              <span className="font-medium">Quote request sent successfully!</span>
+              <span className="font-medium">{t('quote_request.success_title')}</span>
             </div>
             <p className="text-green-600 text-sm mt-1">
-              The professional will receive your request and respond accordingly.
+              {t('quote_request.success_message')}
             </p>
           </div>
         )}
@@ -133,7 +135,7 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg mx-4 mt-4">
             <div className="flex items-center text-red-800">
               <X className="w-5 h-5 mr-2" />
-              <span className="font-medium">Error</span>
+              <span className="font-medium">{t('quote_request.error_title')}</span>
             </div>
             <p className="text-red-600 text-sm mt-1">{error}</p>
           </div>
@@ -145,20 +147,20 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
           <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center text-sm text-gray-600">
               <Mail className="w-4 h-4 mr-2" />
-              <span className="font-medium">From:</span>
-              <span className="ml-2 text-gray-800">{currentUserEmail || 'Loading...'}</span>
+              <span className="font-medium">{t('quote_request.from_label')}</span>
+              <span className="ml-2 text-gray-800">{currentUserEmail || t('quote_request.loading')}</span>
             </div>
             <div className="flex items-center text-sm text-gray-600">
               <User className="w-4 h-4 mr-2" />
-              <span className="font-medium">To:</span>
-              <span className="ml-2 text-gray-800">{professionalEmail || 'Loading...'}</span>
+              <span className="font-medium">{t('quote_request.to_label')}</span>
+              <span className="ml-2 text-gray-800">{professionalEmail || t('quote_request.loading')}</span>
             </div>
           </div>
 
           {/* Subject Field */}
           <div>
             <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-              Subject *
+              {t('quote_request.subject_label')}
             </label>
             <input
               type="text"
@@ -166,7 +168,7 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
               name="subject"
               value={formData.subject}
               onChange={handleInputChange}
-              placeholder="Enter subject for your quote request"
+              placeholder={t('quote_request.subject_placeholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
               required
               disabled={loading}
@@ -176,14 +178,14 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
           {/* Body Field */}
           <div>
             <label htmlFor="body" className="block text-sm font-medium text-gray-700 mb-2">
-              Message *
+              {t('quote_request.message_label')}
             </label>
             <textarea
               id="body"
               name="body"
               value={formData.body}
               onChange={handleInputChange}
-              placeholder="Describe your project requirements, timeline, and any specific details..."
+              placeholder={t('quote_request.message_placeholder')}
               rows={6}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent resize-none"
               required
@@ -199,7 +201,7 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
               disabled={loading}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -209,12 +211,12 @@ const QuoteRequestDialog = ({ isOpen, onClose, professional }) => {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Sending...
+                  {t('actions.sending')}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Send Request
+                  {t('actions.send_request')}
                 </>
               )}
             </button>

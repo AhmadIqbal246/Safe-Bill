@@ -8,8 +8,10 @@ import {
 import { toast } from "react-toastify";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 export default function BuyerRegisterComp() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.auth);
 
@@ -33,31 +35,30 @@ export default function BuyerRegisterComp() {
 
   const validate = () => {
     const newErrors = {};
-    if (!form.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!form.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!form.address.trim()) newErrors.address = "Address is required";
+    if (!form.firstName.trim()) newErrors.firstName = t('registration.first_name_required');
+    if (!form.lastName.trim()) newErrors.lastName = t('registration.last_name_required');
+    if (!form.address.trim()) newErrors.address = t('registration.address_required');
     if (!form.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = t('registration.email_required');
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(form.email)) {
-        newErrors.email = "Invalid email address";
+        newErrors.email = t('registration.invalid_email');
       }
     }
     if (!form.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = t('registration.password_required');
     } else {
       if (form.password.length < 8) {
-        newErrors.password = "Password must be at least 8 characters long.";
+        newErrors.password = t('registration.password_min_length');
       } else if (!strongPasswordRegex.test(form.password)) {
-        newErrors.password =
-          "Password must contain uppercase, lowercase, number, and special character.";
+        newErrors.password = t('registration.password_complexity');
       }
     }
     if (!form.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = t('registration.confirm_password_required');
     } else if (form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t('registration.passwords_not_match');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,7 +90,7 @@ export default function BuyerRegisterComp() {
         typeof success === "string"
           ? success
           : success.detail ||
-              "Registration successful. Please check your email to verify your Email."
+              t('registration.registration_success')
       );
       setForm(initialForm);
       dispatch(resetAuthState());
@@ -100,7 +101,7 @@ export default function BuyerRegisterComp() {
           : error.detail || Object.values(error).flat().join(", ")
       );
     }
-  }, [success, error, dispatch]);
+  }, [success, error, dispatch, t]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -108,22 +109,22 @@ export default function BuyerRegisterComp() {
         <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-[#111827] mb-2">
-              Join Safe Bill as a Buyer
+              {t('buyer_registration.title')}
             </h1>
             <p className="text-[#111827]">
-              Complete your registration to start using the platform.
+              {t('buyer_registration.description')}
             </p>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name *
+                {t('buyer_registration.first_name_label')}
               </label>
               <input
                 type="text"
                 value={form.firstName}
                 onChange={(e) => handleChange("firstName", e.target.value)}
-                placeholder="Enter your first name"
+                placeholder={t('buyer_registration.first_name_placeholder')}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                   errors.firstName ? "border-red-500" : "border-gray-300"
                 }`}
@@ -134,13 +135,13 @@ export default function BuyerRegisterComp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name *
+                {t('buyer_registration.last_name_label')}
               </label>
               <input
                 type="text"
                 value={form.lastName}
                 onChange={(e) => handleChange("lastName", e.target.value)}
-                placeholder="Enter your last name"
+                placeholder={t('buyer_registration.last_name_placeholder')}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                   errors.lastName ? "border-red-500" : "border-gray-300"
                 }`}
@@ -151,13 +152,13 @@ export default function BuyerRegisterComp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Address *
+                {t('buyer_registration.address_label')}
               </label>
               <input
                 type="text"
                 value={form.address}
                 onChange={(e) => handleChange("address", e.target.value)}
-                placeholder="Enter your address"
+                placeholder={t('buyer_registration.address_placeholder')}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                   errors.address ? "border-red-500" : "border-gray-300"
                 }`}
@@ -168,13 +169,13 @@ export default function BuyerRegisterComp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
+                {t('buyer_registration.email_label')}
               </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => handleChange("email", e.target.value)}
-                placeholder="Enter your email address"
+                placeholder={t('buyer_registration.email_placeholder')}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                   errors.email ? "border-red-500" : "border-gray-300"
                 }`}
@@ -185,14 +186,14 @@ export default function BuyerRegisterComp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password *
+                {t('buyer_registration.password_label')}
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(e) => handleChange("password", e.target.value)}
-                  placeholder="Create a strong password"
+                  placeholder={t('buyer_registration.password_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   }`}
@@ -209,8 +210,7 @@ export default function BuyerRegisterComp() {
                 </span>
               </div>
               <p className="text-gray-500 text-sm mt-1">
-                At least 8 characters with uppercase, lowercase, numbers and
-                special character
+                {t('buyer_registration.password_requirements')}
               </p>
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">{errors.password}</p>
@@ -218,7 +218,7 @@ export default function BuyerRegisterComp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password *
+                {t('buyer_registration.confirm_password_label')}
               </label>
               <div className="relative">
                 <input
@@ -227,7 +227,7 @@ export default function BuyerRegisterComp() {
                   onChange={(e) =>
                     handleChange("confirmPassword", e.target.value)
                   }
-                  placeholder="Confirm your password"
+                  placeholder={t('buyer_registration.confirm_password_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.confirmPassword
                       ? "border-red-500"
@@ -262,36 +262,20 @@ export default function BuyerRegisterComp() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <ClipLoader color="#fff" loading={loading} size={20} />
-                    Submitting...
+                    {t('buyer_registration.submitting')}
                   </span>
                 ) : (
-                  "Create my account"
+                  t('buyer_registration.create_account')
                 )}
               </button>
             </div>
-            {/* <span className="text-[#96C2DB] text-sm text-center block">
-              <Link
-                to="/professional-buyer"
-                className="font-semibold text-[#01257D] hover:underline"
-              >
-                Register as a Professional Buyer
-              </Link>
-            </span>
             <span className="text-[#96C2DB] text-sm text-center block">
-              <Link
-                to="/seller-register"
-                className="font-semibold text-[#01257D] hover:underline"
-              >
-                Register as a Service Provider
-              </Link>
-            </span> */}
-            <span className="text-[#96C2DB] text-sm text-center block">
-              Already registered?{" "}
+              {t('buyer_registration.already_registered')}{" "}
               <Link
                 to="/login"
                 className="font-semibold text-[#01257D] hover:underline"
               >
-                Login
+                {t('buyer_registration.login')}
               </Link>
             </span>
           </form>

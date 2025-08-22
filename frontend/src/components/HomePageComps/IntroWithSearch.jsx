@@ -3,6 +3,7 @@ import { Search, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { businessActivityStructure, serviceAreaOptions } from "../../constants/registerationTypes";
+import { useTranslation } from 'react-i18next';
 
 // Create a flattened array of service type options with both id and label
 const serviceTypeOptions = businessActivityStructure.map(option => ({
@@ -11,6 +12,7 @@ const serviceTypeOptions = businessActivityStructure.map(option => ({
 }));
 
 export default function IntroWithSearch() {
+  const { t } = useTranslation();
   const [serviceType, setServiceType] = useState("");
   const [area, setArea] = useState("");
   const [showServiceTypeDropdown, setShowServiceTypeDropdown] = useState(false);
@@ -37,12 +39,12 @@ export default function IntroWithSearch() {
 
   const getServiceTypeLabel = () => {
     const option = serviceTypeOptions.find(opt => opt.value === serviceType);
-    return option ? option.label : "Select specialty...";
+    return option ? option.label : t('homepage.select_specialty');
   };
 
   const getAreaLabel = () => {
     const option = serviceAreaOptions.find(opt => opt.value === area);
-    return option ? option.label : "Select area...";
+    return option ? option.label : t('homepage.select_area');
   };
 
   const isSearchDisabled = !serviceType || !area;
@@ -50,14 +52,14 @@ export default function IntroWithSearch() {
   return (
     <section className="w-full flex flex-col items-center justify-center py-16 px-4 bg-white">
       <h1 className="text-3xl md:text-5xl font-bold text-[#111827] text-center mb-6 leading-tight">
-        Trusted platform for<br className="hidden md:block" /> your projects
+        {t('homepage.hero_title')}
       </h1>
       <p className="text-base md:text-lg text-[#96C2DB] text-center mb-10">
-        Secure payments, transparent tracking, mediation included
+        {t('homepage.hero_subtitle')}
       </p>
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg p-4 md:p-6 flex flex-col md:flex-row items-stretch gap-4 md:gap-2">
         <div className="flex-1 flex flex-col min-w-0">
-          <label className="text-xs font-medium text-[#111827] mb-1">What service do you need?</label>
+          <label className="text-xs font-medium text-[#111827] mb-1">{t('homepage.service_label')}</label>
           <div className="relative">
             <button
               type="button"
@@ -81,7 +83,7 @@ export default function IntroWithSearch() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Search service type..."
+                      placeholder={t('homepage.search_service_type')}
                       value={serviceTypeSearchTerm}
                       onChange={(e) => setServiceTypeSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
@@ -119,7 +121,7 @@ export default function IntroWithSearch() {
         </div>
         
         <div className="flex-1 flex flex-col min-w-0">
-          <label className="text-xs font-medium text-[#111827] mb-1">Location</label>
+          <label className="text-xs font-medium text-[#111827] mb-1">{t('homepage.location_label')}</label>
           <div className="relative">
             <button
               type="button"
@@ -143,7 +145,7 @@ export default function IntroWithSearch() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Search area..."
+                      placeholder={t('homepage.search_area')}
                       value={areaSearchTerm}
                       onChange={(e) => setAreaSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
@@ -190,8 +192,8 @@ export default function IntroWithSearch() {
           disabled={isSearchDisabled}
         >
           <Search className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
-          <span className="hidden sm:inline">Find a professional near you</span>
-          <span className="sm:hidden">Find Professional</span>
+          <span className="hidden sm:inline">{t('actions.find_professional_near_you')}</span>
+          <span className="sm:hidden">{t('actions.find_professional')}</span>
         </button>
       </div>
       

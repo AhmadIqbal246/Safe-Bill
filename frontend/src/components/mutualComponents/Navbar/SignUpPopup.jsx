@@ -3,14 +3,16 @@ import { X, Building2, User, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function SignUpPopup({ isOpen, onClose }) {
+  const { t } = useTranslation();
 
   const registrationOptions = [
     {
       id: 'seller',
-      title: 'Register as a Seller',
-      description: 'Join as a service provider to offer your professional services',
+      title: t('signup_popup.seller_title'),
+      description: t('signup_popup.seller_description'),
       icon: <Building2 className="w-6 h-6" />,
       link: '/seller-register',
       color: 'bg-[#01257D] hover:bg-[#2346a0]',
@@ -18,8 +20,8 @@ export default function SignUpPopup({ isOpen, onClose }) {
     },
     {
       id: 'professional-buyer',
-      title: 'Register as a Buyer (Business)',
-      description: 'Register your business to source professional services',
+      title: t('signup_popup.business_buyer_title'),
+      description: t('signup_popup.business_buyer_description'),
       icon: <Users className="w-6 h-6" />,
       link: '/professional-buyer',
       color: 'bg-[#E6F0FA] hover:bg-[#c7e0fa]',
@@ -27,8 +29,8 @@ export default function SignUpPopup({ isOpen, onClose }) {
     },
     {
       id: 'individual-buyer',
-      title: 'Register as a Buyer (Individual)',
-      description: 'Create an individual account to access services',
+      title: t('signup_popup.individual_buyer_title'),
+      description: t('signup_popup.individual_buyer_description'),
       icon: <User className="w-6 h-6" />,
       link: '/buyer-register',
       color: 'bg-[#E6F0FA] hover:bg-[#c7e0fa]',
@@ -66,7 +68,7 @@ export default function SignUpPopup({ isOpen, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                   <Dialog.Title as="h2" className="text-xl font-semibold text-gray-900">
-                    Choose Your Registration Type
+                    {t('signup_popup.title')}
                   </Dialog.Title>
                   <button
                     onClick={onClose}
@@ -79,7 +81,7 @@ export default function SignUpPopup({ isOpen, onClose }) {
                 {/* Content */}
                 <div className="p-6 space-y-4">
                   <p className="text-gray-600 text-sm mb-6">
-                    Select the type of account that best fits your needs
+                    {t('signup_popup.description')}
                   </p>
 
                   {registrationOptions.map((option) => (
@@ -109,13 +111,13 @@ export default function SignUpPopup({ isOpen, onClose }) {
                 {/* Footer */}
                 <div className="p-6 border-t border-gray-200">
                   <p className="text-center text-sm text-gray-500">
-                    Already have an account?{' '}
+                    {t('signup_popup.already_have_account')}{' '}
                     <Link 
                       to="/login" 
                       onClick={onClose}
                       className="text-[#01257D] hover:underline font-medium"
                     >
-                      Sign in
+                      {t('signup_popup.sign_in')}
                     </Link>
                   </p>
                 </div>

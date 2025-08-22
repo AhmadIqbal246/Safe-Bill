@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react'; // or your preferred icon
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 function EmailVerificationComp() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
   const [message, setMessage] = useState('');
@@ -20,22 +22,22 @@ function EmailVerificationComp() {
           `${backendBaseUrl}api/accounts/verify-email/?uid=${uid}&token=${token}`
         );
         setStatus('success');
-        setMessage(res.data.detail || 'Your email has been verified!');
+        setMessage(res.data.detail || t('email_verification.email_verified'));
         setTimeout(() => navigate('/login'), 2000);
       } catch (err) {
         setStatus('error');
         setMessage(
           err.response?.data?.detail ||
-          'Verification failed. The link may be invalid or expired.'
+          t('email_verification.verification_failed_message')
         );
       }
     }
     if (uid && token) verifyEmail();
     else {
       setStatus('error');
-      setMessage('Invalid verification link.');
+      setMessage(t('email_verification.invalid_link'));
     }
-  }, [uid, token, navigate]);
+  }, [uid, token, navigate, t]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -51,12 +53,12 @@ function EmailVerificationComp() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
             </svg>
-            <p className="text-lg font-medium text-gray-900">Verifying your email...</p>
+            <p className="text-lg font-medium text-gray-900">{t('email_verification.verifying_email')}</p>
           </div>
         )}
         {status === 'success' && (
           <div className="flex flex-col items-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Email Verification</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('email_verification.email_verification')}</h2>
             <p className="text-gray-500 text-center">
               {message}
             </p>
@@ -64,7 +66,7 @@ function EmailVerificationComp() {
         )}
         {status === 'error' && (
           <div className="flex flex-col items-center">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">Verification Failed</h2>
+            <h2 className="text-xl font-semibold text-red-600 mb-2">{t('email_verification.verification_failed')}</h2>
             <p className="text-gray-500 text-center">
               {message}
             </p>

@@ -15,6 +15,7 @@ import {
   businessActivityStructure,
   serviceAreaOptions,
 } from "../../constants/registerationTypes";
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -71,6 +72,7 @@ function getServiceAreaLabel(areaId) {
 }
 
 export default function ProfessionalDetailPage() {
+  const { t } = useTranslation();
   const { professionalId } = useParams();
   const navigate = useNavigate();
   const [professional, setProfessional] = useState(null);
@@ -126,7 +128,7 @@ export default function ProfessionalDetailPage() {
             onClick={() => navigate(-1)}
             className="px-4 py-2 bg-[#01257D] text-white rounded-md hover:bg-[#2346a0] transition-colors"
           >
-            Go Back
+            {t('actions.go_back')}
           </button>
         </div>
       </div>
@@ -189,15 +191,15 @@ export default function ProfessionalDetailPage() {
 
             <p className="text-lg text-gray-600 mb-3">
               {getBusinessActivityLabel(professional.business_type) ||
-                "Professional Services"}
+                t('professional_detail.professional_services')}
             </p>
 
             <div className="flex items-center justify-center mb-4">
               <MapPin className="w-4 h-4 text-gray-500 mr-2" />
               <span className="text-gray-600 mr-4">
                 {safeProfessional.selected_service_areas.length > 0
-                  ? `Serving ${safeProfessional.selected_service_areas.length} areas`
-                  : "Service areas not specified"}
+                  ? t('professional_detail.serving_areas', { count: safeProfessional.selected_service_areas.length })
+                  : t('professional_detail.service_areas_not_specified')}
               </span>
               {/* <div className="flex items-center">
                 <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
@@ -210,7 +212,7 @@ export default function ProfessionalDetailPage() {
               onClick={handleRequestQuote}
               className="bg-[#E2F4FE] text-[#01257D] px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] hover:text-white transition-colors cursor-pointer"
             >
-              Request Quote
+              {t('actions.request_quote')}
             </button>
           </div>
         </div>
@@ -218,10 +220,10 @@ export default function ProfessionalDetailPage() {
         {/* About Section */}
         <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-4">
-            About {professional.name}
+            {t('professional_detail.about_section')}
           </h2>
           <p className="text-gray-700 leading-relaxed">
-            {professional.about || "No about information provided."}
+            {professional.about || t('professional_detail.no_about_info')}
           </p>
         </div>
 
@@ -246,7 +248,7 @@ export default function ProfessionalDetailPage() {
           </div>
         </div> */}
         <div className="p-8 mb-8 flex flex-col gap-4">
-          <h2 className="text-2xl font-bold text-[#111827] mb-6">Categories</h2>
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">{t('professional_detail.categories_title')}</h2>
           <div className="flex flex-wrap gap-2">
             {safeProfessional.categories.length > 0 ? (
               safeProfessional.categories.map((category, index) => (
@@ -258,11 +260,11 @@ export default function ProfessionalDetailPage() {
                 </span>
               ))
             ) : (
-              <span className="text-gray-400">No categories listed.</span>
+              <span className="text-gray-400">{t('professional_detail.no_categories')}</span>
             )}
           </div>
           <h2 className="text-2xl font-bold text-[#111827] mb-6">
-            Subcategories
+            {t('professional_detail.subcategories_title')}
           </h2>
           <div className="flex flex-wrap gap-2">
             {safeProfessional.subcategories.length > 0 ? (
@@ -275,7 +277,7 @@ export default function ProfessionalDetailPage() {
                 </span>
               ))
             ) : (
-              <span className="text-gray-400">No subcategories listed.</span>
+              <span className="text-gray-400">{t('professional_detail.no_subcategories')}</span>
             )}
           </div>
         </div>
@@ -283,7 +285,7 @@ export default function ProfessionalDetailPage() {
         {/* Service Areas Section */}
         <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-6">
-            Service Areas
+            {t('professional_detail.service_areas_title')}
           </h2>
           {/* <div className="relative mb-4">
             <input
@@ -304,33 +306,33 @@ export default function ProfessionalDetailPage() {
                 </span>
               ))
             ) : (
-              <span className="text-gray-400">No service areas specified.</span>
+              <span className="text-gray-400">{t('professional_detail.no_service_areas')}</span>
             )}
           </div>
         </div>
 
         {/* Guarantees Section */}
         <div className="p-8">
-          <h2 className="text-2xl font-bold text-[#111827] mb-6">Guarantees</h2>
+          <h2 className="text-2xl font-bold text-[#111827] mb-6">{t('professional_detail.guarantees_title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <FileCheck className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
-              <p className="font-semibold text-[#111827]">KYC Validated</p>
+              <p className="font-semibold text-[#111827]">{t('professional_detail.kyc_validated')}</p>
             </div>
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <Shield className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
-              <p className="font-semibold text-[#111827]">Insured</p>
+              <p className="font-semibold text-[#111827]">{t('professional_detail.insured')}</p>
             </div>
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <Shield className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
               <p className="font-semibold text-[#111827]">
-                Professional Liability
+                {t('professional_detail.professional_liability')}
               </p>
             </div>
             <div className="border border-gray-200 rounded-lg p-4 text-center">
               <Users className="w-8 h-8 text-[#01257D] mx-auto mb-2" />
               <p className="font-semibold text-[#111827]">
-                Trusted by ProConnect
+                {t('professional_detail.trusted_by_proconnect')}
               </p>
             </div>
           </div>

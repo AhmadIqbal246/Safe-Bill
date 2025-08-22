@@ -1,24 +1,27 @@
 import React from 'react';
 import { Dialog } from '@headlessui/react';
 import { Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ProjectDetailDialogue({ open, onClose, project }) {
+  const { t } = useTranslation();
+  
   if (!project) return null;
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-          <Dialog.Title className="text-xl font-bold text-[#01257D] mb-2">Project Details</Dialog.Title>
+          <Dialog.Title className="text-xl font-bold text-[#01257D] mb-2">{t('project_dialog.title')}</Dialog.Title>
           <div className="mb-4 text-gray-700">
-            <div className="mb-1"><span className="font-semibold">Project Name:</span> {project.name}</div>
-            <div className="mb-1"><span className="font-semibold">Client Email:</span> {project.client_email}</div>
-            <div className="mb-1"><span className="font-semibold">Quote Reference:</span> {project.quote?.reference_number}</div>
-            <div className="mb-1"><span className="font-semibold">Created At:</span> {project.created_at}</div>
-            <div className="mb-1"><span className="font-semibold">Total Amount:</span> <span className="text-[#01257D] font-semibold">${parseFloat(project.total_amount).toLocaleString()}</span></div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.project_name')}</span> {project.name}</div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.client_email')}</span> {project.client_email}</div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.quote_reference')}</span> {project.quote?.reference_number}</div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.created_at')}</span> {project.created_at}</div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.total_amount')}</span> <span className="text-[#01257D] font-semibold">${parseFloat(project.total_amount).toLocaleString()}</span></div>
             {project.quote?.file && (
               <div className="mb-1 flex items-center gap-2">
-                <span className="font-semibold">Quote File:</span>
+                <span className="font-semibold">{t('project_dialog.quote_file')}</span>
                 <a
                   href={project.quote.file}
                   target="_blank"
@@ -26,20 +29,20 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
                   className="text-blue-700 underline flex items-center gap-1 cursor-pointer"
                   download
                 >
-                  <Download className="w-4 h-4 inline" /> Download/View
+                  <Download className="w-4 h-4 inline" /> {t('actions.download_view')}
                 </a>
               </div>
             )}
           </div>
           <div className="mb-4">
-            <div className="font-semibold text-[#01257D] mb-2">Installments</div>
+            <div className="font-semibold text-[#01257D] mb-2">{t('project_dialog.installments')}</div>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm border rounded-lg">
                 <thead className="bg-[#E6F0FA]">
                   <tr>
-                    <th className="px-3 py-2 text-left font-semibold">Step</th>
-                    <th className="px-3 py-2 text-left font-semibold">Amount</th>
-                    <th className="px-3 py-2 text-left font-semibold">Description</th>
+                    <th className="px-3 py-2 text-left font-semibold">{t('project_dialog.step')}</th>
+                    <th className="px-3 py-2 text-left font-semibold">{t('project_dialog.amount')}</th>
+                    <th className="px-3 py-2 text-left font-semibold">{t('project_dialog.description')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -59,7 +62,7 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
               className="px-5 py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
               onClick={onClose}
             >
-              Close
+              {t('actions.close')}
             </button>
           </div>
         </Dialog.Panel>

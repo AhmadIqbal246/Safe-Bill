@@ -11,6 +11,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 import {
   businessActivityStructure,
@@ -19,6 +20,7 @@ import {
 } from "../../../constants/registerationTypes";
 
 export default function SellerRegisterFlow({role = "seller"}) {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.auth);
   const siretVerification = useSelector(
@@ -171,13 +173,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
     setSiretVerified(false);
     dispatch(resetSiretVerification());
     if (value.length !== 14) {
-      setSiretError("SIRET must be exactly 14 digits");
+      setSiretError(t('seller_registration.siret_error'));
     }
   };
 
   const verifySiretHandler = async () => {
     if (formData.businessNumber.length !== 14) {
-      setSiretError("SIRET must be exactly 14 digits");
+      setSiretError(t('seller_registration.siret_error'));
       return;
     }
     setSiretError("");
@@ -207,13 +209,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
     // Integer validation for businessNumber
     if (!formData.businessNumber.trim()) {
-      newErrors.businessNumber = "Business Registration Number is required";
+      newErrors.businessNumber = t('seller_registration.business_registration_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.businessNumber)) {
       newErrors.businessNumber = "only numbers are allowed";
     }
     // Integer validation for phoneNumber
     if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required";
+      newErrors.phoneNumber = t('seller_registration.phone_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.phoneNumber)) {
       newErrors.phoneNumber = "only numbers are allowed";
     }
@@ -221,27 +223,27 @@ export default function SellerRegisterFlow({role = "seller"}) {
     // Password validation rules
     const passwordErrors = [];
     if (!formData.password) {
-      passwordErrors.push("Password is required");
+      passwordErrors.push(t('registration.password_required'));
     } else {
       if (formData.password.length < 8) {
-        passwordErrors.push("Password must be at least 8 characters long.");
+        passwordErrors.push(t('registration.password_min_length'));
       }
       if (!/[A-Z]/.test(formData.password)) {
         passwordErrors.push(
-          "Password should contain at least one uppercase letter."
+          t('registration.password_complexity')
         );
       }
       if (!/[a-z]/.test(formData.password)) {
         passwordErrors.push(
-          "Password should contain at least one lowercase letter."
+          t('registration.password_complexity')
         );
       }
       if (!/\d/.test(formData.password)) {
-        passwordErrors.push("Password should contain at least one number.");
+        passwordErrors.push(t('registration.password_complexity'));
       }
       if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.password)) {
         passwordErrors.push(
-          "Password should contain at least one special character."
+          t('registration.password_complexity')
         );
       }
     }
@@ -251,22 +253,22 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = t('registration.email_required');
     } else {
       // Simple email regex
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        newErrors.email = "Invalid email address";
+        newErrors.email = t('registration.invalid_email');
       }
     }
     if (!formData.confirmPassword)
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = t('registration.confirm_password_required');
     if (
       formData.password &&
       formData.confirmPassword &&
       formData.password !== formData.confirmPassword
     )
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t('registration.passwords_not_match');
     if (!formData.agreeToTerms)
       newErrors.agreeToTerms = "You must agree to the terms";
 
@@ -279,20 +281,20 @@ export default function SellerRegisterFlow({role = "seller"}) {
     const newErrors = {};
 
     if (!formData.businessNumber.trim())
-      newErrors.businessNumber = "Business number / SIRET is required";
+      newErrors.businessNumber = t('seller_registration.business_registration_number_label').replace(' *', '');
     if (!formData.companyName.trim())
-      newErrors.companyName = "Company name is required";
-    if (!formData.streetAddress.trim()) newErrors.streetAddress = "Street address is required";
-    if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
-    if (!formData.cityRegion.trim()) newErrors.cityRegion = "City/Region is required";
+      newErrors.companyName = t('seller_registration.company_name_label').replace(' *', '');
+    if (!formData.streetAddress.trim()) newErrors.streetAddress = t('seller_registration.street_address_label').replace(' *', '');
+    if (!formData.postalCode.trim()) newErrors.postalCode = t('seller_registration.postal_code_label').replace(' *', '');
+    if (!formData.cityRegion.trim()) newErrors.cityRegion = t('seller_registration.city_region_label').replace(' *', '');
     if (!formData.contactPersonFirstName.trim())
-      newErrors.contactPersonFirstName = "First name is required";
+      newErrors.contactPersonFirstName = t('seller_registration.contact_first_name_label').replace(' *', '');
     if (!formData.contactPersonLastName.trim())
-      newErrors.contactPersonLastName = "Last name is required";
+      newErrors.contactPersonLastName = t('seller_registration.contact_last_name_label').replace(' *', '');
     if (!formData.businessActivity)
-      newErrors.businessActivity = "Business activity is required";
+      newErrors.businessActivity = t('seller_registration.business_activity_label').replace(' *', '');
     if (!formData.selectedServiceAreas || formData.selectedServiceAreas.length === 0)
-      newErrors.selectedServiceAreas = "Service areas are required";
+      newErrors.selectedServiceAreas = t('seller_registration.service_areas_label').replace(' *', '');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -307,20 +309,20 @@ export default function SellerRegisterFlow({role = "seller"}) {
   const getTitle = () => {
     switch (role) {
       case "professional-buyer":
-        return "Join Safe Bill as a Professional Buyer";
+        return t('seller_registration.title_professional_buyer');
       case "seller":
       default:
-        return "Join Safe Bill as a Service Provider";
+        return t('seller_registration.title_seller');
     }
   };
 
   const getDescription = () => {
     switch (role) {
       case "professional-buyer":
-        return "Complete your registration to start sourcing services and managing your business needs";
+        return t('seller_registration.description_professional_buyer');
       case "seller":
       default:
-        return "Complete your registration to start receiving leads and growing your business";
+        return t('seller_registration.description_seller');
     }
   };
 
@@ -368,7 +370,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
         typeof success === "string"
           ? success
           : success.detail ||
-              "Registration successful. Please check your email to verify your Email."
+              t('registration.registration_success')
       );
       setFormData(initialFormData);
       setCurrentStep(1);
@@ -395,7 +397,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
           : error.detail || Object.values(error).flat().join(", ")
       );
     }
-  }, [success, error, dispatch]);
+  }, [success, error, dispatch, t]);
 
   const steps = [
     { number: 1, title: "Basic Information", active: currentStep >= 1 },
@@ -467,14 +469,14 @@ export default function SellerRegisterFlow({role = "seller"}) {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business Registration Number *
+                  {t('seller_registration.business_registration_number_label')}
                 </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={formData.businessNumber}
                     onChange={handleSiretChange}
-                    placeholder="Enter your Business Registration Number"
+                    placeholder={t('seller_registration.business_registration_number_placeholder')}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.businessNumber
                         ? "border-red-500"
@@ -495,25 +497,25 @@ export default function SellerRegisterFlow({role = "seller"}) {
                       siretVerified
                     }
                   >
-                    {siretVerification.loading ? "Verifying..." : siretVerified ? "Verified" : "Verify"}
+                    {siretVerification.loading ? t('seller_registration.verifying') : siretVerified ? t('seller_registration.verified') : t('seller_registration.verify')}
                   </button>
                 </div>
                 {siretError && (
                   <p className="text-red-500 text-sm mt-1">{siretError}</p>
                 )}
                 {siretVerified && (
-                  <p className="text-green-600 text-sm mt-1">✓ SIRET number verified successfully</p>
+                  <p className="text-green-600 text-sm mt-1">{t('seller_registration.siret_success')}</p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Company Name *
+                  {t('seller_registration.company_name_label')}
                   {fieldsDisabled && (
                     <div className="relative group">
                       <Info className="w-4 h-4 text-gray-400 cursor-help" />
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                        Please verify your SIRET number to enter company details
+                        {t('seller_registration.siret_tooltip')}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                       </div>
                     </div>
@@ -525,7 +527,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   onChange={(e) =>
                     updateFormData("companyName", e.target.value)
                   }
-                  placeholder="Company name"
+                  placeholder={t('seller_registration.company_name_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.companyName ? "border-red-500" : "border-gray-300"
                   } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
@@ -540,12 +542,12 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Street Address *
+                  {t('seller_registration.street_address_label')}
                   {fieldsDisabled && (
                     <div className="relative group">
                       <Info className="w-4 h-4 text-gray-400 cursor-help" />
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                        Please verify your SIRET number to enter address details
+                        {t('seller_registration.address_tooltip')}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                       </div>
                     </div>
@@ -555,7 +557,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   type="text"
                   value={formData.streetAddress}
                   onChange={(e) => updateFormData("streetAddress", e.target.value)}
-                  placeholder="Enter the Street Address"
+                  placeholder={t('seller_registration.street_address_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.streetAddress ? "border-red-500" : "border-gray-300"
                   } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
