@@ -285,6 +285,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         for frontend_field, backend_field in field_mapping.items():
             value = self.initial_data.get(frontend_field)
             if value is not None:
+                # Handle JSON strings for array fields when using FormData
+                if frontend_field in ['selected_categories', 'selected_subcategories', 'selected_service_areas']:
+                    if isinstance(value, str):
+                        try:
+                            import json
+                            value = json.loads(value)
+                        except (json.JSONDecodeError, TypeError):
+                            # If it's not valid JSON, treat as empty array
+                            value = []
                 business_data[backend_field] = value
 
         if business_data:
@@ -294,4 +303,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
             for field, value in business_data.items():
                 setattr(business_detail, field, value)
             business_detail.save()
-        return instance 
+        return instance

@@ -4,6 +4,7 @@ import { createProject, resetProjectState } from '../../store/slices/ProjectSlic
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const paymentConfigs = [
   [
@@ -21,6 +22,7 @@ const paymentConfigs = [
 ];
 
 export default function ProjectCreation() {
+  const { t } = useTranslation();
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
@@ -63,7 +65,7 @@ export default function ProjectCreation() {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     if (file.type !== 'application/pdf') {
-      setFileError('Only PDF files are allowed.');
+      setFileError(t('project_creation.only_pdf_allowed'));
       setQuoteFile(null);
       return;
     }
@@ -74,7 +76,7 @@ export default function ProjectCreation() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!projectName || !clientEmail || !quoteFile) {
-      toast.error('Please fill all fields and upload the signed quote.');
+      toast.error(t('project_creation.fill_all_fields'));
       return;
     }
     const selectedConfig = installmentRows.map(row => ({
@@ -95,7 +97,7 @@ export default function ProjectCreation() {
 
   useEffect(() => {
     if (success) {
-      toast.success('Project created successfully!');
+      toast.success(t('project_creation.project_created_successfully'));
       dispatch(resetProjectState());
       setProjectName('');
       setClientEmail('');
@@ -109,18 +111,18 @@ export default function ProjectCreation() {
       );
       dispatch(resetProjectState());
     }
-  }, [success, error, dispatch]);
+  }, [success, error, dispatch, t]);
 
   return (
     <div className="max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
-      <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">Project Creation</h1>
+      <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">{t('project_creation.title')}</h1>
 
       {/* Project Name Section */}
       <div className="mb-6 sm:mb-10">
-        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Project Name</h2>
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">{t('project_creation.project_name_section')}</h2>
         <input
           type="text"
-          placeholder="Enter project name"
+          placeholder={t('project_creation.project_name_placeholder')}
           className="px-3 sm:px-4 py-2 sm:py-3 rounded-md border border-gray-200 bg-[#F6FAFD] text-gray-700 w-full max-w-sm sm:max-w-lg focus:outline-none focus:ring-2 focus:ring-[#01257D] text-sm sm:text-base"
           value={projectName}
           onChange={e => setProjectName(e.target.value)}
@@ -129,10 +131,10 @@ export default function ProjectCreation() {
 
       {/* Signed Quote Upload */}
       <div className="mb-6 sm:mb-10">
-        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Signed Quote</h2>
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">{t('project_creation.signed_quote_section')}</h2>
         <div className="border-2 border-dashed border-[#D1D5DB] rounded-xl p-4 sm:p-8 flex flex-col items-center justify-center mb-2 min-h-[120px] sm:min-h-[180px]">
-          <div className="font-semibold text-sm sm:text-lg mb-1">Upload signed quote</div>
-          <div className="text-gray-500 mb-3 sm:mb-4 text-center text-xs sm:text-sm">Drag and drop or browse to upload the signed quote.</div>
+          <div className="font-semibold text-sm sm:text-lg mb-1">{t('project_creation.upload_signed_quote')}</div>
+          <div className="text-gray-500 mb-3 sm:mb-4 text-center text-xs sm:text-sm">{t('project_creation.drag_drop_message')}</div>
           <input
             type="file"
             accept="application/pdf"
@@ -145,7 +147,7 @@ export default function ProjectCreation() {
             className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer text-sm sm:text-base"
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
           >
-            {quoteFile ? 'Change File' : 'Upload'}
+            {quoteFile ? t('project_creation.change_file') : t('project_creation.upload')}
           </button>
           {fileError && <div className="text-red-500 mt-2 text-xs sm:text-sm">{fileError}</div>}
           {quoteFile && !fileError && (
@@ -157,14 +159,14 @@ export default function ProjectCreation() {
                   className="text-blue-600 underline text-xs sm:text-sm cursor-pointer"
                   onClick={() => window.open(URL.createObjectURL(quoteFile), '_blank')}
                 >
-                  View
+                  {t('project_creation.view')}
                 </button>
                 <button
                   type="button"
                   className="text-red-500 underline text-xs sm:text-sm cursor-pointer"
                   onClick={() => setQuoteFile(null)}
                 >
-                  Remove
+                  {t('project_creation.remove')}
                 </button>
               </div>
             </div>
@@ -174,7 +176,7 @@ export default function ProjectCreation() {
 
       {/* Payment Configuration */}
       <div className="mb-6 sm:mb-10">
-        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Payment Configuration</h2>
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">{t('project_creation.payment_configuration')}</h2>
         <div className="flex gap-1 sm:gap-2 mb-3 sm:mb-4">
           {[1, 2, 3].map((n) => (
             <button
@@ -182,7 +184,7 @@ export default function ProjectCreation() {
               className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md border text-xs sm:text-sm font-medium transition-colors cursor-pointer ${installments === n ? 'bg-[#F6FAFD] border-[#01257D] text-[#01257D]' : 'bg-white border-gray-200 text-gray-700 hover:bg-[#F6FAFD]'}`}
               onClick={() => setInstallments(n)}
             >
-              {n} installment{n > 1 ? 's' : ''}
+              {n} {n > 1 ? t('project_creation.installments') : t('project_creation.installment')}
             </button>
           ))}
         </div>
@@ -190,10 +192,10 @@ export default function ProjectCreation() {
           <table className="min-w-full text-xs sm:text-sm">
             <thead className="bg-[#E6F0FA]">
               <tr>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Amount</th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Trigger Step</th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Description</th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">Edit</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.amount')}</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.trigger_step')}</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.description')}</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.edit')}</th>
               </tr>
             </thead>
             <tbody>
@@ -233,13 +235,13 @@ export default function ProjectCreation() {
                           className="px-1 sm:px-2 py-1 bg-green-600 text-white rounded text-xs sm:text-sm"
                           onClick={() => handleEditSave(i)}
                         >
-                          Save
+                          {t('project_creation.save')}
                         </button>
                         <button
                           className="px-1 sm:px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs sm:text-sm"
                           onClick={handleEditCancel}
                         >
-                          Cancel
+                          {t('quote_management.cancel')}
                         </button>
                       </td>
                     </>
@@ -251,7 +253,7 @@ export default function ProjectCreation() {
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <button
                           className="p-1 hover:bg-gray-100 rounded cursor-pointer"
-                          title="Edit"
+                          title={t('project_creation.edit')}
                           onClick={() => handleEdit(i)}
                         >
                           <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -268,11 +270,11 @@ export default function ProjectCreation() {
 
       {/* Client Email and Send Button */}
       <div className="mb-6 sm:mb-10">
-        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">Client</h2>
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">{t('project_creation.client_section')}</h2>
         <form className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center" onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="Client's  email"
+            placeholder={t('project_creation.client_email_placeholder')}
             className="px-3 sm:px-4 py-2 sm:py-3 rounded-md border border-gray-200 bg-[#F6FAFD] text-gray-700 w-full max-w-sm sm:max-w-xs focus:outline-none focus:ring-2 focus:ring-[#01257D] text-sm sm:text-base"
             value={clientEmail}
             onChange={e => setClientEmail(e.target.value)}
@@ -282,7 +284,7 @@ export default function ProjectCreation() {
             className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors w-full sm:w-auto cursor-pointer text-sm sm:text-base"
             disabled={loading}
           >
-            {loading ? 'Sending...' : 'Send Payment Invitation'}
+            {loading ? t('project_creation.sending') : t('project_creation.send_payment_invitation')}
           </button>
         </form>
       </div>
