@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProjects } from '../../store/slices/ProjectSlice';
+import { useTranslation } from 'react-i18next';
 
 const getRandomDate = () => {
   // Generate a random date in 2022-2025 for demo
@@ -11,6 +12,7 @@ const getRandomDate = () => {
 };
 
 export default function CompletedProjectsComp() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { projects, loading, error } = useSelector(state => state.project);
   const [page, setPage] = useState(1);
@@ -53,8 +55,8 @@ export default function CompletedProjectsComp() {
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">Completed Projects</h1>
-      <p className="text-gray-500 mb-6 max-w-2xl">Explore a selection of projects successfully completed by our team, showcasing our expertise and commitment to quality.</p>
+      <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('completed_projects.title')}</h1>
+      <p className="text-gray-500 mb-6 max-w-2xl">{t('completed_projects.subtitle')}</p>
       {/* Sort & Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div className="flex gap-2">
@@ -62,13 +64,13 @@ export default function CompletedProjectsComp() {
             className={`px-4 py-2 bg-[#E6F0FA] text-[#01257D] rounded-md font-semibold text-sm flex items-center gap-2 ${sortBy === 'date' ? 'ring-2 ring-[#01257D]' : ''}`}
             onClick={() => setSortBy('date')}
           >
-            Sort by Date <span className="ml-1">▼</span>
+            {t('completed_projects.sort_by_date')} <span className="ml-1">▼</span>
           </button>
           <button
             className={`px-4 py-2 bg-[#E6F0FA] text-[#01257D] rounded-md font-semibold text-sm flex items-center gap-2 ${sortBy === 'client' ? 'ring-2 ring-[#01257D]' : ''}`}
             onClick={() => setSortBy('client')}
           >
-            Filter by Client <span className="ml-1">▼</span>
+            {t('completed_projects.filter_by_client')} <span className="ml-1">▼</span>
           </button>
           {/* <select
             className="ml-2 px-2 py-1 rounded border border-gray-200 text-sm"
@@ -81,24 +83,24 @@ export default function CompletedProjectsComp() {
           </select> */}
         </div>
       </div>
-      <div className="mb-2 font-semibold">Projects</div>
+      <div className="mb-2 font-semibold">{t('completed_projects.projects')}</div>
       <div className="overflow-x-auto rounded-lg border border-[#E6F0FA] bg-white max-w-[300px] w-full mx-auto sm:max-w-full">
         <table className="min-w-full text-sm">
           <thead className="bg-[#E6F0FA]">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold">Project Title</th>
-              <th className="px-4 py-3 text-left font-semibold">Client Name</th>
-              <th className="px-4 py-3 text-left font-semibold">Price</th>
-              <th className="px-4 py-3 text-left font-semibold">Completion Date</th>
+              <th className="px-4 py-3 text-left font-semibold">{t('completed_projects.project_title')}</th>
+              <th className="px-4 py-3 text-left font-semibold">{t('completed_projects.client_name')}</th>
+              <th className="px-4 py-3 text-left font-semibold">{t('completed_projects.price')}</th>
+              <th className="px-4 py-3 text-left font-semibold">{t('completed_projects.completion_date')}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4} className="text-center py-6 text-gray-400">Loading...</td></tr>
+              <tr><td colSpan={4} className="text-center py-6 text-gray-400">{t('my_profile.loading')}</td></tr>
             ) : error ? (
-              <tr><td colSpan={4} className="text-center py-6 text-red-500">{typeof error === 'string' ? error : 'Failed to load projects.'}</td></tr>
+              <tr><td colSpan={4} className="text-center py-6 text-red-500">{typeof error === 'string' ? error : t('completed_projects.failed_load_projects')}</td></tr>
             ) : paginated.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-6 text-gray-400">No projects found.</td></tr>
+              <tr><td colSpan={4} className="text-center py-6 text-gray-400">{t('dashboard.no_projects_found')}</td></tr>
             ) : (
               paginated.map((proj, idx) => (
                 <tr key={proj.id} className="border-t border-gray-100">

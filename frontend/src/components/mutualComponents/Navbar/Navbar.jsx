@@ -6,18 +6,19 @@ import { logout } from "../../../store/slices/AuthSlices";
 import { fetchNotifications, markNotificationRead } from '../../../store/slices/NotificationSlice';
 import { formatDistanceToNow } from 'date-fns';
 import SignUpPopup from './SignUpPopup';
+import { useTranslation } from 'react-i18next';
 
 export const signedOutNavItems = [
-  { label: "Home", href: "/" },
-  { label: "Directory", href: "#" },
-  { label: "How it works", href: "#" },
-  { label: "Contact", href: "#" },
+  { label: "navbar.home", href: "/" },
+  { label: "navbar.directory", href: "#" },
+  { label: "navbar.how_it_works", href: "#" },
+  { label: "navbar.contact", href: "#" },
 ];
 
 export const signedInNavItems = [
-  { label: "Find Professionals", href: "/find-professionals" },
-  { label: "How it Works", href: "#" },
-  { label: "For Professionals", href: "#" },
+  { label: "navbar.find_professionals", href: "/find-professionals" },
+  { label: "navbar.how_it_works", href: "#" },
+  { label: "navbar.for_professionals", href: "#" },
 ];
 
 export default function SafeBillHeader({
@@ -37,6 +38,10 @@ export default function SafeBillHeader({
   // Add separate state for mobile notification dropdown
   const [isMobileNotifDropdownOpen, setIsMobileNotifDropdownOpen] = useState(false);
   const [isSignUpPopupOpen, setIsSignUpPopupOpen] = useState(false);
+
+  // i18n
+  const { t, i18n } = useTranslation();
+  const changeLanguage = (lng) => i18n.changeLanguage(lng);
 
   // Get auth state from Redux
   const user = useSelector(state => state.auth.user);
@@ -85,7 +90,7 @@ export default function SafeBillHeader({
   function renderNotifications(list = notifications) {
     const unreadList = (list || []).filter(n => !n.is_read);
     if (!unreadList || unreadList.length === 0) {
-      return <div className="text-center text-gray-400 p-4">No unread notifications.</div>;
+      return <div className="text-center text-gray-400 p-4">{t('navbar.no_unread_notifications')}</div>;
     }
     return unreadList.slice(0, 5).map(n => (
       <div key={n.id} className="flex items-center gap-3 p-2 hover:bg-gray-50">
@@ -132,13 +137,30 @@ export default function SafeBillHeader({
                 to={item.href}
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
               >
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
           </nav>
 
           {/* Right Side - Desktop */}
           <div className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`} style={leftShiftStyle}>
+            {/* Language Switcher */}
+            <div className="flex items-center gap-1 mr-2">
+              <button
+                onClick={() => changeLanguage('en')}
+                className={`px-2 py-1 text-xs rounded-md border ${i18n.language.startsWith('en') ? 'bg-[#01257D] text-white border-[#01257D]' : 'border-gray-300 text-gray-700'} cursor-pointer`}
+                title="English"
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLanguage('fr')}
+                className={`px-2 py-1 text-xs rounded-md border ${i18n.language.startsWith('fr') ? 'bg-[#01257D] text-white border-[#01257D]' : 'border-gray-300 text-gray-700'} cursor-pointer`}
+                title="Français"
+              >
+                FR
+              </button>
+            </div>
             {isSignedIn ? (
               <>
                 {/* Notification Bell with Dropdown */}
@@ -155,7 +177,7 @@ export default function SafeBillHeader({
                     )}
                   </button>
                   {isNotifDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max_h-80 max-h-80 overflow-y-auto">
                       <div className="py-2">{renderNotifications()}</div>
                     </div>
                   )}
@@ -184,7 +206,7 @@ export default function SafeBillHeader({
                       <div className="py-1">
                         <button
                           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                          className="flex flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
+                          className="flex flex_col flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
                           style={{ background: 'none', border: 'none' }}
                         >
                           <p className="text-sm font-medium text-gray-900">{userName}</p>
@@ -198,20 +220,20 @@ export default function SafeBillHeader({
                           } 
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
-                          Profile
+                          {t('navbar.profile')}
                         </Link>
                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Settings
+                          {t('navbar.settings')}
                         </a>
                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Billing
+                          {t('navbar.billing')}
                         </a>
                         <div className="border-t border-gray-100">
                           <button
                             onClick={handleSignOut}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                           >
-                            Sign out
+                            {t('navbar.sign_out')}
                           </button>
                         </div>
                       </div>
@@ -226,13 +248,13 @@ export default function SafeBillHeader({
                   onClick={onSignIn}
                   className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                 >
-                  <Link to="/login">Sign In</Link>
+                  <Link to="/login">{t('navbar.sign_in')}</Link>
                 </button>
                 <button
                   onClick={() => setIsSignUpPopupOpen(true)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text_white text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                 >
-                  Sign Up
+                  {t('navbar.sign_up')}
                 </button>
               </>
             )}
@@ -241,6 +263,23 @@ export default function SafeBillHeader({
           {/* Mobile Right Side (avatar and bell only, no hamburger) */}
           {!showMobileMenuButton && (
             <div className="flex md:hidden items-center space-x-4">
+              {/* Language Switcher - Mobile */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => changeLanguage('en')}
+                  className={`px-2 py-1 text-xs rounded-md border ${i18n.language.startsWith('en') ? 'bg-[#01257D] text-white border-[#01257D]' : 'border-gray-300 text-gray-700'} cursor-pointer`}
+                  title="English"
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => changeLanguage('fr')}
+                  className={`px-2 py-1 text-xs rounded-md border ${i18n.language.startsWith('fr') ? 'bg-[#01257D] text-white border-[#01257D]' : 'border-gray-300 text-gray-700'} cursor-pointer`}
+                  title="Français"
+                >
+                  FR
+                </button>
+              </div>
               {isSignedIn ? (
                 <>
                   {/* Mobile Notification Bell with Dropdown */}
@@ -299,20 +338,20 @@ export default function SafeBillHeader({
                             } 
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Profile
+                            {t('navbar.profile')}
                           </Link>
                           <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Settings
+                            {t('navbar.settings')}
                           </a>
                           <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Billing
+                            {t('navbar.billing')}
                           </a>
                           <div className="border-t border-gray-100">
                             <button
                               onClick={handleSignOut}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              Sign out
+                              {t('navbar.sign_out')}
                             </button>
                           </div>
                         </div>
@@ -326,13 +365,13 @@ export default function SafeBillHeader({
                     onClick={onSignIn}
                     className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                   >
-                    <Link to="/login">Sign In</Link>
+                    <Link to="/login">{t('navbar.sign_in')}</Link>
                   </button>
                   <button
                     onClick={() => setIsSignUpPopupOpen(true)}
                     className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                   >
-                    Sign Up
+                    {t('navbar.sign_up')}
                   </button>
                 </>
               )}
@@ -362,9 +401,25 @@ export default function SafeBillHeader({
                   to={item.href}
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
-                  {item.label}
+                  {t(item.label)}
                 </Link>
               ))}
+
+              {/* Language Switcher - Mobile in menu */}
+              <div className="flex items-center gap-2 px-3 py-2">
+                <button
+                  onClick={() => changeLanguage('en')}
+                  className={`px-3 py-1 text-xs rounded-md border ${i18n.language.startsWith('en') ? 'bg-[#01257D] text-white border-[#01257D]' : 'border-gray-300 text-gray-700'} cursor-pointer`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => changeLanguage('fr')}
+                  className={`px-3 py-1 text-xs rounded-md border ${i18n.language.startsWith('fr') ? 'bg-[#01257D] text-white border-[#01257D]' : 'border-gray-300 text-gray-700'} cursor-pointer`}
+                >
+                  Français
+                </button>
+              </div>
 
               {/* Mobile Auth Section */}
               <div className="pt-4 pb-3 border-t border-gray-200">
@@ -397,7 +452,7 @@ export default function SafeBillHeader({
                     {/* Mobile Menu Notification Bell with Dropdown */}
                     <div className="ml-auto relative">
                       <button 
-                        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer"
+                        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded_full rounded-full cursor-pointer"
                         onClick={() => setIsMobileNotifDropdownOpen(!isMobileNotifDropdownOpen)}
                       >
                         <Bell className="h-5 w-5" />
@@ -429,20 +484,20 @@ export default function SafeBillHeader({
                             } 
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Profile
+                            {t('navbar.profile')}
                           </Link>
                           <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Settings
+                            {t('navbar.settings')}
                           </a>
                           <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Billing
+                            {t('navbar.billing')}
                           </a>
                           <div className="border-t border-gray-100">
                             <button
                               onClick={handleSignOut}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              Sign out
+                              {t('navbar.sign_out')}
                             </button>
                           </div>
                         </div>
@@ -455,13 +510,13 @@ export default function SafeBillHeader({
                       onClick={onSignIn}
                       className="w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                     >
-                      <Link to="/login">Sign In</Link>
+                      <Link to="/login">{t('navbar.sign_in')}</Link>
                     </button>
                     <button
                       onClick={() => setIsSignUpPopupOpen(true)}
                       className="w-full px-3 py-2 text-base font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md"
                     >
-                      Sign Up
+                      {t('navbar.sign_up')}
                     </button>
                   </div>
                 )}

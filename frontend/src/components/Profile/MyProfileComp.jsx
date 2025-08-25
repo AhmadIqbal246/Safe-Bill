@@ -18,6 +18,7 @@ import {
   serviceAreaOptions,
   skillOptions,
 } from "../../constants/registerationTypes";
+import { useTranslation } from "react-i18next";
 
 function getDefaultAvatar(username) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -37,6 +38,7 @@ function getSafeArrayField(profile, fieldName) {
 }
 
 export default function MyProfileComp() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { profile, loading, error, success } = useSelector(
     (state) => state.userProfile
@@ -71,27 +73,27 @@ export default function MyProfileComp() {
       setEditModalOpen(false);
       setEditForm(null);
       setEditPicPreview(null);
-      toast.success("Profile updated successfully!");
+      toast.success(t('my_profile.profile_updated_successfully'));
       // Refresh the profile data from the API to get the latest data
       dispatch(fetchUserProfile());
       console.log(profile);
       
     }
-  }, [success, dispatch]);
+  }, [success, dispatch, t]);
 
   useEffect(() => {
     if (feedbackSuccess) {
-      toast.success("Feedback submitted successfully!");
+      toast.success(t('my_profile.feedback_submitted_successfully'));
       dispatch(resetFeedbackState());
       setSelectedRating(null);
       setFeedbackText("");
       setFeedbackEmail("");
     }
     if (feedbackError) {
-      toast.error("Failed to submit feedback.");
+      toast.error(t('my_profile.failed_submit_feedback'));
       dispatch(resetFeedbackState());
     }
-  }, [feedbackSuccess, feedbackError, dispatch]);
+  }, [feedbackSuccess, feedbackError, dispatch, t]);
 
   const handleRatingClick = (rating) => {
     setSelectedRating(rating);
@@ -111,11 +113,11 @@ export default function MyProfileComp() {
   const handleFeedbackSubmit = (e) => {
     e.preventDefault();
     if (!selectedRating) {
-      toast.error("Please select a rating first");
+      toast.error(t('my_profile.please_select_rating'));
       return;
     }
     if (!feedbackEmail) {
-      toast.error("Please provide your email address");
+      toast.error(t('my_profile.please_provide_email'));
       return;
     }
 
@@ -128,17 +130,17 @@ export default function MyProfileComp() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-400">Loading...</div>;
+    return <div className="text-center py-12 text-gray-400">{t('my_profile.loading')}</div>;
   }
   if (error) {
     return (
       <div className="text-center py-12 text-red-500">
-        {typeof error === "string" ? error : "Failed to load profile."}
+        {typeof error === "string" ? error : t('my_profile.failed_load_profile')}
       </div>
     );
   }
   if (!profile) {
-    return <div className="text-center py-12 text-gray-400">No profile data available.</div>;
+    return <div className="text-center py-12 text-gray-400">{t('my_profile.no_profile_data')}</div>;
   }
 
   // Ensure profile has required fields with safe defaults
@@ -220,15 +222,15 @@ export default function MyProfileComp() {
     const validationErrors = [];
     
     if (!editForm.username || editForm.username.trim() === '') {
-      validationErrors.push('Username is required');
+      validationErrors.push(t('my_profile.username_required'));
     }
     
     if (!editForm.type_of_activity || editForm.type_of_activity.trim() === '') {
-      validationErrors.push('Business activity is required');
+      validationErrors.push(t('my_profile.business_activity_required'));
     }
     
     if (!editForm.selected_service_areas || editForm.selected_service_areas.length === 0) {
-      validationErrors.push('At least one service area is required');
+      validationErrors.push(t('my_profile.service_areas_required'));
     }
     
     // If there are validation errors, show them and return
@@ -287,16 +289,16 @@ export default function MyProfileComp() {
           {profile.username}
         </div>
         <div className="text-gray-500 font-medium">
-          Business Activity:{" "}
+          {t('my_profile.business_activity')}:{" "}
           {profile.type_of_activity
             ? businessActivityStructure.find(
                 (opt) => opt.id === profile.type_of_activity
               )?.label || capitalize(profile.type_of_activity)
-            : "Not specified"}
+            : t('my_profile.not_specified')}
         </div>
                  {safeProfile.selected_categories.length > 0 && (
            <div className="text-gray-500 font-medium">
-             Categories:{" "}
+             {t('my_profile.categories')}:{" "}
              {safeProfile.selected_categories.map(catId => {
                const activity = businessActivityStructure.find(
                  opt => opt.id === profile.type_of_activity
@@ -308,7 +310,7 @@ export default function MyProfileComp() {
          )}
          {safeProfile.selected_subcategories.length > 0 && (
            <div className="text-gray-500 font-medium">
-             Subcategories:{" "}
+             {t('my_profile.subcategories')}:{" "}
              {safeProfile.selected_subcategories.map(subcatId => {
                const activity = businessActivityStructure.find(
                  opt => opt.id === profile.type_of_activity
@@ -323,7 +325,7 @@ export default function MyProfileComp() {
          )}
         {safeProfile.selected_service_areas.length > 0 && (
           <div className="text-gray-400 text-sm mb-2">
-            Service Areas: {safeProfile.selected_service_areas.map(areaId => {
+            {t('my_profile.service_areas')}: {safeProfile.selected_service_areas.map(areaId => {
               const area = serviceAreaOptions.find(opt => opt.value === areaId);
               return area?.label || areaId;
             }).join(", ")}
@@ -338,13 +340,13 @@ export default function MyProfileComp() {
           className="w-full max-w-xs bg-[#E6F0FA] text-[#01257D] font-semibold py-2 rounded-md mb-2 mt-2 cursor-pointer"
           onClick={openEditModal}
         >
-          Edit
+          {t('my_profile.edit_profile')}
         </button>
       </div>
       <div className="mb-6">
-        <h2 className="text-lg font-bold mb-2">About</h2>
+        <h2 className="text-lg font-bold mb-2">{t('my_profile.about')}</h2>
         <div className=" rounded-lg px-4 py-3 text-gray-700 break-words">
-          {profile.about || "No about info provided."}
+          {profile.about || t('my_profile.no_about_info')}
         </div>
       </div>
              {/* <div className="mb-6">
@@ -367,21 +369,21 @@ export default function MyProfileComp() {
          </div>
        </div> */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold mb-2">Contact</h2>
+        <h2 className="text-lg font-bold mb-2">{t('my_profile.contact')}</h2>
         <div className="flex flex-col sm:flex-row gap-6 text-gray-700">
           <div>
-            <div className="text-xs text-gray-400 font-semibold">Email</div>
+            <div className="text-xs text-gray-400 font-semibold">{t('my_profile.email')}</div>
             <div>{profile.email}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-400 font-semibold">Phone</div>
+            <div className="text-xs text-gray-400 font-semibold">{t('my_profile.phone')}</div>
             <div>{profile.phone_number}</div>
           </div>
         </div>
       </div>
       {/* Feedback form remains as before, not populated from API */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold mb-4">Help us improve</h2>
+        <h2 className="text-lg font-bold mb-4">{t('my_profile.help_improve')}</h2>
         <div className="flex gap-2 mb-4 flex-wrap">
           {["Excellent", "Good", "Needs Improvement"].map((label) => (
             <button
@@ -399,13 +401,12 @@ export default function MyProfileComp() {
           ))}
         </div>
         <div className="text-xs text-gray-500 mb-4">
-          💡 Select a rating to get started, then feel free to add your own
-          thoughts below!
+          💡 {t('my_profile.select_rating')}
         </div>
         <div className="mb-4">
           <textarea
             className="w-full min-h-[80px] rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
-            placeholder="Feedback"
+            placeholder={t('my_profile.feedback')}
             value={feedbackText}
             onChange={(e) => setFeedbackText(e.target.value)}
           />
@@ -413,7 +414,7 @@ export default function MyProfileComp() {
         <input
           type="email"
           className="w-full mb-4 rounded-md border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D] cursor-pointer"
-          placeholder="Your email address"
+          placeholder={t('my_profile.your_email')}
           value={feedbackEmail}
           onChange={(e) => setFeedbackEmail(e.target.value)}
         />
@@ -425,10 +426,10 @@ export default function MyProfileComp() {
           {feedbackLoading ? (
             <div className="flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Submitting...
+              {t('my_profile.submitting')}
             </div>
           ) : (
-            "Submit Feedback"
+            t('my_profile.submit_feedback')
           )}
         </button>
       </div>
@@ -444,14 +445,14 @@ export default function MyProfileComp() {
           <Dialog.Panel className="w-full max-w-lg max-h-[90vh] rounded-lg bg-white shadow-xl flex flex-col">
             <div className="p-6 border-b border-gray-200">
               <Dialog.Title className="text-xl font-bold text-[#01257D]">
-                Edit Profile
+                {t('my_profile.edit_profile')}
               </Dialog.Title>
             </div>
             {editForm && (
               <form id="edit-profile-form" onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
                 {/* Required fields note */}
                 <div className="text-sm text-gray-600 mb-4">
-                  <span className="text-red-500">*</span> indicates required fields
+                  <span className="text-red-500">*</span> {t('my_profile.required_fields_note')}
                 </div>
                 
                 <div className="flex flex-col items-center mb-4">
@@ -478,12 +479,12 @@ export default function MyProfileComp() {
                       fileInputRef.current && fileInputRef.current.click()
                     }
                   >
-                    Upload New Picture
+                    {t('my_profile.upload_new_picture')}
                   </button>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Username *
+                    {t('my_profile.username_label')}
                   </label>
                   <input
                     type="text"
@@ -497,7 +498,7 @@ export default function MyProfileComp() {
                 {/* Business Activity Selection */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Business Activity *
+                    {t('my_profile.business_activity_label')}
                   </label>
                   <div className="relative">
                     <button
@@ -518,7 +519,7 @@ export default function MyProfileComp() {
                           ? businessActivityStructure.find(
                               (opt) => opt.id === editForm.type_of_activity
                             )?.label || editForm.type_of_activity
-                          : "Choose Business Activity"}
+                          : t('my_profile.choose_business_activity')}
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 text-gray-400 transition-transform ${
@@ -534,7 +535,7 @@ export default function MyProfileComp() {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                               type="text"
-                              placeholder="Search business activity..."
+                              placeholder={t('my_profile.search_business_activity')}
                               value={businessActivitySearchTerm}
                               onChange={(e) =>
                                 setBusinessActivitySearchTerm(e.target.value)
@@ -582,7 +583,7 @@ export default function MyProfileComp() {
                 {editForm.type_of_activity && (
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Categories (Optional)
+                      {t('my_profile.categories_label')}
                     </label>
                     <div className="relative">
                       <button
@@ -594,8 +595,8 @@ export default function MyProfileComp() {
                       >
                         <span className="text-gray-500">
                           {editForm.selected_categories && editForm.selected_categories.length > 0
-                            ? `${editForm.selected_categories.length} selected`
-                            : "Choose Categories"}
+                            ? `${editForm.selected_categories.length} ${t('my_profile.selected')}`
+                            : t('my_profile.choose_categories')}
                         </span>
                         <ChevronDown
                           className={`h-4 w-4 text-gray-400 transition-transform ${
@@ -611,7 +612,7 @@ export default function MyProfileComp() {
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <input
                                 type="text"
-                                placeholder="Search categories..."
+                                placeholder={t('my_profile.search_categories')}
                                 value={categorySearchTerm}
                                 onChange={(e) =>
                                   setCategorySearchTerm(e.target.value)
@@ -698,7 +699,7 @@ export default function MyProfileComp() {
                 {editForm.type_of_activity && editForm.selected_categories && editForm.selected_categories.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Subcategories (Optional)
+                      {t('my_profile.subcategories_label')}
                     </label>
                     <div className="relative">
                       <button
@@ -710,8 +711,8 @@ export default function MyProfileComp() {
                       >
                         <span className="text-gray-500">
                           {editForm.selected_subcategories && editForm.selected_subcategories.length > 0
-                            ? `${editForm.selected_subcategories.length} selected`
-                            : "Choose Subcategories"}
+                            ? `${editForm.selected_subcategories.length} ${t('my_profile.selected')}`
+                            : t('my_profile.choose_subcategories')}
                         </span>
                         <ChevronDown
                           className={`h-4 w-4 text-gray-400 transition-transform ${
@@ -727,7 +728,7 @@ export default function MyProfileComp() {
                               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                               <input
                                 type="text"
-                                placeholder="Search subcategories..."
+                                placeholder={t('my_profile.search_subcategories')}
                                 value={subcategorySearchTerm}
                                 onChange={(e) =>
                                   setSubcategorySearchTerm(e.target.value)
@@ -820,7 +821,7 @@ export default function MyProfileComp() {
                 )}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Service Areas *
+                    {t('my_profile.service_areas_label')}
                   </label>
                   <div className="relative">
                     <button
@@ -830,8 +831,8 @@ export default function MyProfileComp() {
                     >
                       <span className="text-gray-500">
                         {editForm.selected_service_areas && editForm.selected_service_areas.length > 0
-                          ? `${editForm.selected_service_areas.length} selected`
-                          : "Choose Service Areas"}
+                          ? `${editForm.selected_service_areas.length} ${t('my_profile.selected')}`
+                          : t('my_profile.choose_service_areas')}
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 text-gray-400 transition-transform ${
@@ -847,7 +848,7 @@ export default function MyProfileComp() {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                               type="text"
-                              placeholder="Search areas..."
+                              placeholder={t('my_profile.search_areas')}
                               value={serviceAreasSearchTerm}
                               onChange={(e) =>
                                 setServiceAreasSearchTerm(e.target.value)
@@ -935,7 +936,7 @@ export default function MyProfileComp() {
                 </div> */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    About
+                    {t('my_profile.about_label')}
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border rounded-md"
@@ -1026,14 +1027,14 @@ export default function MyProfileComp() {
                   className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 cursor-pointer"
                   onClick={handleEditCancel}
                 >
-                  Cancel
+                  {t('quote_management.cancel')}
                 </button>
                 <button
                   type="submit"
                   form="edit-profile-form"
                   className="px-4 py-2 rounded bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] cursor-pointer"
                 >
-                  Submit
+                  {t('my_profile.submit')}
                 </button>
               </div>
             </div>

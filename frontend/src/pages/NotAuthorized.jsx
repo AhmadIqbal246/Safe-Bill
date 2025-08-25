@@ -18,7 +18,7 @@ export default function NotAuthorized() {
             Access Denied
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            You don't have permission to access this page. This area is restricted to sellers only.
+            You don't have permission to access this page.
           </p>
         </div>
         

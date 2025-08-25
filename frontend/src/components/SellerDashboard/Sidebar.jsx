@@ -1,19 +1,22 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const links = [
-  { label: 'Dashboard', to: '/seller-dashboard' },
-  { label: 'My quotes', to: '/my-quotes' },
-  { label: 'Current projects', to: '/current-projects' },
-  { label: 'Completed projects', to: '/completed-projects' },
-  { label: 'Disputes', to: '/seller-disputes' },
-  { label: 'My profile', to: '/profile' },
-  { label: 'Documents', to: '/my-documents' },
-  { label: 'Support', to: '/support' },
+  { labelKey: 'sidebar.dashboard', to: '/seller-dashboard' },
+  { labelKey: 'sidebar.my_quotes', to: '/my-quotes' },
+  { labelKey: 'sidebar.current_projects', to: '/current-projects' },
+  { labelKey: 'sidebar.completed_projects', to: '/completed-projects' },
+  { labelKey: 'sidebar.disputes', to: '/seller-disputes' },
+  { labelKey: 'sidebar.my_profile', to: '/profile' },
+  { labelKey: 'sidebar.documents', to: '/my-documents' },
+  { labelKey: 'sidebar.support', to: '/support' },
 ];
 
 export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
+  const { t } = useTranslation();
+  
   return (
     <>
       {/* Desktop Sidebar */}
@@ -23,12 +26,12 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
           {links.map(link => (
             link.to === "#" ? (
               <Link
-                key={link.label}
+                key={link.labelKey}
                 to="#"
                 className="px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer text-gray-700 hover:bg-white"
                 onClick={() => setOpen(false)}
               >
-                {link.label}
+                {t(link.labelKey)}
               </Link>
             ) : (
               <NavLink
@@ -41,7 +44,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
                 }
                 onClick={() => setOpen(false)}
               >
-                {link.label}
+                {t(link.labelKey)}
               </NavLink>
             )
           ))}
@@ -65,12 +68,12 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
           {links.map(link => (
             link.to === "#" ? (
               <Link
-                key={link.label}
+                key={link.labelKey}
                 to="#"
                 className="px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer text-gray-700 hover:bg-white"
                 onClick={() => setOpen(false)}
               >
-                {link.label}
+                {t(link.labelKey)}
               </Link>
             ) : (
               <NavLink
@@ -83,7 +86,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
                 }
                 onClick={() => setOpen(false)}
               >
-                {link.label}
+                {t(link.labelKey)}
               </NavLink>
             )
           ))}
@@ -96,7 +99,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
                 className="px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer text-gray-700 hover:bg-white"
                 onClick={() => setOpen(false)}
               >
-                {item.label}
+                {t(item.label)}
               </Link>
             ) : (
               <NavLink
@@ -109,7 +112,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
                 }
                 onClick={() => setOpen(false)}
               >
-                {item.label}
+                {t(item.label)}
               </NavLink>
             )
           ))}

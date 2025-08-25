@@ -43,13 +43,9 @@ export const updateUserProfile = createAsyncThunk(
               // Handle file directly
               dataToSend.append(key, value);
             } else if (Array.isArray(value)) {
-              // Handle ALL arrays the same way - append each item individually
-              // This matches how skills is being handled in your current working case
-              value.forEach((item, index) => {
-                dataToSend.append(`${key}[${index}]`, item);
-              });
-              // OR if your backend expects JSON strings for all arrays:
-              // dataToSend.append(key, JSON.stringify(value));
+              // For Django backend, send arrays as JSON strings
+              // This ensures proper handling of selected_categories, selected_subcategories, etc.
+              dataToSend.append(key, JSON.stringify(value));
             } else {
               dataToSend.append(key, value);
             }

@@ -7,27 +7,29 @@ import {
 } from "../../../store/slices/BussinessDetailSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 
 const documents = [
-  { key: "kbis", label: "Upload KBIS" },
+  { key: "kbis", labelKey: "onboarding.upload_kbis" },
   {
     key: "liability_certificate",
-    label: "Upload Liability Insurance Certificate",
+    labelKey: "onboarding.upload_liability_certificate",
   },
-  { key: "insurance_certificate", label: "Upload Insurance Certificate" },
-  { key: "id_main_contact", label: "Upload ID of Main Contact" },
-  { key: "rib", label: "Upload Company Bank Details (RIB)" },
+  { key: "insurance_certificate", labelKey: "onboarding.upload_insurance_certificate" },
+  { key: "id_main_contact", labelKey: "onboarding.upload_id_main_contact" },
+  { key: "rib", labelKey: "onboarding.upload_rib" },
 ];
 
 const requiredDocs = [
-  { key: "kbis", label: "KBIS" },
-  { key: "liability_certificate", label: "Liability Insurance Certificate" },
-  { key: "insurance_certificate", label: "Insurance Certificate" },
-  { key: "id_main_contact", label: "ID of Main Contact" },
-  { key: "rib", label: "Company Bank Details (RIB)" },
+  { key: "kbis", labelKey: "onboarding.upload_kbis" },
+  { key: "liability_certificate", labelKey: "onboarding.upload_liability_certificate" },
+  { key: "insurance_certificate", labelKey: "onboarding.upload_insurance_certificate" },
+  { key: "id_main_contact", labelKey: "onboarding.upload_id_main_contact" },
+  { key: "rib", labelKey: "onboarding.upload_rib" },
 ];
 
 export default function OnBoardingComp() {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(2);
   const [files, setFiles] = useState({});
   const [bank, setBank] = useState({
@@ -84,16 +86,16 @@ export default function OnBoardingComp() {
         "image/tiff"
       ];
       if (!allowedTypes.includes(file.type)) {
-        return "Only PDF, JPG, PNG, or TIFF files are allowed for ID.";
+        return t('onboarding.file_type_error_id');
       }
     } else {
       // Only allow PDF for other documents
       if (file.type !== "application/pdf") {
-        return "Only PDF files are allowed for this document.";
+        return t('onboarding.file_type_error_pdf');
       }
     }
     if (file.size > maxSize) {
-      return "File size must be under 7 MB.";
+      return t('onboarding.file_size_error');
     }
     return null;
   };
@@ -114,7 +116,7 @@ export default function OnBoardingComp() {
     const newErrors = {};
     requiredDocs.forEach((doc) => {
       if (!files[doc.key]) {
-        newErrors[doc.key] = `${doc.label} is required`;
+        newErrors[doc.key] = `${t(doc.labelKey)} is required`;
       }
     });
     setErrors(newErrors);
@@ -174,7 +176,7 @@ export default function OnBoardingComp() {
           : error?.detail || "An error occurred while uploading documents."
       );
     }
-  }, [error]);
+  }, [error, t]);
 
   const steps = [
     { number: 1, title: "Basic Information", active: currentStep >= 1 },
@@ -188,13 +190,13 @@ export default function OnBoardingComp() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-[#111827] mb-2">
-            Complete Your Registration
+            {t('onboarding.title')}
           </h1>
           <p className="text-[#111827]">
             {currentStep === 2
-              ? "Please upload the required documents to finish your registration."
+              ? t('onboarding.description_documents')
               : currentStep === 3
-              ? "Documents uploaded successfully. Go to Dashboard to start using the platform."
+              ? t('onboarding.description_verification')
               : ""}
           </p>
         </div>
@@ -283,7 +285,7 @@ export default function OnBoardingComp() {
                 {documents.map((doc) => (
                   <div key={doc.key}>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {doc.label} <span className="text-red-500">*</span>
+                      {t(doc.labelKey)} <span className="text-red-500">*</span>
                     </label>
                     <label
                       className="flex flex-col items-center justify-center border-2 border-gray-200 rounded-lg h-40 cursor-pointer hover:border-black transition-colors relative"
@@ -309,7 +311,7 @@ export default function OnBoardingComp() {
                         </div>
                       ) : (
                         <span className="text-gray-400 text-base">
-                          {doc.label}
+                          {t(doc.labelKey)}
                         </span>
                       )}
                       <input
@@ -343,7 +345,7 @@ export default function OnBoardingComp() {
                 onClick={handleContinue}
                 disabled={loading}
               >
-                {loading ? "Uploading..." : "Continue"}
+                {loading ? t('onboarding.uploading') : t('onboarding.continue')}
               </button>
             </div>
           </>
@@ -359,7 +361,7 @@ export default function OnBoardingComp() {
             <h2 className="text-2xl font-semibold text-[#111827] mb-2 text-center">
               {typeof success === 'string'
                 ? success
-                : success?.detail || 'We have got details successfully for Verification'}
+                : success?.detail || t('onboarding.verification_success')}
             </h2>
             <p className="text-[#6B7280] mb-8 text-center">
               {(() => {
@@ -368,13 +370,13 @@ export default function OnBoardingComp() {
                   try {
                     const userObj = JSON.parse(userStr);
                     if (userObj.role === 'seller') {
-                      return 'Go to your dashboard now to start receiving leads and growing your business';
+                      return t('onboarding.go_to_dashboard_seller');
                     } else if (userObj.role === 'professional-buyer') {
-                      return 'Your registration is complete! You can now start using the platform';
+                      return t('onboarding.go_to_home_professional_buyer');
                     }
                   } catch (e) {}
                 }
-                return 'Log in to your dashboard now to start';
+                return t('onboarding.go_to_dashboard_default');
               })()}
             </p>
             <button
@@ -387,13 +389,13 @@ export default function OnBoardingComp() {
                   try {
                     const userObj = JSON.parse(userStr);
                     if (userObj.role === 'seller') {
-                      return 'Go to Dashboard';
+                      return t('onboarding.go_to_dashboard');
                     } else if (userObj.role === 'professional-buyer') {
-                      return 'Go to Home';
+                      return t('onboarding.go_to_home');
                     }
                   } catch (e) {}
                 }
-                return 'Go to Dashboard';
+                return t('onboarding.go_to_dashboard');
               })()}
             </button>
           </div>

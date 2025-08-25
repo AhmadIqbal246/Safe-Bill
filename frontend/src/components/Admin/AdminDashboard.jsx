@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -78,6 +79,7 @@ const Pill = ({ children, type }) => {
 };
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const staticData = useStaticAdminData();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -131,30 +133,31 @@ export default function AdminDashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto py-6">
-      <h1 className="text-xl sm:text-2xl font-semibold mb-4">Administration</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold mb-4">{t('admin.title')}</h1>
 
       {loading && (
-        <div className="mb-4 text-sm text-gray-500">Loading admin overview...</div>
+        <div className="mb-4 text-sm text-gray-500">{t('admin.loading_overview')}</div>
       )}
       {error && (
-        <div className="mb-4 text-sm text-red-600">{error}</div>
+        <div className="mb-4 text-sm text-red-600">{t('admin.failed_overview')}</div>
       )}
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard title="User Count" value={overview.kpis.userCount} />
-        <StatCard title="Transactions" value={overview.kpis.transactions} />
-        <StatCard title="Disputes" value={overview.kpis.disputes} />
+        <StatCard title={t('admin.user_count')} value={overview.kpis.userCount} />
+        <StatCard title={t('admin.transactions')} value={overview.kpis.transactions} />
+        <StatCard title={t('admin.disputes')} value={overview.kpis.disputes} />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="mb-2">
-            <div className="text-sm font-medium">Registration Trends</div>
+            <div className="text-sm font-medium">{t('admin.registration_trends')}</div>
             <div className="text-xs text-gray-500">
-              {overview.registrationChangePercent >= 0 ? '+' : ''}
-              {overview.registrationChangePercent}% • Last 30 Days {overview.registrationChangePercent >= 0 ? '+' : ''}{overview.registrationChangePercent}%
+              {(overview.registrationChangePercent >= 0 ? '+' : '') + (overview.registrationChangePercent ?? 0)}%
+              {' • '}{t('admin.last_30_days')}{' '}
+              {(overview.registrationChangePercent >= 0 ? '+' : '') + (overview.registrationChangePercent ?? 0)}%
             </div>
           </div>
           <div className="h-56">
@@ -172,10 +175,11 @@ export default function AdminDashboard() {
 
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="mb-2">
-            <div className="text-sm font-medium">Revenue</div>
+            <div className="text-sm font-medium">{t('admin.revenue')}</div>
             <div className="text-xs text-gray-500">
-              {overview.revenueChangePercent >= 0 ? '+' : ''}
-              {overview.revenueChangePercent}% • Last 30 Days {overview.revenueChangePercent >= 0 ? '+' : ''}{overview.revenueChangePercent}%
+              {(overview.revenueChangePercent >= 0 ? '+' : '') + (overview.revenueChangePercent ?? 0)}%
+              {' • '}{t('admin.last_30_days')}{' '}
+              {(overview.revenueChangePercent >= 0 ? '+' : '') + (overview.revenueChangePercent ?? 0)}%
             </div>
           </div>
           <div className="h-56">
@@ -196,11 +200,11 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-xl border border-gray-200 mb-8">
         <div className="px-4 py-3 border-b border-gray-200">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div className="font-medium">User Management</div>
+            <div className="font-medium">{t('admin.user_management')}</div>
             <div className="w-full md:w-72">
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder={t('admin.search_placeholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -211,13 +215,13 @@ export default function AdminDashboard() {
               className={`pb-2 border-b-2 ${tab === 'professionals' ? 'border-[#01257D] text-[#01257D]' : 'border-transparent text-gray-500'}`}
               onClick={() => setTab('professionals')}
             >
-              Professionals
+              {t('admin.professionals')}
             </button>
             <button
               className={`pb-2 border-b-2 ${tab === 'clients' ? 'border-[#01257D] text-[#01257D]' : 'border-transparent text-gray-500'}`}
               onClick={() => setTab('clients')}
             >
-              Clients
+              {t('admin.clients')}
             </button>
           </div>
         </div>
@@ -225,9 +229,9 @@ export default function AdminDashboard() {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="text-left font-medium px-4 py-3">Name</th>
-                <th className="text-left font-medium px-4 py-3">Email</th>
-                <th className="text-left font-medium px-4 py-3">Status</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.name')}</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.email')}</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.status')}</th>
                 {/* <th className="text-left font-medium px-4 py-3">Actions</th> */}
               </tr>
             </thead>
@@ -258,15 +262,15 @@ export default function AdminDashboard() {
 
       {/* KYC Validation */}
       <div className="bg-white rounded-xl border border-gray-200">
-        <div className="px-4 py-3 border-b border-gray-200 font-medium">KYC Validation</div>
+        <div className="px-4 py-3 border-b border-gray-200 font-medium">{t('admin.kyc_validation')}</div>
         <div className="overflow-x-auto max-h-80 overflow-y-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
-                <th className="text-left font-medium px-4 py-3">Name</th>
-                <th className="text-left font-medium px-4 py-3">Document Type</th>
-                <th className="text-left font-medium px-4 py-3">Status</th>
-                <th className="text-left font-medium px-4 py-3">Actions</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.name')}</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.document_type')}</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.status')}</th>
+                <th className="text-left font-medium px-4 py-3">{t('admin.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -277,11 +281,11 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3"><Pill type={row.status}>{row.status}</Pill></td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2 text-xs">
-                      <button className="text-emerald-600 hover:underline cursor-pointer">Validate</button>
+                      <button className="text-emerald-600 hover:underline cursor-pointer">{t('admin.validate')}</button>
                       <span className="text-gray-300">|</span>
-                      <button className="text-rose-600 hover:underline cursor-pointer">Reject</button>
+                      <button className="text-rose-600 hover:underline cursor-pointer">{t('admin.reject')}</button>
                       <span className="text-gray-300">|</span>
-                      <button className="text-[#01257D] hover:underline cursor-pointer">Request Info</button>
+                      <button className="text-[#01257D] hover:underline cursor-pointer">{t('admin.request_info')}</button>
                     </div>
                   </td>
                 </tr>
