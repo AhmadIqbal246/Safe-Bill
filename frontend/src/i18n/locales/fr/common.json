@@ -461,5 +461,29 @@
      "price": "Prix",
      "completion_date": "Date de Fin",
      "failed_load_projects": "Échec du chargement des projets."
-   }
+   },
+  "admin": {
+    "title": "Administration",
+    "loading_overview": "Chargement de l'aperçu administrateur...",
+    "failed_overview": "Échec du chargement de l'aperçu administrateur",
+    "user_count": "Nombre d'utilisateurs",
+    "transactions": "Transactions",
+    "disputes": "Litiges",
+    "registration_trends": "Tendances d'inscription",
+    "last_30_days": "30 derniers jours",
+    "revenue": "Revenus",
+    "user_management": "Gestion des utilisateurs",
+    "search_placeholder": "Rechercher par nom ou email...",
+    "professionals": "Professionnels",
+    "clients": "Clients",
+    "name": "Nom",
+    "email": "Email",
+    "status": "Statut",
+    "kyc_validation": "Validation KYC",
+    "document_type": "Type de document",
+    "actions": "Actions",
+    "validate": "Valider",
+    "reject": "Rejeter",
+    "request_info": "Demander des infos"
+  }
 }
