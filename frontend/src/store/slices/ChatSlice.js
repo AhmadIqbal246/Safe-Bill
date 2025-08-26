@@ -40,14 +40,8 @@ export const sendTextMessage = createAsyncThunk(
       // Send message through WebSocket
       websocketService.sendMessage(messageData.content, messageData.client_message_id);
       
-      // Also send via API as backup
-      const res = await axios.post(
-        `${BASE_URL}api/projects/${projectId}/chat/messages/create/`,
-        messageData,
-        { headers: authHeader() }
-      );
-      
-      return { projectId, message: res.data };
+      // WS-only send: return project context; message will arrive via WS handler
+      return { projectId };
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
@@ -219,9 +213,8 @@ const chatSlice = createSlice({
       // Send Message - Remove the automatic push to prevent duplication
       // The message will be added via WebSocket addIncomingMessage instead
       .addCase(sendTextMessage.fulfilled, (state, action) => {
-        // Don't add the message here as it will come through WebSocket
-        // This prevents the duplication issue
-        console.log('Message sent successfully via API');
+        // Message will come via WebSocket new.message event
+        console.log('Message sent via WebSocket');
       })
       // Fetch Chat Contacts
       .addCase(fetchChatContacts.pending, (state) => {
