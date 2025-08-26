@@ -6,6 +6,7 @@ import {
   connectToProjectChat, 
   disconnectFromProjectChat 
 } from '../../../store/slices/ChatSlice';
+import websocketService from '../../../services/websocketService';
 import { formatDistanceToNow } from 'date-fns';
 import { X, Paperclip, Send } from 'lucide-react';
 import { closeChat } from '../../../store/slices/ChatSlice';
@@ -52,6 +53,16 @@ const ChatWindow = () => {
   useEffect(() => {
     // Scroll to bottom when new messages arrive
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // If chat is open and there are messages, mark the latest as read
+    if (isChatOpen && projectId) {
+      const list = messages[projectId] || [];
+      if (list.length > 0) {
+        const last = list[list.length - 1];
+        if (last && last.id) {
+          websocketService.markAsRead(last.id);
+        }
+      }
+    }
   }, [messages, projectId]);
 
   const handleSendMessage = async () => {

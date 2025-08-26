@@ -68,8 +68,7 @@ class ConversationSerializer(serializers.ModelSerializer):
         """Get unread message count for the current user"""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return obj.messages.filter(
-                sender__ne=request.user,
+            return obj.messages.exclude(sender=request.user).filter(
                 read_at__isnull=True
             ).count()
         return 0

@@ -143,12 +143,16 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
         conv = Conversation.objects.get(project=project)
         
         # Mark messages as read
-        updated_count = Message.objects.filter(
-            conversation=conv, 
-            sender__ne=self.user, 
-            id__lte=last_id, 
-            read_at__isnull=True
-        ).update(read_at=timezone.now())
+        updated_count = (
+            Message.objects
+            .filter(
+                conversation=conv,
+                id__lte=last_id,
+                read_at__isnull=True,
+            )
+            .exclude(sender=self.user)
+            .update(read_at=timezone.now())
+        )
         
         # Update chat contact unread count
         if updated_count > 0:
