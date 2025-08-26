@@ -106,9 +106,9 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
         conv.last_message_text = msg.content[:255]
         conv.save(update_fields=["last_message_at", "last_message_text"])
         
-        # Update chat contacts for both participants
-        if msg.content:
-            conv.update_chat_contacts(msg.content, msg.created_at, self.user)
+        # Note: Chat contact unread_count and last_message updates are handled
+        # by Message.save() to avoid double-incrementing when messages are
+        # created via WebSocket. Do not call update_chat_contacts here.
         
         return msg
 
