@@ -104,11 +104,14 @@ class MarkReadAPIView(EnsureConversationMixin, generics.UpdateAPIView):
             return Response({"detail": "last_read_message_id required"}, status=400)
         
         # Mark messages as read
-        unread_messages = Message.objects.filter(
-            conversation=conversation,
-            sender__ne=request.user,
-            id__lte=last_id,
-            read_at__isnull=True,
+        unread_messages = (
+            Message.objects
+            .filter(
+                conversation=conversation,
+                id__lte=last_id,
+                read_at__isnull=True,
+            )
+            .exclude(sender=request.user)
         )
         unread_messages.update(read_at=timezone.now())
         

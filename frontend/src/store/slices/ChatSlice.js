@@ -50,7 +50,7 @@ export const sendTextMessage = createAsyncThunk(
 
 export const connectToProjectChat = createAsyncThunk(
   'chat/connectToProjectChat',
-  async ({ projectId }, { dispatch }) => {
+  async ({ projectId }, { dispatch, getState }) => {
     console.log('Connecting to project chat:', projectId);
     const token = sessionStorage.getItem('access');
     
@@ -71,6 +71,35 @@ export const connectToProjectChat = createAsyncThunk(
           read_at: message.read_at
         }
       }));
+
+      // If chat window is open on this project, mark as read immediately
+      try {
+        const state = getState();
+        const { isChatOpen, selectedContact } = state.chat || {};
+        if (isChatOpen && selectedContact && selectedContact.project_info && selectedContact.project_info.id === message.project) {
+          websocketService.markAsRead(message.id);
+        }
+      } catch (_) {}
+
+      // Ensure contact list reflects the new message in real time.
+      // If this project/contact isn't in the list yet, refresh contacts.
+      try {
+        const state = getState();
+        const hasContact = (state.chat.chatContacts || []).some(
+          (c) => c.project_info && c.project_info.id === message.project
+        );
+        if (!hasContact) {
+          dispatch(fetchChatContacts());
+        }
+      } catch (_) {}
+    });
+
+    // Handle read receipts to clear unread counts locally
+    websocketService.on('readReceipt', (event) => {
+      const currentUserId = getCurrentUserId();
+      if (event && event.user_id === currentUserId) {
+        dispatch(zeroUnreadForProject({ projectId }));
+      }
     });
     
     return { projectId };
@@ -152,11 +181,23 @@ const chatSlice = createSlice({
         
         // Only update unread count if the message is not from the current user
         if (message.sender !== currentUserId) {
+          const isChatOpenForProject = (
+            state.isChatOpen &&
+            state.selectedContact &&
+            state.selectedContact.project_info &&
+            state.selectedContact.project_info.id === projectId
+          );
+
           const contact = state.chatContacts.find(c => c.project_info.id === projectId);
           if (contact) {
-            contact.unread_count += 1;
+            // Always update last message preview/time so list updates in real-time
             contact.last_message_text = message.content;
             contact.last_message_at = message.created_at;
+
+            // Increment unread only if user is not actively viewing this chat
+            if (!isChatOpenForProject) {
+              contact.unread_count += 1;
+            }
           }
         }
       }
@@ -186,6 +227,13 @@ const chatSlice = createSlice({
       const contact = state.chatContacts.find(c => c.id === contactId);
       if (contact) {
         contact.unread_count = unreadCount;
+      }
+    },
+    zeroUnreadForProject: (state, action) => {
+      const { projectId } = action.payload;
+      const contact = state.chatContacts.find(c => c.project_info && c.project_info.id === projectId);
+      if (contact) {
+        contact.unread_count = 0;
       }
     },
   },
