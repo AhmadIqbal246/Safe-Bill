@@ -34,7 +34,9 @@
     "view_categories": "View Categories",
     "read_stories": "Read Stories",
     "send_request": "Send Request",
-    "sending": "Sending..."
+    "sending": "Sending...",
+    "id": "ID",
+    "created": "Created"
   },
   "signup_popup": {
     "title": "Choose Your Registration Type",

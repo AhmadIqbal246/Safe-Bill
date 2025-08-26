@@ -34,7 +34,9 @@
     "view_categories": "Voir les Catégories",
     "read_stories": "Lire les Histoires",
     "send_request": "Envoyer la Demande",
-    "sending": "Envoi en cours..."
+    "sending": "Envoi en cours...",
+    "id": "ID",
+    "created": "Créé"
   },
   "signup_popup": {
     "title": "Choisissez votre type d'inscription",
