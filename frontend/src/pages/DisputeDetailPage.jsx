@@ -16,8 +16,10 @@ import {
   CheckCircle,
   UserCheck
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function DisputeDetailPage() {
+  const { t } = useTranslation();
   const { disputeId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -57,12 +59,12 @@ export default function DisputeDetailPage() {
   };
 
   const getStatusText = (status) => {
-    if (!status) return 'Unknown';
+    if (!status) return t('dispute_detail.unknown');
     return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
   };
 
   const getDisputeTypeText = (type) => {
-    if (!type) return 'Unknown';
+    if (!type) return t('dispute_detail.unknown');
     return type.replace('_', ' ').split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
@@ -90,7 +92,7 @@ export default function DisputeDetailPage() {
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <div className="text-lg text-gray-500">Loading dispute details...</div>
+              <div className="text-lg text-gray-500">{t('dispute_detail.loading_dispute_details')}</div>
             </div>
           </div>
         </div>
@@ -106,7 +108,7 @@ export default function DisputeDetailPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
               <div className="text-lg text-red-500">
-                Error: {typeof disputeDetailError === 'string' ? disputeDetailError : 'Failed to load dispute details'}
+                {typeof disputeDetailError === 'string' ? disputeDetailError : t('dispute_detail.failed_load_dispute_details')}
               </div>
             </div>
           </div>
@@ -122,7 +124,7 @@ export default function DisputeDetailPage() {
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <div className="text-lg text-gray-500">Dispute not found</div>
+              <div className="text-lg text-gray-500">{t('dispute_detail.dispute_not_found')}</div>
             </div>
           </div>
         </div>
@@ -143,7 +145,7 @@ export default function DisputeDetailPage() {
             className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Disputes
+            {t('dispute_detail.back_to_disputes')}
           </button>
 
           {/* Dispute Header */}
@@ -155,12 +157,12 @@ export default function DisputeDetailPage() {
                 </h1>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
-                    <span className="font-medium">ID:</span>
+                    <span className="font-medium">{t('common.id')}:</span>
                     <span className="text-[#01257D]">{dispute.dispute_id}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>Created: {formatDate(dispute.created_at)}</span>
+                    <span>{t('common.created')}: {formatDate(dispute.created_at)}</span>
                   </div>
                 </div>
               </div>
@@ -169,7 +171,7 @@ export default function DisputeDetailPage() {
                   {getStatusText(dispute.status)}
                 </span>
                 <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
-                  Contact Mediator
+                  {t('dispute_detail.contact_mediator')}
                 </button>
               </div>
             </div>
@@ -180,10 +182,10 @@ export default function DisputeDetailPage() {
             <div className="lg:col-span-2 space-y-6">
               {/* Dispute Information */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Dispute Information</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('dispute_detail.dispute_information')}</h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.description')}</label>
                     <div className="bg-gray-50 p-3 rounded-lg">
                       {dispute.description.length > 150 ? (
                         <>
@@ -194,7 +196,7 @@ export default function DisputeDetailPage() {
                             onClick={() => handleViewDescription(dispute.description)}
                             className="text-blue-600 underline text-sm hover:text-blue-800 mt-2 cursor-pointer"
                           >
-                            View Full Description
+                            {t('dispute_detail.view_full_description')}
                           </button>
                         </>
                       ) : (
@@ -207,29 +209,29 @@ export default function DisputeDetailPage() {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nature of Dispute</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.nature_of_dispute')}</label>
                       <p className="text-gray-900">{getDisputeTypeText(dispute.dispute_type)}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('disputes.project')}</label>
                       <p className="text-gray-900">{dispute.project?.name}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Initiator</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('disputes.initiator')}</label>
                       <p className="text-gray-900">{dispute.initiator_name}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Respondent</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('disputes.respondent')}</label>
                       <p className="text-gray-900">{dispute.respondent_name}</p>
                     </div>
                   </div>
 
                   {dispute.assigned_mediator && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Mediator</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.assigned_mediator')}</label>
                       <p className="text-gray-900">{dispute.mediator_name}</p>
                     </div>
                   )}
@@ -239,7 +241,7 @@ export default function DisputeDetailPage() {
               {/* Supporting Documents */}
               {dispute.documents && dispute.documents.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Supporting Documents</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('dispute_detail.supporting_documents')}</h2>
                   <div className="space-y-3">
                     {dispute.documents.map((doc) => (
                       <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -247,7 +249,7 @@ export default function DisputeDetailPage() {
                           <FileText className="w-5 h-5 text-gray-500" />
                           <div>
                             <p className="text-sm font-medium text-gray-900">{doc.filename}</p>
-                            <p className="text-xs text-gray-500">Uploaded by {doc.uploaded_by}</p>
+                            <p className="text-xs text-gray-500">{t('dispute_detail.uploaded_by')} {doc.uploaded_by}</p>
                           </div>
                         </div>
                         <a
@@ -257,7 +259,7 @@ export default function DisputeDetailPage() {
                           className="text-[#01257D] hover:text-[#2346a0] text-sm flex items-center gap-1 cursor-pointer"
                         >
                           <Download className="w-4 h-4" />
-                          Download
+                          {t('project_detail.download')}
                         </a>
                       </div>
                     ))}
@@ -268,7 +270,7 @@ export default function DisputeDetailPage() {
               {/* Comments */}
               {dispute.comments && dispute.comments.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Comments</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('dispute_detail.comments')}</h2>
                   <div className="space-y-4">
                     {dispute.comments.map((comment) => (
                       <div key={comment.id} className="border-l-4 border-[#01257D] pl-4">
@@ -288,10 +290,10 @@ export default function DisputeDetailPage() {
             <div className="space-y-6">
               {/* Current Status */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Tracking</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('dispute_detail.tracking')}</h2>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Status</span>
+                    <span className="text-sm font-medium text-gray-700">{t('disputes.status')}</span>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(dispute.status)}`}>
                       {getStatusText(dispute.status)}
                     </span>
@@ -299,7 +301,7 @@ export default function DisputeDetailPage() {
                   
                   {dispute.assigned_mediator && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Assigned Mediator</span>
+                      <span className="text-sm font-medium text-gray-700">{t('dispute_detail.assigned_mediator')}</span>
                       <span className="text-sm text-gray-900">{dispute.mediator_name}</span>
                     </div>
                   )}
@@ -308,7 +310,7 @@ export default function DisputeDetailPage() {
 
               {/* History Timeline */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">History</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dispute_detail.history')}</h3>
                 <div className="relative">
                   {/* Timeline Line */}
                   <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
@@ -336,23 +338,23 @@ export default function DisputeDetailPage() {
               {/* Resolution Details */}
               {dispute.resolution_details && (
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Resolution</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('dispute_detail.resolution')}</h3>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Details</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.resolution_details')}</label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-lg text-sm">{dispute.resolution_details}</p>
                     </div>
                     
                     {dispute.resolution_amount && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Amount</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.resolution_amount')}</label>
                         <p className="text-gray-900 font-medium">${dispute.resolution_amount}</p>
                       </div>
                     )}
                     
                     {dispute.resolved_at && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Resolved Date</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.resolved_date')}</label>
                         <p className="text-gray-900">{formatDate(dispute.resolved_at)}</p>
                       </div>
                     )}
@@ -374,7 +376,7 @@ export default function DisputeDetailPage() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
-              Dispute Description
+              {t('dispute_detail.dispute_description')}
             </Dialog.Title>
             
             <div className="mb-6">
@@ -391,7 +393,7 @@ export default function DisputeDetailPage() {
                 className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                 onClick={() => setViewDescriptionDialogOpen(false)}
               >
-                Close
+                {t('dispute_detail.close')}
               </button>
             </div>
           </Dialog.Panel>

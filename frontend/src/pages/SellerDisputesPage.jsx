@@ -6,8 +6,10 @@ import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Sidebar from '../components/SellerDashboard/Sidebar';
 import { Search, ChevronDown, Calendar, User, FileText } from 'lucide-react';
 import MainLayout from '../components/Layout/MainLayout';
+import { useTranslation } from 'react-i18next';
 
 export default function SellerDisputesPage() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,7 +84,7 @@ export default function SellerDisputesPage() {
   };
 
   const getStatusText = (status) => {
-    if (!status) return 'Unknown';
+    if (!status) return t('dispute_detail.unknown');
     return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
   };
 
@@ -95,7 +97,7 @@ export default function SellerDisputesPage() {
           <div className="flex-1 min-h-screen bg-gray-50 p-4">
             <div className="max-w-7xl mx-auto">
               <div className="text-center py-12">
-                <div className="text-lg text-gray-500">Loading disputes...</div>
+                <div className="text-lg text-gray-500">{t('seller_disputes.loading_disputes')}</div>
               </div>
             </div>
           </div>
@@ -114,7 +116,7 @@ export default function SellerDisputesPage() {
             <div className="max-w-7xl mx-auto">
               <div className="text-center py-12">
                 <div className="text-lg text-red-500">
-                  Error: {typeof disputesError === 'string' ? disputesError : 'Failed to load disputes'}
+                  {typeof disputesError === 'string' ? disputesError : t('seller_disputes.failed_load_disputes')}
                 </div>
               </div>
             </div>
@@ -131,8 +133,8 @@ export default function SellerDisputesPage() {
           <div className="max-w-7xl mx-auto">
             {/* Header */}
             <div className="mb-4 sm:mb-6 px-2 sm:px-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Disputes</h1>
-              <p className="text-sm sm:text-base text-gray-600">Manage and track your disputes</p>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{t('seller_disputes.title')}</h1>
+              <p className="text-sm sm:text-base text-gray-600">{t('seller_disputes.subtitle')}</p>
             </div>
 
             {/* Search Bar */}
@@ -141,7 +143,7 @@ export default function SellerDisputesPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <input
                   type="text"
-                  placeholder="Search disputes..."
+                  placeholder={t('seller_disputes.search_placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01257D] focus:border-[#01257D] transition-colors"
@@ -156,26 +158,26 @@ export default function SellerDisputesPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dispute ID
+                        {t('seller_disputes.dispute_id')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
+                        {t('seller_disputes.title_label')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Project
+                        {t('seller_disputes.project')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Parties
+                        {t('seller_disputes.parties')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        {t('seller_disputes.status')}
                       </th>
                       <th 
                         className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
                         onClick={() => handleSort('created_at')}
                       >
                         <div className="flex items-center gap-1">
-                          Created At
+                          {t('seller_disputes.created_at')}
                           <ChevronDown className={`w-4 h-4 transition-transform ${sortField === 'created_at' && sortDirection === 'asc' ? 'rotate-180' : ''}`} />
                         </div>
                       </th>
@@ -201,8 +203,8 @@ export default function SellerDisputesPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="space-y-1">
-                            <div>Initiator: {dispute.initiator_name}</div>
-                            <div>Respondent: {dispute.respondent_name}</div>
+                            <div>{t('seller_disputes.initiator')}: {dispute.initiator_name}</div>
+                            <div>{t('seller_disputes.respondent')}: {dispute.respondent_name}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -249,7 +251,7 @@ export default function SellerDisputesPage() {
                     <div className="flex items-start gap-2">
                       <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <span className="text-gray-500">Project:</span>
+                        <span className="text-gray-500">{t('seller_disputes.project')}:</span>
                         <div className="text-gray-900 font-medium">
                           {dispute.project_name}
                         </div>
@@ -260,7 +262,7 @@ export default function SellerDisputesPage() {
                     <div className="flex items-start gap-2">
                       <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <span className="text-gray-500">Created:</span>
+                        <span className="text-gray-500">{t('seller_disputes.created')}:</span>
                         <div className="text-gray-900 font-medium">
                           {formatDate(dispute.created_at)}
                         </div>
@@ -271,7 +273,7 @@ export default function SellerDisputesPage() {
                     <div className="flex items-start gap-2">
                       <User className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <span className="text-gray-500">Initiator:</span>
+                        <span className="text-gray-500">{t('seller_disputes.initiator')}:</span>
                         <div className="text-gray-900 font-medium">
                           {dispute.initiator_name}
                         </div>
@@ -282,7 +284,7 @@ export default function SellerDisputesPage() {
                     <div className="flex items-start gap-2">
                       <User className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <span className="text-gray-500">Respondent:</span>
+                        <span className="text-gray-500">{t('seller_disputes.respondent')}:</span>
                         <div className="text-gray-900 font-medium">
                           {dispute.respondent_name}
                         </div>
@@ -298,7 +300,7 @@ export default function SellerDisputesPage() {
               <div className="bg-white rounded-lg shadow-sm mx-2 sm:mx-0">
                 <div className="text-center py-12">
                   <div className="text-gray-500 text-sm sm:text-base">
-                    {searchTerm ? 'No disputes found matching your search.' : 'No disputes found.'}
+                    {searchTerm ? t('seller_disputes.no_disputes_matching_search') : t('seller_disputes.no_disputes_found')}
                   </div>
                 </div>
               </div>
