@@ -76,7 +76,6 @@ export default function MyProfileComp() {
       toast.success(t('my_profile.profile_updated_successfully'));
       // Refresh the profile data from the API to get the latest data
       dispatch(fetchUserProfile());
-      console.log(profile);
       
     }
   }, [success, dispatch, t]);
@@ -273,7 +272,6 @@ export default function MyProfileComp() {
       data.profile_pic = editForm.profile_pic;
     }
   
-    console.log('Submitting data:', data); // Debug log to verify data
     dispatch(updateUserProfile(data));
   };
 

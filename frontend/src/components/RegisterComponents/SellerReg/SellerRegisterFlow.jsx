@@ -363,7 +363,6 @@ export default function SellerRegisterFlow({role = "seller"}) {
   };
 
   useEffect(() => {
-    console.log("Success:", success);
 
     if (success) {
       toast.success(
