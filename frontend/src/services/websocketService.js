@@ -13,6 +13,10 @@ class WebSocketService {
       return;
     }
 
+    // Store context for reconnects
+    this.currentProjectId = projectId;
+    this.currentToken = token;
+
     const wsUrl = `${import.meta.env.VITE_WS_BASE_URL || 'ws://127.0.0.1:8000'}/ws/chat/project/${projectId}/?token=${token}`;
     
     try {
