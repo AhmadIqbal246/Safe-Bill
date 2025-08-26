@@ -4,8 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchClientProjectDetail } from '../store/slices/ProjectSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Download, Star, Calendar, DollarSign, Shield, MessageCircle, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function ProjectDetailPage() {
+  const { t } = useTranslation();
   const { projectId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -50,11 +52,11 @@ export default function ProjectDetailPage() {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'approved': return 'Completed';
-      case 'pending': return 'In Progress';
-      case 'not_approved': return 'Not Approved';
-      case 'review_request': return 'Review Request';
-      default: return 'Not Submitted';
+      case 'approved': return t('project_detail.completed');
+      case 'pending': return t('project_detail.in_progress');
+      case 'not_approved': return t('project_detail.not_approved');
+      case 'review_request': return t('project_detail.review_request');
+      default: return t('project_detail.not_submitted');
     }
   };
 
@@ -65,7 +67,7 @@ export default function ProjectDetailPage() {
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <div className="text-lg text-gray-500">Loading project details...</div>
+              <div className="text-lg text-gray-500">{t('project_detail.loading_project_details')}</div>
             </div>
           </div>
         </div>
@@ -81,7 +83,7 @@ export default function ProjectDetailPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
               <div className="text-lg text-red-500">
-                Error: {typeof clientProjectDetailError === 'string' ? clientProjectDetailError : 'Failed to load project details'}
+                {typeof clientProjectDetailError === 'string' ? clientProjectDetailError : t('project_detail.failed_load_project_details')}
               </div>
             </div>
           </div>
@@ -97,7 +99,7 @@ export default function ProjectDetailPage() {
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <div className="text-lg text-gray-500">Project not found</div>
+              <div className="text-lg text-gray-500">{t('project_detail.project_not_found')}</div>
             </div>
           </div>
         </div>
@@ -121,7 +123,7 @@ export default function ProjectDetailPage() {
             onClick={() => navigate(-1)}
             className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
           >
-            ← Back to Dashboard
+            {t('project_detail.back_to_dashboard')}
           </button>
 
           {/* Project Header */}
@@ -142,22 +144,22 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>Started: {formatDate(project.created_at)}</span>
+                    <span>{t('project_detail.started')}: {formatDate(project.created_at)}</span>
                   </div>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  In Progress
+                  {t('project_detail.in_progress')}
                 </span>
                 <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
-                  Contact Seller
+                  {t('project_detail.contact_seller')}
                 </button>
                 <button 
                   onClick={() => navigate('/dispute-submit', { state: { project } })}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
                 >
-                  Raise Dispute
+                  {t('project_detail.raise_dispute')}
                 </button>
               </div>
             </div>
@@ -168,7 +170,7 @@ export default function ProjectDetailPage() {
             <div className="lg:col-span-2 space-y-6">
               {/* Project Progress */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Project Progress</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('project_detail.project_progress')}</h2>
                 <div className="relative">
                   {/* Timeline Container */}
                   <div className="flex items-center justify-between">
@@ -201,7 +203,7 @@ export default function ProjectDetailPage() {
                           <div className="text-center">
                             <div className="font-medium text-gray-900 text-sm mb-1">{installment.step}</div>
                             <div className="text-xs text-gray-600">
-                              ${parseFloat(installment.amount).toLocaleString()} {isCompleted ? 'Paid' : 'Pending'}
+                              ${parseFloat(installment.amount).toLocaleString()} {isCompleted ? t('project_detail.paid') : t('project_detail.pending')}
                             </div>
                           </div>
                           
@@ -220,17 +222,17 @@ export default function ProjectDetailPage() {
 
               {/* Milestones & Payments */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Milestones & Payments</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('project_detail.milestones_payments')}</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Milestone</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Amount</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Paid</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Action</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">{t('project_detail.milestone')}</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">{t('project_detail.status')}</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">{t('project_detail.amount')}</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">{t('project_detail.paid')}</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">{t('project_detail.date')}</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">{t('project_detail.action')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -254,7 +256,7 @@ export default function ProjectDetailPage() {
                           <td className="py-3 px-4">
                             {milestone.status === 'pending' && (
                               <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
-                                Review
+                                {t('project_detail.review')}
                               </button>
                             )}
                           </td>
@@ -268,21 +270,21 @@ export default function ProjectDetailPage() {
               {/* Project Documents */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">Project Documents</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{t('project_detail.project_documents')}</h2>
                   <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
-                    Download All
+                    {t('project_detail.download_all')}
                   </button>
                 </div>
                 <div className="space-y-4">
                   {project.quote?.file && (
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
-                        <div className="font-medium text-gray-900">Quote Document</div>
+                        <div className="font-medium text-gray-900">{t('project_detail.quote_document')}</div>
                         <div className="text-sm text-gray-600">{formatDate(project.created_at)}</div>
                       </div>
                       <div className="flex gap-2">
                         <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
-                          Preview
+                          {t('project_detail.preview')}
                         </button>
                         <a
                           href={project.quote.file}
@@ -291,7 +293,7 @@ export default function ProjectDetailPage() {
                           className="text-[#01257D] hover:text-[#2346a0] text-sm flex items-center gap-1"
                         >
                           <Download className="w-4 h-4" />
-                          Download
+                          {t('project_detail.download')}
                         </a>
                       </div>
                     </div>
@@ -300,12 +302,12 @@ export default function ProjectDetailPage() {
                     milestone.supporting_doc && (
                       <div key={milestone.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                          <div className="font-medium text-gray-900">{milestone.name} - Supporting Document</div>
+                          <div className="font-medium text-gray-900">{milestone.name} - {t('project_detail.supporting_document')}</div>
                           <div className="text-sm text-gray-600">{formatDate(milestone.created_date)}</div>
                         </div>
                         <div className="flex gap-2">
                           <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
-                            Preview
+                            {t('project_detail.preview')}
                           </button>
                           <a
                             href={milestone.supporting_doc}
@@ -314,7 +316,7 @@ export default function ProjectDetailPage() {
                             className="text-[#01257D] hover:text-[#2346a0] text-sm flex items-center gap-1"
                           >
                             <Download className="w-4 h-4" />
-                            Download
+                            {t('project_detail.download')}
                           </a>
                         </div>
                       </div>
@@ -328,59 +330,59 @@ export default function ProjectDetailPage() {
             <div className="space-y-6">
               {/* Payment Summary */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Summary</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('project_detail.payment_summary')}</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Total Project Amount</span>
+                    <span className="text-gray-600">{t('project_detail.total_project_amount')}</span>
                     <span className="font-semibold text-gray-900">${totalAmount.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Amount Paid</span>
+                    <span className="text-gray-600">{t('project_detail.amount_paid')}</span>
                     <span className="font-semibold text-green-600">${paidAmount.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Pending Payments</span>
+                    <span className="text-gray-600">{t('project_detail.pending_payments')}</span>
                     <span className="font-semibold text-orange-600">${pendingAmount.toLocaleString()}</span>
                   </div>
                   <div className="border-t pt-3">
-                    <div className="text-sm text-gray-600 mb-1">Next Payment Due</div>
+                    <div className="text-sm text-gray-600 mb-1">{t('project_detail.next_payment_due')}</div>
                     <div className="font-semibold text-gray-900">${pendingAmount > 0 ? project.installments?.find(inst => inst.step !== 'Project Completion')?.amount || 0 : 0}</div>
-                    <div className="text-xs text-gray-500">Development milestone</div>
+                    <div className="text-xs text-gray-500">{t('project_detail.development_milestone')}</div>
                   </div>
                   <button className="w-full mt-4 px-4 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer">
-                    Pay Now
+                    {t('project_detail.pay_now')}
                   </button>
                 </div>
               </div>
 
               {/* Project Details */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Project Details</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('project_detail.project_details')}</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Project ID</span>
+                    <span className="text-gray-600">{t('project_detail.project_id')}</span>
                     <span className="font-medium text-gray-900">MPRJ-{project.id.toString().padStart(6, '0')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Category</span>
+                    <span className="text-gray-600">{t('project_detail.category')}</span>
                     <span className="font-medium text-gray-900">{project.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Duration</span>
-                    <span className="font-medium text-gray-900">8 weeks</span>
+                    <span className="text-gray-600">{t('project_detail.duration')}</span>
+                    <span className="font-medium text-gray-900">8 {t('project_detail.weeks')}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Escrow Protection</span>
+                    <span className="text-gray-600">{t('project_detail.escrow_protection')}</span>
                     <div className="flex items-center gap-1 text-green-600">
                       <Shield className="w-4 h-4" />
-                      <span className="font-medium">Active</span>
+                      <span className="font-medium">{t('project_detail.active')}</span>
                     </div>
                   </div>
                   <button 
                     onClick={() => navigate('/dispute-submit', { state: { project } })}
                     className="w-full mt-4 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
                   >
-                    Dispute
+                    {t('project_detail.dispute')}
                   </button>
                 </div>
               </div>

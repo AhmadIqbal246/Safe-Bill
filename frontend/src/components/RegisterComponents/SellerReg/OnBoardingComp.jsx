@@ -147,7 +147,6 @@ export default function OnBoardingComp() {
       }
     });
     const accessToken = sessionStorage.getItem("access");
-    console.log("TOKEN", accessToken);
 
     dispatch(uploadBusinessDocuments({ formData, accessToken }));
   };

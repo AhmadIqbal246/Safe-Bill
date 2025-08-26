@@ -9,8 +9,10 @@ import PaymentTracking from '../components/BuyerDashboard/PaymentTracking';
 import DocumentsSection from '../components/BuyerDashboard/DocumentsSection';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Chat from '../components/mutualComponents/Chat/Chat';
+import { useTranslation } from 'react-i18next';
 
 export default function BuyerDashboardPage() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { clientProjects, clientProjectsLoading, clientProjectsError } = useSelector(
@@ -49,11 +51,11 @@ export default function BuyerDashboardPage() {
             {/* Loading Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
-                <div className="text-gray-500">Track and manage your service projects</div>
+                <h2 className="text-2xl sm:text-3xl font-semibold mb-1">{t('buyer_dashboard.title')}</h2>
+                <div className="text-gray-500">{t('buyer_dashboard.subtitle')}</div>
               </div>
               <div className="mt-4 sm:mt-0 px-6 py-3 bg-gray-200 text-gray-400 rounded-lg font-medium">
-                View All Disputes
+                {t('buyer_dashboard.view_all_disputes')}
               </div>
             </div>
             
@@ -151,8 +153,8 @@ export default function BuyerDashboardPage() {
             {/* Error Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
-                <div className="text-gray-500">Track and manage your service projects</div>
+                <h2 className="text-2xl sm:text-3xl font-semibold mb-1">{t('buyer_dashboard.title')}</h2>
+                <div className="text-gray-500">{t('buyer_dashboard.subtitle')}</div>
               </div>
             </div>
             
@@ -163,15 +165,15 @@ export default function BuyerDashboardPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-red-800 mb-2">Failed to Load Dashboard</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-red-800 mb-2">{t('buyer_dashboard.failed_load_dashboard')}</h3>
               <p className="text-red-600 mb-4">
-                {typeof clientProjectsError === 'string' ? clientProjectsError : 'An unexpected error occurred while loading your dashboard data.'}
+                {typeof clientProjectsError === 'string' ? clientProjectsError : t('buyer_dashboard.unexpected_error')}
               </p>
               <button 
                 onClick={() => dispatch(fetchClientProjects())}
                 className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
               >
-                Try Again
+                {t('buyer_dashboard.try_again')}
               </button>
             </div>
           </div>
@@ -186,14 +188,14 @@ export default function BuyerDashboardPage() {
       <div className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-semibold mb-1">Buyer Dashboard</h2>
-            <div className="text-gray-500">Track and manage your service projects</div>
+            <h2 className="text-2xl sm:text-3xl font-semibold mb-1">{t('buyer_dashboard.title')}</h2>
+            <div className="text-gray-500">{t('buyer_dashboard.subtitle')}</div>
           </div>
           <button 
             onClick={() => navigate('/disputes')}
             className="mt-4 sm:mt-0 px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
           >
-            View All Disputes
+            {t('buyer_dashboard.view_all_disputes')}
           </button>
         </div>
         
@@ -215,7 +217,7 @@ export default function BuyerDashboardPage() {
         
         <div className="flex justify-center mt-8 sm:mt-10">
           <button className="bg-[#153A7D] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#1a4086] transition-colors">
-            Contact Support
+            {t('buyer_dashboard.contact_support')}
           </button>
         </div>
       </div>

@@ -7,8 +7,6 @@ const ChatButton = () => {
   const dispatch = useDispatch();
   const { chatContacts, isContactListOpen, chatContactsLoading, messages } = useSelector(state => state.chat);
   
-  console.log("Meaages", messages);
-  
   // Calculate total unread messages
   const totalUnread = chatContacts.reduce((sum, contact) => sum + contact.unread_count, 0);
 
