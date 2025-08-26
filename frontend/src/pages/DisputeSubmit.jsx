@@ -5,8 +5,10 @@ import { fetchAvailableProjects, createDispute, clearDisputeErrors } from '../st
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 export default function DisputeSubmit() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -40,12 +42,12 @@ export default function DisputeSubmit() {
 
   // Dispute type options
   const disputeTypes = [
-    { value: 'payment_issue', label: 'Payment Issue' },
-    { value: 'quality_issue', label: 'Quality Issue' },
-    { value: 'delivery_delay', label: 'Delivery Delay' },
-    { value: 'communication_issue', label: 'Communication Issue' },
-    { value: 'scope_creep', label: 'Scope Creep' },
-    { value: 'other', label: 'Other' },
+    { value: 'payment_issue', label: t('dispute_submit.payment_issue') },
+    { value: 'quality_issue', label: t('dispute_submit.quality_issue') },
+    { value: 'delivery_delay', label: t('dispute_submit.delivery_delay') },
+    { value: 'communication_issue', label: t('dispute_submit.communication_issue') },
+    { value: 'scope_creep', label: t('dispute_submit.scope_creep') },
+    { value: 'other', label: t('dispute_submit.other') },
   ];
 
   useEffect(() => {
@@ -88,20 +90,20 @@ export default function DisputeSubmit() {
     const newErrors = {};
 
     if (!formData.project) {
-      newErrors.project = 'Please select a project';
+      newErrors.project = t('dispute_submit.please_select_project');
     }
     if (!formData.dispute_type) {
-      newErrors.dispute_type = 'Please select the nature of dispute';
+      newErrors.dispute_type = t('dispute_submit.please_select_dispute_type');
     }
     if (!formData.title.trim()) {
-      newErrors.title = 'Please enter a title for the dispute';
+      newErrors.title = t('dispute_submit.please_enter_title');
     } else if (formData.title.length > TITLE_MAX_LENGTH) {
-      newErrors.title = `Title must be ${TITLE_MAX_LENGTH} characters or less`;
+      newErrors.title = t('dispute_submit.title_max_length');
     }
     if (!formData.description.trim()) {
-      newErrors.description = 'Please provide a description of the dispute';
+      newErrors.description = t('dispute_submit.please_provide_description');
     } else if (formData.description.length > DESCRIPTION_MAX_LENGTH) {
-      newErrors.description = `Description must be ${DESCRIPTION_MAX_LENGTH} characters or less`;
+      newErrors.description = t('dispute_submit.description_max_length');
     }
 
     setErrors(newErrors);
@@ -123,7 +125,7 @@ export default function DisputeSubmit() {
 
       const result = await dispatch(createDispute(disputeData)).unwrap();
       
-      toast.success('Dispute submitted successfully!');
+      toast.success(t('dispute_submit.dispute_submitted_successfully'));
       
       // Reset form fields instead of navigating
       setFormData({
@@ -159,7 +161,7 @@ export default function DisputeSubmit() {
         <SafeBillHeader />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-lg text-gray-500">Loading projects...</div>
+            <div className="text-lg text-gray-500">{t('dispute_submit.loading_projects')}</div>
           </div>
         </div>
       </>
@@ -176,18 +178,18 @@ export default function DisputeSubmit() {
             onClick={() => navigate(-1)}
             className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
           >
-            ← Back
+            {t('dispute_submit.back')}
           </button>
 
           {/* Form Container */}
           <div className="bg-white rounded-lg shadow-sm p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-8">Declaration</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-8">{t('dispute_submit.title')}</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Project Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Project
+                  {t('dispute_submit.select_project')}
                 </label>
                 <select
                   name="project"
@@ -197,7 +199,7 @@ export default function DisputeSubmit() {
                     errors.project ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Select Project</option>
+                  <option value="">{t('dispute_submit.select_project_placeholder')}</option>
                   {availableProjects.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name} - {project.reference_number}
@@ -215,7 +217,7 @@ export default function DisputeSubmit() {
               {/* Nature of Dispute */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nature of Dispute
+                  {t('dispute_submit.nature_of_dispute')}
                 </label>
                 <select
                   name="dispute_type"
@@ -225,7 +227,7 @@ export default function DisputeSubmit() {
                     errors.dispute_type ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Nature of Dispute</option>
+                  <option value="">{t('dispute_submit.nature_of_dispute_placeholder')}</option>
                   {disputeTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
@@ -243,14 +245,14 @@ export default function DisputeSubmit() {
               {/* Dispute Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dispute Title
+                  {t('dispute_submit.dispute_title')}
                 </label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="Enter a brief title for the dispute"
+                  placeholder={t('dispute_submit.dispute_title_placeholder')}
                   maxLength={TITLE_MAX_LENGTH}
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#01257D] focus:border-[#01257D] transition-colors ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
@@ -276,7 +278,7 @@ export default function DisputeSubmit() {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
+                  {t('dispute_submit.description')}
                 </label>
                 <textarea
                   name="description"
@@ -284,7 +286,7 @@ export default function DisputeSubmit() {
                   onChange={handleInputChange}
                   rows={6}
                   maxLength={DESCRIPTION_MAX_LENGTH}
-                  placeholder="Please provide a detailed description of the dispute, including relevant facts, timeline, and any supporting information..."
+                  placeholder={t('dispute_submit.description_placeholder')}
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#01257D] focus:border-[#01257D] transition-colors resize-none ${
                     errors.description ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -309,7 +311,7 @@ export default function DisputeSubmit() {
               {/* File Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Supporting Documents
+                  {t('dispute_submit.upload_supporting_documents')}
                 </label>
                 
                 {/* Upload Area */}
@@ -318,8 +320,8 @@ export default function DisputeSubmit() {
                   className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#01257D] hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600 mb-1">Click to upload files</p>
-                  <p className="text-sm text-gray-500">PDF, DOC, DOCX, JPG, PNG (Max 10MB each)</p>
+                  <p className="text-gray-600 mb-1">{t('dispute_submit.click_to_upload')}</p>
+                  <p className="text-sm text-gray-500">{t('dispute_submit.file_types')}</p>
                 </div>
 
                 <input
@@ -334,7 +336,7 @@ export default function DisputeSubmit() {
                 {/* File List */}
                 {documents.length > 0 && (
                   <div className="mt-4 space-y-2">
-                    <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
+                    <h4 className="text-sm font-medium text-gray-700">{t('dispute_submit.selected_files')}:</h4>
                     {documents.map((file, index) => (
                       <div
                         key={index}
@@ -367,7 +369,7 @@ export default function DisputeSubmit() {
                   disabled={createDisputeLoading}
                   className="w-full px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {createDisputeLoading ? 'Submitting...' : 'Submit Dispute'}
+                  {createDisputeLoading ? t('dispute_submit.submitting') : t('dispute_submit.submit_dispute')}
                 </button>
               </div>
             </form>

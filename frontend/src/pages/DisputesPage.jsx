@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { fetchDisputes } from '../store/slices/DisputeSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Search, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function DisputesPage() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -90,7 +92,7 @@ export default function DisputesPage() {
         <div className="min-h-screen bg-gray-50 p-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <div className="text-lg text-gray-500">Loading disputes...</div>
+              <div className="text-lg text-gray-500">{t('disputes.loading_disputes')}</div>
             </div>
           </div>
         </div>
@@ -106,7 +108,7 @@ export default function DisputesPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
               <div className="text-lg text-red-500">
-                Error: {typeof disputesError === 'string' ? disputesError : 'Failed to load disputes'}
+                {typeof disputesError === 'string' ? disputesError : t('disputes.failed_load_disputes')}
               </div>
             </div>
           </div>
@@ -123,14 +125,14 @@ export default function DisputesPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Disputes</h1>
-              <p className="text-gray-600">Manage and track your disputes</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('disputes.title')}</h1>
+              <p className="text-gray-600">{t('disputes.subtitle')}</p>
             </div>
             <button
               onClick={() => navigate('/dispute-submit')}
               className="mt-4 sm:mt-0 px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
             >
-              Create New Dispute
+              {t('disputes.create_new_dispute')}
             </button>
           </div>
 
@@ -140,7 +142,7 @@ export default function DisputesPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search disputes by ID, title, project, or parties..."
+                placeholder={t('disputes.search_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#01257D] focus:border-[#01257D] transition-colors"
@@ -155,29 +157,29 @@ export default function DisputesPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dispute ID
+                      {t('disputes.dispute_id')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Title
+                      {t('disputes.title_label')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Project
+                      {t('disputes.project')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Initiator
+                      {t('disputes.initiator')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Respondent
+                      {t('disputes.respondent')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('disputes.status')}
                     </th>
                     <th 
                       className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center gap-1">
-                        Created At
+                        {t('disputes.created_at')}
                         <ChevronDown className={`w-4 h-4 transition-transform ${sortField === 'created_at' && sortDirection === 'asc' ? 'rotate-180' : ''}`} />
                       </div>
                     </th>
@@ -224,7 +226,7 @@ export default function DisputesPage() {
             {filteredAndSortedDisputes.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-500">
-                  {searchTerm ? 'No disputes found matching your search.' : 'No disputes found.'}
+                  {searchTerm ? t('disputes.no_disputes_matching_search') : t('disputes.no_disputes_found')}
                 </div>
               </div>
             )}
