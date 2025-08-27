@@ -22,6 +22,25 @@ export const submitFeedback = createAsyncThunk(
   }
 );
 
+export const submitContactMessage = createAsyncThunk(
+  'feedback/submitContactMessage',
+  async ({ name, email, subject, message }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}api/feedback/contact/`,
+        { name, email, subject, message },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Network error' });
+    }
+  }
+);
+
 const feedbackSlice = createSlice({
   name: 'feedback',
   initialState: {
@@ -50,6 +69,19 @@ const feedbackSlice = createSlice({
       .addCase(submitFeedback.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.detail || 'Failed to submit feedback.';
+      })
+      .addCase(submitContactMessage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(submitContactMessage.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(submitContactMessage.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.detail || 'Failed to send message.';
       });
   },
 });

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
-import { submitFeedback, resetFeedbackState } from '../../store/slices/FeedbackSlices';
+import { submitContactMessage, resetFeedbackState } from '../../store/slices/FeedbackSlices';
 
 export default function ContactUs() {
   const { t } = useTranslation();
@@ -46,8 +46,12 @@ export default function ContactUs() {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const composedFeedback = `From: ${formData.name}\nSubject: ${formData.subject}\n\n${formData.message}`;
-    dispatch(submitFeedback({ email: formData.email, feedback: composedFeedback }));
+    dispatch(submitContactMessage({
+      name: formData.name,
+      email: formData.email,
+      subject: formData.subject,
+      message: formData.message,
+    }));
   };
 
   useEffect(() => {
