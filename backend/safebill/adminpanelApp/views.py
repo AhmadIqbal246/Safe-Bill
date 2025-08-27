@@ -5,9 +5,10 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 from disputes.models import Dispute
-from .permissions import IsAdminRole
+from .permissions import IsAdminRole, IsSuperAdmin
 
 
 User = get_user_model()
@@ -98,6 +99,85 @@ class AdminUsersListAPIView(APIView):
             "name": (u.get_full_name() or u.username or u.email),
             "email": u.email,
             "status": "Active" if u.is_active else "Inactive",
+            "is_admin": u.is_admin,
         } for u in users]
+
+        return Response({"results": data})
+
+
+class SuperAdminUsersListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def get(self, request):
+        """Get all users with their admin status for super-admin management"""
+        users = User.objects.exclude(role='super-admin').order_by('id')
+        data = [{
+            "id": u.id,
+            "name": (u.get_full_name() or u.username or u.email),
+            "email": u.email,
+            "role": u.role,
+            "status": "Active" if u.is_active else "Inactive",
+            "is_admin": u.is_admin,
+        } for u in users]
+
+        return Response({"results": data})
+
+
+class AdminManagementAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def post(self, request):
+        """Toggle admin status for a user"""
+        user_id = request.data.get('user_id')
+        is_admin = request.data.get('is_admin', False)
+        
+        if not user_id:
+            return Response(
+                {"detail": "user_id is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(id=user_id)
+            
+            # Prevent super-admin from modifying other super-admins
+            if user.role == 'super-admin':
+                return Response(
+                    {"detail": "Cannot modify super-admin users"}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            user.is_admin = is_admin
+            user.save()
+            
+            return Response({
+                "message": f"Admin status updated for {user.email}",
+                "user_id": user.id,
+                "is_admin": user.is_admin
+            })
+            
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class CurrentAdminsListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def get(self, request):
+        """Get list of current admins (users with is_admin=True)"""
+        admins = User.objects.filter(is_admin=True).exclude(
+            role='super-admin'
+        ).order_by('id')
+        data = [{
+            "id": u.id,
+            "name": (u.get_full_name() or u.username or u.email),
+            "email": u.email,
+            "role": u.role,
+            "status": "Active" if u.is_active else "Inactive",
+            "is_admin": u.is_admin,
+        } for u in admins]
 
         return Response({"results": data})

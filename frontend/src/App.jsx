@@ -78,7 +78,7 @@ function App() {
           <Route path='/seller-disputes' element={<ProtectedRoute requiredRole="seller"><SellerDisputesPage/></ProtectedRoute>}/>
           <Route path='/dispute/:disputeId' element={<ProtectedRoute><DisputeDetailPage/></ProtectedRoute>}/>
           <Route path='/professional/:professionalId' element={<ProtectedRoute><ProfessionalDetailPage/></ProtectedRoute>}/>
-          <Route path='/admin' element={<ProtectedRoute requiredRole="admin"><AdminPage/></ProtectedRoute>}/>
+          <Route path='/admin' element={<ProtectedRoute requiredRole={["admin", "super-admin"]}><AdminPage/></ProtectedRoute>}/>
           <Route path='/contact-us' element={<ContactUs/>}/>
           {/* Add more routes as needed */}
         </Routes>

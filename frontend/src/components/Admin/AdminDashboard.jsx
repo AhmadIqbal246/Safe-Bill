@@ -78,6 +78,22 @@ const Pill = ({ children, type }) => {
   );
 };
 
+const AdminToggle = ({ isAdmin, onToggle, disabled = false }) => (
+  <label className="flex items-center cursor-pointer">
+    <div className="relative">
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={isAdmin}
+        onChange={onToggle}
+        disabled={disabled}
+      />
+      <div className={`block w-10 h-6 rounded-full ${isAdmin ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+      <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isAdmin ? 'transform translate-x-4' : ''}`}></div>
+    </div>
+  </label>
+);
+
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const staticData = useStaticAdminData();
@@ -86,8 +102,14 @@ export default function AdminDashboard() {
   const [overview, setOverview] = useState(staticData);
   const [professionals, setProfessionals] = useState(staticData.professionals);
   const [clients, setClients] = useState(staticData.clients);
+  const [currentAdmins, setCurrentAdmins] = useState([]);
   const [tab, setTab] = useState('professionals');
   const [search, setSearch] = useState('');
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [userRole, setUserRole] = useState('');
+
+  console.log(userRole);
+  console.log(isSuperAdmin);
 
   useEffect(() => {
     const access = sessionStorage.getItem('access');
@@ -98,6 +120,20 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
         setError(null);
+        const user = sessionStorage.getItem('user');
+        const userData = JSON.parse(user);
+        setUserRole(userData.role);
+        setIsSuperAdmin(userData.role === 'super-admin');
+        
+        // Check user role first
+        // const userResponse = await fetch(`${BASE_URL}api/accounts/user/`, { headers });
+        // if (userResponse.ok) {
+        //   const userData = await userResponse.json();
+        //   console.log("userData", userData);
+        //   setUserRole(userData.role);
+        //   setIsSuperAdmin(userData.role === 'super-admin');
+        // }
+
         // Overview
         const o = await fetch(`${BASE_URL}api/admin/overview/`, { headers });
         if (o.ok) {
@@ -109,11 +145,13 @@ export default function AdminDashboard() {
             revenueBars: json.revenueBars,
           });
         }
+
         // Users
         const [proRes, clientRes] = await Promise.all([
           fetch(`${BASE_URL}api/admin/users/?role=seller`, { headers }),
           fetch(`${BASE_URL}api/admin/users/?role=buyer`, { headers }),
         ]);
+        
         if (proRes.ok) {
           const j = await proRes.json();
           setProfessionals(j.results || staticData.professionals);
@@ -122,6 +160,15 @@ export default function AdminDashboard() {
           const j = await clientRes.json();
           setClients(j.results || staticData.clients);
         }
+
+        // Current admins (only for super-admin)
+        if (isSuperAdmin) {
+          const adminsRes = await fetch(`${BASE_URL}api/admin/super-admin/current-admins/`, { headers });
+          if (adminsRes.ok) {
+            const adminsData = await adminsRes.json();
+            setCurrentAdmins(adminsData.results || []);
+          }
+        }
       } catch (e) {
         setError('Failed to load admin overview');
       } finally {
@@ -129,7 +176,52 @@ export default function AdminDashboard() {
       }
     }
     fetchData();
-  }, [staticData]);
+  }, [staticData, isSuperAdmin]);
+
+  const handleAdminToggle = async (userId, newAdminStatus) => {
+    const access = sessionStorage.getItem('access');
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const headers = {
+      'Authorization': `Bearer ${access}`,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      const response = await fetch(`${BASE_URL}api/admin/super-admin/manage-admin/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          user_id: userId,
+          is_admin: newAdminStatus
+        })
+      });
+
+      if (response.ok) {
+        // Update the user in the appropriate list
+        const updateUserInList = (list, setList) => {
+          setList(prev => prev.map(user => 
+            user.id === userId ? { ...user, is_admin: newAdminStatus } : user
+          ));
+        };
+
+        updateUserInList(professionals, setProfessionals);
+        updateUserInList(clients, setClients);
+
+        // Refresh current admins list
+        const adminsRes = await fetch(`${BASE_URL}api/admin/super-admin/current-admins/`, { 
+          headers: { Authorization: `Bearer ${access}` } 
+        });
+        if (adminsRes.ok) {
+          const adminsData = await adminsRes.json();
+          setCurrentAdmins(adminsData.results || []);
+        }
+      } else {
+        console.error('Failed to update admin status');
+      }
+    } catch (error) {
+      console.error('Error updating admin status:', error);
+    }
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto py-6">
@@ -196,6 +288,44 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Current Admins Section (Super Admin Only) */}
+      {isSuperAdmin && (
+        <div className="bg-white rounded-xl border border-gray-200 mb-8">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <div className="font-medium">{t('admin.current_admins')}</div>
+          </div>
+          <div className="overflow-x-auto max-h-80 overflow-y-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="text-left font-medium px-4 py-3">{t('admin.name')}</th>
+                  <th className="text-left font-medium px-4 py-3">{t('admin.email')}</th>
+                  <th className="text-left font-medium px-4 py-3">{t('admin.role')}</th>
+                  <th className="text-left font-medium px-4 py-3">{t('admin.status')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentAdmins.map(row => (
+                  <tr key={`admin-${row.id}`} className="border-t border-gray-100">
+                    <td className="px-4 py-3">{row.name}</td>
+                    <td className="px-4 py-3 text-gray-500">{row.email}</td>
+                    <td className="px-4 py-3">{row.role}</td>
+                    <td className="px-4 py-3"><Pill type={row.status}>{row.status}</Pill></td>
+                  </tr>
+                ))}
+                {currentAdmins.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-3 text-center text-gray-500">
+                      {t('admin.no_admins_found')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* User Management */}
       <div className="bg-white rounded-xl border border-gray-200 mb-8">
         <div className="px-4 py-3 border-b border-gray-200">
@@ -232,7 +362,9 @@ export default function AdminDashboard() {
                 <th className="text-left font-medium px-4 py-3">{t('admin.name')}</th>
                 <th className="text-left font-medium px-4 py-3">{t('admin.email')}</th>
                 <th className="text-left font-medium px-4 py-3">{t('admin.status')}</th>
-                {/* <th className="text-left font-medium px-4 py-3">Actions</th> */}
+                {isSuperAdmin && (
+                  <th className="text-left font-medium px-4 py-3">{t('admin.admin_access')}</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -250,9 +382,14 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3">{row.name}</td>
                   <td className="px-4 py-3 text-gray-500">{row.email}</td>
                   <td className="px-4 py-3"><Pill type={row.status}>{row.status}</Pill></td>
-                  {/* <td className="px-4 py-3">
-                    <button className="text-xs text-gray-700 hover:text-[#01257D] cursor-pointer">Moderate</button>
-                  </td> */}
+                  {isSuperAdmin && (
+                    <td className="px-4 py-3">
+                      <AdminToggle
+                        isAdmin={row.is_admin || false}
+                        onToggle={() => handleAdminToggle(row.id, !row.is_admin)}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
