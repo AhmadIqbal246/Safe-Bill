@@ -10,13 +10,14 @@ import { useTranslation } from 'react-i18next';
 
 export const signedOutNavItems = [
   { label: "navbar.home", href: "/" },
-  { label: "navbar.directory", href: "#" },
-  { label: "navbar.contact", href: "#" },
+  { label: "navbar.find_professionals", href: "/find-professionals" },
+  { label: "navbar.contact", href: "/contact-us" },
 ];
 
 export const signedInNavItems = [
   { label: "navbar.find_professionals", href: "/find-professionals" },
   { label: "navbar.for_professionals", href: "#" },
+  { label: "navbar.contact", href: "/contact-us" }
 ];
 
 export default function SafeBillHeader({
