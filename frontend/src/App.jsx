@@ -30,6 +30,7 @@ import DisputeDetailPage from "./pages/DisputeDetailPage";
 import SellerDisputesPage from "./pages/SellerDisputesPage";
 import AdminPage from "./pages/AdminPage";
 import ProfessionalDetailPage from "./components/FindProfessional/ProfessionalDetailPage";
+import ContactUs from "./components/mutualComponents/ContactUs";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -78,6 +79,7 @@ function App() {
           <Route path='/dispute/:disputeId' element={<ProtectedRoute><DisputeDetailPage/></ProtectedRoute>}/>
           <Route path='/professional/:professionalId' element={<ProtectedRoute><ProfessionalDetailPage/></ProtectedRoute>}/>
           <Route path='/admin' element={<ProtectedRoute requiredRole="admin"><AdminPage/></ProtectedRoute>}/>
+          <Route path='/contact-us' element={<ContactUs/>}/>
           {/* Add more routes as needed */}
         </Routes>
       </Router>

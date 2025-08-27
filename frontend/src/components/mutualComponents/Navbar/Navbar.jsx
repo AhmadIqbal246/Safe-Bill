@@ -11,13 +11,11 @@ import { useTranslation } from 'react-i18next';
 export const signedOutNavItems = [
   { label: "navbar.home", href: "/" },
   { label: "navbar.directory", href: "#" },
-  { label: "navbar.how_it_works", href: "#" },
   { label: "navbar.contact", href: "#" },
 ];
 
 export const signedInNavItems = [
   { label: "navbar.find_professionals", href: "/find-professionals" },
-  { label: "navbar.how_it_works", href: "#" },
   { label: "navbar.for_professionals", href: "#" },
 ];
 
