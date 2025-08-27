@@ -4,8 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser, resetAuthState } from "../../store/slices/AuthSlices";
 import { toast } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function LogInComp() {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
@@ -47,7 +49,7 @@ export default function LogInComp() {
 
   useEffect(() => {
     if (success && user) {
-      toast.success("Login successful!");
+      toast.success(t("login.login_successful"));
       console.log("User data:", user);
       console.log("User role:", user.role);
       console.log("User role type:", typeof user.role);
@@ -71,7 +73,7 @@ export default function LogInComp() {
               targetUrl = decodedUrl;
             }
           } catch (error) {
-            console.warn('Invalid redirect URL:', redirectUrl);
+            console.warn(t("login.invalid_redirect_url"), redirectUrl);
             // Fall back to dashboard
           }
         } else if (user.onboarding_complete !== false) {
@@ -99,7 +101,7 @@ export default function LogInComp() {
       );
       dispatch(resetAuthState());
     }
-  }, [success, error, user, dispatch, navigate, redirectUrl]);
+  }, [success, error, user, dispatch, navigate, redirectUrl, t]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -109,29 +111,29 @@ export default function LogInComp() {
             <Mail className="text-white w-10 h-10" />
           </div>
         </div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2 text-center">Sign in to your account</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2 text-center">{t("login.sign_in_to_account")}</h2>
         <form className="space-y-6 mt-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.email_address")}</label>
             <input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder={t("login.enter_email")}
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A1128] focus:border-transparent border-gray-300"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.password")}</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder="Enter your password"
+                placeholder={t("login.enter_password")}
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A1128] focus:border-transparent border-gray-300"
                 required
               />
@@ -158,10 +160,10 @@ export default function LogInComp() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                 </svg>
-                Signing in...
+                {t("login.signing_in")}
               </span>
             ) : (
-              "Sign In"
+              t("login.sign_in")
             )}
           </button>
           {/* <div className="text-center">

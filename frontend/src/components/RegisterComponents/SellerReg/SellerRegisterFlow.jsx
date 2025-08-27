@@ -84,36 +84,36 @@ export default function SellerRegisterFlow({role = "seller"}) {
     let passwordErrors = [];
     let confirmPasswordError = "";
     if (!password) {
-      passwordErrors.push("Password is required");
+      passwordErrors.push(t('registration.password_required'));
     } else {
       if (password.length < 8) {
-        passwordErrors.push("Password must be at least 8 characters long.");
+        passwordErrors.push(t('registration.password_min_length'));
       }
       if (!/[A-Z]/.test(password)) {
         passwordErrors.push(
-          "Password should contain at least one uppercase letter."
+          t('registration.password_complexity')
         );
       }
       if (!/[a-z]/.test(password)) {
         passwordErrors.push(
-          "Password should contain at least one lowercase letter."
+          t('registration.password_complexity')
         );
       }
       if (!/\d/.test(password)) {
-        passwordErrors.push("Password should contain at least one number.");
+        passwordErrors.push(t('registration.password_complexity'));
       }
       if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
         passwordErrors.push(
-          "Password should contain at least one special character."
+          t('registration.password_complexity')
         );
       }
     }
     if (confirmPassword) {
       if (password !== confirmPassword) {
-        confirmPasswordError = "Passwords do not match";
+        confirmPasswordError = t('registration.passwords_not_match');
       }
     } else if (confirmPassword === "") {
-      confirmPasswordError = "Please confirm your password";
+      confirmPasswordError = t('registration.confirm_password_required');
     }
     // If passwordErrors is empty, set errors.password to empty string
     setErrors((prev) => ({
@@ -133,7 +133,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
       if (!/^\d*$/.test(value)) {
         setErrors((prev) => ({
           ...prev,
-          [field]: "Only numbers are Allowed",
+          [field]: t('registration.only_numbers_allowed_validation'),
         }));
         return;
       } else {
@@ -211,13 +211,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
     if (!formData.businessNumber.trim()) {
       newErrors.businessNumber = t('seller_registration.business_registration_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.businessNumber)) {
-      newErrors.businessNumber = "only numbers are allowed";
+      newErrors.businessNumber = t('registration.only_numbers_allowed_validation');
     }
     // Integer validation for phoneNumber
     if (!formData.phoneNumber.trim()) {
       newErrors.phoneNumber = t('seller_registration.phone_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = "only numbers are allowed";
+      newErrors.phoneNumber = t('registration.only_numbers_allowed_validation');
     }
 
     // Password validation rules
@@ -399,9 +399,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
   }, [success, error, dispatch, t]);
 
   const steps = [
-    { number: 1, title: "Basic Information", active: currentStep >= 1 },
-    { number: 2, title: "Documents", active: false },
-    { number: 3, title: "Verification", active: false },
+    { number: 1, title: t('seller_registration.basic_information_step'), active: currentStep >= 1 },
+    { number: 2, title: t('seller_registration.documents_step'), active: false },
+    { number: 3, title: t('seller_registration.verification_step'), active: false },
   ];
 
   return (
@@ -569,12 +569,12 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Postal Code *
+                  {t('seller_registration.postal_code_label')}
                   {fieldsDisabled && (
                     <div className="relative group">
                       <Info className="w-4 h-4 text-gray-400 cursor-help" />
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                        Please verify your SIRET number to enter postal code
+                        {t('seller_registration.postal_code_tooltip')}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                       </div>
                     </div>
@@ -584,7 +584,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   type="text"
                   value={formData.postalCode}
                   onChange={(e) => updateFormData("postalCode", e.target.value)}
-                  placeholder="Enter the Postal Code"
+                  placeholder={t('seller_registration.postal_code_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.postalCode ? "border-red-500" : "border-gray-300"
                   } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
@@ -597,12 +597,12 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  City/Region *
+                  {t('seller_registration.city_region_label')}
                   {fieldsDisabled && (
                     <div className="relative group">
                       <Info className="w-4 h-4 text-gray-400 cursor-help" />
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                        Please verify your SIRET number to enter city/region
+                        {t('seller_registration.city_region_tooltip')}
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
                       </div>
                     </div>
@@ -612,7 +612,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   type="text"
                   value={formData.cityRegion}
                   onChange={(e) => updateFormData("cityRegion", e.target.value)}
-                  placeholder="Enter the City/Region"
+                  placeholder={t('seller_registration.city_region_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.cityRegion ? "border-red-500" : "border-gray-300"
                   } ${fieldsDisabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
@@ -623,18 +623,18 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 )}
                 {siretVerified && (
                   <p className="text-green-600 text-sm mt-1">
-                    ✓ Address components automatically populated from SIRET verification
+                    {t('seller_registration.address_components_populated')}
                   </p>
                 )}
                 <p className="text-gray-500 text-sm mt-1">
-                  These fields will be automatically combined into a formatted address when you submit the form.
+                  {t('seller_registration.address_fields_combined_note')}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contact First Name *
+                    {t('seller_registration.contact_first_name_label')}
                   </label>
                   <input
                     type="text"
@@ -642,7 +642,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     onChange={(e) =>
                       updateFormData("contactPersonFirstName", e.target.value)
                     }
-                    placeholder="Enter First Name"
+                    placeholder={t('seller_registration.contact_first_name_placeholder')}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.contactPersonFirstName ? "border-red-500" : "border-gray-300"
                     }`}
@@ -655,7 +655,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contact Last Name *
+                    {t('seller_registration.contact_last_name_label')}
                   </label>
                   <input
                     type="text"
@@ -663,7 +663,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     onChange={(e) =>
                       updateFormData("contactPersonLastName", e.target.value)
                     }
-                    placeholder="Enter Last Name"
+                    placeholder={t('seller_registration.contact_last_name_placeholder')}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.contactPersonLastName ? "border-red-500" : "border-gray-300"
                     }`}
@@ -678,7 +678,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
+                  {t('seller_registration.phone_number_label')}
                 </label>
                 <div className="flex">
                   <select
@@ -700,7 +700,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     onChange={(e) =>
                       updateFormData("phoneNumber", e.target.value)
                     }
-                    placeholder="Enter your phone number"
+                    placeholder={t('seller_registration.phone_number_placeholder')}
                     className={`flex-1 px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
                     } sm:w-full w-38`}
@@ -717,13 +717,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
+                  {t('seller_registration.email_label')}
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateFormData("email", e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder={t('seller_registration.email_address_placeholder')}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
@@ -736,7 +736,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
               {/* Business Activity Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business Activity *
+                  {t('seller_registration.business_activity_label')}
                 </label>
                 <div className="relative">
                   <button
@@ -749,7 +749,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     <span className={formData.businessActivity ? 'text-gray-900' : 'text-gray-500'}>
                       {formData.businessActivity ? 
                         businessActivityStructure.find(opt => opt.id === formData.businessActivity)?.label || formData.businessActivity 
-                        : 'Select Business Activity'}
+                        : t('seller_registration.select_business_activity_placeholder')}
                     </span>
                     <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showBusinessActivityDropdown ? 'rotate-180' : ''}`} />
                   </button>
@@ -761,7 +761,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search business activity..."
+                            placeholder={t('seller_registration.search_business_activity_placeholder')}
                             value={businessActivitySearchTerm}
                             onChange={(e) => setBusinessActivitySearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -809,7 +809,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
               {formData.businessActivity && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categories (Optional)
+                    {t('seller_registration.categories_optional_label')}
                   </label>
                   <div className="relative">
                     <button
@@ -819,8 +819,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     >
                       <span className={formData.selectedCategories.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
                         {formData.selectedCategories.length > 0 
-                          ? `${formData.selectedCategories.length} category(ies) selected`
-                          : 'Select Categories (Optional)'}
+                          ? t('seller_registration.category_selected_count', { count: formData.selectedCategories.length })
+                          : t('seller_registration.select_categories_placeholder')}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showCategoriesDropdown ? 'rotate-180' : ''}`} />
                     </button>
@@ -832,7 +832,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                               type="text"
-                              placeholder="Search categories..."
+                              placeholder={t('seller_registration.search_categories_placeholder')}
                               value={categorySearchTerm}
                               onChange={(e) => setCategorySearchTerm(e.target.value)}
                               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -913,7 +913,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
               {formData.selectedCategories.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subcategories (Optional)
+                    {t('seller_registration.subcategories_optional_label')}
                   </label>
                   <div className="relative">
                     <button
@@ -923,8 +923,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     >
                       <span className={formData.selectedSubcategories.length > 0 ? 'text-gray-900' : 'text-gray-500'}>
                         {formData.selectedSubcategories.length > 0 
-                          ? `${formData.selectedSubcategories.length} subcategory(ies) selected`
-                          : 'Select Subcategories (Optional)'}
+                          ? t('seller_registration.subcategory_selected_count', { count: formData.selectedSubcategories.length })
+                          : t('seller_registration.select_subcategories_placeholder')}
                       </span>
                       <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showSubcategoriesDropdown ? 'rotate-180' : ''}`} />
                     </button>
@@ -936,7 +936,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                               type="text"
-                              placeholder="Search subcategories..."
+                              placeholder={t('seller_registration.search_subcategories_placeholder')}
                               value={subcategorySearchTerm}
                               onChange={(e) => setSubcategorySearchTerm(e.target.value)}
                               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -1017,7 +1017,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Service Areas *
+                  {t('seller_registration.service_areas_label')}
                 </label>
                 <div className="relative">
                   <button
@@ -1029,8 +1029,8 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   >
                     <span className="text-gray-500">
                       {formData.selectedServiceAreas && formData.selectedServiceAreas.length > 0
-                        ? `${formData.selectedServiceAreas.length} selected`
-                        : 'Choose Service Areas'}
+                        ? t('seller_registration.service_area_selected_count', { count: formData.selectedServiceAreas.length })
+                        : t('seller_registration.choose_service_areas_placeholder')}
                     </span>
                     <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showServiceAreasDropdown ? 'rotate-180' : ''}`} />
                   </button>
@@ -1042,7 +1042,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Search service areas..."
+                            placeholder={t('seller_registration.search_service_areas_placeholder')}
                             value={serviceAreasSearchTerm}
                             onChange={(e) => setServiceAreasSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -1116,14 +1116,14 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password *
+                  {t('seller_registration.password_label')}
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => updateFormData("password", e.target.value)}
-                    placeholder="Create a strong password"
+                    placeholder={t('seller_registration.password_placeholder')}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       Array.isArray(errors.password) &&
                       errors.password.length > 0
@@ -1144,8 +1144,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   </span>
                 </div>
                 <p className="text-gray-500 text-sm mt-1">
-                  At least 8 characters with uppercase, lowercase, numbers and
-                  special character
+                  {t('seller_registration.password_requirements')}
                 </p>
                 {Array.isArray(errors.password) &&
                   errors.password.length > 0 && (
@@ -1162,7 +1161,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password *
+                  {t('seller_registration.confirm_password_label')}
                 </label>
                 <div className="relative">
                   <input
@@ -1171,7 +1170,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     onChange={(e) =>
                       updateFormData("confirmPassword", e.target.value)
                     }
-                    placeholder="Confirm your password"
+                    placeholder={t('seller_registration.confirm_password_placeholder')}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
                       errors.confirmPassword
                         ? "border-red-500"
@@ -1208,18 +1207,18 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     className="mt-1 h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
                   />
                   <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
-                    I agree to the{" "}
+                    {t('seller_registration.agree_to_terms')}{" "}
                     <a href="#" className="text-blue-600 hover:underline">
-                      Terms of Service
+                      {t('seller_registration.terms_of_service')}
                     </a>{" "}
-                    and{" "}
+                    {t('seller_registration.and')}{" "}
                     <a href="#" className="text-blue-600 hover:underline">
-                      Privacy Policy
+                      {t('seller_registration.privacy_policy')}
                     </a>
                   </label>
                 </div>
                 {errors.agreeToTerms && (
-                  <p className="text-red-500 text-sm">{errors.agreeToTerms}</p>
+                  <p className="text-red-500 text-sm">{t('seller_registration.must_agree_to_terms')}</p>
                 )}
 
                 <div className="flex items-start">
@@ -1236,7 +1235,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                     htmlFor="marketing"
                     className="ml-2 text-sm text-gray-700"
                   >
-                    Do you Want to be in Professional Directory?
+                    {t('seller_registration.professional_directory_question')}
                   </label>
                 </div>
               </div>
@@ -1254,16 +1253,16 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   : "bg-[#E6F0FA] text-[#01257D] hover:bg-[#c7e0fa]"
               }`}
             >
-              Previous
+              {t('seller_registration.previous')}
             </button>
 
             <span className="text-[#96C2DB] text-sm">
-              Already registered?{" "}
+              {t('seller_registration.already_registered_question')}{" "}
               <Link
                 to="/login"
                 className="font-semibold text-[#01257D] hover:underline"
               >
-                Login
+                {t('seller_registration.login_link')}
               </Link>
             </span>
 
@@ -1277,10 +1276,10 @@ export default function SellerRegisterFlow({role = "seller"}) {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <ClipLoader color="#fff" loading={loading} size={20} />
-                  Submitting...
+                  {t('seller_registration.submitting')}
                 </span>
               ) : (
-                "Create my account"
+                t('seller_registration.create_my_account')
               )}
             </button>
           </div>
