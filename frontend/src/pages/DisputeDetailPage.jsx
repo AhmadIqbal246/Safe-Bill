@@ -162,12 +162,12 @@ export default function DisputeDetailPage() {
                 </h1>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
-                    <span className="font-medium">{t('common.id')}:</span>
+                    <span className="font-medium">ID:</span>
                     <span className="text-[#01257D]">{dispute.dispute_id}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>{t('common.created')}: {formatDate(dispute.created_at)}</span>
+                    <span>Created: {formatDate(dispute.created_at)}</span>
                   </div>
                 </div>
               </div>
