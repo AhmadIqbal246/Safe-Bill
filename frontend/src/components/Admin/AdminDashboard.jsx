@@ -11,6 +11,16 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchOverview,
+  fetchUsersByRole,
+  fetchCurrentAdmins,
+  toggleAdmin,
+  fetchSuperAdminDisputes,
+  assignMediator,
+  fetchAdminAssignedDisputes,
+} from '../../store/slices/AdminSlice';
 
 // Static data for now; can be replaced by API data later
 const useStaticAdminData = () => {
@@ -38,18 +48,8 @@ const useStaticAdminData = () => {
       { month: 'Jun', revenue: 8 },
       { month: 'Jul', revenue: 8 },
     ],
-    professionals: [
-      { id: 1, name: 'Sophia Clark', email: 'sophia.clark@example.com', status: 'Active' },
-      { id: 2, name: 'Ethan Carter', email: 'ethan.carter@example.com', status: 'Inactive' },
-      { id: 3, name: 'Olivia Bennett', email: 'olivia.bennett@example.com', status: 'Active' },
-      { id: 4, name: 'Liam Foster', email: 'liam.foster@example.com', status: 'Active' },
-      { id: 5, name: 'Ava Harper', email: 'ava.harper@example.com', status: 'Inactive' },
-    ],
-    clients: [
-      { id: 11, name: 'Noah Turner', email: 'noah.turner@example.com', status: 'Active' },
-      { id: 12, name: 'Isabella Reed', email: 'isabella.reed@example.com', status: 'Active' },
-      { id: 13, name: 'Jackson Hayes', email: 'jackson.hayes@example.com', status: 'Inactive' },
-    ],
+    professionals: [],
+    clients: [],
     kycQueue: [
       { id: 101, name: 'Noah Turner', document: 'ID Card', status: 'Pending' },
       { id: 102, name: 'Isabella Reed', document: 'Passport', status: 'Pending' },
@@ -96,88 +96,47 @@ const AdminToggle = ({ isAdmin, onToggle, disabled = false }) => (
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   const staticData = useStaticAdminData();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [overview, setOverview] = useState(staticData);
-  const [professionals, setProfessionals] = useState(staticData.professionals);
-  const [clients, setClients] = useState(staticData.clients);
-  const [currentAdmins, setCurrentAdmins] = useState([]);
   const [tab, setTab] = useState('professionals');
   const [search, setSearch] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [selectedMediatorByDispute, setSelectedMediatorByDispute] = useState({});
 
-  // Role checks from session
   const user = sessionStorage.getItem('user');
   const userData = JSON.parse(user || '{}');
   const isSuperAdmin = userData.role === 'super-admin';
   const isAdmin = userData.role === 'admin' || (userData.is_admin === true);
 
-  // Disputes state
-  const [disputes, setDisputes] = useState([]); // super-admin view
-  const [assignedDisputes, setAssignedDisputes] = useState([]); // admin view
-  const [assigning, setAssigning] = useState(false);
-  const [selectedMediatorByDispute, setSelectedMediatorByDispute] = useState({});
+  const adminState = useSelector(state => state.admin);
+  const overview = adminState.overview || staticData;
+  const professionals = adminState.professionals || [];
+  const clients = adminState.clients || [];
+  const currentAdmins = adminState.currentAdmins || [];
+  const disputes = adminState.disputes || [];
+  const assignedDisputes = adminState.assignedDisputes || [];
 
   useEffect(() => {
-    const access = sessionStorage.getItem('access');
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const headers = access ? { Authorization: `Bearer ${access}` } : {};
-
-    async function fetchData() {
+    async function load() {
       try {
         setLoading(true);
         setError(null);
-
-        // Overview
-        const o = await fetch(`${BASE_URL}api/admin/overview/`, { headers });
-        if (o.ok) {
-          const json = await o.json();
-          setOverview({
-            ...staticData,
-            kpis: json.kpis,
-            registrationTrend: json.registrationTrend,
-            revenueBars: json.revenueBars,
-          });
-        }
-
-        // Users
-        const [proRes, clientRes] = await Promise.all([
-          fetch(`${BASE_URL}api/admin/users/?role=seller`, { headers }),
-          fetch(`${BASE_URL}api/admin/users/?role=buyer`, { headers }),
+        await Promise.all([
+          dispatch(fetchOverview()),
+          dispatch(fetchUsersByRole('seller')),
+          dispatch(fetchUsersByRole('buyer')),
         ]);
-        
-        if (proRes.ok) {
-          const j = await proRes.json();
-          setProfessionals(j.results || staticData.professionals);
-        }
-        if (clientRes.ok) {
-          const j = await clientRes.json();
-          setClients(j.results || staticData.clients);
-        }
 
-        // Super-admin fetch current admins and disputes
         if (isSuperAdmin) {
-          const [adminsRes, disputesRes] = await Promise.all([
-            fetch(`${BASE_URL}api/admin/super-admin/current-admins/`, { headers }),
-            fetch(`${BASE_URL}api/admin/super-admin/disputes/`, { headers })
+          await Promise.all([
+            dispatch(fetchCurrentAdmins()),
+            dispatch(fetchSuperAdminDisputes()),
           ]);
-          if (adminsRes.ok) {
-            const adminsData = await adminsRes.json();
-            setCurrentAdmins(adminsData.results || []);
-          }
-          if (disputesRes.ok) {
-            const d = await disputesRes.json();
-            setDisputes(d.results || []);
-          }
         }
-
-        // Admin: fetch only assigned disputes
         if (!isSuperAdmin && isAdmin) {
-          const myDisputes = await fetch(`${BASE_URL}api/admin/admin/assigned-disputes/`, { headers });
-          if (myDisputes.ok) {
-            const d = await myDisputes.json();
-            setAssignedDisputes(d.results || []);
-          }
+          await dispatch(fetchAdminAssignedDisputes());
         }
       } catch (e) {
         setError('Failed to load admin overview');
@@ -185,84 +144,20 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     }
-    fetchData();
-  }, [staticData, isSuperAdmin, isAdmin]);
+    load();
+  }, [dispatch, isSuperAdmin, isAdmin]);
 
   const handleAdminToggle = async (userId, newAdminStatus) => {
-    const access = sessionStorage.getItem('access');
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const headers = {
-      'Authorization': `Bearer ${access}`,
-      'Content-Type': 'application/json'
-    };
-
-    try {
-      const response = await fetch(`${BASE_URL}api/admin/super-admin/manage-admin/`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          user_id: userId,
-          is_admin: newAdminStatus
-        })
-      });
-
-      if (response.ok) {
-        // Update the user in the appropriate list
-        const updateUserInList = (list, setList) => {
-          setList(prev => prev.map(user => 
-            user.id === userId ? { ...user, is_admin: newAdminStatus } : user
-          ));
-        };
-
-        updateUserInList(professionals, setProfessionals);
-        updateUserInList(clients, setClients);
-
-        // Refresh current admins list
-        const adminsRes = await fetch(`${BASE_URL}api/admin/super-admin/current-admins/`, { 
-          headers: { Authorization: `Bearer ${access}` } 
-        });
-        if (adminsRes.ok) {
-          const adminsData = await adminsRes.json();
-          setCurrentAdmins(adminsData.results || []);
-        }
-      } else {
-        console.error('Failed to update admin status');
-      }
-    } catch (error) {
-      console.error('Error updating admin status:', error);
-    }
+    await dispatch(toggleAdmin({ userId, isAdmin: newAdminStatus }));
+    if (isSuperAdmin) dispatch(fetchCurrentAdmins());
   };
 
   const handleAssignMediator = async (disputeId) => {
     const mediatorId = selectedMediatorByDispute[disputeId];
     if (!mediatorId) return;
     setAssigning(true);
-    const access = sessionStorage.getItem('access');
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-    try {
-      const res = await fetch(`${BASE_URL}api/admin/super-admin/assign-mediator/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${access}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ dispute_id: disputeId, mediator_id: mediatorId })
-      });
-      if (res.ok) {
-        // Update dispute locally
-        const r = await res.json();
-        setDisputes(prev => prev.map(d => d.id === disputeId ? {
-          ...d,
-          status: r.status,
-          assigned_mediator: currentAdmins.find(a => a.id === mediatorId)?.email || d.assigned_mediator
-        } : d));
-      }
-    } catch (e) {
-      console.error('Failed to assign mediator', e);
-    } finally {
-      setAssigning(false);
-    }
+    await dispatch(assignMediator({ disputeId, mediatorId }));
+    setAssigning(false);
   };
 
   return (
@@ -278,9 +173,9 @@ export default function AdminDashboard() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard title={t('admin.user_count')} value={overview.kpis.userCount} />
-        <StatCard title={t('admin.transactions')} value={overview.kpis.transactions} />
-        <StatCard title={t('admin.disputes')} value={overview.kpis.disputes} />
+        <StatCard title={t('admin.user_count')} value={overview.kpis.userCount || 0} />
+        <StatCard title={t('admin.transactions')} value={overview.kpis.transactions || 0} />
+        <StatCard title={t('admin.disputes')} value={overview.kpis.disputes || 0} />
       </div>
 
       {/* Charts */}
@@ -551,7 +446,7 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {overview.kycQueue.map(row => (
+              {overview.kycQueue?.map(row => (
                 <tr key={`kyc-${row.id}`} className="border-t border-gray-100">
                   <td className="px-4 py-3">{row.name}</td>
                   <td className="px-4 py-3 text-gray-500">{row.document}</td>
