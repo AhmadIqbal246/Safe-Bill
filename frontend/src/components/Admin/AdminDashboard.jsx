@@ -22,6 +22,7 @@ import {
   fetchAdminAssignedDisputes,
   mediatorUpdateStatus,
 } from '../../store/slices/AdminSlice';
+import { Dialog } from '@headlessui/react';
 
 // Static data for now; can be replaced by API data later
 const useStaticAdminData = () => {
@@ -95,6 +96,16 @@ const AdminToggle = ({ isAdmin, onToggle, disabled = false }) => (
   </label>
 );
 
+// Helpers
+const formatStatus = (status) => {
+  if (!status) return 'Unknown';
+  return status
+    .toString()
+    .split('_')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(' ');
+};
+
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -107,6 +118,7 @@ export default function AdminDashboard() {
   const [assigningById, setAssigningById] = useState({}); // { [disputeId]: true }
   const [mediatorDropdownOpen, setMediatorDropdownOpen] = useState({}); // { [disputeId]: true }
   const [mediatorSearchTerm, setMediatorSearchTerm] = useState({}); // { [disputeId]: 'john' }
+  const [confirmModal, setConfirmModal] = useState({ open: false, message: '', onConfirm: null, confirmLabel: 'Confirm' });
 
   const user = sessionStorage.getItem('user');
   const userData = JSON.parse(user || '{}');
@@ -155,6 +167,10 @@ export default function AdminDashboard() {
     if (isSuperAdmin) dispatch(fetchCurrentAdmins());
   };
 
+  const openConfirm = (message, onConfirm, confirmLabel = 'Confirm') => {
+    setConfirmModal({ open: true, message, onConfirm, confirmLabel });
+  };
+
   const handleAssignMediator = async (disputeId) => {
     const mediatorId = selectedMediatorByDispute[disputeId];
     if (!mediatorId) return;
@@ -175,6 +191,35 @@ export default function AdminDashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto py-6">
+      {/* Confirmation Modal */}
+      <Dialog open={confirmModal.open} onClose={() => setConfirmModal({ open: false, message: '', onConfirm: null, confirmLabel: 'Confirm' })} className="relative z-50">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-xs rounded bg-white p-6 shadow-lg">
+            <Dialog.Title className="text-lg font-semibold mb-4">Confirm Action</Dialog.Title>
+            <div className="mb-6 whitespace-pre-line text-sm text-gray-700">{confirmModal.message}</div>
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 cursor-pointer"
+                onClick={() => setConfirmModal({ open: false, message: '', onConfirm: null, confirmLabel: 'Confirm' })}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] cursor-pointer"
+                onClick={async () => {
+                  const fn = confirmModal.onConfirm;
+                  setConfirmModal({ open: false, message: '', onConfirm: null, confirmLabel: 'Confirm' });
+                  if (typeof fn === 'function') await fn();
+                }}
+              >
+                {confirmModal.confirmLabel || 'Confirm'}
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
       <h1 className="text-xl sm:text-2xl font-semibold mb-4">{t('admin.title')}</h1>
 
       {loading && (
@@ -369,21 +414,26 @@ export default function AdminDashboard() {
                   <tr key={`d-${d.id}`} className="border-t border-gray-100">
                     <td className="px-4 py-3">{d.dispute_id}</td>
                     <td className="px-4 py-3">{d.title}</td>
-                    <td className="px-4 py-3">{d.status}</td>
+                    <td className="px-4 py-3">{formatStatus(d.status)}</td>
                     <td className="px-4 py-3 text-gray-500">{d.initiator}</td>
                     <td className="px-4 py-3 text-gray-500">{d.respondent}</td>
                     <td className="px-4 py-3">{d.assigned_mediator || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 relative">
                         <button
-                          className="px-3 py-1 border rounded-md text-sm bg-white hover:bg-gray-50 cursor-pointer"
-                          onClick={() => setMediatorDropdownOpen(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
+                          className={`px-3 py-1 border rounded-md text-sm ${d.status === 'resolved' || d.status === 'closed' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 cursor-pointer'}`}
+                          onClick={() => {
+                            if (d.status === 'resolved' || d.status === 'closed') return;
+                            setMediatorDropdownOpen(prev => ({ ...prev, [d.id]: !prev[d.id] }));
+                          }}
+                          title={d.status === 'resolved' || d.status === 'closed' ? 'Cannot assign when dispute is resolved or closed' : ''}
+                          disabled={d.status === 'resolved' || d.status === 'closed'}
                         >
                           {selectedMediatorByDispute[d.id]
                             ? (currentAdmins.find(a => a.id === selectedMediatorByDispute[d.id])?.name || 'Selected')
                             : 'Select mediator…'}
                         </button>
-                        {mediatorDropdownOpen[d.id] && (
+                        {mediatorDropdownOpen[d.id] && d.status !== 'resolved' && d.status !== 'closed' && (
                           <div className="absolute z-10 top-10 left-0 bg-white border rounded-md shadow-lg w-72">
                             <div className="p-2 border-b">
                               <input
@@ -398,7 +448,7 @@ export default function AdminDashboard() {
                               {filteredMediators(d.id).map(a => (
                                 <button
                                   key={`opt-${a.id}`}
-                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm cursor-pointer"
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 text_sm text-sm cursor-pointer"
                                   onClick={() => {
                                     setSelectedMediatorByDispute(prev => ({ ...prev, [d.id]: a.id }));
                                     setMediatorDropdownOpen(prev => ({ ...prev, [d.id]: false }));
@@ -414,9 +464,15 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         <button
-                          disabled={assigningById[d.id] || !selectedMediatorByDispute[d.id]}
-                          onClick={() => handleAssignMediator(d.id)}
-                          className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[d.id] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
+                          disabled={assigningById[d.id] || !selectedMediatorByDispute[d.id] || d.status === 'resolved' || d.status === 'closed'}
+                          onClick={() => {
+                            const msg = `You cannot reverse this action.\nAre you sure you want to change status from "${formatStatus(d.status)}" to "${formatStatus('mediation_initiated')}"?`;
+                            openConfirm(msg, async () => {
+                              await handleAssignMediator(d.id);
+                            }, 'Assign');
+                          }}
+                          className={`text-xs px-3 py-1 rounded-md ${assigningById[d.id] ? 'bg-gray-300 text-gray-600' : (d.status === 'resolved' || d.status === 'closed' ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-[#01257D] text-white hover:bg-[#2346a0] cursor-pointer')}`}
+                          title={d.status === 'resolved' || d.status === 'closed' ? 'Cannot assign when dispute is resolved or closed' : ''}
                         >
                           {assigningById[d.id] ? 'Assigning…' : 'Assign'}
                         </button>
@@ -457,7 +513,7 @@ export default function AdminDashboard() {
                   <tr key={`md-${d.id}`} className="border-t border-gray-100">
                     <td className="px-4 py-3">{d.dispute_id}</td>
                     <td className="px-4 py-3">{d.title}</td>
-                    <td className="px-4 py-3">{d.status}</td>
+                    <td className="px-4 py-3">{formatStatus(d.status)}</td>
                     <td className="px-4 py-3 text-gray-500">{d.initiator}</td>
                     <td className="px-4 py-3 text-gray-500">{d.respondent}</td>
                     <td className="px-4 py-3 text-gray-500">{new Date(d.created_at).toLocaleString()}</td>
@@ -467,10 +523,13 @@ export default function AdminDashboard() {
                           <button
                             className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`prog-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
                             disabled={assigningById[`prog-${d.id}`]}
-                            onClick={async () => {
-                              setAssigningById(prev => ({ ...prev, [`prog-${d.id}`]: true }));
-                              await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'in_progress' }));
-                              setAssigningById(prev => ({ ...prev, [`prog-${d.id}`]: false }));
+                            onClick={() => {
+                              const msg = `You cannot reverse this action.\nAre you sure you want to change status from "${formatStatus(d.status)}" to "${formatStatus('in_progress')}"?`;
+                              openConfirm(msg, async () => {
+                                setAssigningById(prev => ({ ...prev, [`prog-${d.id}`]: true }));
+                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'in_progress' }));
+                                setAssigningById(prev => ({ ...prev, [`prog-${d.id}`]: false }));
+                              }, 'Update');
                             }}
                           >
                             {assigningById[`prog-${d.id}`] ? 'Updating…' : 'Mark In Progress'}
@@ -480,10 +539,13 @@ export default function AdminDashboard() {
                           <button
                             className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`await-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
                             disabled={assigningById[`await-${d.id}`]}
-                            onClick={async () => {
-                              setAssigningById(prev => ({ ...prev, [`await-${d.id}`]: true }));
-                              await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'awaiting_decision' }));
-                              setAssigningById(prev => ({ ...prev, [`await-${d.id}`]: false }));
+                            onClick={() => {
+                              const msg = `You cannot reverse this action.\nAre you sure you want to change status from "${formatStatus(d.status)}" to "${formatStatus('awaiting_decision')}"?`;
+                              openConfirm(msg, async () => {
+                                setAssigningById(prev => ({ ...prev, [`await-${d.id}`]: true }));
+                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'awaiting_decision' }));
+                                setAssigningById(prev => ({ ...prev, [`await-${d.id}`]: false }));
+                              }, 'Update');
                             }}
                           >
                             {assigningById[`await-${d.id}`] ? 'Updating…' : 'Mark Awaiting Decision'}
@@ -494,10 +556,13 @@ export default function AdminDashboard() {
                             <button
                               className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`res-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                               disabled={assigningById[`res-${d.id}`]}
-                              onClick={async () => {
-                                setAssigningById(prev => ({ ...prev, [`res-${d.id}`]: true }));
-                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'resolved' }));
-                                setAssigningById(prev => ({ ...prev, [`res-${d.id}`]: false }));
+                              onClick={() => {
+                                const msg = `You cannot reverse this action.\nAre you sure you want to change status from "${formatStatus(d.status)}" to "${formatStatus('resolved')}"?`;
+                                openConfirm(msg, async () => {
+                                  setAssigningById(prev => ({ ...prev, [`res-${d.id}`]: true }));
+                                  await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'resolved' }));
+                                  setAssigningById(prev => ({ ...prev, [`res-${d.id}`]: false }));
+                                }, 'Update');
                               }}
                             >
                               {assigningById[`res-${d.id}`] ? 'Updating…' : 'Mark Resolved'}
@@ -505,10 +570,13 @@ export default function AdminDashboard() {
                             <button
                               className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`close-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
                               disabled={assigningById[`close-${d.id}`]}
-                              onClick={async () => {
-                                setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: true }));
-                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'closed' }));
-                                setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: false }));
+                              onClick={() => {
+                                const msg = `You cannot reverse this action.\nAre you sure you want to change status from "${formatStatus(d.status)}" to "${formatStatus('closed')}"?`;
+                                openConfirm(msg, async () => {
+                                  setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: true }));
+                                  await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'closed' }));
+                                  setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: false }));
+                                }, 'Close');
                               }}
                             >
                               {assigningById[`close-${d.id}`] ? 'Updating…' : 'Close'}
@@ -519,10 +587,13 @@ export default function AdminDashboard() {
                           <button
                             className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`close-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
                             disabled={assigningById[`close-${d.id}`]}
-                            onClick={async () => {
-                              setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: true }));
-                              await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'closed' }));
-                              setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: false }));
+                            onClick={() => {
+                              const msg = `You cannot reverse this action.\nAre you sure you want to change status from "${formatStatus(d.status)}" to "${formatStatus('closed')}"?`;
+                              openConfirm(msg, async () => {
+                                setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: true }));
+                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'closed' }));
+                                setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: false }));
+                              }, 'Close');
                             }}
                           >
                             {assigningById[`close-${d.id}`] ? 'Updating…' : 'Close'}
@@ -534,7 +605,7 @@ export default function AdminDashboard() {
                 ))}
                 {assignedDisputes.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="px-4 py-3 text-center text-gray-500">No assigned disputes.</td>
+                    <td colSpan="7" className="px-4 py-3 text-center text-gray-500">No assigned disputes.</td>
                   </tr>
                 )}
               </tbody>

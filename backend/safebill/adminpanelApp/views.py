@@ -220,11 +220,26 @@ class AssignMediatorAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
-            dispute = Dispute.objects.get(id=dispute_id)
+            dispute = Dispute.objects.only(
+                'id', 'initiator_id', 'respondent_id', 'status',
+                'assigned_mediator_id'
+            ).get(id=dispute_id)
         except Dispute.DoesNotExist:
             return Response({"detail": "Dispute not found"}, status=404)
+
+        # Prevent assigning mediator if dispute is already finalized
+        if dispute.status in {"resolved", "closed"}:
+            return Response(
+                {
+                    "detail": (
+                        "Cannot assign mediator when dispute is "
+                        "resolved or closed"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
-            mediator = User.objects.get(
+            mediator = User.objects.only('id').get(
                 id=mediator_id,
                 is_admin=True,
             )
@@ -234,6 +249,20 @@ class AssignMediatorAPIView(APIView):
                 status=404,
             )
 
+        # Prevent re-assigning to the same mediator
+        if dispute.assigned_mediator_id == mediator.id:
+            return Response(
+                {"detail": "Dispute already assigned to this mediator"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Prevent assigning initiator/respondent as mediator
+        if mediator.id in {dispute.initiator_id, dispute.respondent_id}:
+            return Response(
+                {"detail": "Initiator or respondent cannot be mediator"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         dispute.assigned_mediator = mediator
         dispute.status = 'mediation_initiated'
         dispute.save()
@@ -241,7 +270,7 @@ class AssignMediatorAPIView(APIView):
             dispute=dispute,
             event_type='mediation_initiated',
             description=(
-                f"Mediator {mediator.email} assigned by super-admin"
+                "Mediator assigned by super-admin"
             ),
             created_by=request.user,
         )
