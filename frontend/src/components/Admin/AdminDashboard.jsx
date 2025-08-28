@@ -105,11 +105,18 @@ export default function AdminDashboard() {
   const [currentAdmins, setCurrentAdmins] = useState([]);
   const [tab, setTab] = useState('professionals');
   const [search, setSearch] = useState('');
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
+  // Role checks from session
   const user = sessionStorage.getItem('user');
-  const userData = JSON.parse(user);
-  setIsSuperAdmin(userData.role === 'super-admin');
+  const userData = JSON.parse(user || '{}');
+  const isSuperAdmin = userData.role === 'super-admin';
+  const isAdmin = userData.role === 'admin' || (userData.is_admin === true);
+
+  // Disputes state
+  const [disputes, setDisputes] = useState([]); // super-admin view
+  const [assignedDisputes, setAssignedDisputes] = useState([]); // admin view
+  const [assigning, setAssigning] = useState(false);
+  const [selectedMediatorByDispute, setSelectedMediatorByDispute] = useState({});
 
   useEffect(() => {
     const access = sessionStorage.getItem('access');
@@ -148,12 +155,28 @@ export default function AdminDashboard() {
           setClients(j.results || staticData.clients);
         }
 
-        // Current admins (only for super-admin)
+        // Super-admin fetch current admins and disputes
         if (isSuperAdmin) {
-          const adminsRes = await fetch(`${BASE_URL}api/admin/super-admin/current-admins/`, { headers });
+          const [adminsRes, disputesRes] = await Promise.all([
+            fetch(`${BASE_URL}api/admin/super-admin/current-admins/`, { headers }),
+            fetch(`${BASE_URL}api/admin/super-admin/disputes/`, { headers })
+          ]);
           if (adminsRes.ok) {
             const adminsData = await adminsRes.json();
             setCurrentAdmins(adminsData.results || []);
+          }
+          if (disputesRes.ok) {
+            const d = await disputesRes.json();
+            setDisputes(d.results || []);
+          }
+        }
+
+        // Admin: fetch only assigned disputes
+        if (!isSuperAdmin && isAdmin) {
+          const myDisputes = await fetch(`${BASE_URL}api/admin/admin/assigned-disputes/`, { headers });
+          if (myDisputes.ok) {
+            const d = await myDisputes.json();
+            setAssignedDisputes(d.results || []);
           }
         }
       } catch (e) {
@@ -163,7 +186,7 @@ export default function AdminDashboard() {
       }
     }
     fetchData();
-  }, [staticData, isSuperAdmin]);
+  }, [staticData, isSuperAdmin, isAdmin]);
 
   const handleAdminToggle = async (userId, newAdminStatus) => {
     const access = sessionStorage.getItem('access');
@@ -207,6 +230,38 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error updating admin status:', error);
+    }
+  };
+
+  const handleAssignMediator = async (disputeId) => {
+    const mediatorId = selectedMediatorByDispute[disputeId];
+    if (!mediatorId) return;
+    setAssigning(true);
+    const access = sessionStorage.getItem('access');
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    try {
+      const res = await fetch(`${BASE_URL}api/admin/super-admin/assign-mediator/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ dispute_id: disputeId, mediator_id: mediatorId })
+      });
+      if (res.ok) {
+        // Update dispute locally
+        const r = await res.json();
+        setDisputes(prev => prev.map(d => d.id === disputeId ? {
+          ...d,
+          status: r.status,
+          assigned_mediator: currentAdmins.find(a => a.id === mediatorId)?.email || d.assigned_mediator
+        } : d));
+      }
+    } catch (e) {
+      console.error('Failed to assign mediator', e);
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -383,6 +438,104 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Super Admin: Disputes Management */}
+      {isSuperAdmin && (
+        <div className="bg-white rounded-xl border border-gray-200 mb-8">
+          <div className="px-4 py-3 border-b border-gray-200 font-medium">Disputes</div>
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="text-left font-medium px-4 py-3">ID</th>
+                  <th className="text-left font-medium px-4 py-3">Title</th>
+                  <th className="text-left font-medium px-4 py-3">Status</th>
+                  <th className="text-left font-medium px-4 py-3">Initiator</th>
+                  <th className="text-left font-medium px-4 py-3">Respondent</th>
+                  <th className="text-left font-medium px-4 py-3">Mediator</th>
+                  <th className="text-left font-medium px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {disputes.map(d => (
+                  <tr key={`d-${d.id}`} className="border-t border-gray-100">
+                    <td className="px-4 py-3">{d.dispute_id}</td>
+                    <td className="px-4 py-3">{d.title}</td>
+                    <td className="px-4 py-3">{d.status}</td>
+                    <td className="px-4 py-3 text-gray-500">{d.initiator}</td>
+                    <td className="px-4 py-3 text-gray-500">{d.respondent}</td>
+                    <td className="px-4 py-3">{d.assigned_mediator || '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="px-2 py-1 border rounded-md text-sm"
+                          value={selectedMediatorByDispute[d.id] || ''}
+                          onChange={(e) => setSelectedMediatorByDispute(prev => ({ ...prev, [d.id]: Number(e.target.value) }))}
+                        >
+                          <option value="">Select mediator…</option>
+                          {currentAdmins.map(a => (
+                            <option key={`opt-${a.id}`} value={a.id}>{a.name} ({a.email})</option>
+                          ))}
+                        </select>
+                        <button
+                          disabled={assigning || !selectedMediatorByDispute[d.id]}
+                          onClick={() => handleAssignMediator(d.id)}
+                          className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigning ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
+                        >
+                          Assign
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {disputes.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="px-4 py-3 text-center text-gray-500">No disputes found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Admin: My Assigned Disputes */}
+      {!isSuperAdmin && isAdmin && (
+        <div className="bg-white rounded-xl border border-gray-200 mb-8">
+          <div className="px-4 py-3 border-b border-gray-200 font-medium">My Assigned Disputes</div>
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="text-left font-medium px-4 py-3">ID</th>
+                  <th className="text-left font-medium px-4 py-3">Title</th>
+                  <th className="text-left font-medium px-4 py-3">Status</th>
+                  <th className="text-left font-medium px-4 py-3">Initiator</th>
+                  <th className="text-left font-medium px-4 py-3">Respondent</th>
+                  <th className="text-left font-medium px-4 py-3">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignedDisputes.map(d => (
+                  <tr key={`md-${d.id}`} className="border-t border-gray-100">
+                    <td className="px-4 py-3">{d.dispute_id}</td>
+                    <td className="px-4 py-3">{d.title}</td>
+                    <td className="px-4 py-3">{d.status}</td>
+                    <td className="px-4 py-3 text-gray-500">{d.initiator}</td>
+                    <td className="px-4 py-3 text-gray-500">{d.respondent}</td>
+                    <td className="px-4 py-3 text-gray-500">{new Date(d.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+                {assignedDisputes.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-3 text-center text-gray-500">No assigned disputes.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* KYC Validation */}
       <div className="bg-white rounded-xl border border-gray-200">

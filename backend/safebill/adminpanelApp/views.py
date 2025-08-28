@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
-from disputes.models import Dispute
-from .permissions import IsAdminRole, IsSuperAdmin
+from disputes.models import Dispute, DisputeEvent
+from .permissions import IsAdminRole, IsSuperAdmin, IsAdmin
 
 
 User = get_user_model()
@@ -20,7 +20,6 @@ class AdminOverviewAPIView(APIView):
     def get(self, request):
         # Basic KPI counts
         user_count = User.objects.count()
-        disputes_count = Dispute.objects.count()
 
         # For now keep transactions static as requested
         transactions_count = 5678
@@ -76,7 +75,7 @@ class AdminOverviewAPIView(APIView):
             "kpis": {
                 "userCount": user_count,
                 "transactions": transactions_count,
-                "disputes": disputes_count,
+                "disputes": Dispute.objects.count(),
             },
             "registrationTrend": trend,
             "revenueBars": revenue,
@@ -130,35 +129,35 @@ class AdminManagementAPIView(APIView):
         """Toggle admin status for a user"""
         user_id = request.data.get('user_id')
         is_admin = request.data.get('is_admin', False)
-        
+
         if not user_id:
             return Response(
-                {"detail": "user_id is required"}, 
+                {"detail": "user_id is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             user = User.objects.get(id=user_id)
-            
+
             # Prevent super-admin from modifying other super-admins
             if user.role == 'super-admin':
                 return Response(
-                    {"detail": "Cannot modify super-admin users"}, 
+                    {"detail": "Cannot modify super-admin users"},
                     status=status.HTTP_403_FORBIDDEN
                 )
-            
+
             user.is_admin = is_admin
             user.save()
-            
+
             return Response({
                 "message": f"Admin status updated for {user.email}",
                 "user_id": user.id,
                 "is_admin": user.is_admin
             })
-            
+
         except User.DoesNotExist:
             return Response(
-                {"detail": "User not found"}, 
+                {"detail": "User not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -180,4 +179,99 @@ class CurrentAdminsListAPIView(APIView):
             "is_admin": u.is_admin,
         } for u in admins]
 
+        return Response({"results": data})
+
+
+class SuperAdminDisputesListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def get(self, request):
+        """List disputes for super-admin with minimal info."""
+        disputes = Dispute.objects.select_related(
+            'initiator', 'respondent', 'assigned_mediator', 'project'
+        ).order_by('-created_at')
+        data = []
+        for d in disputes:
+            data.append({
+                "id": d.id,
+                "dispute_id": d.dispute_id,
+                "title": d.title,
+                "status": d.status,
+                "initiator": d.initiator.email,
+                "respondent": d.respondent.email,
+                "assigned_mediator": (
+                    d.assigned_mediator.email if d.assigned_mediator else None
+                ),
+                "created_at": d.created_at,
+            })
+        return Response({"results": data})
+
+
+class AssignMediatorAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def post(self, request):
+        """Assign an admin as mediator to a dispute."""
+        dispute_id = request.data.get('dispute_id')
+        mediator_id = request.data.get('mediator_id')
+        if not dispute_id or not mediator_id:
+            return Response(
+                {"detail": "dispute_id and mediator_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            dispute = Dispute.objects.get(id=dispute_id)
+        except Dispute.DoesNotExist:
+            return Response({"detail": "Dispute not found"}, status=404)
+        try:
+            mediator = User.objects.get(
+                id=mediator_id,
+                is_admin=True,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Mediator not found or not eligible"},
+                status=404,
+            )
+
+        dispute.assigned_mediator = mediator
+        dispute.status = 'mediation_initiated'
+        dispute.save()
+        DisputeEvent.objects.create(
+            dispute=dispute,
+            event_type='mediator_assigned',
+            description=(
+                f"Mediator {mediator.email} assigned by super-admin"
+            ),
+            created_by=request.user,
+        )
+        return Response({
+            "message": "Mediator assigned",
+            "dispute_id": dispute.id,
+            "mediator": mediator.email,
+            "status": dispute.status,
+        })
+
+
+class AdminAssignedDisputesAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request):
+        """List disputes assigned to the current admin user."""
+        disputes = Dispute.objects.filter(
+            assigned_mediator=request.user
+        ).select_related(
+            'initiator', 'respondent', 'project'
+        ).order_by('-created_at')
+        data = []
+        for d in disputes:
+            data.append({
+                "id": d.id,
+                "dispute_id": d.dispute_id,
+                "title": d.title,
+                "status": d.status,
+                "initiator": d.initiator.email,
+                "respondent": d.respondent.email,
+                "created_at": d.created_at,
+            })
         return Response({"results": data})
