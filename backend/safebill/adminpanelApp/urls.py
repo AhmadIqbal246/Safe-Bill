@@ -8,6 +8,7 @@ from .views import (
     SuperAdminDisputesListAPIView,
     AssignMediatorAPIView,
     AdminAssignedDisputesAPIView,
+    MediatorUpdateDisputeStatusAPIView,
 )
 
 app_name = 'adminpanel'
@@ -44,5 +45,10 @@ urlpatterns = [
         'admin/assigned-disputes/',
         AdminAssignedDisputesAPIView.as_view(),
         name='admin-assigned-disputes'
+    ),
+    path(
+        'admin/mediator/update-status/',
+        MediatorUpdateDisputeStatusAPIView.as_view(),
+        name='mediator-update-status'
     ),
 ]

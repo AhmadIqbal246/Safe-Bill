@@ -112,6 +112,23 @@ export const fetchAdminAssignedDisputes = createAsyncThunk(
   }
 );
 
+export const mediatorUpdateStatus = createAsyncThunk(
+  'admin/mediatorUpdateStatus',
+  async ({ disputeId, newStatus }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post('api/admin/admin/mediator/update-status/', {
+        dispute_id: disputeId,
+        new_status: newStatus,
+      });
+      toast.success('Dispute status updated');
+      return { disputeId, status: data.status };
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to update status');
+      return rejectWithValue(err.response?.data || { detail: 'Failed to update status' });
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState,
@@ -180,6 +197,12 @@ const adminSlice = createSlice({
       // Admin assigned disputes
       .addCase(fetchAdminAssignedDisputes.fulfilled, (state, action) => {
         state.assignedDisputes = action.payload;
+      })
+      // Mediator updates status
+      .addCase(mediatorUpdateStatus.fulfilled, (state, action) => {
+        const { disputeId, status } = action.payload;
+        state.assignedDisputes = state.assignedDisputes.map(d => d.id === disputeId ? { ...d, status } : d);
+        state.disputes = state.disputes.map(d => d.id === disputeId ? { ...d, status } : d);
       });
   }
 });

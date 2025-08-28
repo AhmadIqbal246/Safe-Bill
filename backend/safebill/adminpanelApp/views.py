@@ -239,7 +239,7 @@ class AssignMediatorAPIView(APIView):
         dispute.save()
         DisputeEvent.objects.create(
             dispute=dispute,
-            event_type='mediator_assigned',
+            event_type='mediation_initiated',
             description=(
                 f"Mediator {mediator.email} assigned by super-admin"
             ),
@@ -275,3 +275,64 @@ class AdminAssignedDisputesAPIView(APIView):
                 "created_at": d.created_at,
             })
         return Response({"results": data})
+
+
+class MediatorUpdateDisputeStatusAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def post(self, request):
+        """Allow assigned mediator to advance dispute status.
+
+        Allowed transitions:
+        - mediation_initiated -> in_progress
+        - in_progress -> awaiting_decision
+        - awaiting_decision -> resolved
+        - awaiting_decision -> closed
+        - resolved -> closed
+        """
+        dispute_id = request.data.get('dispute_id')
+        new_status = request.data.get('new_status')
+        if not dispute_id or not new_status:
+            return Response(
+                {"detail": "dispute_id and new_status are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            dispute = Dispute.objects.get(id=dispute_id)
+        except Dispute.DoesNotExist:
+            return Response({"detail": "Dispute not found"}, status=404)
+
+        if dispute.assigned_mediator_id != request.user.id:
+            return Response(
+                {"detail": "Not mediator of this dispute"},
+                status=403,
+            )
+
+        current = dispute.status
+        allowed = {
+            'mediation_initiated': ['in_progress'],
+            'in_progress': ['awaiting_decision'],
+            'awaiting_decision': ['resolved', 'closed'],
+            'resolved': ['closed'],
+        }
+        if current not in allowed or new_status not in allowed[current]:
+            return Response(
+                {"detail": "Invalid status transition"},
+                status=400,
+            )
+
+        dispute.status = new_status
+        dispute.save()
+        DisputeEvent.objects.create(
+            dispute=dispute,
+            event_type='status_changed',
+            description=(
+                f"Status changed from {current} to {new_status}"
+            ),
+            created_by=request.user,
+        )
+        return Response({
+            "message": "Status updated",
+            "dispute_id": dispute.id,
+            "status": dispute.status,
+        })

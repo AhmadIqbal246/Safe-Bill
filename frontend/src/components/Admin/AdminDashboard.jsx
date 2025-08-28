@@ -20,6 +20,7 @@ import {
   fetchSuperAdminDisputes,
   assignMediator,
   fetchAdminAssignedDisputes,
+  mediatorUpdateStatus,
 } from '../../store/slices/AdminSlice';
 
 // Static data for now; can be replaced by API data later
@@ -102,8 +103,10 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('professionals');
   const [search, setSearch] = useState('');
-  const [assigning, setAssigning] = useState(false);
   const [selectedMediatorByDispute, setSelectedMediatorByDispute] = useState({});
+  const [assigningById, setAssigningById] = useState({}); // { [disputeId]: true }
+  const [mediatorDropdownOpen, setMediatorDropdownOpen] = useState({}); // { [disputeId]: true }
+  const [mediatorSearchTerm, setMediatorSearchTerm] = useState({}); // { [disputeId]: 'john' }
 
   const user = sessionStorage.getItem('user');
   const userData = JSON.parse(user || '{}');
@@ -155,9 +158,19 @@ export default function AdminDashboard() {
   const handleAssignMediator = async (disputeId) => {
     const mediatorId = selectedMediatorByDispute[disputeId];
     if (!mediatorId) return;
-    setAssigning(true);
+    setAssigningById(prev => ({ ...prev, [disputeId]: true }));
     await dispatch(assignMediator({ disputeId, mediatorId }));
-    setAssigning(false);
+    setAssigningById(prev => ({ ...prev, [disputeId]: false }));
+    setMediatorDropdownOpen(prev => ({ ...prev, [disputeId]: false }));
+  };
+
+  const filteredMediators = (disputeId) => {
+    const term = (mediatorSearchTerm[disputeId] || '').toLowerCase();
+    if (!term) return currentAdmins;
+    return currentAdmins.filter(a => (
+      (a.name || '').toLowerCase().includes(term) ||
+      (a.email || '').toLowerCase().includes(term)
+    ));
   };
 
   return (
@@ -361,23 +374,51 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-gray-500">{d.respondent}</td>
                     <td className="px-4 py-3">{d.assigned_mediator || '—'}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <select
-                          className="px-2 py-1 border rounded-md text-sm"
-                          value={selectedMediatorByDispute[d.id] || ''}
-                          onChange={(e) => setSelectedMediatorByDispute(prev => ({ ...prev, [d.id]: Number(e.target.value) }))}
-                        >
-                          <option value="">Select mediator…</option>
-                          {currentAdmins.map(a => (
-                            <option key={`opt-${a.id}`} value={a.id}>{a.name} ({a.email})</option>
-                          ))}
-                        </select>
+                      <div className="flex items-center gap-2 relative">
                         <button
-                          disabled={assigning || !selectedMediatorByDispute[d.id]}
-                          onClick={() => handleAssignMediator(d.id)}
-                          className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigning ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
+                          className="px-3 py-1 border rounded-md text-sm bg-white hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setMediatorDropdownOpen(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
                         >
-                          Assign
+                          {selectedMediatorByDispute[d.id]
+                            ? (currentAdmins.find(a => a.id === selectedMediatorByDispute[d.id])?.name || 'Selected')
+                            : 'Select mediator…'}
+                        </button>
+                        {mediatorDropdownOpen[d.id] && (
+                          <div className="absolute z-10 top-10 left-0 bg-white border rounded-md shadow-lg w-72">
+                            <div className="p-2 border-b">
+                              <input
+                                type="text"
+                                placeholder="Search by name or email..."
+                                value={mediatorSearchTerm[d.id] || ''}
+                                onChange={(e) => setMediatorSearchTerm(prev => ({ ...prev, [d.id]: e.target.value }))}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none"
+                              />
+                            </div>
+                            <div className="max-h-56 overflow-y-auto">
+                              {filteredMediators(d.id).map(a => (
+                                <button
+                                  key={`opt-${a.id}`}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedMediatorByDispute(prev => ({ ...prev, [d.id]: a.id }));
+                                    setMediatorDropdownOpen(prev => ({ ...prev, [d.id]: false }));
+                                  }}
+                                >
+                                  {a.name} ({a.email})
+                                </button>
+                              ))}
+                              {filteredMediators(d.id).length === 0 && (
+                                <div className="px-3 py-2 text-gray-400 text-sm">No results</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          disabled={assigningById[d.id] || !selectedMediatorByDispute[d.id]}
+                          onClick={() => handleAssignMediator(d.id)}
+                          className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[d.id] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
+                        >
+                          {assigningById[d.id] ? 'Assigning…' : 'Assign'}
                         </button>
                       </div>
                     </td>
@@ -408,6 +449,7 @@ export default function AdminDashboard() {
                   <th className="text-left font-medium px-4 py-3">Initiator</th>
                   <th className="text-left font-medium px-4 py-3">Respondent</th>
                   <th className="text-left font-medium px-4 py-3">Created</th>
+                  <th className="text-left font-medium px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -419,6 +461,75 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-gray-500">{d.initiator}</td>
                     <td className="px-4 py-3 text-gray-500">{d.respondent}</td>
                     <td className="px-4 py-3 text-gray-500">{new Date(d.created_at).toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {d.status === 'mediation_initiated' && (
+                          <button
+                            className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`prog-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
+                            disabled={assigningById[`prog-${d.id}`]}
+                            onClick={async () => {
+                              setAssigningById(prev => ({ ...prev, [`prog-${d.id}`]: true }));
+                              await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'in_progress' }));
+                              setAssigningById(prev => ({ ...prev, [`prog-${d.id}`]: false }));
+                            }}
+                          >
+                            {assigningById[`prog-${d.id}`] ? 'Updating…' : 'Mark In Progress'}
+                          </button>
+                        )}
+                        {d.status === 'in_progress' && (
+                          <button
+                            className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`await-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}
+                            disabled={assigningById[`await-${d.id}`]}
+                            onClick={async () => {
+                              setAssigningById(prev => ({ ...prev, [`await-${d.id}`]: true }));
+                              await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'awaiting_decision' }));
+                              setAssigningById(prev => ({ ...prev, [`await-${d.id}`]: false }));
+                            }}
+                          >
+                            {assigningById[`await-${d.id}`] ? 'Updating…' : 'Mark Awaiting Decision'}
+                          </button>
+                        )}
+                        {d.status === 'awaiting_decision' && (
+                          <>
+                            <button
+                              className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`res-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                              disabled={assigningById[`res-${d.id}`]}
+                              onClick={async () => {
+                                setAssigningById(prev => ({ ...prev, [`res-${d.id}`]: true }));
+                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'resolved' }));
+                                setAssigningById(prev => ({ ...prev, [`res-${d.id}`]: false }));
+                              }}
+                            >
+                              {assigningById[`res-${d.id}`] ? 'Updating…' : 'Mark Resolved'}
+                            </button>
+                            <button
+                              className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`close-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
+                              disabled={assigningById[`close-${d.id}`]}
+                              onClick={async () => {
+                                setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: true }));
+                                await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'closed' }));
+                                setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: false }));
+                              }}
+                            >
+                              {assigningById[`close-${d.id}`] ? 'Updating…' : 'Close'}
+                            </button>
+                          </>
+                        )}
+                        {d.status === 'resolved' && (
+                          <button
+                            className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`close-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
+                            disabled={assigningById[`close-${d.id}`]}
+                            onClick={async () => {
+                              setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: true }));
+                              await dispatch(mediatorUpdateStatus({ disputeId: d.id, newStatus: 'closed' }));
+                              setAssigningById(prev => ({ ...prev, [`close-${d.id}`]: false }));
+                            }}
+                          >
+                            {assigningById[`close-${d.id}`] ? 'Updating…' : 'Close'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {assignedDisputes.length === 0 && (
