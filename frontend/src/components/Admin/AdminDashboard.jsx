@@ -106,10 +106,10 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState('professionals');
   const [search, setSearch] = useState('');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [userRole, setUserRole] = useState('');
 
-  console.log(userRole);
-  console.log(isSuperAdmin);
+  const user = sessionStorage.getItem('user');
+  const userData = JSON.parse(user);
+  setIsSuperAdmin(userData.role === 'super-admin');
 
   useEffect(() => {
     const access = sessionStorage.getItem('access');
@@ -120,19 +120,6 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
         setError(null);
-        const user = sessionStorage.getItem('user');
-        const userData = JSON.parse(user);
-        setUserRole(userData.role);
-        setIsSuperAdmin(userData.role === 'super-admin');
-        
-        // Check user role first
-        // const userResponse = await fetch(`${BASE_URL}api/accounts/user/`, { headers });
-        // if (userResponse.ok) {
-        //   const userData = await userResponse.json();
-        //   console.log("userData", userData);
-        //   setUserRole(userData.role);
-        //   setIsSuperAdmin(userData.role === 'super-admin');
-        // }
 
         // Overview
         const o = await fetch(`${BASE_URL}api/admin/overview/`, { headers });
