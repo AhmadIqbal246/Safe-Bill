@@ -5,9 +5,10 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
-from disputes.models import Dispute
-from .permissions import IsAdminRole
+from disputes.models import Dispute, DisputeEvent
+from .permissions import IsAdminRole, IsSuperAdmin, IsAdmin
 
 
 User = get_user_model()
@@ -19,7 +20,6 @@ class AdminOverviewAPIView(APIView):
     def get(self, request):
         # Basic KPI counts
         user_count = User.objects.count()
-        disputes_count = Dispute.objects.count()
 
         # For now keep transactions static as requested
         transactions_count = 5678
@@ -75,7 +75,7 @@ class AdminOverviewAPIView(APIView):
             "kpis": {
                 "userCount": user_count,
                 "transactions": transactions_count,
-                "disputes": disputes_count,
+                "disputes": Dispute.objects.count(),
             },
             "registrationTrend": trend,
             "revenueBars": revenue,
@@ -98,6 +98,270 @@ class AdminUsersListAPIView(APIView):
             "name": (u.get_full_name() or u.username or u.email),
             "email": u.email,
             "status": "Active" if u.is_active else "Inactive",
+            "is_admin": u.is_admin,
         } for u in users]
 
         return Response({"results": data})
+
+
+class SuperAdminUsersListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def get(self, request):
+        """Get all users with their admin status for super-admin management"""
+        users = User.objects.exclude(role='super-admin').order_by('id')
+        data = [{
+            "id": u.id,
+            "name": (u.get_full_name() or u.username or u.email),
+            "email": u.email,
+            "role": u.role,
+            "status": "Active" if u.is_active else "Inactive",
+            "is_admin": u.is_admin,
+        } for u in users]
+
+        return Response({"results": data})
+
+
+class AdminManagementAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def post(self, request):
+        """Toggle admin status for a user"""
+        user_id = request.data.get('user_id')
+        is_admin = request.data.get('is_admin', False)
+
+        if not user_id:
+            return Response(
+                {"detail": "user_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(id=user_id)
+
+            # Prevent super-admin from modifying other super-admins
+            if user.role == 'super-admin':
+                return Response(
+                    {"detail": "Cannot modify super-admin users"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            user.is_admin = is_admin
+            user.save()
+
+            return Response({
+                "message": f"Admin status updated for {user.email}",
+                "user_id": user.id,
+                "is_admin": user.is_admin
+            })
+
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class CurrentAdminsListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def get(self, request):
+        """Get list of current admins (users with is_admin=True)"""
+        admins = User.objects.filter(is_admin=True).exclude(
+            role='super-admin'
+        ).order_by('id')
+        data = [{
+            "id": u.id,
+            "name": (u.get_full_name() or u.username or u.email),
+            "email": u.email,
+            "role": u.role,
+            "status": "Active" if u.is_active else "Inactive",
+            "is_admin": u.is_admin,
+        } for u in admins]
+
+        return Response({"results": data})
+
+
+class SuperAdminDisputesListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def get(self, request):
+        """List disputes for super-admin with minimal info."""
+        disputes = Dispute.objects.select_related(
+            'initiator', 'respondent', 'assigned_mediator', 'project'
+        ).order_by('-created_at')
+        data = []
+        for d in disputes:
+            data.append({
+                "id": d.id,
+                "dispute_id": d.dispute_id,
+                "title": d.title,
+                "status": d.status,
+                "initiator": d.initiator.email,
+                "respondent": d.respondent.email,
+                "assigned_mediator": (
+                    d.assigned_mediator.email if d.assigned_mediator else None
+                ),
+                "created_at": d.created_at,
+            })
+        return Response({"results": data})
+
+
+class AssignMediatorAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def post(self, request):
+        """Assign an admin as mediator to a dispute."""
+        dispute_id = request.data.get('dispute_id')
+        mediator_id = request.data.get('mediator_id')
+        if not dispute_id or not mediator_id:
+            return Response(
+                {"detail": "dispute_id and mediator_id are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            dispute = Dispute.objects.only(
+                'id', 'initiator_id', 'respondent_id', 'status',
+                'assigned_mediator_id'
+            ).get(id=dispute_id)
+        except Dispute.DoesNotExist:
+            return Response({"detail": "Dispute not found"}, status=404)
+
+        # Prevent assigning mediator if dispute is already finalized
+        if dispute.status in {"resolved", "closed"}:
+            return Response(
+                {
+                    "detail": (
+                        "Cannot assign mediator when dispute is "
+                        "resolved or closed"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            mediator = User.objects.only('id').get(
+                id=mediator_id,
+                is_admin=True,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Mediator not found or not eligible"},
+                status=404,
+            )
+
+        # Prevent re-assigning to the same mediator
+        if dispute.assigned_mediator_id == mediator.id:
+            return Response(
+                {"detail": "Dispute already assigned to this mediator"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Prevent assigning initiator/respondent as mediator
+        if mediator.id in {dispute.initiator_id, dispute.respondent_id}:
+            return Response(
+                {"detail": "Initiator or respondent cannot be mediator"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        dispute.assigned_mediator = mediator
+        dispute.status = 'mediation_initiated'
+        dispute.save()
+        DisputeEvent.objects.create(
+            dispute=dispute,
+            event_type='mediation_initiated',
+            description=(
+                "Mediator assigned by super-admin"
+            ),
+            created_by=request.user,
+        )
+        return Response({
+            "message": "Mediator assigned",
+            "dispute_id": dispute.id,
+            "mediator": mediator.email,
+            "status": dispute.status,
+        })
+
+
+class AdminAssignedDisputesAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request):
+        """List disputes assigned to the current admin user."""
+        disputes = Dispute.objects.filter(
+            assigned_mediator=request.user
+        ).select_related(
+            'initiator', 'respondent', 'project'
+        ).order_by('-created_at')
+        data = []
+        for d in disputes:
+            data.append({
+                "id": d.id,
+                "dispute_id": d.dispute_id,
+                "title": d.title,
+                "status": d.status,
+                "initiator": d.initiator.email,
+                "respondent": d.respondent.email,
+                "created_at": d.created_at,
+            })
+        return Response({"results": data})
+
+
+class MediatorUpdateDisputeStatusAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def post(self, request):
+        """Allow assigned mediator to advance dispute status.
+
+        Allowed transitions:
+        - mediation_initiated -> in_progress
+        - in_progress -> awaiting_decision
+        - awaiting_decision -> resolved
+        - awaiting_decision -> closed
+        - resolved -> closed
+        """
+        dispute_id = request.data.get('dispute_id')
+        new_status = request.data.get('new_status')
+        if not dispute_id or not new_status:
+            return Response(
+                {"detail": "dispute_id and new_status are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            dispute = Dispute.objects.get(id=dispute_id)
+        except Dispute.DoesNotExist:
+            return Response({"detail": "Dispute not found"}, status=404)
+
+        if dispute.assigned_mediator_id != request.user.id:
+            return Response(
+                {"detail": "Not mediator of this dispute"},
+                status=403,
+            )
+
+        current = dispute.status
+        allowed = {
+            'mediation_initiated': ['in_progress'],
+            'in_progress': ['awaiting_decision'],
+            'awaiting_decision': ['resolved', 'closed'],
+            'resolved': ['closed'],
+        }
+        if current not in allowed or new_status not in allowed[current]:
+            return Response(
+                {"detail": "Invalid status transition"},
+                status=400,
+            )
+
+        dispute.status = new_status
+        dispute.save()
+        DisputeEvent.objects.create(
+            dispute=dispute,
+            event_type='status_changed',
+            description=(
+                f"Status changed from {current} to {new_status}"
+            ),
+            created_by=request.user,
+        )
+        return Response({
+            "message": "Status updated",
+            "dispute_id": dispute.id,
+            "status": dispute.status,
+        })

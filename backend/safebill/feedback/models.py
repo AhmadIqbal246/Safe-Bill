@@ -21,3 +21,14 @@ class QuoteRequest(models.Model):
     def __str__(self):
         return (f"Quote request from {self.from_email} to "
                 f"{self.to_email} at {self.created_at}")
+
+
+class ContactMessage(models.Model):
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Contact message from {self.name} <{self.email}> at {self.created_at}"

@@ -10,11 +10,18 @@ class User(AbstractUser):
         ('buyer', 'Buyer'),
         ('professional-buyer', 'Professional Buyer'),
         ('admin', 'Admin'),
+        ('super-admin', 'Super Admin'),
     ]
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    is_admin = models.BooleanField(
+        default=False, 
+        help_text=(
+            "Whether this user has admin privileges assigned by super-admin"
+        )
+    )
     onboarding_complete = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
@@ -25,6 +32,16 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+    @property
+    def is_super_admin(self):
+        """Check if user is a super admin"""
+        return self.role == 'super-admin'
+
+    @property
+    def has_admin_access(self):
+        """Check if user has admin access (either super-admin or admin with is_admin=True)"""
+        return self.is_super_admin or (self.role == 'admin' or self.is_admin)
 
 
 class BusinessDetail(models.Model):

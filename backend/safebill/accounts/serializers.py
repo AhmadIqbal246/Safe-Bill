@@ -147,6 +147,7 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['onboarding_complete'] = user.onboarding_complete
         token['is_email_verified'] = user.is_email_verified
         token['phone_number'] = user.phone_number
+        token['is_admin'] = user.is_admin
         return token
     
 
