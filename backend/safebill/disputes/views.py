@@ -29,18 +29,22 @@ class DisputeListAPIView(generics.ListAPIView):
 
 
 class DisputeDetailAPIView(generics.RetrieveAPIView):
-    """
-    Get detailed information about a specific dispute
-    """
+    """Get detailed information about a specific dispute."""
     serializer_class = DisputeDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Dispute.objects.filter(
-            initiator=self.request.user
-        ) | Dispute.objects.filter(
-            respondent=self.request.user
-        )
+        user = self.request.user
+        # Super-admin can view all disputes
+        if getattr(user, 'role', None) == 'super-admin':
+            return Dispute.objects.all()
+        # Admins/mediators can view disputes they are assigned to
+        admin_qs = Dispute.objects.filter(assigned_mediator=user)
+        # Regular access: involved as initiator or respondent
+        party_qs = Dispute.objects.filter(Q(initiator=user) | Q(respondent=user))
+        if getattr(user, 'is_admin', False):
+            return admin_qs | party_qs
+        return party_qs
 
 
 class DisputeCreateAPIView(generics.CreateAPIView):
