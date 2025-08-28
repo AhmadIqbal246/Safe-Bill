@@ -9,6 +9,7 @@ from rest_framework import status
 
 from disputes.models import Dispute, DisputeEvent
 from .permissions import IsAdminRole, IsSuperAdmin, IsAdmin
+from notifications.models import Notification
 
 
 User = get_user_model()
@@ -270,10 +271,51 @@ class AssignMediatorAPIView(APIView):
             dispute=dispute,
             event_type='mediation_initiated',
             description=(
-                "Mediator assigned by super-admin"
+                "Mediator assigned: "
+                + (
+                    (mediator.get_full_name()
+                     or getattr(mediator, 'username', '')).strip()
+                )
+                + " "
+                + getattr(mediator, 'email', '')
             ),
             created_by=request.user,
         )
+        
+        # Send notifications to all parties
+        mediator_name = mediator.get_full_name() or mediator.username
+        dispute_title = dispute.title or f"Dispute {dispute.dispute_id}"
+        
+        # Notify initiator
+        initiator_message = (
+            f"Mediator {mediator_name} ({mediator.email}) "
+            f"has been assigned to your dispute: {dispute_title}"
+        )
+        Notification.objects.create(
+            user=dispute.initiator,
+            message=initiator_message
+        )
+        
+        # Notify respondent
+        respondent_message = (
+            f"Mediator {mediator_name} ({mediator.email}) "
+            f"has been assigned to your dispute: {dispute_title}"
+        )
+        Notification.objects.create(
+            user=dispute.respondent,
+            message=respondent_message
+        )
+        
+        # Notify mediator
+        mediator_message = (
+            f"You have been assigned as mediator for dispute: "
+            f"{dispute_title}"
+        )
+        Notification.objects.create(
+            user=mediator,
+            message=mediator_message
+        )
+        
         return Response({
             "message": "Mediator assigned",
             "dispute_id": dispute.id,
@@ -352,14 +394,43 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
 
         dispute.status = new_status
         dispute.save()
+        
+        # Helper function to format status for display
+        def format_status_display(status):
+            if not status:
+                return 'Unknown'
+            return status.replace('_', ' ').title()
+        
         DisputeEvent.objects.create(
             dispute=dispute,
             event_type='status_changed',
             description=(
-                f"Status changed from {current} to {new_status}"
+                f'Status changed from "{format_status_display(current)}" '
+                f'to "{format_status_display(new_status)}"'
             ),
             created_by=request.user,
         )
+        
+        # Send notifications to initiator and respondent about status change
+        dispute_title = dispute.title or f"Dispute {dispute.dispute_id}"
+        status_change_message = (
+            f"Dispute '{dispute_title}' status changed from "
+            f'"{format_status_display(current)}" to '
+            f'"{format_status_display(new_status)}"'
+        )
+        
+        # Notify initiator
+        Notification.objects.create(
+            user=dispute.initiator,
+            message=status_change_message
+        )
+        
+        # Notify respondent
+        Notification.objects.create(
+            user=dispute.respondent,
+            message=status_change_message
+        )
+        
         return Response({
             "message": "Status updated",
             "dispute_id": dispute.id,

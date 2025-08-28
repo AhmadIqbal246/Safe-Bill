@@ -23,6 +23,7 @@ import {
   mediatorUpdateStatus,
 } from '../../store/slices/AdminSlice';
 import { Dialog } from '@headlessui/react';
+import { useNavigate } from 'react-router-dom';
 
 // Static data for now; can be replaced by API data later
 const useStaticAdminData = () => {
@@ -109,6 +110,7 @@ const formatStatus = (status) => {
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const staticData = useStaticAdminData();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -476,6 +478,12 @@ export default function AdminDashboard() {
                         >
                           {assigningById[d.id] ? 'Assigning…' : 'Assign'}
                         </button>
+                        <button
+                          className="text-xs px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                          onClick={() => navigate(`/dispute/${d.id}`)}
+                        >
+                          View
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -519,6 +527,12 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-gray-500">{new Date(d.created_at).toLocaleString()}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        <button
+                          className="text-xs px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 cursor-pointer"
+                          onClick={() => navigate(`/dispute/${d.id}`)}
+                        >
+                          View
+                        </button>
                         {d.status === 'mediation_initiated' && (
                           <button
                             className={`text-xs px-3 py-1 rounded-md cursor-pointer ${assigningById[`prog-${d.id}`] ? 'bg-gray-300 text-gray-600' : 'bg-[#01257D] text-white hover:bg-[#2346a0]'}`}

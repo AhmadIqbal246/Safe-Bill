@@ -34,6 +34,11 @@ export default function DisputeDetailPage() {
     disputeDetailError
   } = useSelector(state => state.dispute);
 
+  // Detect admin view
+  const user = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
+  const userData = user ? JSON.parse(user) : null;
+  const isAdminView = userData?.role === 'admin' || userData?.role === 'super-admin' || userData?.is_admin;
+
   useEffect(() => {
     if (disputeId) {
       dispatch(fetchDisputeDetail(disputeId));
@@ -141,11 +146,11 @@ export default function DisputeDetailPage() {
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => isAdminView ? navigate('/admin') : navigate(-1)}
             className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            {t('dispute_detail.back_to_disputes')}
+            {isAdminView ? 'Back to Admin Panel' : t('dispute_detail.back_to_disputes')}
           </button>
 
           {/* Dispute Header */}
@@ -157,12 +162,12 @@ export default function DisputeDetailPage() {
                 </h1>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
-                    <span className="font-medium">{t('common.id')}:</span>
+                    <span className="font-medium">ID:</span>
                     <span className="text-[#01257D]">{dispute.dispute_id}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>{t('common.created')}: {formatDate(dispute.created_at)}</span>
+                    <span>Created: {formatDate(dispute.created_at)}</span>
                   </div>
                 </div>
               </div>
@@ -170,9 +175,11 @@ export default function DisputeDetailPage() {
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(dispute.status)}`}>
                   {getStatusText(dispute.status)}
                 </span>
-                <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
-                  {t('dispute_detail.contact_mediator')}
-                </button>
+                {!isAdminView && (
+                  <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
+                    {t('dispute_detail.contact_mediator')}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -224,7 +231,7 @@ export default function DisputeDetailPage() {
                       <p className="text-gray-900">{dispute.initiator_name}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('disputes.respondent')}</label>
+                      <label className="block text_sm text-sm font-medium text-gray-700 mb-1">{t('disputes.respondent')}</label>
                       <p className="text-gray-900">{dispute.respondent_name}</p>
                     </div>
                   </div>
@@ -244,7 +251,7 @@ export default function DisputeDetailPage() {
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('dispute_detail.supporting_documents')}</h2>
                   <div className="space-y-3">
                     {dispute.documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={doc.id} className="flex items-center justify_between justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">
                           <FileText className="w-5 h-5 text-gray-500" />
                           <div>
@@ -317,7 +324,7 @@ export default function DisputeDetailPage() {
                   
                   {/* Timeline Events */}
                   <div className="space-y-4">
-                    {dispute.events && dispute.events.map((event, index) => (
+                    {dispute.events && dispute.events.map((event) => (
                       <div key={event.id} className="relative flex items-start gap-4">
                         {/* Event Icon */}
                         <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-[#01257D] rounded-full text-white">
