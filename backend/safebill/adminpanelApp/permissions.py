@@ -18,3 +18,11 @@ class IsSuperAdmin(BasePermission):
         is_super_admin = getattr(user, 'is_super_admin', False)
         return bool(user and user.is_authenticated and is_super_admin)
 
+class IsAdmin(BasePermission):
+    """Allow access only to authenticated users with admin role."""
+
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        is_admin = getattr(user, 'is_admin', False)
+        return bool(user and user.is_authenticated and is_admin)
+

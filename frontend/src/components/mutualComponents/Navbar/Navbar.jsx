@@ -49,6 +49,13 @@ export default function SafeBillHeader({
   const userAvatar = user && user.avatar ? user.avatar : null;
   const userEmail = user && user.email ? user.email : "";
 
+  // Determine admin panel visibility from session/user
+  const adminRoleFlag = (typeof window !== 'undefined' && sessionStorage.getItem('admin_role') === 'true');
+  const canSeeAdminPanel = !!(
+    adminRoleFlag ||
+    (user && (user.role === 'admin' || user.role === 'super-admin' || user.is_admin === true))
+  );
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -139,6 +146,14 @@ export default function SafeBillHeader({
                 {t(item.label)}
               </Link>
             ))}
+            {canSeeAdminPanel && (
+              <Link
+                to="/admin"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                Admin Panel
+              </Link>
+            )}
           </nav>
 
           {/* Right Side - Desktop */}
@@ -403,6 +418,14 @@ export default function SafeBillHeader({
                   {t(item.label)}
                 </Link>
               ))}
+              {canSeeAdminPanel && (
+                <Link
+                  to="/admin"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  Admin Panel
+                </Link>
+              )}
 
               {/* Language Switcher - Mobile in menu */}
               <div className="flex items-center gap-2 px-3 py-2">

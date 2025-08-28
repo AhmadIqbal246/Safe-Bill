@@ -6,6 +6,8 @@ export default function ProtectedRoute({ children, redirectTo = "/login", requir
   // Check both user and access token in sessionStorage
   const user = JSON.parse(sessionStorage.getItem("user"));
   const access = sessionStorage.getItem("access");
+  const adminRoleFlag = user?.is_admin;
+  console.log("adminRoleFlag", adminRoleFlag);
 
   if (!user && !access) {
     // Capture the current location and pass it as a query parameter
@@ -26,7 +28,17 @@ export default function ProtectedRoute({ children, redirectTo = "/login", requir
       hasRequiredRole = userRole === requiredRole;
     }
 
+    // Allow admin override when route requires admin/super-admin
+    const routeRequiresAdmin = Array.isArray(requiredRole)
+      ? (requiredRole.includes("admin") || requiredRole.includes("super-admin"))
+      : (requiredRole === "admin" || requiredRole === "super-admin");
+
     if (!hasRequiredRole) {
+      if (adminRoleFlag && routeRequiresAdmin) {
+        // Allow access due to admin override flag in session storage
+        if (!children) return <Outlet />;
+        return children;
+      }
       // Redirect to not-authorized page if user doesn't have the required role
       return <Navigate to="/not-authorized" replace />;
     }

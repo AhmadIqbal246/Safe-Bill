@@ -41,7 +41,7 @@ class User(AbstractUser):
     @property
     def has_admin_access(self):
         """Check if user has admin access (either super-admin or admin with is_admin=True)"""
-        return self.is_super_admin or (self.role == 'admin' and self.is_admin)
+        return self.is_super_admin or (self.role == 'admin' or self.is_admin)
 
 
 class BusinessDetail(models.Model):
