@@ -270,7 +270,13 @@ class AssignMediatorAPIView(APIView):
             dispute=dispute,
             event_type='mediation_initiated',
             description=(
-                "Mediator assigned by super-admin"
+                "Mediator assigned: "
+                + (
+                    (mediator.get_full_name()
+                     or getattr(mediator, 'username', '')).strip()
+                )
+                + " "
+                + getattr(mediator, 'email', '')
             ),
             created_by=request.user,
         )
@@ -352,11 +358,19 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
 
         dispute.status = new_status
         dispute.save()
+        
+        # Helper function to format status for display
+        def format_status_display(status):
+            if not status:
+                return 'Unknown'
+            return status.replace('_', ' ').title()
+        
         DisputeEvent.objects.create(
             dispute=dispute,
             event_type='status_changed',
             description=(
-                f"Status changed from {current} to {new_status}"
+                f'Status changed from "{format_status_display(current)}" '
+                f'to "{format_status_display(new_status)}"'
             ),
             created_by=request.user,
         )
