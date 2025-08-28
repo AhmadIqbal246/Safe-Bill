@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Dispute, DisputeDocument, DisputeEvent, DisputeComment
+from django.db.models import Q
 from .serializers import (
     DisputeListSerializer, DisputeDetailSerializer, DisputeCreateSerializer,
     DisputeUpdateSerializer, DisputeCommentCreateSerializer
