@@ -449,7 +449,11 @@
      "failed_submit_feedback": "Failed to submit feedback.",
      "loading": "Loading...",
      "failed_load_profile": "Failed to load profile.",
-     "no_profile_data": "No profile data available."
+     "no_profile_data": "No profile data available.",
+     "username_too_long": "Username must be less than {{max}} characters",
+     "about_too_long_chars": "About must be less than {{max}} characters",
+     "about_too_many_words": "About must be less than {{max}} words",
+     "about_placeholder": "Enter your about"
    },
    "documents": {
      "title": "Documents",

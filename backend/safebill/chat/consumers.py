@@ -7,6 +7,9 @@ from .models import Conversation, Message, ChatContact
 from projects.models import Project
 from django.utils import timezone
 
+from django.core.mail import send_mail
+from django.conf import settings
+
 User = get_user_model()
 
 
@@ -106,11 +109,66 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
         conv.last_message_text = msg.content[:255]
         conv.save(update_fields=["last_message_at", "last_message_text"])
         
+        # Send email notification for quote chat first message
+        self._send_quote_chat_notification(project, msg, conv)
+        
         # Note: Chat contact unread_count and last_message updates are handled
         # by Message.save() to avoid double-incrementing when messages are
         # created via WebSocket. Do not call update_chat_contacts here.
         
         return msg
+
+    def _send_quote_chat_notification(self, project, message, conversation):
+        """Send email notification to seller for first message in quote chat"""
+        try:
+            # Check if this is a quote chat
+            if not project.name.startswith("Quote Chat:"):
+                return
+            
+            # Check if this is the first message in the conversation
+            message_count = Message.objects.filter(
+                conversation=conversation
+            ).count()
+            if message_count > 1:  # Not the first message
+                return
+            
+            # Get the seller and buyer
+            seller = project.user
+            buyer = message.sender
+            
+            # Only send notification if buyer sends first message
+            if message.sender_id != seller.id:
+                subject = (
+                    f"New Business Opportunity - Message from "
+                    f"{buyer.username}"
+                )
+                message_preview = (
+                    f"{message.content[:200]}{'...' if len(message.content) > 200 else ''}"
+                )
+                message_body = f"""
+Hello {seller.username},
+
+You have received a new message regarding a business opportunity on SafeBill.
+
+From: {buyer.username} ({buyer.email})
+
+Please log in to your SafeBill dashboard to view the full conversation and respond to this potential client.
+
+Best regards,
+SafeBill Team
+                """.strip()
+                
+                send_mail(
+                    subject=subject,
+                    message=message_body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[seller.email],
+                    fail_silently=True,
+                )
+        except Exception as e:
+            # Log error but don't break the chat functionality
+            print(f"Error sending quote chat notification: {e}")
+            pass
 
     async def _handle_send_message(self, payload):
         msg = await self._create_message(

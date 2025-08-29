@@ -450,7 +450,11 @@
      "failed_submit_feedback": "Échec de la soumission du retour.",
      "loading": "Chargement...",
      "failed_load_profile": "Échec du chargement du profil.",
-     "no_profile_data": "Aucune donnée de profil disponible."
+     "no_profile_data": "Aucune donnée de profil disponible.",
+     "username_too_long": "Le nom d'utilisateur doit contenir moins de {{max}} caractères",
+     "about_too_long_chars": "À propos doit contenir moins de {{max}} caractères",
+     "about_too_many_words": "À propos doit contenir moins de {{max}} mots",
+     "about_placeholder": "Entrez votre à propos"
    },
    "documents": {
      "title": "Documents",

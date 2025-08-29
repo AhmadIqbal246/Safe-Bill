@@ -256,7 +256,7 @@ export default function ProfessionalDetailPage() {
           <h2 className="text-2xl font-bold text-[#111827] mb-4">
             {t('professional_detail.about_section')}
           </h2>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="rounded-lg px-4 py-3 text-gray-700 leading-relaxed break-words">
             {professional.about || t('professional_detail.no_about_info')}
           </p>
         </div>
