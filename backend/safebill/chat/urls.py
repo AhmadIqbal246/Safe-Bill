@@ -21,4 +21,8 @@ urlpatterns = [
          views.ChatContactDetailAPIView.as_view()),
     path("chat/contacts/<int:contact_id>/mark-read/", 
          views.MarkContactReadAPIView.as_view()),
+
+    # Start a quote chat between current user and a professional (creates/returns a hidden project)
+    path("chat/start-quote/<int:professional_id>/", 
+         views.StartQuoteChatAPIView.as_view()),
 ]

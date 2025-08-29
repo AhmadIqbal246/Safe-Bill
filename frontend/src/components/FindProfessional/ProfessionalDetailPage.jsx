@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import SafeBillHeader from "../mutualComponents/Navbar/Navbar";
-import QuoteRequestDialog from "./QuoteRequestDialog";
+// import QuoteRequestDialog from "./QuoteRequestDialog";
+import Chat from "../mutualComponents/Chat/Chat";
+import { useDispatch } from 'react-redux';
+import { setSelectedContact, toggleChat } from '../../store/slices/ChatSlice';
 import {
   businessActivityStructure,
   serviceAreaOptions,
@@ -78,7 +81,7 @@ export default function ProfessionalDetailPage() {
   const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchProfessionalDetails = async () => {
@@ -165,8 +168,39 @@ export default function ProfessionalDetailPage() {
     return getDefaultAvatar(professional.name);
   };
 
-  const handleRequestQuote = () => {
-    setIsQuoteDialogOpen(true);
+  const handleRequestQuote = async () => {
+    try {
+      const res = await axios.post(
+        `${BASE_URL}api/chat/start-quote/${professionalId}/`,
+        {},
+        { headers: { Authorization: `Bearer ${sessionStorage.getItem('access')}` } }
+      );
+      const { project_id } = res.data;
+
+      // Build a minimal contact object compatible with ChatWindow
+      const contact = {
+        id: `quote-${project_id}-${professionalId}`,
+        contact_info: {
+          id: professional.id,
+          username: professional.name,
+          first_name: professional.first_name || '',
+          last_name: professional.last_name || '',
+          email: professional.email || '',
+        },
+        project_info: {
+          id: project_id,
+          name: professional.name || 'Quote Chat',
+        },
+        last_message_text: '',
+        last_message_at: null,
+        unread_count: 0,
+      };
+
+      dispatch(setSelectedContact(contact));
+      dispatch(toggleChat());
+    } catch (err) {
+      console.error('Failed to start quote chat:', err);
+    }
   };
 
   return (
@@ -339,12 +373,8 @@ export default function ProfessionalDetailPage() {
         </div>
       </div>
 
-      {/* Quote Request Dialog */}
-      <QuoteRequestDialog
-        isOpen={isQuoteDialogOpen}
-        onClose={() => setIsQuoteDialogOpen(false)}
-        professional={professional}
-      />
+      {/* Global Chat Overlay */}
+      <Chat />
     </div>
   );
 }
