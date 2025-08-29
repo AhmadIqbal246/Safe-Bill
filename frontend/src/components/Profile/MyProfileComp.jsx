@@ -64,6 +64,17 @@ export default function MyProfileComp() {
   const [showServiceAreasDropdown, setShowServiceAreasDropdown] = useState(false);
   const fileInputRef = useRef();
 
+  // Word/character limits
+  const USERNAME_MAX_LENGTH = 10;
+  const ABOUT_MAX_WORDS = 200;
+  const ABOUT_MAX_CHARS = 800;
+
+  // Helper function to count words
+  const countWords = (text) => {
+    if (!text || text.trim() === '') return 0;
+    return text.trim().split(/\s+/).length;
+  };
+
   useEffect(() => {
     dispatch(fetchUserProfile());
   }, [dispatch]);
@@ -220,8 +231,11 @@ export default function MyProfileComp() {
     // Validation for required fields
     const validationErrors = [];
     
+    // Validate username
     if (!editForm.username || editForm.username.trim() === '') {
       validationErrors.push(t('my_profile.username_required'));
+    } else if (editForm.username.length > USERNAME_MAX_LENGTH) {
+      validationErrors.push(t('my_profile.username_too_long', { max: USERNAME_MAX_LENGTH }));
     }
     
     if (!editForm.type_of_activity || editForm.type_of_activity.trim() === '') {
@@ -230,6 +244,16 @@ export default function MyProfileComp() {
     
     if (!editForm.selected_service_areas || editForm.selected_service_areas.length === 0) {
       validationErrors.push(t('my_profile.service_areas_required'));
+    }
+
+    // Validate about field
+    if (editForm.about) {
+      if (editForm.about.length > ABOUT_MAX_CHARS) {
+        validationErrors.push(t('my_profile.about_too_long_chars', { max: ABOUT_MAX_CHARS }));
+      }
+      if (countWords(editForm.about) > ABOUT_MAX_WORDS) {
+        validationErrors.push(t('my_profile.about_too_many_words', { max: ABOUT_MAX_WORDS }));
+      }
     }
     
     // If there are validation errors, show them and return
@@ -486,12 +510,16 @@ export default function MyProfileComp() {
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D]"
                     value={editForm.username}
                     onChange={(e) =>
                       handleEditChange("username", e.target.value)
                     }
+                    maxLength={USERNAME_MAX_LENGTH}
                   />
+                  <div className="text-xs text-gray-500 mt-1">
+                    {editForm.username ? `${editForm.username.length}/${USERNAME_MAX_LENGTH} characters` : `${USERNAME_MAX_LENGTH} characters max`}
+                  </div>
                 </div>
                 {/* Business Activity Selection */}
                 <div>
@@ -937,10 +965,22 @@ export default function MyProfileComp() {
                     {t('my_profile.about_label')}
                   </label>
                   <textarea
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D]"
                     value={editForm.about}
                     onChange={(e) => handleEditChange("about", e.target.value)}
+                    maxLength={ABOUT_MAX_CHARS}
+                    rows={4}
+                    placeholder={t('my_profile.about_placeholder')}
                   />
+                  <div className="text-xs text-gray-500 mt-1">
+                    {editForm.about ? (
+                      <>
+                        {countWords(editForm.about)}/{ABOUT_MAX_WORDS} words • {editForm.about.length}/{ABOUT_MAX_CHARS} characters
+                      </>
+                    ) : (
+                      `${ABOUT_MAX_WORDS} words max • ${ABOUT_MAX_CHARS} characters max`
+                    )}
+                  </div>
                 </div>
                 {/* Skills with Enhanced Search */}
                 {/* <div>
