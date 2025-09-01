@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MessageCircle, RefreshCw } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleContactList, fetchChatContacts } from '../../../store/slices/ChatSlice';
@@ -9,6 +9,39 @@ const ChatButton = () => {
   
   // Calculate total unread messages
   const totalUnread = chatContacts.reduce((sum, contact) => sum + contact.unread_count, 0);
+
+  // Fetch chat contacts when component mounts and set up automatic refresh
+  useEffect(() => {
+    // Initial fetch
+    dispatch(fetchChatContacts());
+    
+    // Set up periodic refresh every 30 seconds to keep unread count updated
+    const interval = setInterval(() => {
+      dispatch(fetchChatContacts());
+    }, 30000); // 30 seconds
+    
+    // Refresh contacts when user returns to the tab/window
+    const handleFocus = () => {
+      dispatch(fetchChatContacts());
+    };
+    
+    // Refresh contacts when user switches back to this tab
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        dispatch(fetchChatContacts());
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup interval and event listeners on component unmount
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [dispatch]);
 
   const handleClick = () => {
     if (!isContactListOpen) {
