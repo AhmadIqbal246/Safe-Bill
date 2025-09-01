@@ -5,6 +5,14 @@ from django.conf import settings
 # Create your models here.
 
 class Project(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('not_approved', 'Not Approved'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    ]
+    
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -25,6 +33,11 @@ class Project(models.Model):
         max_length=64, unique=True, null=True, blank=True
     )
     invite_token_expiry = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"

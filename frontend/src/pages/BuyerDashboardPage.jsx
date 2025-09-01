@@ -25,7 +25,7 @@ export default function BuyerDashboardPage() {
 
   // Calculate dashboard stats from client projects
   const activeProjects = clientProjects.filter(project => 
-    project.status === 'active' || !project.status
+    project.status === 'in_progress'
   ).length;
   
   const completedProjects = clientProjects.filter(project => 

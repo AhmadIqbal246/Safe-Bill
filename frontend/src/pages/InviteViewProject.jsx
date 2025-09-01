@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import axios from 'axios';
+import ProjectStatusBadge from '../components/common/ProjectStatusBadge';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -21,35 +22,74 @@ export default function InviteViewProject() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
+
+  const fetchProject = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.get(
+        `${backendBaseUrl}api/projects/invite/${token}/`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+          },
+          withCredentials: true,
+        }
+      );
+      setProject(res.data);
+    } catch (err) {
+      setError(
+        err.response && err.response.data && err.response.data.detail
+          ? err.response.data.detail
+          : err.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchProject() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await axios.get(
-          `${backendBaseUrl}api/projects/invite/${token}/`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${sessionStorage.getItem('access')}`,
-            },
-            withCredentials: true,
-          }
-        );
-        setProject(res.data);
-      } catch (err) {
-        setError(
-          err.response && err.response.data && err.response.data.detail
-            ? err.response.data.detail
-            : err.message
-        );
-      } finally {
-        setLoading(false);
-      }
-    }
     if (token) fetchProject();
   }, [token]);
+
+  const handleProjectAction = async (action) => {
+    setActionLoading(true);
+    setActionMessage('');
+    setError(null);
+    
+    try {
+      const res = await axios.post(
+        `${backendBaseUrl}api/projects/invite/${token}/`,
+        { action },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+          },
+          withCredentials: true,
+        }
+      );
+      
+      setActionMessage(res.data.detail);
+      
+      // Refresh project data to get updated status
+      setTimeout(() => {
+        fetchProject();
+      }, 1000);
+      
+    } catch (err) {
+      setError(
+        err.response && err.response.data && err.response.data.detail
+          ? err.response.data.detail
+          : err.message
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -100,6 +140,10 @@ export default function InviteViewProject() {
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">Reference Number</div>
               <div className="text-gray-900 font-medium">{project.reference_number}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">Status</div>
+              <ProjectStatusBadge status={project.status} size="small" />
             </div>
           </div>
         </div>
@@ -181,6 +225,103 @@ export default function InviteViewProject() {
             <button className="px-6 py-2 bg-emerald-600 text-white rounded-md font-semibold hover:bg-emerald-700 transition-colors">Pay by Bank Transfer</button>
           </div> */}
         </div>
+        {/* Project Action Buttons */}
+        {project.status === 'pending' && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-lg font-bold mb-4">Project Approval</h2>
+            <p className="text-gray-600 mb-6">
+              Please review the project details above. You can either approve or reject this project.
+            </p>
+            
+            {actionMessage && (
+              <div className={`mb-4 p-3 rounded-lg ${
+                actionMessage.includes('approved') ? 'bg-green-100 text-green-800' :
+                actionMessage.includes('rejected') ? 'bg-red-100 text-red-800' :
+                'bg-blue-100 text-blue-800'
+              }`}>
+                {actionMessage}
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => handleProjectAction('approve')}
+                disabled={actionLoading}
+                className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {actionLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Approve Project
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => handleProjectAction('reject')}
+                disabled={actionLoading}
+                className="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {actionLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 0 018-8v8z"/>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Reject Project
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Status Messages for Non-Pending Projects */}
+        {project.status === 'approved' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center">
+              <svg className="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <h3 className="text-lg font-semibold text-green-800">Project Approved</h3>
+                <p className="text-green-700">This project has been approved and is now active.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {project.status === 'not_approved' && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center">
+              <svg className="w-8 h-8 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <div>
+                <h3 className="text-lg font-semibold text-red-800">Project Rejected</h3>
+                <p className="text-red-700">This project has been rejected and is no longer active.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="text-center text-xs text-gray-400 mt-6">Secured with SSL encryption and processed through Stripe</div>
       </div>
     </>
