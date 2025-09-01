@@ -362,6 +362,12 @@
     "failed_load_projects": "Failed to load projects.",
     "project_deleted_successfully": "Project deleted successfully.",
     "failed_delete_project": "Failed to delete project.",
+    "project_started_successfully": "Project started successfully!",
+    "failed_start_project": "Failed to start project.",
+    "start_project": "Start Project",
+    "approved_projects": "Approved Projects",
+    "approved_projects_ready": "Approved Projects Ready to Start",
+    "approved_projects_description": "These projects have been approved by clients and are ready to begin work. Click the play button to start the project.",
     "confirm_deletion": "Confirm Deletion",
     "confirm_delete_message": "Are you sure you want to delete this project?",
     "cancel": "Cancel",
@@ -373,7 +379,8 @@
     "pending": "Pending",
     "validated": "Validated",
     "rejected": "Rejected",
-    "expired": "Expired"
+    "expired": "Expired",
+    "project_ready": "Project Ready"
   },
      "project_creation": {
      "title": "Project Creation",

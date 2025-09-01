@@ -25,4 +25,5 @@ urlpatterns = [
     # Start a quote chat between current user and a professional (creates/returns a hidden project)
     path("chat/start-quote/<int:professional_id>/", 
          views.StartQuoteChatAPIView.as_view()),
+    
 ]

@@ -183,6 +183,29 @@ export const deleteProject = createAsyncThunk(
   }
 );
 
+export const updateProjectStatus = createAsyncThunk(
+  'project/updateProjectStatus',
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.post(
+        `${BASE_URL}api/projects/status-update/${projectId}/`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return { projectId, newStatus: response.data.new_status };
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 export const approveMilestone = createAsyncThunk(
   'project/approveMilestone',
   async ({ milestoneId, action, reviewComment }, { rejectWithValue }) => {
@@ -402,6 +425,22 @@ const projectSlice = createSlice({
       .addCase(deleteProject.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to delete project';
+      })
+      .addCase(updateProjectStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProjectStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        // Update the project status in the projects list if it exists
+        const updatedProject = state.projects.find(p => p.id === action.payload.projectId);
+        if (updatedProject) {
+          updatedProject.status = action.payload.newStatus;
+        }
+      })
+      .addCase(updateProjectStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to update project status';
       })
       .addCase(approveMilestone.pending, (state) => {
         state.approveMilestoneLoading = true;
