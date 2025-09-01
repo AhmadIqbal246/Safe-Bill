@@ -13,6 +13,11 @@ class Project(models.Model):
         ('completed', 'Completed'),
     ]
     
+    PROJECT_TYPE_CHOICES = [
+        ('real_project', 'Real Project'),
+        ('quote_chat', 'Quote Chat'),
+    ]
+    
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -37,6 +42,12 @@ class Project(models.Model):
         max_length=20,
         choices=STATUS_CHOICES,
         default='pending'
+    )
+    project_type = models.CharField(
+        max_length=20,
+        choices=PROJECT_TYPE_CHOICES,
+        default='real_project',
+        help_text="Type of project - real project or quote chat"
     )
 
     def __str__(self):

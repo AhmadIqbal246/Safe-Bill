@@ -174,6 +174,7 @@ class StartQuoteChatAPIView(generics.CreateAPIView):
             client=buyer,
             name=f"Quote Chat: {buyer.username} ↔ {seller.username}",
             client_email=buyer.email or "",
+            project_type="quote_chat",  # Mark as quote chat project
         )
 
         return Response({

@@ -75,7 +75,11 @@ class ProjectListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(user=self.request.user).order_by('-id')
+        # Only show real projects, not quote chat projects
+        return Project.objects.filter(
+            user=self.request.user, 
+            project_type='real_project'
+        ).order_by('-id')
 
 
 class ClientProjectListAPIView(generics.ListAPIView):
@@ -95,6 +99,60 @@ class ProjectDeleteAPIView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(user=self.request.user)
+
+
+class ProjectStatusUpdateAPIView(APIView):
+    """
+    API view for updating project status from 'approved' to 'in_progress'
+    Only sellers can update their own projects
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, project_id):
+        try:
+            # Get the project and verify ownership
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response(
+                {'detail': 'Project not found or you do not have permission to modify it.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if user has seller role
+        if not hasattr(request.user, 'role') or request.user.role not in ['seller']:
+            return Response(
+                {'detail': 'Only sellers can update project status.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validate current status
+        if project.status != 'approved':
+            return Response(
+                {'detail': f'Project status can only be changed to "In Progress" when current status is "Approved". Current status: {project.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update status to in_progress
+        project.status = 'in_progress'
+        project.save()
+        
+        # Create notification for the client
+        if project.client:
+            Notification.objects.create(
+                user=project.client,
+                message=f"Project '{project.name}' has been started and is now in progress."
+            )
+        
+        # Create notification for the seller
+        Notification.objects.create(
+            user=request.user,
+            message=f"You have started project '{project.name}' and it is now in progress."
+        )
+        
+        return Response({
+            'detail': 'Project status updated successfully to "in_progress".',
+            'new_status': 'in_progress'
+        }, status=status.HTTP_200_OK)
 
 
 class MilestoneListAPIView(generics.ListAPIView):
