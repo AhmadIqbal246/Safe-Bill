@@ -91,7 +91,8 @@ class EmailService:
         user_email: str,
         user_name: str,
         verification_url: str,
-        user_type: str = "user"
+        user_type: str = "user",
+        verification_code: str = None
     ) -> bool:
         """
         Send email verification email.
@@ -101,6 +102,7 @@ class EmailService:
             user_name: Recipient name
             verification_url: Email verification URL
             user_type: Type of user (buyer, seller, etc.)
+            verification_code: Optional verification code for manual entry
             
         Returns:
             bool: True if email was sent successfully
@@ -109,6 +111,8 @@ class EmailService:
             'user_name': user_name,
             'verification_url': verification_url,
             'user_type': user_type,
+            'verification_code': verification_code,
+            'frontend_verification_url': f"{settings.FRONTEND_URL}email-verification",
             'site_name': 'SafeBill',
             'support_email': settings.DEFAULT_FROM_EMAIL,
         }
