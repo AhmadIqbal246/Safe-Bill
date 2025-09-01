@@ -35,7 +35,8 @@ class EmailService:
             recipient_list: List of recipient email addresses
             template_name: Name of the HTML template (without .html extension)
             context: Context variables for the template
-            from_email: Sender email address (defaults to settings.DEFAULT_FROM_EMAIL)
+            from_email: Sender email address (defaults to 
+            settings.DEFAULT_FROM_EMAIL)
             fail_silently: Whether to fail silently on errors
             
         Returns:
@@ -356,4 +357,47 @@ class EmailService:
             recipient_list=[sender_email],
             template_name='quote_request_confirmation',
             context=context
+        )
+
+    @staticmethod
+    def send_project_invitation_email(
+        client_email: str,
+        project_name: str,
+        invitation_url: str,
+        invitation_token: str
+    ) -> bool:
+        """
+        Send project invitation email to client.
+        
+        Args:
+            client_email: Client's email address
+            project_name: Name of the project
+            invitation_url: Full invitation URL
+            invitation_token: Invitation token for manual entry
+            
+        Returns:
+            bool: True if email was sent successfully
+        """
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        
+        context = {
+            'project_name': project_name,
+            'invitation_url': invitation_url,
+            'invitation_token': invitation_token,
+            'frontend_url': frontend_url,
+            'site_name': 'SafeBill',
+            'support_email': settings.DEFAULT_FROM_EMAIL,
+        }
+        
+        subject = (
+            f"You've been invited to join the '{project_name}' "
+            f"project on SafeBill"
+        )
+        
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[client_email],
+            template_name='project_invitation',
+            context=context,
+            fail_silently=True  # Don't fail if email can't be sent
         )
