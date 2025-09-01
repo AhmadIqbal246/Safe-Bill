@@ -9,6 +9,7 @@ import feedbackReducer from './slices/FeedbackSlices';
 import disputeReducer from './slices/DisputeSlice';
 import chatReducer from './slices/ChatSlice';
 import adminReducer from './slices/AdminSlice';
+import stripeReducer from './slices/ConnectStripe';
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -25,6 +26,7 @@ export const store = configureStore({
     dispute: disputeReducer,
     chat: chatReducer,
     admin: adminReducer,
+    stripe: stripeReducer,
   },
 });
 
