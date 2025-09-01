@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Preview - SafeBill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .preview-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e3a8a;
+            text-align: center;
+        }
+        .email-frame {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            min-height: 600px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <h1>SafeBill Email Preview</h1>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <p>This page helps you preview how the SafeBill emails will look in different email clients.</p>
+            <p>To test the email rendering:</p>
+            <ol>
+                <li>Run the Django development server: <code>python manage.py runserver</code></li>
+                <li>Run the email test script: <code>python test_email_service.py</code></li>
+                <li>Check your email client to see the rendered HTML emails</li>
+            </ol>
+        </div>
+        
+        <h2>Email Verification Template Preview</h2>
+        <div class="email-frame">
+            <iframe src="data:text/html;charset=utf-8,
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Transitional//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'/>
+    <title>Verify Your Email - SafeBill</title>
+    <style type='text/css'>
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+        }
+        
+        .email-wrapper {
+            width: 100%;
+            background-color: #f8f9fa;
+            padding: 20px 0;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            background-color: #1e3a8a;
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            color: #ffffff;
+        }
+        
+        .email-header p {
+            font-size: 16px;
+            margin: 0;
+            color: #ffffff;
+            opacity: 0.9;
+        }
+        
+        .email-content {
+            padding: 40px 30px;
+        }
+        
+        .email-content h2 {
+            color: #1e3a8a;
+            font-size: 24px;
+            margin: 0 0 20px 0;
+            font-weight: bold;
+        }
+        
+        .email-content p {
+            font-size: 16px;
+            margin: 0 0 16px 0;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        .email-content .highlight {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: #1e3a8a;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .email-footer p {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 8px 0;
+        }
+        
+        .email-footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .warning {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class='email-wrapper'>
+        <table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%'>
+            <tr>
+                <td align='center'>
+                    <div class='email-container'>
+                        <div class='email-header'>
+                            <h1>SafeBill</h1>
+                            <p>Email Verification Required</p>
+                        </div>
+                        
+                        <div class='email-content'>
+                            <h2>Verify Your Email Address</h2>
+                            
+                            <p>Hello Test User!</p>
+                            
+                            <p>Welcome to SafeBill! To complete your registration as a seller, please verify your email address by clicking the button below:</p>
+                            
+                            <div style='text-align: center; margin: 30px 0;'>
+                                <a href='#' class='btn'>Verify Email Address</a>
+                            </div>
+                            
+                            <div class='highlight'>
+                                <p><strong>Important:</strong> This verification link will expire in 24 hours for security reasons.</p>
+                            </div>
+                            
+                            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+                            <p style='word-break: break-all; background-color: #f3f4f6; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 14px;'>
+                                https://example.com/verify?token=test123
+                            </p>
+                            
+                            <div class='warning'>
+                                <p><strong>Security Notice:</strong> If you didn't create an account with SafeBill, you can safely ignore this email. Your email address will not be used without verification.</p>
+                            </div>
+                            
+                            <p>Once verified, you'll be able to:</p>
+                            <ul style='margin-left: 20px; color: #4b5563;'>
+                                <li>Access your dashboard</li>
+                                <li>Create and manage projects</li>
+                                <li>Connect with other professionals</li>
+                                <li>Secure your business transactions</li>
+                            </ul>
+                            
+                            <p>If you're having trouble with the verification link, please contact our support team at <a href='mailto:support@safebill.com'>support@safebill.com</a>.</p>
+                            
+                            <p>Best regards,<br>
+                            The SafeBill Team</p>
+                        </div>
+                        
+                        <div class='email-footer'>
+                            <p>&copy; 2024 SafeBill. All rights reserved.</p>
+                            <p>If you have any questions, please contact us at <a href='mailto:support@safebill.com'>support@safebill.com</a></p>
+                            <p>This email was sent to you because you have an account with SafeBill.</p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>"></iframe>
+        </div>
+        
+        <h2>Testing Instructions</h2>
+        <div class="instructions">
+            <h3>To test the email functionality:</h3>
+            <ol>
+                <li><strong>Run the test script:</strong> <code>python test_email_service.py</code></li>
+                <li><strong>Check your email:</strong> Look for emails in your inbox</li>
+                <li><strong>Verify HTML rendering:</strong> The emails should now display with proper styling</li>
+                <li><strong>Test different email clients:</strong> Gmail, Outlook, Apple Mail, etc.</li>
+            </ol>
+            
+            <h3>Key improvements made:</h3>
+            <ul>
+                <li>✅ Used XHTML 1.0 Transitional DOCTYPE for better email client compatibility</li>
+                <li>✅ Added proper MIME type headers</li>
+                <li>✅ Used table-based layout for better email client support</li>
+                <li>✅ Removed CSS properties that don't work in email clients</li>
+                <li>✅ Added email client specific CSS resets</li>
+                <li>✅ Used inline styles where necessary</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -7,8 +7,7 @@ from .models import Conversation, Message, ChatContact
 from projects.models import Project
 from django.utils import timezone
 
-from django.core.mail import send_mail
-from django.conf import settings
+from utils.email_service import EmailService
 
 User = get_user_model()
 
@@ -138,32 +137,21 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
             
             # Only send notification if buyer sends first message
             if message.sender_id != seller.id:
-                subject = (
-                    f"New Business Opportunity - Message from "
-                    f"{buyer.username}"
-                )
+                # Get user names for email
+                seller_name = seller.get_full_name() or seller.username or seller.email.split('@')[0]
+                buyer_name = buyer.get_full_name() or buyer.username or buyer.email.split('@')[0]
                 message_preview = (
                     f"{message.content[:200]}{'...' if len(message.content) > 200 else ''}"
                 )
-                message_body = f"""
-Hello {seller.username},
-
-You have received a new message regarding a business opportunity on SafeBill.
-
-From: {buyer.username} ({buyer.email})
-
-Please log in to your SafeBill dashboard to view the full conversation and respond to this potential client.
-
-Best regards,
-SafeBill Team
-                """.strip()
                 
-                send_mail(
-                    subject=subject,
-                    message=message_body,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[seller.email],
-                    fail_silently=True,
+                # Send email using the new email service
+                EmailService.send_quote_chat_notification(
+                    seller_email=seller.email,
+                    seller_name=seller_name,
+                    buyer_name=buyer_name,
+                    buyer_email=buyer.email,
+                    project_name=project.name,
+                    message_preview=message_preview
                 )
         except Exception as e:
             # Log error but don't break the chat functionality
