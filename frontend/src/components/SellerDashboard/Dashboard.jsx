@@ -7,50 +7,7 @@ import { fetchNotifications, markNotificationRead, markAllNotificationsRead } fr
 import { CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-
-const overviewData = [
-  {
-    labelKey: 'dashboard.pending_quotes',
-    value: 12,
-    change: '+10%',
-    color: 'bg-white',
-    btnKey: 'dashboard.view',
-  },
-  {
-    labelKey: 'dashboard.current_projects',
-    value: 8,
-    change: '+5%',
-    color: 'bg-white',
-    btnKey: 'dashboard.view',
-  },
-  {
-    labelKey: 'dashboard.monthly_revenue',
-    value: '$25,000',
-    change: '+15%',
-    color: 'bg-white',
-    btnKey: 'dashboard.view',
-  },
-];
-
-const deadlines = {
-  count: 3,
-  change: '-2%',
-};
-
-// Icon selection based on message content (simple heuristic)
-function getNotificationIcon(message) {
-  if (message.toLowerCase().includes('project')) return '+';
-  if (message.toLowerCase().includes('approved')) return '✓';
-  if (message.toLowerCase().includes('deadline')) return '⏰';
-  if (message.toLowerCase().includes('payment')) return '$';
-  return '!';
-}
-
-const statusOptions = [
-  { labelKey: 'dashboard.in_progress', color: 'bg-cyan-400 text-white' },
-  { labelKey: 'dashboard.completed', color: 'bg-emerald-700 text-white' },
-  { labelKey: 'dashboard.pending', color: 'bg-gray-300 text-gray-800' },
-];
+import ProjectStatusBadge from '../common/ProjectStatusBadge';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -65,6 +22,48 @@ export default function Dashboard() {
     dispatch(fetchProjects());
     dispatch(fetchNotifications());
   }, [dispatch]);
+
+  // Calculate real project counts
+  const pendingQuotesCount = projects ? projects.filter(project => project.status === 'pending').length : 0;
+  const currentProjectsCount = projects ? projects.filter(project => project.status === 'in_progress').length : 0;
+  
+  const overviewData = [
+    {
+      labelKey: 'dashboard.pending_quotes',
+      value: pendingQuotesCount,
+      change: '+10%',
+      color: 'bg-white',
+      btnKey: 'dashboard.view',
+    },
+    {
+      labelKey: 'dashboard.current_projects',
+      value: currentProjectsCount,
+      change: '+5%',
+      color: 'bg-white',
+      btnKey: 'dashboard.view',
+    },
+    {
+      labelKey: 'dashboard.monthly_revenue',
+      value: '$25,000',
+      change: '+15%',
+      color: 'bg-white',
+      btnKey: 'dashboard.view',
+    },
+  ];
+
+  const deadlines = {
+    count: 3,
+    change: '-2%',
+  };
+
+  // Icon selection based on message content (simple heuristic)
+  function getNotificationIcon(message) {
+    if (message.toLowerCase().includes('project')) return '+';
+    if (message.toLowerCase().includes('approved')) return '✓';
+    if (message.toLowerCase().includes('deadline')) return '⏰';
+    if (message.toLowerCase().includes('payment')) return '$';
+    return '!';
+  }
 
   // Show loading state for the entire dashboard
   if (loading) {
@@ -199,7 +198,6 @@ export default function Dashboard() {
   const sortedProjects = (projects || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   // Show up to 7 projects in the table, scroll if more
   const maxRows = 7;
-  const dummyStatus = idx => statusOptions[idx % statusOptions.length];
 
   const handleViewDetails = (project) => {
     setDialogProject(project);
@@ -323,22 +321,19 @@ export default function Dashboard() {
                     {sortedProjects.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-4 sm:py-6 text-gray-400 text-xs sm:text-sm">{t('dashboard.no_projects_found')}</td></tr>
                     ) : (
-                      sortedProjects.slice(0, 5).map((proj, idx) => {
-                        const status = dummyStatus(idx);
-                        return (
-                          <tr key={proj.id} className="border-t border-gray-100">
-                            <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm max-w-[80px] sm:max-w-none truncate">{proj.name}</td>
-                            <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-blue-700 font-medium cursor-pointer hover:underline text-xs sm:text-sm max-w-[80px] sm:max-w-none truncate">{proj.client_email}</td>
-                            <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap">
-                              <span className={`inline-block px-1 sm:px-2 md:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold ${status.color}`}>{t(status.labelKey)}</span>
-                            </td>
-                            <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">${parseFloat(proj.total_amount).toLocaleString()}</td>
-                            <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap">
-                              <button className="text-[#01257D] font-semibold hover:underline cursor-pointer text-xs sm:text-sm" onClick={() => handleViewDetails(proj)}>{t('dashboard.view')}</button>
-                            </td>
-                          </tr>
-                        );
-                      })
+                      sortedProjects.slice(0, 5).map((proj, idx) => (
+                      <tr key={proj.id} className="border-t border-gray-100">
+                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm max-w-[80px] sm:max-w-none truncate">{proj.name}</td>
+                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-blue-700 font-medium cursor-pointer hover:underline text-xs sm:text-sm max-w-[80px] sm:max-w-none truncate">{proj.client_email}</td>
+                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap">
+                          <ProjectStatusBadge status={proj.status} size="small" />
+                        </td>
+                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">${parseFloat(proj.total_amount).toLocaleString()}</td>
+                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap">
+                          <button className="text-[#01257D] font-semibold hover:underline cursor-pointer text-xs sm:text-sm" onClick={() => handleViewDetails(proj)}>{t('dashboard.view')}</button>
+                        </td>
+                      </tr>
+                    ))
                     )}
                   </tbody>
                 </table>
@@ -347,7 +342,7 @@ export default function Dashboard() {
             <div className="flex justify-end mt-3 sm:mt-4">
               <button
                 className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-xs sm:text-sm cursor-pointer"
-                onClick={() => navigate('/current-projects')}
+                onClick={() => navigate('/my-quotes')}
               >
                 {t('dashboard.view_all_projects')}
               </button>

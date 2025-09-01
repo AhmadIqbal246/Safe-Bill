@@ -4,7 +4,7 @@ from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import timedelta
 import secrets
-from django.core.mail import send_mail
+from utils.email_service import EmailService
 from django.conf import settings
 from notifications.models import Notification
 
@@ -132,22 +132,25 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
                 # Other fields will be empty and can be edited later
             )
         
-        # Send invite email to client
+        # Send invite email to client using EmailService
         frontend_url = settings.FRONTEND_URL.rstrip('/')
         invite_link = f"{frontend_url}/project-invite?token={invite_token}"
-        send_mail(
-            subject='You have been invited to view your project',
-            message=(
-                'Hello,\n\nA new project has been created for you on SafeBill. '
-                'Please use the following secure link to view your project '
-                'details:'
-                '\n' + f'{invite_link}' +
-                '\n\nThis link will expire in 2 days.'
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[project.client_email],
-            fail_silently=True,
-        )
+        
+        try:
+            EmailService.send_project_invitation_email(
+                client_email=project.client_email,
+                project_name=project.name,
+                invitation_url=invite_link,
+                invitation_token=invite_token
+            )
+        except Exception as e:
+            # Log the error but don't fail project creation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(
+                f"Failed to send project invitation email to "
+                f"{project.client_email}: {str(e)}"
+            )
         # Create notification for the user
         Notification.objects.create(
             user=user,
@@ -172,7 +175,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             'id', 'name', 'client_email', 'client', 'quote', 'installments',
-            'reference_number', 'total_amount', 'created_at'
+            'reference_number', 'total_amount', 'created_at', 'status'
         ]
 
     def get_reference_number(self, obj):
@@ -200,7 +203,7 @@ class ClientProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             'id', 'name', 'seller_name', 'quote', 'installments', 'milestones',
-            'reference_number', 'total_amount', 'created_at'
+            'reference_number', 'total_amount', 'created_at', 'status'
         ]
 
     def get_reference_number(self, obj):

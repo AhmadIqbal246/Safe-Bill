@@ -31,6 +31,8 @@ import SellerDisputesPage from "./pages/SellerDisputesPage";
 import AdminPage from "./pages/AdminPage";
 import ProfessionalDetailPage from "./components/FindProfessional/ProfessionalDetailPage";
 import ContactUs from "./components/mutualComponents/ContactUs";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -57,6 +59,8 @@ function App() {
           <Route path="/buyer-register" element={<BuyerRegisterPage />} />
           <Route path='/email-verification' element={<EmailVerificationPage/>}/>
           <Route path='/login' element={<LogInPage/>}/>
+          <Route path='/forgot-password' element={<ForgotPassword/>}/>
+          <Route path='/password-reset' element={<ResetPassword/>}/>
           <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage/></ProtectedRoute>}/>
           <Route path='/find-professionals' element={<ProtectedRoute><FindProfessionals/></ProtectedRoute>}/>
           <Route path='/seller-dashboard' element={<ProtectedRoute requiredRole="seller"><SellerDashboardPage/></ProtectedRoute>}/>
@@ -68,7 +72,7 @@ function App() {
           <Route path='/my-documents' element={<ProtectedRoute requiredRole="seller"><MyDocuments/></ProtectedRoute>}/>
           <Route path='/milestones' element={<ProtectedRoute requiredRole="seller"><MilestonePage/></ProtectedRoute>}/>
           <Route path='/support' element={<Support/>}/>
-          <Route path='/project-invite' element={<ProtectedRoute redirectTo="/buyer-register"><InviteViewProject/></ProtectedRoute>}/>
+          <Route path='/project-invite' element={<ProtectedRoute redirectTo="/login"><InviteViewProject/></ProtectedRoute>}/>
           <Route path='/professional-buyer' element={<ProfessionalBuyerPage/>}/>
           <Route path='/not-authorized' element={<NotAuthorized/>}/>
           <Route path='/buyer-dashboard' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><BuyerDashboardPage/></ProtectedRoute>}/>

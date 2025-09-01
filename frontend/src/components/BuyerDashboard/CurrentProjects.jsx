@@ -1,7 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import ProjectStatusBadge from '../common/ProjectStatusBadge';
 
 export default function CurrentProjects({ projects = [] }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getProgressPercentage = (project) => {
@@ -13,20 +16,7 @@ export default function CurrentProjects({ projects = [] }) {
     return Math.round((completedInstallments / totalInstallments) * 100);
   };
 
-  const getStatusColor = (project) => {
-    // For now, use a simple status based on progress
-    const progress = getProgressPercentage(project);
-    if (progress >= 90) return 'bg-[#0ec6b0]'; // Green for near completion
-    if (progress >= 50) return 'bg-[#0ec6b0]'; // Green for active
-    return 'bg-yellow-500'; // Yellow for review
-  };
 
-  const getStatusText = (project) => {
-    const progress = getProgressPercentage(project);
-    if (progress >= 90) return 'Review';
-    if (progress >= 50) return 'Active';
-    return 'Planning';
-  };
 
   const handleProjectClick = (project) => {
     navigate(`/project/${project.id}`);
@@ -34,14 +24,12 @@ export default function CurrentProjects({ projects = [] }) {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px] h-[500px] flex flex-col">
-      <div className="font-semibold text-lg mb-4">Current Projects</div>
+      <div className="font-semibold text-lg mb-4">{t('buyer_dashboard.current_projects')}</div>
       
-      {projects.length > 0 ? (
+      {projects.filter(project => project.status === 'in_progress').length > 0 ? (
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-          {projects.map((project, index) => {
+          {projects.filter(project => project.status === 'in_progress').map((project, index) => {
             const progress = getProgressPercentage(project);
-            const statusColor = getStatusColor(project);
-            const statusText = getStatusText(project);
             
             return (
               <div 
@@ -52,9 +40,7 @@ export default function CurrentProjects({ projects = [] }) {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-gray-900 text-sm">{project.name}</span>
-                    <span className={`${statusColor} text-white rounded-full px-2 py-0.5 text-xs`}>
-                      {statusText}
-                    </span>
+                    <ProjectStatusBadge status={project.status} size="small" />
                   </div>
                   <div className="text-sm font-semibold text-gray-800">
                     ${project.total_amount?.toFixed(2) || '0.00'}
@@ -82,7 +68,7 @@ export default function CurrentProjects({ projects = [] }) {
         </div>
       ) : (
         <div className="text-gray-500 text-center py-8">
-          No active projects found
+          {t('buyer_dashboard.no_in_progress_projects')}
         </div>
       )}
     </div>
