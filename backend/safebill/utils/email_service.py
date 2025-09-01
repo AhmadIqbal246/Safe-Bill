@@ -112,7 +112,9 @@ class EmailService:
             'verification_url': verification_url,
             'user_type': user_type,
             'verification_code': verification_code,
-            'frontend_verification_url': f"{settings.FRONTEND_URL}email-verification",
+            'frontend_verification_url': (
+                f"{settings.FRONTEND_URL}email-verification"
+            ),
             'site_name': 'SafeBill',
             'support_email': settings.DEFAULT_FROM_EMAIL,
         }
@@ -130,7 +132,8 @@ class EmailService:
     def send_password_reset_email(
         user_email: str,
         user_name: str,
-        reset_url: str
+        reset_url: str,
+        reset_code: str = None
     ) -> bool:
         """
         Send password reset email.
@@ -139,6 +142,7 @@ class EmailService:
             user_email: Recipient email address
             user_name: Recipient name
             reset_url: Password reset URL
+            reset_code: Optional reset code for manual entry
             
         Returns:
             bool: True if email was sent successfully
@@ -146,6 +150,10 @@ class EmailService:
         context = {
             'user_name': user_name,
             'reset_url': reset_url,
+            'reset_code': reset_code,
+            'frontend_reset_url': (
+                f"{settings.FRONTEND_URL}reset-password"
+            ),
             'site_name': 'SafeBill',
             'support_email': settings.DEFAULT_FROM_EMAIL,
         }

@@ -42,7 +42,7 @@ function EmailVerificationComp() {
   const handleVerifyEmail = async () => {
     if (!verificationToken.trim()) {
       setShowError(true);
-      setMessage('Please enter a verification token');
+      setMessage(t('email_verification.please_enter_token'));
       return;
     }
 
@@ -58,14 +58,14 @@ function EmailVerificationComp() {
       
       setStatus('success');
       setShowSuccess(true);
-      setMessage(res.data.detail || 'Email verified successfully!');
+      setMessage(res.data.detail || t('email_verification.verification_email_sent'));
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
       setStatus('error');
       setShowError(true);
       setMessage(
         err.response?.data?.detail ||
-        'Verification failed. Please check your token and try again.'
+        t('email_verification.verification_failed_message')
       );
     }
   };
@@ -73,7 +73,7 @@ function EmailVerificationComp() {
   const handleResendVerification = async () => {
     if (!resendEmail.trim()) {
       setShowError(true);
-      setMessage('Please enter your email address');
+      setMessage(t('email_verification.please_enter_email'));
       return;
     }
 
@@ -95,13 +95,13 @@ function EmailVerificationComp() {
       );
       
       setShowSuccess(true);
-      setMessage(res.data.detail || 'Verification email sent successfully!');
+      setMessage(res.data.detail || t('email_verification.verification_email_sent'));
       setResendCooldown(60); // 60 seconds cooldown
     } catch (err) {
       setShowError(true);
       setMessage(
         err.response?.data?.detail ||
-        'Failed to send verification email. Please try again.'
+        t('email_verification.failed_to_send_verification')
       );
     } finally {
       setIsResending(false);
@@ -116,19 +116,19 @@ function EmailVerificationComp() {
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
-      return 'Email address is required';
+      return t('email_verification.email_required');
     }
     if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address (e.g., user@domain.com)';
+      return t('email_verification.email_invalid');
     }
     if (email.length > 254) {
-      return 'Email address is too long';
+      return t('email_verification.email_too_long');
     }
     if (email.split('@')[0].length > 64) {
-      return 'Local part of email is too long';
+      return t('email_verification.local_part_too_long');
     }
     if (email.split('@')[1] && email.split('@')[1].length > 190) {
-      return 'Domain part of email is too long';
+      return t('email_verification.domain_part_too_long');
     }
     return '';
   };
@@ -151,8 +151,8 @@ function EmailVerificationComp() {
 
         {/* Main Title */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Email</h1>
-          <p className="text-gray-600 text-sm">Please check your email and enter the verification code below</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('email_verification.title')}</h1>
+          <p className="text-gray-600 text-sm">{t('email_verification.description')}</p>
         </div>
 
         {/* Success Message */}
@@ -178,7 +178,7 @@ function EmailVerificationComp() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
             </svg>
-            <p className="text-lg font-medium text-gray-900">Verifying your email...</p>
+            <p className="text-lg font-medium text-gray-900">{t('email_verification.verifying_email')}</p>
           </div>
         )}
 
@@ -188,7 +188,7 @@ function EmailVerificationComp() {
             {/* Verification Token Section */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Verification Token
+                {t('email_verification.verification_token')}
               </label>
               <div className="relative">
                 <input
@@ -196,7 +196,7 @@ function EmailVerificationComp() {
                   value={verificationToken}
                   onChange={(e) => setVerificationToken(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent pr-12"
-                  placeholder="Enter your verification token"
+                  placeholder={t('email_verification.verification_token_placeholder')}
                 />
                 {verificationToken && (
                   <button
@@ -213,10 +213,10 @@ function EmailVerificationComp() {
             <button
               onClick={handleVerifyEmail}
               disabled={!verificationToken.trim()}
-              className="w-full bg-[#1e3a8a] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#1e40af] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+              className="w-full bg-[#01257D] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#2346a0] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             >
               <Check className="w-5 h-5 mr-2" />
-              Verify Email
+              {t('email_verification.verify_email')}
             </button>
 
             {/* Divider */}
@@ -229,7 +229,7 @@ function EmailVerificationComp() {
             {/* Resend Verification Section */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Resend verification to
+                {t('email_verification.resend_verification_to')}
               </label>
               <input
                 type="email"
@@ -238,7 +238,7 @@ function EmailVerificationComp() {
                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent ${
                   emailError ? 'border-red-300 focus:border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="Enter your email address"
+                placeholder={t('email_verification.please_enter_email')}
               />
               {emailError && (
                 <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -257,17 +257,17 @@ function EmailVerificationComp() {
               {isResending ? (
                 <>
                   <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                  Sending...
+                  {t('email_verification.sending')}
                 </>
               ) : resendCooldown > 0 ? (
                 <>
                   <Clock className="w-5 h-5 mr-2" />
-                  Resend in {resendCooldown}s
+                  {t('email_verification.resend_in')} {resendCooldown}{t('email_verification.seconds')}
                 </>
               ) : (
                 <>
                   <Mail className="w-5 h-5 mr-2" />
-                  Resend Verification
+                  {t('email_verification.resend_verification')}
                 </>
               )}
             </button>
@@ -280,9 +280,9 @@ function EmailVerificationComp() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Email Verified!</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('email_verification.email_verified')}</h2>
             <p className="text-gray-600 mb-4">{message}</p>
-            <p className="text-sm text-gray-500">Redirecting to login page...</p>
+            <p className="text-sm text-gray-500">{t('email_verification.redirecting_to_login')}</p>
           </div>
         )}
 
@@ -292,13 +292,13 @@ function EmailVerificationComp() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-xl font-semibold text-red-600 mb-2">Verification Failed</h2>
+            <h2 className="text-xl font-semibold text-red-600 mb-2">{t('email_verification.verification_failed')}</h2>
             <p className="text-gray-600 mb-4">{message}</p>
             <button
               onClick={() => setStatus('form')}
               className="text-[#1e3a8a] hover:text-[#1e40af] font-medium"
             >
-              Try Again
+              {t('email_verification.try_again')}
             </button>
           </div>
         )}
@@ -309,8 +309,8 @@ function EmailVerificationComp() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start">
             <AlertTriangle className="text-blue-600 w-5 h-5 mt-0.5 mr-3 flex-shrink-0" />
             <div>
-              <p className="text-blue-800 text-sm font-medium">Security Notice</p>
-              <p className="text-blue-700 text-sm">Verification tokens expire after 24 hours for your security.</p>
+              <p className="text-blue-800 text-sm font-medium">{t('email_verification.security_notice')}</p>
+              <p className="text-blue-700 text-sm">{t('email_verification.security_notice_description')}</p>
             </div>
           </div>
 
@@ -318,8 +318,8 @@ function EmailVerificationComp() {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start">
             <Clock className="text-gray-600 w-5 h-5 mt-0.5 mr-3 flex-shrink-0" />
             <div>
-              <p className="text-gray-800 text-sm font-medium">Need Help?</p>
-              <p className="text-gray-700 text-sm">Check your spam folder or contact support if you don't receive the email.</p>
+              <p className="text-gray-800 text-sm font-medium">{t('email_verification.need_help')}</p>
+              <p className="text-gray-700 text-sm">{t('email_verification.need_help_description')}</p>
             </div>
           </div>
         </div>

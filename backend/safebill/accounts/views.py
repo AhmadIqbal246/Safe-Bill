@@ -322,7 +322,8 @@ class PasswordResetRequestView(APIView):
             EmailService.send_password_reset_email(
                 user_email=user.email,
                 user_name=user_name,
-                reset_url=reset_url
+                reset_url=reset_url,
+                reset_code=token
             )
             
             return Response(
