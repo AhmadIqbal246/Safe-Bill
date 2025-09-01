@@ -1,0 +1,514 @@
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.conf import settings
+import stripe
+from django.contrib.auth import get_user_model
+import logging
+import json
+from django.db import transaction
+from .models import StripeAccount, StripeIdentity
+
+User = get_user_model()
+
+# Create your views here.
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def connect_stripe(request):
+    stripe.api_key = settings.STRIPE_API_KEY
+    user = request.user
+
+    # Get or create StripeAccount for the user
+    stripe_account, created = StripeAccount.objects.get_or_create(
+        user=user, defaults={"account_status": "onboarding"}
+    )
+
+    if stripe_account.account_id is None:
+        account = stripe.Account.create(
+            country="FR",
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+            },
+            controller={
+                "fees": {"payer": "application"},
+                "losses": {"payments": "application"},
+                "stripe_dashboard": {"type": "express"},
+            },
+        )
+        stripe_account.account_id = account.id
+        stripe_account.save()
+    else:
+        account = stripe.Account.retrieve(stripe_account.account_id)
+
+    account_link = stripe.AccountLink.create(
+        account=stripe_account.account_id,
+        refresh_url=f"{settings.FRONTEND_URL}onboarding/",
+        return_url=f"{settings.FRONTEND_URL}onboarding/",
+        type="account_onboarding",
+        collection_options={
+            "fields": "eventually_due",
+        },
+    )
+
+    return Response(
+        {"detail": "Stripe connected successfully.", "account_link": account_link.url},
+        status=200,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def stripe_connect_webhook(request):
+    """
+    Simple Stripe webhook to handle account connection updates
+    """
+    logger = logging.getLogger(__name__)
+
+    # Get the raw request body
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+    endpoint_secret = settings.STRIPE_CONNECT_WEBHOOK_SECRET
+
+    # Verify webhook signature (optional for development, required for production)
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError as e:
+        logger.error(f"Invalid payload: {e}")
+        return Response({"error": "Invalid payload"}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {e}")
+        return Response({"error": "Invalid signature"}, status=400)
+
+    # Handle account.updated event
+    if event["type"] == "account.updated":
+        logger.info(f"Account updated event: {event}")
+        account = event["data"]["object"]
+        account_id = account["id"]
+
+        try:
+            # Find StripeAccount by account ID
+            stripe_account = StripeAccount.objects.get(account_id=account_id)
+
+            # Update StripeAccount status with comprehensive checks
+            details_submitted = account.get("details_submitted", False)
+            charges_enabled = account.get("charges_enabled", False)
+            payouts_enabled = account.get("payouts_enabled", False)
+
+            # Check if business verification is complete
+            requirements = account.get("requirements", {})
+            currently_due = requirements.get("currently_due", [])
+            past_due = requirements.get("past_due", [])
+
+            # Onboarding is complete only if all conditions are met
+            is_onboarding_complete = (
+                details_submitted
+                and charges_enabled
+                and payouts_enabled
+                and len(currently_due) == 0
+                and len(past_due) == 0
+            )
+
+            if is_onboarding_complete:
+                stripe_account.account_status = "active"
+                stripe_account.onboarding_complete = True
+                logger.info(
+                    f"Stripe account {account_id} is now fully active for user {stripe_account.user.id}"
+                )
+            else:
+                # Only change to "pending" if user has started onboarding (details_submitted is True)
+                # Otherwise keep the current status (likely "onboarding")
+                if details_submitted:
+                    stripe_account.account_status = "pending"
+                # If details_submitted is False, keep the current status (probably "onboarding")
+                stripe_account.onboarding_complete = False
+                logger.info(
+                    f"Stripe account {account_id} status updated for user {stripe_account.user.id} - details_submitted: {details_submitted}, charges_enabled: {charges_enabled}, payouts_enabled: {payouts_enabled}, currently_due: {currently_due}, past_due: {past_due}, status: {stripe_account.account_status}"
+                )
+
+            # Store account information
+            stripe_account.account_data = {
+                "country": account.get("country"),
+                "default_currency": account.get("default_currency"),
+                "business_type": account.get("business_type"),
+                "charges_enabled": charges_enabled,
+                "payouts_enabled": payouts_enabled,
+                "details_submitted": details_submitted,
+                "requirements": requirements,
+                "currently_due": currently_due,
+                "eventually_due": requirements.get("eventually_due", []),
+                "past_due": past_due,
+            }
+
+            stripe_account.save()
+            logger.info(f"Updated StripeAccount {stripe_account.id} with account data")
+
+        except StripeAccount.DoesNotExist:
+            logger.error(f"StripeAccount not found for account {account_id}")
+        except Exception as e:
+            logger.error(f"Error updating StripeAccount for account {account_id}: {e}")
+
+    # Handle account deauthorization
+    elif event["type"] == "account.application.deauthorized":
+        account = event["data"]["object"]
+        account_id = account["id"]
+
+        try:
+            stripe_account = StripeAccount.objects.get(account_id=account_id)
+            stripe_account.account_status = "disconnected"
+            stripe_account.onboarding_complete = False
+            stripe_account.account_data = {}
+            stripe_account.save()
+
+            logger.info(
+                f"Stripe account {account_id} disconnected for user {stripe_account.user.id}"
+            )
+
+        except StripeAccount.DoesNotExist:
+            logger.error(f"StripeAccount not found for account {account_id}")
+        except Exception as e:
+            logger.error(f"Error disconnecting Stripe account {account_id}: {e}")
+
+    else:
+        logger.info(f"Unhandled event type: {event['type']}")
+
+    return Response({"status": "success"}, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def check_stripe_status(request):
+    """
+    Check the current Stripe onboarding status for the authenticated user
+    """
+    user = request.user
+
+    try:
+        stripe_account = StripeAccount.objects.get(user=user)
+    except StripeAccount.DoesNotExist:
+        return Response(
+            {
+                "stripe_connected": False,
+                "onboarding_complete": False,
+                "account_status": "not_created",
+                "message": "No Stripe account connected",
+            },
+            status=200,
+        )
+
+    # Get the latest account information from Stripe
+    if stripe_account.account_id:
+        try:
+            stripe.api_key = settings.STRIPE_API_KEY
+            account = stripe.Account.retrieve(stripe_account.account_id)
+
+            # Update StripeAccount status based on current account state
+            # Check if all requirements are met for complete onboarding
+            details_submitted = account.get("details_submitted", False)
+            charges_enabled = account.get("charges_enabled", False)
+            payouts_enabled = account.get("payouts_enabled", False)
+
+            # Check if business verification is complete
+            requirements = account.get("requirements", {})
+            currently_due = requirements.get("currently_due", [])
+            eventually_due = requirements.get("eventually_due", [])
+            past_due = requirements.get("past_due", [])
+
+            # Onboarding is complete only if all conditions are met
+            is_onboarding_complete = (
+                details_submitted
+                and charges_enabled
+                and payouts_enabled
+                and len(currently_due) == 0
+                and len(past_due) == 0
+            )
+
+            if is_onboarding_complete:
+                stripe_account.account_status = "active"
+                stripe_account.onboarding_complete = True
+            else:
+                # Only change to "pending" if user has started onboarding (details_submitted is True)
+                # Otherwise keep the current status (likely "onboarding")
+                if details_submitted:
+                    stripe_account.account_status = "pending"
+                # If details_submitted is False, keep the current status (probably "onboarding")
+                stripe_account.onboarding_complete = False
+
+            # Update account data
+            stripe_account.account_data = {
+                "country": account.get("country"),
+                "default_currency": account.get("default_currency"),
+                "business_type": account.get("business_type"),
+                "charges_enabled": charges_enabled,
+                "payouts_enabled": payouts_enabled,
+                "details_submitted": details_submitted,
+                "requirements": requirements,
+                "currently_due": currently_due,
+                "eventually_due": eventually_due,
+                "past_due": past_due,
+            }
+
+            stripe_account.save()
+
+            return Response(
+                {
+                    "stripe_connected": True,
+                    "onboarding_complete": stripe_account.onboarding_complete,
+                    "account_status": stripe_account.account_status,
+                    "charges_enabled": charges_enabled,
+                    "payouts_enabled": payouts_enabled,
+                    "details_submitted": details_submitted,
+                    "requirements": requirements,
+                    "currently_due": currently_due,
+                    "eventually_due": eventually_due,
+                    "past_due": past_due,
+                    "account_data": stripe_account.account_data,
+                },
+                status=200,
+            )
+
+        except stripe.error.StripeError as e:
+            logging.error(f"Stripe API error for user {user.id}: {e}")
+            return Response(
+                {
+                    "stripe_connected": True,
+                    "onboarding_complete": stripe_account.onboarding_complete,
+                    "account_status": stripe_account.account_status,
+                    "error": "Failed to fetch latest account status from Stripe",
+                    "account_data": stripe_account.account_data,
+                },
+                status=200,
+            )
+    else:
+        return Response(
+            {
+                "stripe_connected": False,
+                "onboarding_complete": False,
+                "account_status": stripe_account.account_status,
+                "message": "No Stripe account ID found",
+            },
+            status=200,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_stripe_identity_session(request):
+    """
+    Create a Stripe Identity verification session for professional buyers
+    """
+    stripe.api_key = settings.STRIPE_API_KEY
+    user = request.user
+
+    try:
+        # Get or create StripeIdentity for the user
+        stripe_identity, created = StripeIdentity.objects.get_or_create(
+            user=user, defaults={"identity_status": "not_started"}
+        )
+
+        # Create a Stripe Identity verification session
+        verification_session = stripe.identity.VerificationSession.create(
+            verification_flow=settings.STRIPE_VERIFICATION_FLOW_ID,
+            provided_details={"email": user.email},
+            metadata={
+                "user_id": str(user.id),
+                "user_email": user.email,
+            },
+        )
+
+        # Store the verification session ID with the StripeIdentity
+        stripe_identity.verification_session_id = verification_session.id
+        stripe_identity.identity_status = "pending"
+        stripe_identity.save()
+
+        return Response(
+            {
+                "detail": "Stripe Identity verification session created successfully.",
+                "verification_session_id": verification_session.id,
+                "client_secret": verification_session.client_secret,
+                "session_url": verification_session.url,
+            },
+            status=200,
+        )
+
+    except stripe.error.StripeError as e:
+        logging.error(f"Stripe Identity error for user {user.id}: {e}")
+        return Response(
+            {"error": f"Failed to create verification session: {str(e)}"},
+            status=400,
+        )
+    except Exception as e:
+        logging.error(
+            f"Unexpected error creating Stripe Identity session for user {user.id}: {e}"
+        )
+        return Response(
+            {"error": "An unexpected error occurred"},
+            status=500,
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def check_stripe_identity_status(request):
+    """
+    Check the current Stripe Identity verification status for the authenticated user
+    """
+    user = request.user
+
+    try:
+        stripe_identity = StripeIdentity.objects.get(user=user)
+        return Response(
+            {
+                "identity_verified": stripe_identity.identity_verified,
+                "identity_status": stripe_identity.identity_status,
+                "verification_data": stripe_identity.verification_data,
+            },
+            status=200,
+        )
+    except StripeIdentity.DoesNotExist:
+        return Response(
+            {
+                "identity_verified": False,
+                "identity_status": "not_started",
+                "verification_data": {},
+            },
+            status=200,
+        )
+    except Exception as e:
+        logger.error(f"Error checking identity status for user {user.id}: {e}")
+        return Response(
+            {"error": "Failed to check identity verification status"},
+            status=500,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def stripe_identity_webhook(request):
+    """
+    Handle Stripe Identity verification webhook events
+    """
+    logger = logging.getLogger(__name__)
+
+    # Get the raw request body
+    payload = request.body
+    sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+
+    # Verify webhook signature
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError as e:
+        logger.error(f"Invalid payload: {e}")
+        return Response({"error": "Invalid payload"}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {e}")
+        return Response({"error": "Invalid signature"}, status=400)
+
+    logger.info(f"Received Stripe Identity webhook: {event['type']}")
+
+    # Handle identity.verification_session.processing event
+    if event["type"] == "identity.verification_session.processing":
+        verification_session = event["data"]["object"]
+        session_id = verification_session["id"]
+
+        try:
+            stripe_identity = StripeIdentity.objects.get(
+                verification_session_id=session_id
+            )
+            stripe_identity.identity_status = "processing"
+            stripe_identity.save()
+            logger.info(
+                f"Updated identity status to processing for user {stripe_identity.user.id}"
+            )
+        except StripeIdentity.DoesNotExist:
+            logger.error(f"StripeIdentity not found for session {session_id}")
+        except Exception as e:
+            logger.error(f"Error updating identity status: {e}")
+
+    # Handle identity.verification_session.verified event
+    elif event["type"] == "identity.verification_session.verified":
+        verification_session = event["data"]["object"]
+        session_id = verification_session["id"]
+
+        try:
+            stripe_identity = StripeIdentity.objects.get(
+                verification_session_id=session_id
+            )
+            stripe_identity.identity_status = "verified"
+            stripe_identity.identity_verified = True
+            stripe_identity.save()
+            logger.info(
+                f"Identity verification completed for user {stripe_identity.user.id}"
+            )
+        except StripeIdentity.DoesNotExist:
+            logger.error(f"StripeIdentity not found for session {session_id}")
+        except Exception as e:
+            logger.error(f"Error updating identity status: {e}")
+
+    # Handle identity.verification_session.requires_input event
+    elif event["type"] == "identity.verification_session.requires_input":
+        verification_session = event["data"]["object"]
+        session_id = verification_session["id"]
+
+        try:
+            stripe_identity = StripeIdentity.objects.get(
+                verification_session_id=session_id
+            )
+            stripe_identity.identity_status = "requires_input"
+            stripe_identity.identity_verified = False
+            stripe_identity.save()
+            logger.info(
+                f"Identity verification requires input for user {stripe_identity.user.id}"
+            )
+        except StripeIdentity.DoesNotExist:
+            logger.error(f"StripeIdentity not found for session {session_id}")
+        except Exception as e:
+            logger.error(f"Error updating identity status: {e}")
+
+    # Handle identity.verification_session.failed event
+    elif event["type"] == "identity.verification_session.failed":
+        verification_session = event["data"]["object"]
+        session_id = verification_session["id"]
+
+        try:
+            stripe_identity = StripeIdentity.objects.get(
+                verification_session_id=session_id
+            )
+            stripe_identity.identity_status = "failed"
+            stripe_identity.identity_verified = False
+            stripe_identity.save()
+            logger.info(
+                f"Identity verification failed for user {stripe_identity.user.id}"
+            )
+        except StripeIdentity.DoesNotExist:
+            logger.error(f"StripeIdentity not found for session {session_id}")
+        except Exception as e:
+            logger.error(f"Error updating identity status: {e}")
+
+    # Handle identity.verification_session.canceled event
+    elif event["type"] == "identity.verification_session.canceled":
+        verification_session = event["data"]["object"]
+        session_id = verification_session["id"]
+
+        try:
+            stripe_identity = StripeIdentity.objects.get(
+                verification_session_id=session_id
+            )
+            stripe_identity.identity_status = "canceled"
+            stripe_identity.identity_verified = False
+            stripe_identity.save()
+            logger.info(
+                f"Identity verification canceled for user {stripe_identity.user.id}"
+            )
+        except StripeIdentity.DoesNotExist:
+            logger.error(f"StripeIdentity not found for session {session_id}")
+        except Exception as e:
+            logger.error(f"Error updating identity status: {e}")
+
+    else:
+        logger.info(f"Unhandled Stripe Identity event type: {event['type']}")
+
+    return Response({"status": "success"}, status=200)
