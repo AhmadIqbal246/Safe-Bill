@@ -203,7 +203,8 @@ class ClientProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             'id', 'name', 'seller_name', 'quote', 'installments', 'milestones',
-            'reference_number', 'total_amount', 'created_at', 'status', 'project_type'
+            'reference_number', 'total_amount', 'created_at', 'status', 'project_type',
+            'invite_token'
         ]
 
     def get_reference_number(self, obj):

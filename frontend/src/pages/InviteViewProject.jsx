@@ -40,6 +40,26 @@ export default function InviteViewProject() {
         }
       );
       setProject(res.data);
+      
+      // Automatically add client to project if not already added
+      // This ensures the buyer can see pending projects on their dashboard
+      if (res.data && !res.data.client) {
+        try {
+          await axios.post(
+            `${backendBaseUrl}api/projects/invite/${token}/`,
+            { action: 'view' }, // Special action to just add client without approval
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+              },
+              withCredentials: true,
+            }
+          );
+        } catch (addError) {
+          console.log('Client already added or error adding client:', addError);
+        }
+      }
     } catch (err) {
       setError(
         err.response && err.response.data && err.response.data.detail
