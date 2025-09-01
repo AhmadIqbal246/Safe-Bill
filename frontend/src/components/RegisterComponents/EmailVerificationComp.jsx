@@ -11,6 +11,7 @@ function EmailVerificationComp() {
   const [message, setMessage] = useState('');
   const [verificationToken, setVerificationToken] = useState('');
   const [resendEmail, setResendEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -76,6 +77,14 @@ function EmailVerificationComp() {
       return;
     }
 
+    // Validate email format
+    const emailValidationError = validateEmail(resendEmail);
+    if (emailValidationError) {
+      setShowError(true);
+      setMessage(emailValidationError);
+      return;
+    }
+
     setIsResending(true);
     setShowError(false);
 
@@ -102,6 +111,32 @@ function EmailVerificationComp() {
   const copyToken = () => {
     navigator.clipboard.writeText(verificationToken);
     // You could add a toast notification here
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      return 'Email address is required';
+    }
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address (e.g., user@domain.com)';
+    }
+    if (email.length > 254) {
+      return 'Email address is too long';
+    }
+    if (email.split('@')[0].length > 64) {
+      return 'Local part of email is too long';
+    }
+    if (email.split('@')[1] && email.split('@')[1].length > 190) {
+      return 'Domain part of email is too long';
+    }
+    return '';
+  };
+
+  const handleEmailChange = (e) => {
+    const email = e.target.value;
+    setResendEmail(email);
+    setEmailError(validateEmail(email));
   };
 
   return (
@@ -199,16 +234,24 @@ function EmailVerificationComp() {
               <input
                 type="email"
                 value={resendEmail}
-                onChange={(e) => setResendEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                onChange={handleEmailChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent ${
+                  emailError ? 'border-red-300 focus:border-red-500' : 'border-gray-300'
+                }`}
                 placeholder="Enter your email address"
               />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  {emailError}
+                </p>
+              )}
             </div>
 
             {/* Resend Button */}
             <button
               onClick={handleResendVerification}
-              disabled={!resendEmail.trim() || isResending || resendCooldown > 0}
+              disabled={!resendEmail.trim() || isResending || resendCooldown > 0 || emailError}
               className="w-full border-2 border-[#1e3a8a] text-[#1e3a8a] py-3 px-4 rounded-lg font-medium hover:bg-[#1e3a8a] hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
             >
               {isResending ? (
