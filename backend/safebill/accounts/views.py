@@ -3,8 +3,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from django.core.mail import send_mail
-from django.urls import reverse
 from .serializers import (
     SellerRegistrationSerializer, UserTokenObtainPairSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
@@ -18,6 +16,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
 from rest_framework.decorators import api_view, permission_classes
+from utils.email_service import EmailService
 import re
 import unicodedata
 
@@ -53,22 +52,24 @@ class SellerRegisterView(APIView):
         serializer = SellerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Send verification email
+            # Send verification email using the new email service
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             front_base_url = settings.FRONTEND_URL
-            # verification_url = request.build_absolute_uri(
-            #     reverse('accounts:verify-email') + f'?uid={uid}&token={token}'
-            # )
-            frontend_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
-            send_mail(
-                subject='Verify your email',
-                message=(
-                    f'Click the link to verify your email: {frontend_url}'
-                ),
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
+            verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
+            
+            # Get user name for email
+            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            
+            # Send verification email
+            EmailService.send_verification_email(
+                user_email=user.email,
+                user_name=user_name,
+                verification_url=verification_url,
+                user_type="seller",
+                verification_code=token
             )
+            
             return Response(
                 {'detail': 'Registration successful. Please check your email to verify your account.'},
                 status=status.HTTP_201_CREATED
@@ -81,20 +82,25 @@ class BuyerRegistrationView(APIView):
         serializer = BuyerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Send verification email
+            # Send verification email using the new email service
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             front_base_url = settings.FRONTEND_URL
-            frontend_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
-            send_mail(
-                subject='Verify your email',
-                message=(
-                    f'Click the link to verify your email: {frontend_url}'
-                ),
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
+            verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
+            
+            # Get user name for email
+            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            
+            # Send verification email
+            EmailService.send_verification_email(
+                user_email=user.email,
+                user_name=user_name,
+                verification_url=verification_url,
+                user_type="buyer",
+                verification_code=token
             )
-            return Response({'detail': 'Registration successful. Please check your email to verify your Email.'}, status=status.HTTP_201_CREATED)
+            
+            return Response({'detail': 'Registration successful. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -111,6 +117,15 @@ class VerifyEmailView(APIView):
             user.is_active = True
             user.is_email_verified = True
             user.save()
+            
+            # Send welcome email after successful verification
+            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            EmailService.send_welcome_email(
+                user_email=user.email,
+                user_name=user_name,
+                user_type=user.role
+            )
+            
             return Response(
                 {'detail': 'Email verified successfully.'},
                 status=status.HTTP_200_OK
@@ -118,6 +133,135 @@ class VerifyEmailView(APIView):
         return Response(
             {'detail': 'Invalid or expired token.'},
             status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def post(self, request):
+        """Verify email with token from form input"""
+        token = request.data.get('token')
+        if not token:
+            return Response(
+                {'detail': 'Verification token is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Try to find user by token (assuming token contains user info)
+        # For now, we'll use a simple approach - in production, you might want to store tokens in database
+        try:
+            # Parse token to extract user info
+            # This is a simplified approach - you might want to implement a more secure token system
+            import base64
+            import json
+            
+            # Decode the token (assuming it's base64 encoded JSON with user info)
+            try:
+                decoded_token = base64.b64decode(token).decode('utf-8')
+                token_data = json.loads(decoded_token)
+                user_id = token_data.get('user_id')
+                token_value = token_data.get('token')
+            except:
+                # Fallback: try to find user by checking all unverified users
+                unverified_users = User.objects.filter(is_email_verified=False, is_active=False)
+                user = None
+                for u in unverified_users:
+                    if default_token_generator.check_token(u, token):
+                        user = u
+                        break
+            else:
+                # Use the decoded token data
+                try:
+                    user = User.objects.get(pk=user_id)
+                    if not default_token_generator.check_token(user, token_value):
+                        user = None
+                except User.DoesNotExist:
+                    user = None
+            
+            if user and not user.is_email_verified:
+                user.is_active = True
+                user.is_email_verified = True
+                user.save()
+                
+                # Send welcome email after successful verification
+                user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+                EmailService.send_welcome_email(
+                    user_email=user.email,
+                    user_name=user_name,
+                    user_type=user.role
+                )
+                
+                return Response(
+                    {'detail': 'Email verified successfully. Welcome to SafeBill!'},
+                    status=status.HTTP_200_OK
+                )
+            elif user and user.is_email_verified:
+                return Response(
+                    {'detail': 'Email is already verified.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            else:
+                return Response(
+                    {'detail': 'Invalid or expired verification token.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except Exception as e:
+            return Response(
+                {'detail': 'Invalid verification token format.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ResendVerificationView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response(
+                {'detail': 'Email address is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'No account found with this email address.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if email is already verified
+        if user.is_email_verified:
+            return Response(
+                {'detail': 'Email is already verified.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user is already active (shouldn't happen but safety check)
+        if user.is_active:
+            return Response(
+                {'detail': 'Account is already active.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Generate new verification token
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        front_base_url = settings.FRONTEND_URL
+        verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
+        
+        # Get user name for email
+        user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+        
+        # Send verification email
+        EmailService.send_verification_email(
+            user_email=user.email,
+            user_name=user_name,
+            verification_url=verification_url,
+            user_type=user.role,
+            verification_code=token
+        )
+        
+        return Response(
+            {'detail': 'Verification email sent successfully. Please check your inbox.'},
+            status=status.HTTP_200_OK
         )
 
 
@@ -167,20 +311,21 @@ class PasswordResetRequestView(APIView):
                     status=200
                 )
             token = default_token_generator.make_token(user)
-            uid = user.id
-            print(uid)
-            reset_url = request.build_absolute_uri(
-                reverse('accounts:password-reset-confirm') +
-                f'?uid={uid}&token={token}'
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            front_base_url = settings.FRONTEND_URL
+            reset_url = f"{front_base_url}password-reset/?uid={uid}&token={token}"
+            
+            # Get user name for email
+            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            
+            # Send password reset email using the new email service
+            EmailService.send_password_reset_email(
+                user_email=user.email,
+                user_name=user_name,
+                reset_url=reset_url,
+                reset_code=token
             )
-            send_mail(
-                subject='Password Reset',
-                message=(
-                    f'Click the link to reset your password: {reset_url}'
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-            )
+            
             return Response(
                 {'detail': 'If the email exists, a reset link will be sent.'},
                 status=200

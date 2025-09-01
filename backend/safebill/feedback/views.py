@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from django.core.mail import send_mail
 from django.conf import settings
+from utils.email_service import EmailService
 from .models import Feedback, QuoteRequest, ContactMessage
 from .serializers import FeedbackSerializer, QuoteRequestSerializer, ContactMessageSerializer
 
@@ -118,27 +119,21 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
         try:
             instance = serializer.save()
             
-            # Send quote request email to the professional
-            send_mail(
+            # Send quote request email to the professional using new email service
+            EmailService.send_quote_request_email(
+                professional_email=instance.to_email,
+                from_email=instance.from_email,
                 subject=instance.subject,
-                message=f"From: {instance.from_email}\n\n{instance.body}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[instance.to_email],
-                fail_silently=True,
+                body=instance.body,
+                professional_id=instance.professional_id
             )
             
-            # Send confirmation email to the sender
-            send_mail(
-                subject="Quote Request Sent Successfully",
-                message=(
-                    f"Your quote request has been sent to the professional.\n\n"
-                    f"Subject: {instance.subject}\n"
-                    f"Professional ID: {instance.professional_id}\n\n"
-                    f"We'll notify you when they respond."
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[instance.from_email],
-                fail_silently=True,
+            # Send confirmation email to the sender using new email service
+            EmailService.send_quote_request_confirmation(
+                sender_email=instance.from_email,
+                subject=instance.subject,
+                professional_id=instance.professional_id,
+                to_email=instance.to_email
             )
             
             return Response(

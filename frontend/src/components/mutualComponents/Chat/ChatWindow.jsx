@@ -179,13 +179,13 @@ const ChatWindow = () => {
         {/* Message Input */}
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center space-x-2">
-            <button
+            {/* <button
               onClick={() => fileInputRef.current?.click()}
               className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
               title="Attach file"
             >
               <Paperclip size={20} />
-            </button>
+            </button> */}
             <input
               ref={fileInputRef}
               type="file"

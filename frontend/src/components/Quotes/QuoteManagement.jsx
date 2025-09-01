@@ -1,21 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Download, Trash2 } from 'lucide-react';
+import { Eye, Edit, Download, Trash2, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjects, deleteProject } from '../../store/slices/ProjectSlice';
+import { fetchProjects, deleteProject, updateProjectStatus } from '../../store/slices/ProjectSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { useTranslation } from 'react-i18next';
-
-const statusStyles = {
-  Pending: 'bg-cyan-100 text-cyan-700',
-  Validated: 'bg-green-100 text-green-700',
-  Rejected: 'bg-red-100 text-red-700',
-  Expired: 'bg-pink-100 text-pink-700',
-};
+import ProjectStatusBadge from '../common/ProjectStatusBadge';
 
 const filters = ['Status', 'Date', 'Amount', 'Client'];
-const statusOptions = ['Pending', 'Validated', 'Rejected', 'Expired'];
 
 export default function QuoteManagement() {
   const { t } = useTranslation();
@@ -26,6 +19,7 @@ export default function QuoteManagement() {
   const { projects, loading, error } = useSelector(state => state.project);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ open: false, projectId: null });
+  const [startingProjectId, setStartingProjectId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -63,6 +57,19 @@ export default function QuoteManagement() {
       toast.error(typeof err === 'string' ? err : t('quote_management.failed_delete_project'));
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleStartProject = async (projectId) => {
+    setStartingProjectId(projectId);
+    try {
+      await dispatch(updateProjectStatus(projectId)).unwrap();
+      toast.success(t('quote_management.project_started_successfully'));
+      dispatch(fetchProjects()); // Refresh projects to update status
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : t('quote_management.failed_start_project'));
+    } finally {
+      setStartingProjectId(null);
     }
   };
 
@@ -123,8 +130,21 @@ export default function QuoteManagement() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-      </div>
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white max-w-[300px] w-full mx-auto sm:max-w-full">
+              </div>
+
+        {/* Approved Projects Section */}
+        {/* {filteredProjects.some(p => p.status === 'approved') && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-800 mb-2">
+              {t('quote_management.project_ready')}
+            </h3>
+            <p className="text-green-700 text-sm">
+              {t('quote_management.approved_projects_description')}
+            </p>
+          </div>
+        )} */}
+
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white max-w-[300px] w-full mx-auto sm:max-w-full">
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
@@ -148,40 +168,53 @@ export default function QuoteManagement() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProjects.map((p, i) => {
-                  const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
-                  return (
-                    <tr key={p.id} className="border-t border-gray-100">
-                      <td className="px-4 py-3 whitespace-nowrap">{p.quote && p.quote.reference_number}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{p.name}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{p.client_email}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}>{t(`quote_management.${status.toLowerCase()}`)}</span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap flex gap-2 items-center">
-                        <button className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.view')}
-                          onClick={() => window.open(p.quote && p.quote.file, '_blank')}>
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <a className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.download')}
-                          href={p.quote && p.quote.file} download>
-                          <Download className="w-4 h-4" />
-                        </a>
-                        <button className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.edit')}><Edit className="w-4 h-4" /></button>
+                {filteredProjects.map((p, i) => (
+                  <tr key={p.id} className="border-t border-gray-100">
+                    <td className="px-4 py-3 whitespace-nowrap">{p.quote && p.quote.reference_number}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{p.name}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{p.client_email}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <ProjectStatusBadge status={p.status} size="small" />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap flex gap-2 items-center">
+                      <button className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.view')}
+                        onClick={() => window.open(p.quote && p.quote.file, '_blank')}>
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <a className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.download')}
+                        href={p.quote && p.quote.file} download>
+                        <Download className="w-4 h-4" />
+                      </a>
+                      <button className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.edit')}><Edit className="w-4 h-4" /></button>
+                      {p.status === 'approved' && (
                         <button
-                          className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${deletingId === p.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          title={t('quote_management.delete')}
-                          onClick={() => handleDelete(p.id)}
-                          disabled={deletingId === p.id}
+                          className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${
+                            startingProjectId === p.id ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          title={t('quote_management.start_project')}
+                          onClick={() => handleStartProject(p.id)}
+                          disabled={startingProjectId === p.id}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {startingProjectId === p.id ? (
+                            <div className="w-4 h-4 border-2 border-[#01257D] border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Play className="w-4 h-4 text-green-600" />
+                          )}
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      )}
+                      <button
+                        className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${deletingId === p.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={t('quote_management.delete')}
+                        onClick={() => handleDelete(p.id)}
+                        disabled={deletingId === p.id}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -20,27 +20,40 @@ class ProjectCreateAPIView(generics.CreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
+        # Check if user has seller role
+        if not hasattr(self.request.user, 'role') or self.request.user.role not in ['seller']:
+            raise permissions.PermissionDenied(
+                "Only users with seller role can create projects."
+            )
+        
         # Extract and process the form data
         data = {}
         
         # Handle regular fields
-        data['name'] = request.data.get('name')[0] if isinstance(request.data.get('name'), list) else request.data.get('name')
-        data['client_email'] = request.data.get('client_email')[0] if isinstance(request.data.get('client_email'), list) else request.data.get('client_email')
+        data['name'] = (request.data.get('name')[0] if isinstance(
+            request.data.get('name'), list) else request.data.get('name'))
+        data['client_email'] = (request.data.get('client_email')[0] if isinstance(
+            request.data.get('client_email'), list) else request.data.get('client_email'))
         
         # Handle installments JSON
         installments_raw = request.data.get('installments')
         if installments_raw:
-            installments_str = installments_raw[0] if isinstance(installments_raw, list) else installments_raw
+            installments_str = (installments_raw[0] if isinstance(
+                installments_raw, list) else installments_raw)
             try:
                 import json
                 data['installments'] = json.loads(installments_str)
             except (json.JSONDecodeError, ValueError):
-                return Response({'installments': ['Invalid JSON format']}, status=400)
+                return Response(
+                    {'installments': ['Invalid JSON format']}, 
+                    status=400
+                )
         
         # Handle quote file
         quote_file = request.data.get('quote.file')
         if quote_file:
-            file_obj = quote_file[0] if isinstance(quote_file, list) else quote_file
+            file_obj = (quote_file[0] if isinstance(
+                quote_file, list) else quote_file)
             data['quote'] = {'file': file_obj}
         else:
             data['quote'] = {}
@@ -62,7 +75,11 @@ class ProjectListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(user=self.request.user).order_by('-id')
+        # Only show real projects, not quote chat projects
+        return Project.objects.filter(
+            user=self.request.user, 
+            project_type='real_project'
+        ).order_by('-id')
 
 
 class ClientProjectListAPIView(generics.ListAPIView):
@@ -82,6 +99,60 @@ class ProjectDeleteAPIView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(user=self.request.user)
+
+
+class ProjectStatusUpdateAPIView(APIView):
+    """
+    API view for updating project status from 'approved' to 'in_progress'
+    Only sellers can update their own projects
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, project_id):
+        try:
+            # Get the project and verify ownership
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response(
+                {'detail': 'Project not found or you do not have permission to modify it.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if user has seller role
+        if not hasattr(request.user, 'role') or request.user.role not in ['seller']:
+            return Response(
+                {'detail': 'Only sellers can update project status.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validate current status
+        if project.status != 'approved':
+            return Response(
+                {'detail': f'Project status can only be changed to "In Progress" when current status is "Approved". Current status: {project.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update status to in_progress
+        project.status = 'in_progress'
+        project.save()
+        
+        # Create notification for the client
+        if project.client:
+            Notification.objects.create(
+                user=project.client,
+                message=f"Project '{project.name}' has been started and is now in progress."
+            )
+        
+        # Create notification for the seller
+        Notification.objects.create(
+            user=request.user,
+            message=f"You have started project '{project.name}' and it is now in progress."
+        )
+        
+        return Response({
+            'detail': 'Project status updated successfully to "in_progress".',
+            'new_status': 'in_progress'
+        }, status=status.HTTP_200_OK)
 
 
 class MilestoneListAPIView(generics.ListAPIView):
@@ -114,6 +185,13 @@ class MilestoneDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 class ProjectInviteAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
+    def check_buyer_permission(self, request):
+        """Check if user has buyer role"""
+        if not hasattr(request.user, 'role') or request.user.role not in ['buyer', 'professional-buyer']:
+            raise permissions.PermissionDenied(
+                "Only users with buyer or professional-buyer role can approve/reject projects."
+            )
 
     def get(self, request, token):
         try:
@@ -157,8 +235,11 @@ class ProjectInviteAPIView(APIView):
 
     def post(self, request, token):
         """
-        Handle client acceptance of the project invite
+        Handle client approval/rejection of the project invite
         """
+        # Check buyer permissions
+        self.check_buyer_permission(request)
+        
         try:
             project = Project.objects.get(invite_token=token)
         except Project.DoesNotExist:
@@ -182,8 +263,17 @@ class ProjectInviteAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Add the client to the project
-        if not project.client:
+        # Get the action from request data
+        action = request.data.get('action')
+        if action not in ['approve', 'reject']:
+            return Response(
+                {'detail': 'Invalid action. Must be "approve" or "reject".'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if action == 'approve':
+            # Approve the project
+            project.status = 'approved'
             project.client = request.user
             project.save()
             
@@ -193,19 +283,40 @@ class ProjectInviteAPIView(APIView):
             # Create notification for the seller
             Notification.objects.create(
                 user=project.user,
-                message=f"Client {request.user.email} has accepted the project '{project.name}'."
+                message=f"Client {request.user.email} has approved the project '{project.name}'."
             )
             
             # Create notification for the buyer
             Notification.objects.create(
                 user=request.user,
-                message=f"You have successfully accepted the project '{project.name}' from {project.user.username}."
+                message=f"You have successfully approved the project '{project.name}' from {project.user.username}."
             )
-        
-        return Response(
-            {'detail': 'Project accepted successfully.'},
-            status=status.HTTP_200_OK
-        )
+            
+            return Response(
+                {'detail': 'Project approved successfully.'},
+                status=status.HTTP_200_OK
+            )
+        else:
+            # Reject the project
+            project.status = 'not_approved'
+            project.save()
+            
+            # Create notification for the seller
+            Notification.objects.create(
+                user=project.user,
+                message=f"Client {request.user.email} has rejected the project '{project.name}'."
+            )
+            
+            # Create notification for the buyer
+            Notification.objects.create(
+                user=request.user,
+                message=f"You have rejected the project '{project.name}' from {project.user.username}."
+            )
+            
+            return Response(
+                {'detail': 'Project rejected successfully.'},
+                status=status.HTTP_200_OK
+            )
 
     def _create_chat_contacts(self, project):
         """

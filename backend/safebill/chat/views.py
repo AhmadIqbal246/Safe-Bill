@@ -8,6 +8,7 @@ from .serializers import (
     MessageSerializer, ConversationSerializer, ChatContactSerializer
 )
 from projects.models import Project
+from accounts.models import User
 
 
 class ProjectChatPermission(permissions.BasePermission):
@@ -129,6 +130,57 @@ class MarkReadAPIView(EnsureConversationMixin, generics.UpdateAPIView):
                 pass
         
         return Response({"status": "ok"})
+
+
+class StartQuoteChatAPIView(generics.CreateAPIView):
+    """
+    Create or return a lightweight hidden Project to enable chat between
+    the current user (buyer) and a professional (seller). Reuses existing
+    project-scoped chat infrastructure with no changes to sockets/APIs.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        professional_id = kwargs.get("professional_id")
+        try:
+            professional = User.objects.get(id=professional_id)
+        except User.DoesNotExist:
+            return Response({"detail": "Professional not found"}, status=404)
+
+        # Prevent chatting with yourself
+        if professional.id == request.user.id:
+            return Response({"detail": "Cannot start chat with yourself"}, status=400)
+
+        # Determine seller/buyer roles in project fields
+        # We store professional as project.user (seller), requester as client (buyer)
+        seller = professional
+        buyer = request.user
+
+        # Find existing quote project between these two users (idempotent)
+        existing = (
+            Project.objects.filter(user=seller, client=buyer, name__startswith="Quote Chat:")
+            .order_by("id")
+            .first()
+        )
+        if existing:
+            return Response({
+                "project_id": existing.id,
+                "project_name": existing.name,
+            })
+
+        # Create a minimal hidden project to back the chat
+        project = Project.objects.create(
+            user=seller,
+            client=buyer,
+            name=f"Quote Chat: {buyer.username} ↔ {seller.username}",
+            client_email=buyer.email or "",
+            project_type="quote_chat",  # Mark as quote chat project
+        )
+
+        return Response({
+            "project_id": project.id,
+            "project_name": project.name,
+        }, status=201)
 
 
 class InboxListAPIView(generics.ListAPIView):

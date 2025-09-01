@@ -3,7 +3,7 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, resetAuthState } from "../../store/slices/AuthSlices";
 import { toast } from "react-toastify";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export default function LogInComp() {
@@ -148,6 +148,11 @@ export default function LogInComp() {
                 )}
               </span>
             </div>
+          </div>
+          <div className="text-center">
+            <Link to="/forgot-password" className="text-sm text-[#0A1128] hover:underline">
+              Forgot password?
+            </Link>
           </div>
           <button
             type="submit"

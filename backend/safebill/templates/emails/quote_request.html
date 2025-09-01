@@ -1,0 +1,41 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ subject }} - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}New Quote Request{% endblock %}
+
+{% block content %}
+<h2>New Quote Request</h2>
+
+<p>Hello!</p>
+
+<div class="success">
+    <p><strong>You have received a new quote request through {{ site_name }}!</strong></p>
+</div>
+
+<div class="highlight">
+    <p><strong>From:</strong> {{ from_email }}</p>
+    <p><strong>Subject:</strong> {{ subject }}</p>
+    <p><strong>Professional ID:</strong> {{ professional_id }}</p>
+</div>
+
+<h3>Request Details:</h3>
+<div style="background-color: #f8f9fa; padding: 16px; border-radius: 6px; border-left: 4px solid #3b82f6; margin: 16px 0;">
+    <p style="color: #4b5563;">{{ body }}</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" class="btn">Respond to Request</a>
+</div>
+
+<p>This quote request was sent through {{ site_name }}. Please log in to your dashboard to view the full details and respond to this potential client.</p>
+
+<div class="warning">
+    <p><strong>Important:</strong> Quick responses often lead to better business relationships. Consider responding within 24-48 hours for the best results.</p>
+</div>
+
+<p>If you have any questions about this request or need assistance, please contact our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Best regards,<br>
+The {{ site_name }} Team</p>
+{% endblock %}

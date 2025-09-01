@@ -7,6 +7,8 @@ from .models import Conversation, Message, ChatContact
 from projects.models import Project
 from django.utils import timezone
 
+from utils.email_service import EmailService
+
 User = get_user_model()
 
 
@@ -106,11 +108,55 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
         conv.last_message_text = msg.content[:255]
         conv.save(update_fields=["last_message_at", "last_message_text"])
         
+        # Send email notification for quote chat first message
+        self._send_quote_chat_notification(project, msg, conv)
+        
         # Note: Chat contact unread_count and last_message updates are handled
         # by Message.save() to avoid double-incrementing when messages are
         # created via WebSocket. Do not call update_chat_contacts here.
         
         return msg
+
+    def _send_quote_chat_notification(self, project, message, conversation):
+        """Send email notification to seller for first message in quote chat"""
+        try:
+            # Check if this is a quote chat
+            if not project.name.startswith("Quote Chat:"):
+                return
+            
+            # Check if this is the first message in the conversation
+            message_count = Message.objects.filter(
+                conversation=conversation
+            ).count()
+            if message_count > 1:  # Not the first message
+                return
+            
+            # Get the seller and buyer
+            seller = project.user
+            buyer = message.sender
+            
+            # Only send notification if buyer sends first message
+            if message.sender_id != seller.id:
+                # Get user names for email
+                seller_name = seller.get_full_name() or seller.username or seller.email.split('@')[0]
+                buyer_name = buyer.get_full_name() or buyer.username or buyer.email.split('@')[0]
+                message_preview = (
+                    f"{message.content[:200]}{'...' if len(message.content) > 200 else ''}"
+                )
+                
+                # Send email using the new email service
+                EmailService.send_quote_chat_notification(
+                    seller_email=seller.email,
+                    seller_name=seller_name,
+                    buyer_name=buyer_name,
+                    buyer_email=buyer.email,
+                    project_name=project.name,
+                    message_preview=message_preview
+                )
+        except Exception as e:
+            # Log error but don't break the chat functionality
+            print(f"Error sending quote chat notification: {e}")
+            pass
 
     async def _handle_send_message(self, payload):
         msg = await self._create_message(
