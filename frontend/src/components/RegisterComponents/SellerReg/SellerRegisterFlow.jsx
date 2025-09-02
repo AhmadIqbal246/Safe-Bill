@@ -1023,7 +1023,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   <button
                     type="button"
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                      errors.serviceArea ? "border-red-500" : "border-gray-300"
+                      errors.selectedServiceAreas ? "border-red-500" : "border-gray-300"
                     }`}
                     onClick={() => setShowServiceAreasDropdown(!showServiceAreasDropdown)}
                   >
@@ -1107,9 +1107,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   </div>
                 )}
                 
-                {errors.serviceArea && (
+                {errors.selectedServiceAreas && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.serviceArea}
+                    {errors.selectedServiceAreas}
                   </p>
                 )}
               </div>
