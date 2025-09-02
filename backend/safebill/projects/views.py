@@ -248,6 +248,13 @@ class ProjectInviteAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Ensure this is a real project, not a quote chat project
+        if project.project_type != 'real_project':
+            return Response(
+                {'detail': 'This invitation is not for a real project.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # Check expiry
         if (not project.invite_token_expiry or
                 project.invite_token_expiry < timezone.now()):
@@ -265,13 +272,33 @@ class ProjectInviteAPIView(APIView):
         
         # Get the action from request data
         action = request.data.get('action')
-        if action not in ['approve', 'reject']:
+        if action not in ['approve', 'reject', 'view']:
             return Response(
-                {'detail': 'Invalid action. Must be "approve" or "reject".'},
+                {'detail': 'Invalid action. Must be "approve", "reject", or "view".'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if action == 'approve':
+        if action == 'view':
+            # Just add the client to the project without approval
+            # This allows the buyer to see pending projects on their dashboard
+            if not project.client:
+                project.client = request.user
+                project.save()
+                
+                # Create chat contacts for both seller and buyer
+                self._create_chat_contacts(project)
+                
+                # Create notification for the buyer
+                Notification.objects.create(
+                    user=request.user,
+                    message=f"You have been added to the project '{project.name}' by {project.user.username}."
+                )
+            
+            return Response(
+                {'detail': 'Client added to project for viewing.'},
+                status=status.HTTP_200_OK
+            )
+        elif action == 'approve':
             # Approve the project
             project.status = 'approved'
             project.client = request.user
@@ -299,6 +326,9 @@ class ProjectInviteAPIView(APIView):
         else:
             # Reject the project
             project.status = 'not_approved'
+            # Remove client from project if they were added for viewing
+            if project.client == request.user:
+                project.client = None
             project.save()
             
             # Create notification for the seller

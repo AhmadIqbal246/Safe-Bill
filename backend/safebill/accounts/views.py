@@ -46,7 +46,7 @@ class UserTokenObtainPairView(TokenObtainPairView):
     serializer_class = UserTokenObtainPairSerializer
 
 
-
+#following view is being used to register both sellers and professional buyers, name is such because we got the requirement from the client way after the development
 class SellerRegisterView(APIView):
     def post(self, request):
         serializer = SellerRegistrationSerializer(data=request.data)
@@ -59,14 +59,20 @@ class SellerRegisterView(APIView):
             verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
             
             # Get user name for email
-            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            user_name = user.get_full_name() or user.username or \
+                user.email.split('@')[0]
+
+            # Determine user_type based on user's role
+            role = getattr(user, 'role', 'seller')
+            user_type = 'Professional Buyer' if role == 'professional-buyer' \
+                else 'Seller'
             
             # Send verification email
             EmailService.send_verification_email(
                 user_email=user.email,
                 user_name=user_name,
                 verification_url=verification_url,
-                user_type="seller",
+                user_type=user_type,
                 verification_code=token
             )
             

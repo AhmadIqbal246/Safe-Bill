@@ -20,6 +20,12 @@ export const signedInNavItems = [
   { label: "navbar.contact", href: "/contact-us" }
 ];
 
+export const buyerNavItems = [
+  { label: "navbar.find_professionals", href: "/find-professionals" },
+  { label: "navbar.how_to_accept_project_invite", href: "/how-to-accept-project-invite" },
+  { label: "navbar.contact", href: "/contact-us" }
+];
+
 export default function SafeBillHeader({
   onSignIn,
   onJoinNow,
@@ -55,6 +61,10 @@ export default function SafeBillHeader({
     adminRoleFlag ||
     (user && (user.role === 'admin' || user.role === 'super-admin' || user.is_admin === true))
   );
+
+  const canSeeProjectInvite = !!(
+    user && (user.role === 'buyer' || user.role === 'professional-buyer')
+  )
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -152,6 +162,14 @@ export default function SafeBillHeader({
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
               >
                 Admin Panel
+              </Link>
+            )}
+            {canSeeProjectInvite && (
+              <Link
+                to="/how-to-accept-project-invite"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                How to Accept Project Invite
               </Link>
             )}
           </nav>
@@ -424,6 +442,14 @@ export default function SafeBillHeader({
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
                   Admin Panel
+                </Link>
+              )}
+              {canSeeProjectInvite && (
+                <Link
+                  to="/how-to-accept-project-invite"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  How to Accept Project Invite
                 </Link>
               )}
 
