@@ -602,7 +602,8 @@
     "failed_load_dashboard": "Failed to load dashboard",
     "unexpected_error": "An unexpected error occurred",
     "try_again": "Try Again",
-    "contact_support": "Contact Support"
+    "contact_support": "Contact Support",
+    "accept_project_invite": "Accept Project Invite"
   },
   "dispute_submit": {
     "back": "← Back",
@@ -881,5 +882,18 @@
     "failed_delete_project": "Failed to delete project",
     "failed_load_projects": "Failed to load projects",
     "no_projects_found": "No projects found"
+  },
+  "accept_project_invite": {
+    "title": "Accept Project Invite",
+    "subtitle": "Enter your project invitation code to view project details",
+    "token_label": "Invitation Code",
+    "token_placeholder": "Paste your invitation code here...",
+    "token_help": "This is the code you received in your project invitation email",
+    "submit_button": "View Project",
+    "processing": "Processing...",
+    "enter_token_error": "Please enter a valid invitation code",
+    "general_error": "An error occurred. Please try again.",
+    "help_text": "Don't have an invitation code? Check your email or contact the project creator.",
+    "back_to_dashboard": "Back to Dashboard"
   }
 }

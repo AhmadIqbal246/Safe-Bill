@@ -602,7 +602,8 @@
     "failed_load_dashboard": "Échec du chargement du tableau de bord",
     "unexpected_error": "Une erreur inattendue s'est produite",
     "try_again": "Réessayer",
-    "contact_support": "Contacter le Support"
+    "contact_support": "Contacter le Support",
+    "accept_project_invite": "Accepter l'Invitation de Projet"
   },
   "dispute_submit": {
     "back": "← Retour",
@@ -881,5 +882,18 @@
     "failed_delete_project": "Échec de la suppression du projet",
     "failed_load_projects": "Échec du chargement des projets",
     "no_projects_found": "Aucun projet trouvé"
+  },
+  "accept_project_invite": {
+    "title": "Accepter l'Invitation au Projet",
+    "subtitle": "Entrez votre code d'invitation au projet pour voir les détails",
+    "token_label": "Code d'Invitation",
+    "token_placeholder": "Collez votre code d'invitation ici...",
+    "token_help": "C'est le code que vous avez reçu dans votre email d'invitation au projet",
+    "submit_button": "Voir le Projet",
+    "processing": "Traitement...",
+    "enter_token_error": "Veuillez entrer un code d'invitation valide",
+    "general_error": "Une erreur s'est produite. Veuillez réessayer.",
+    "help_text": "Vous n'avez pas de code d'invitation ? Vérifiez votre email ou contactez le créateur du projet.",
+    "back_to_dashboard": "Retour au Tableau de Bord"
   }
 }

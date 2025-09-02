@@ -192,12 +192,20 @@ export default function BuyerDashboardPage() {
             <h2 className="text-2xl sm:text-3xl font-semibold mb-1">{t('buyer_dashboard.title')}</h2>
             <div className="text-gray-500">{t('buyer_dashboard.subtitle')}</div>
           </div>
-          <button 
-            onClick={() => navigate('/disputes')}
-            className="mt-4 sm:mt-0 px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
-          >
-            {t('buyer_dashboard.view_all_disputes')}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+            <button 
+              onClick={() => navigate('/accept-project-invite')}
+              className="px-6 py-3 bg-[#10B981] text-white rounded-lg hover:bg-[#059669] transition-colors font-medium cursor-pointer"
+            >
+              {t('buyer_dashboard.accept_project_invite')}
+            </button>
+            <button 
+              onClick={() => navigate('/disputes')}
+              className="px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
+            >
+              {t('buyer_dashboard.view_all_disputes')}
+            </button>
+          </div>
         </div>
         
         {/* Dashboard Summary - Responsive Grid */}
