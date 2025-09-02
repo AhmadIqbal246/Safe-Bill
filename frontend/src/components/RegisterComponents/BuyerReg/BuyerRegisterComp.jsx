@@ -18,7 +18,9 @@ export default function BuyerRegisterComp() {
   const initialForm = {
     firstName: "",
     lastName: "",
-    address: "",
+    streetAddress: "",
+    postalCode: "",
+    cityRegion: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -37,7 +39,9 @@ export default function BuyerRegisterComp() {
     const newErrors = {};
     if (!form.firstName.trim()) newErrors.firstName = t('registration.first_name_required');
     if (!form.lastName.trim()) newErrors.lastName = t('registration.last_name_required');
-    if (!form.address.trim()) newErrors.address = t('registration.address_required');
+    if (!form.streetAddress.trim()) newErrors.streetAddress = t('registration.address_required');
+    if (!form.postalCode.trim()) newErrors.postalCode = t('registration.postal_code_required');
+    if (!form.cityRegion.trim()) newErrors.cityRegion = t('registration.city_region_required');
     if (!form.email.trim()) {
       newErrors.email = t('registration.email_required');
     } else {
@@ -76,7 +80,7 @@ export default function BuyerRegisterComp() {
       username: form.email.split("@")[0],
       first_name: form.firstName,
       last_name: form.lastName,
-      address: form.address,
+      address: `${form.streetAddress}, ${form.postalCode}, ${form.cityRegion}`,
       email: form.email,
       password: form.password,
       role: "buyer",
@@ -152,20 +156,57 @@ export default function BuyerRegisterComp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('buyer_registration.address_label')}
+                {t('buyer_registration.street_address_label')}
               </label>
               <input
                 type="text"
-                value={form.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-                placeholder={t('buyer_registration.address_placeholder')}
+                value={form.streetAddress}
+                onChange={(e) => handleChange("streetAddress", e.target.value)}
+                placeholder={t('buyer_registration.street_address_placeholder')}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
-                  errors.address ? "border-red-500" : "border-gray-300"
+                  errors.streetAddress ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.address && (
-                <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+              {errors.streetAddress && (
+                <p className="text-red-500 text-sm mt-1">{errors.streetAddress}</p>
               )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('buyer_registration.postal_code_label')}
+              </label>
+              <input
+                type="text"
+                value={form.postalCode}
+                onChange={(e) => handleChange("postalCode", e.target.value)}
+                placeholder={t('buyer_registration.postal_code_placeholder')}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                  errors.postalCode ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.postalCode && (
+                <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('buyer_registration.city_region_label')}
+              </label>
+              <input
+                type="text"
+                value={form.cityRegion}
+                onChange={(e) => handleChange("cityRegion", e.target.value)}
+                placeholder={t('buyer_registration.city_region_placeholder')}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
+                  errors.cityRegion ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.cityRegion && (
+                <p className="text-red-500 text-sm mt-1">{errors.cityRegion}</p>
+              )}
+              <p className="text-gray-500 text-sm mt-1">
+                {t('buyer_registration.address_fields_combined_note')}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
