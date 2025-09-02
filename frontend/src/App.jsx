@@ -34,6 +34,7 @@ import ContactUs from "./components/mutualComponents/ContactUs";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AcceptProjectInvite from "./pages/AcceptProjectInvite";
+import HowToAcceptProjectInvite from "./pages/HowToAcceptProjectInvite";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -86,6 +87,7 @@ function App() {
           <Route path='/admin' element={<ProtectedRoute requiredRole={["admin", "super-admin"]}><AdminPage/></ProtectedRoute>}/>
           <Route path='/contact-us' element={<ContactUs/>}/>
           <Route path='/accept-project-invite' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><AcceptProjectInvite/></ProtectedRoute>}/>
+          <Route path='/how-to-accept-project-invite' element={<HowToAcceptProjectInvite/>}/>
           {/* Add more routes as needed */}
         </Routes>
       </Router>
