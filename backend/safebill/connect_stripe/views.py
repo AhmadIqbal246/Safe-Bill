@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 import logging
 import json
 from django.db import transaction
+from django.utils import timezone
 from .models import StripeAccount, StripeIdentity
 
 User = get_user_model()
@@ -14,6 +15,7 @@ User = get_user_model()
 # Create your views here.
 
 
+# ====================================================================== Connect Stripe ======================================================================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def connect_stripe(request):
@@ -37,6 +39,9 @@ def connect_stripe(request):
                 "losses": {"payments": "application"},
                 "stripe_dashboard": {"type": "express"},
             },
+            metadata={
+                "user_id": str(user.id),
+            },
         )
         stripe_account.account_id = account.id
         stripe_account.save()
@@ -59,6 +64,7 @@ def connect_stripe(request):
     )
 
 
+# ====================================================================== Stripe Connect Webhook ======================================================================
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_connect_webhook(request):
@@ -87,6 +93,8 @@ def stripe_connect_webhook(request):
         logger.info(f"Account updated event: {event}")
         account = event["data"]["object"]
         account_id = account["id"]
+        user_id = account["metadata"]["user_id"]
+        user = User.objects.get(id=user_id)
 
         try:
             # Find StripeAccount by account ID
@@ -113,6 +121,8 @@ def stripe_connect_webhook(request):
 
             if is_onboarding_complete:
                 stripe_account.account_status = "active"
+                user.onboarding_complete = True
+                user.save()
                 stripe_account.onboarding_complete = True
                 logger.info(
                     f"Stripe account {account_id} is now fully active for user {stripe_account.user.id}"
@@ -123,12 +133,11 @@ def stripe_connect_webhook(request):
                 if details_submitted:
                     stripe_account.account_status = "pending"
                 # If details_submitted is False, keep the current status (probably "onboarding")
-                stripe_account.onboarding_complete = False
                 logger.info(
                     f"Stripe account {account_id} status updated for user {stripe_account.user.id} - details_submitted: {details_submitted}, charges_enabled: {charges_enabled}, payouts_enabled: {payouts_enabled}, currently_due: {currently_due}, past_due: {past_due}, status: {stripe_account.account_status}"
                 )
 
-            # Store account information
+            # Store account information and last webhook event payload
             stripe_account.account_data = {
                 "country": account.get("country"),
                 "default_currency": account.get("default_currency"),
@@ -140,6 +149,7 @@ def stripe_connect_webhook(request):
                 "currently_due": currently_due,
                 "eventually_due": requirements.get("eventually_due", []),
                 "past_due": past_due,
+                "last_webhook_event": event,
             }
 
             stripe_account.save()
@@ -177,6 +187,7 @@ def stripe_connect_webhook(request):
     return Response({"status": "success"}, status=200)
 
 
+# ====================================================================== Check Stripe Status ======================================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def check_stripe_status(request):
@@ -228,6 +239,8 @@ def check_stripe_status(request):
             if is_onboarding_complete:
                 stripe_account.account_status = "active"
                 stripe_account.onboarding_complete = True
+                user.onboarding_complete = True
+                user.save()
             else:
                 # Only change to "pending" if user has started onboarding (details_submitted is True)
                 # Otherwise keep the current status (likely "onboarding")
@@ -293,6 +306,7 @@ def check_stripe_status(request):
         )
 
 
+# ====================================================================== Create Stripe Identity Session ======================================================================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_stripe_identity_session(request):
@@ -314,7 +328,6 @@ def create_stripe_identity_session(request):
             provided_details={"email": user.email},
             metadata={
                 "user_id": str(user.id),
-                "user_email": user.email,
             },
         )
 
@@ -349,6 +362,7 @@ def create_stripe_identity_session(request):
         )
 
 
+# ====================================================================== Check Stripe Identity Status ======================================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def check_stripe_identity_status(request):
@@ -384,6 +398,7 @@ def check_stripe_identity_status(request):
         )
 
 
+# ====================================================================== Stripe Identity Webhook ======================================================================
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def stripe_identity_webhook(request):
@@ -419,6 +434,8 @@ def stripe_identity_webhook(request):
                 verification_session_id=session_id
             )
             stripe_identity.identity_status = "processing"
+            # Save the exact webhook response
+            stripe_identity.verification_data = event
             stripe_identity.save()
             logger.info(
                 f"Updated identity status to processing for user {stripe_identity.user.id}"
@@ -432,6 +449,9 @@ def stripe_identity_webhook(request):
     elif event["type"] == "identity.verification_session.verified":
         verification_session = event["data"]["object"]
         session_id = verification_session["id"]
+        user_id = verification_session["metadata"]["user_id"]
+        user = User.objects.get(id=user_id)
+        logger.info(f"User {user.id} verified identity")
 
         try:
             stripe_identity = StripeIdentity.objects.get(
@@ -439,6 +459,11 @@ def stripe_identity_webhook(request):
             )
             stripe_identity.identity_status = "verified"
             stripe_identity.identity_verified = True
+            stripe_identity.verification_data = event
+
+            user.onboarding_complete = True
+            user.save()
+            stripe_identity.verified_at = timezone.now()
             stripe_identity.save()
             logger.info(
                 f"Identity verification completed for user {stripe_identity.user.id}"
@@ -459,6 +484,8 @@ def stripe_identity_webhook(request):
             )
             stripe_identity.identity_status = "requires_input"
             stripe_identity.identity_verified = False
+            # Save the exact webhook response
+            stripe_identity.verification_data = event
             stripe_identity.save()
             logger.info(
                 f"Identity verification requires input for user {stripe_identity.user.id}"
@@ -479,6 +506,8 @@ def stripe_identity_webhook(request):
             )
             stripe_identity.identity_status = "failed"
             stripe_identity.identity_verified = False
+            # Save the exact webhook response
+            stripe_identity.verification_data = event
             stripe_identity.save()
             logger.info(
                 f"Identity verification failed for user {stripe_identity.user.id}"
@@ -499,6 +528,8 @@ def stripe_identity_webhook(request):
             )
             stripe_identity.identity_status = "canceled"
             stripe_identity.identity_verified = False
+            # Save the exact webhook response
+            stripe_identity.verification_data = event
             stripe_identity.save()
             logger.info(
                 f"Identity verification canceled for user {stripe_identity.user.id}"
