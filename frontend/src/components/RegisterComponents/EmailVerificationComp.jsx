@@ -27,7 +27,8 @@ function EmailVerificationComp() {
   useEffect(() => {
     if (uid && token) {
       setVerificationToken(token);
-      handleVerifyEmail();
+      // Trigger verification immediately with the token from URL
+      handleVerifyEmail(token);
     }
   }, [uid, token]);
 
@@ -39,8 +40,9 @@ function EmailVerificationComp() {
     }
   }, [resendCooldown]);
 
-  const handleVerifyEmail = async () => {
-    if (!verificationToken.trim()) {
+  const handleVerifyEmail = async (overrideToken) => {
+    const tokenToUse = (overrideToken ?? verificationToken).trim();
+    if (!tokenToUse) {
       setShowError(true);
       setMessage(t('email_verification.please_enter_token'));
       return;
@@ -53,7 +55,7 @@ function EmailVerificationComp() {
     try {
       const res = await axios.post(
         `${backendBaseUrl}api/accounts/verify-email/`,
-        { token: verificationToken }
+        { token: tokenToUse }
       );
       
       setStatus('success');
