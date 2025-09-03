@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../../store/slices/AuthSlices";
 import { fetchNotifications, markNotificationRead } from '../../../store/slices/NotificationSlice';
+import { useNotificationWebSocket } from '../../../hooks/useNotificationWebSocket';
 import { formatDistanceToNow } from 'date-fns';
 import SignUpPopup from './SignUpPopup';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +61,9 @@ export default function SafeBillHeader({
   const navigate = useNavigate();
 
   // Notifications
-  const { notifications } = useSelector(state => state.notifications);
+  const { notifications, websocketConnected } = useSelector(state => state.notifications);
+  const { markNotificationRead: wsMarkNotificationRead } = useNotificationWebSocket();
+  
   useEffect(() => {
     if (isSignedIn) dispatch(fetchNotifications());
   }, [dispatch, isSignedIn]);
@@ -98,8 +101,8 @@ export default function SafeBillHeader({
     if (!unreadList || unreadList.length === 0) {
       return <div className="text-center text-gray-400 p-4">{t('navbar.no_unread_notifications')}</div>;
     }
-    return unreadList.slice(0, 5).map(n => (
-      <div key={n.id} className="flex items-center gap-3 p-2 hover:bg-gray-50">
+    return unreadList.slice(0, 5).map((n, idx) => (
+      <div key={`notif-${n.id}-${idx}`} className="flex items-center gap-3 p-2 hover:bg-gray-50">
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold flex-shrink-0">
           {getNotificationIcon(n.message)}
         </div>
@@ -112,7 +115,13 @@ export default function SafeBillHeader({
         <button
           className="ml-1 mr-2 text-green-600 hover:text-green-800 self-center flex-shrink-0 cursor-pointer"
           title="Mark as read"
-          onClick={() => dispatch(markNotificationRead(n.id))}
+          onClick={() => {
+            if (websocketConnected) {
+              wsMarkNotificationRead(n.id);
+            } else {
+              dispatch(markNotificationRead(n.id));
+            }
+          }}
         >
           <CheckCircle size={18} />
         </button>

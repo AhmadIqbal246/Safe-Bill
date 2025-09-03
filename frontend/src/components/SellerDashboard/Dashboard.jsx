@@ -4,6 +4,7 @@ import { fetchProjects } from '../../store/slices/ProjectSlice';
 import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDialogue';
 import { useNavigate } from 'react-router-dom';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../../store/slices/NotificationSlice';
+import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
 import { CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -14,9 +15,12 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { projects, loading, error } = useSelector(state => state.project);
-  const { notifications, loading: notifLoading, error: notifError, markAllLoading } = useSelector(state => state.notifications);
+  const { notifications, loading: notifLoading, error: notifError, markAllLoading, websocketConnected } = useSelector(state => state.notifications);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
+
+  // Initialize WebSocket connection for real-time notifications
+  const { markNotificationRead: wsMarkNotificationRead, markAllNotificationsRead: wsMarkAllNotificationsRead } = useNotificationWebSocket();
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -206,7 +210,11 @@ export default function Dashboard() {
 
   // Handle mark all as read
   const handleMarkAllAsRead = () => {
-    dispatch(markAllNotificationsRead());
+    if (websocketConnected) {
+      wsMarkAllNotificationsRead();
+    } else {
+      dispatch(markAllNotificationsRead());
+    }
   };
 
   // Check if there are any unread notifications
@@ -238,7 +246,13 @@ export default function Dashboard() {
           <button
             className="ml-1 sm:ml-2 text-green-600 hover:text-green-800 self-center flex-shrink-0"
             title="Mark as read"
-            onClick={() => dispatch(markNotificationRead(n.id))}
+            onClick={() => {
+              if (websocketConnected) {
+                wsMarkNotificationRead(n.id);
+              } else {
+                dispatch(markNotificationRead(n.id));
+              }
+            }}
           >
             <CheckCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
