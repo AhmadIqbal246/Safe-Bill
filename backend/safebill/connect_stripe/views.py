@@ -9,6 +9,11 @@ import json
 from django.db import transaction
 from django.utils import timezone
 from .models import StripeAccount, StripeIdentity
+from projects.models import Project
+from payments.models import Payment
+from payments.utils import send_payment_websocket_update
+from utils.email_service import EmailService
+from notifications.services import NotificationService
 
 User = get_user_model()
 
@@ -124,6 +129,13 @@ def stripe_connect_webhook(request):
                 user.onboarding_complete = True
                 user.save()
                 stripe_account.onboarding_complete = True
+
+                # Send notification for successful Stripe onboarding
+                NotificationService.create_notification(
+                    user,
+                    "Your Stripe account has been successfully verified and is now active. You can now receive payments.",
+                )
+
                 logger.info(
                     f"Stripe account {account_id} is now fully active for user {stripe_account.user.id}"
                 )
@@ -171,6 +183,12 @@ def stripe_connect_webhook(request):
             stripe_account.onboarding_complete = False
             stripe_account.account_data = {}
             stripe_account.save()
+
+            # Send notification for Stripe account disconnection
+            NotificationService.create_notification(
+                stripe_account.user,
+                "Your Stripe account has been disconnected. You will no longer be able to receive payments until you reconnect.",
+            )
 
             logger.info(
                 f"Stripe account {account_id} disconnected for user {stripe_account.user.id}"
@@ -465,6 +483,13 @@ def stripe_identity_webhook(request):
             user.save()
             stripe_identity.verified_at = timezone.now()
             stripe_identity.save()
+
+            # Send notification for successful identity verification
+            NotificationService.create_notification(
+                user,
+                "Your identity has been successfully verified!",
+            )
+
             logger.info(
                 f"Identity verification completed for user {stripe_identity.user.id}"
             )
@@ -509,6 +534,13 @@ def stripe_identity_webhook(request):
             # Save the exact webhook response
             stripe_identity.verification_data = event
             stripe_identity.save()
+
+            # Send notification for failed identity verification
+            NotificationService.create_notification(
+                stripe_identity.user,
+                "Your identity verification has failed. Please try again!",
+            )
+
             logger.info(
                 f"Identity verification failed for user {stripe_identity.user.id}"
             )
@@ -538,6 +570,140 @@ def stripe_identity_webhook(request):
             logger.error(f"StripeIdentity not found for session {session_id}")
         except Exception as e:
             logger.error(f"Error updating identity status: {e}")
+
+    # Handle checkout.session.completed event
+    elif event["type"] == "checkout.session.completed":
+        payment = event["data"]["object"]
+        payment_id = payment["id"]
+        project_id = payment["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.status = "approved"
+        project.save()
+        payment = Payment.objects.get(stripe_payment_id=payment_id)
+        payment.status = "paid"
+        payment.webhook_response = event
+        payment.save()
+
+        # Email: notify client of successful payment
+        try:
+            if project.client:
+                client = project.client
+                client_name = (
+                    client.get_full_name()
+                    or getattr(client, "username", None)
+                    or (
+                        client.email.split("@")[0]
+                        if getattr(client, "email", None)
+                        else "User"
+                    )
+                )
+                EmailService.send_client_payment_success_email(
+                    user_email=client.email,
+                    user_name=client_name,
+                    project_name=project.name,
+                    amount=str(payment.amount),
+                )
+        except Exception:
+            # Avoid breaking webhook flow if email fails
+            pass
+
+        # Send notifications for successful payment
+        NotificationService.create_notification(
+            project.user,
+            f"Project '{project.name}' has been approved.",
+        )
+        NotificationService.create_notification(
+            project.client,
+            f"Your payment of {payment.amount} for project '{project.name}' has been processed successfully.",
+        )
+
+        # Send WebSocket update
+        send_payment_websocket_update(
+            project_id=project.id,
+            payment_status="paid",
+            payment_amount=payment.amount,
+            project_status="approved",
+            updated_at=payment.updated_at,
+        )
+
+    # Handle checkout.session.expired event
+    elif event["type"] == "checkout.session.expired":
+        payment = event["data"]["object"]
+        payment_id = payment["id"]
+        project_id = payment["metadata"]["project_id"]
+        payment = Payment.objects.get(stripe_payment_id=payment_id)
+        payment.status = "pending"
+        payment.webhook_response = event
+        payment.save()
+        project = Project.objects.get(id=project_id)
+        project.status = "pending"
+        project.save()
+
+        # Send notifications for expired payment session
+        NotificationService.create_notification(
+            project.client,
+            f"Your payment session for project '{project.name}' has expired.",
+        )
+
+        # Send WebSocket update
+        send_payment_websocket_update(
+            project_id=project.id,
+            payment_status="pending",
+            payment_amount=payment.amount,
+            project_status="pending",
+            updated_at=payment.updated_at,
+        )
+
+    # Handle checkout.session.failed event
+    elif event["type"] == "checkout.session.async_payment_failed":
+        payment = event["data"]["object"]
+        payment_id = payment["id"]
+        project_id = payment["metadata"]["project_id"]
+        payment = Payment.objects.get(stripe_payment_id=payment_id)
+        payment.status = "failed"
+        payment.webhook_response = event
+        payment.save()
+        project = Project.objects.get(id=project_id)
+        project.status = "pending"
+        project.save()
+
+        # Email: notify client of failed payment
+        try:
+            if project.client:
+                client = project.client
+                client_name = (
+                    client.get_full_name()
+                    or getattr(client, "username", None)
+                    or (
+                        client.email.split("@")[0]
+                        if getattr(client, "email", None)
+                        else "User"
+                    )
+                )
+                EmailService.send_client_payment_failed_email(
+                    user_email=client.email,
+                    user_name=client_name,
+                    project_name=project.name,
+                    amount=str(payment.amount),
+                )
+        except Exception:
+            # Avoid breaking webhook flow if email fails
+            pass
+
+        # Send notifications for failed payment
+        NotificationService.create_notification(
+            project.client,
+            f"Payment for project '{project.name}' has failed.",
+        )
+
+        # Send WebSocket update
+        send_payment_websocket_update(
+            project_id=project.id,
+            payment_status="failed",
+            payment_amount=payment.amount,
+            project_status="pending",
+            updated_at=payment.updated_at,
+        )
 
     else:
         logger.info(f"Unhandled Stripe Identity event type: {event['type']}")
