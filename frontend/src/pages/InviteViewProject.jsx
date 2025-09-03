@@ -5,6 +5,7 @@ import axios from "axios";
 import ProjectStatusBadge from "../components/common/ProjectStatusBadge";
 import Loader from "../components/common/Loader";
 import paymentWebSocketService from "../services/paymentWebSocketService";
+import { toast } from "react-toastify";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -68,7 +69,10 @@ export default function InviteViewProject() {
   // Redirect buyer when project becomes approved
   useEffect(() => {
     if (project?.status === "approved") {
-      navigate("/buyer-dashboard");
+      setTimeout(() => {
+        toast.success("Project approved successfully");
+        navigate("/buyer-dashboard");
+      }, 5000);
     }
   }, [project?.status, navigate]);
 
