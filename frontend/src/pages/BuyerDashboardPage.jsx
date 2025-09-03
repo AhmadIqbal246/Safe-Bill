@@ -5,6 +5,7 @@ import { fetchClientProjects } from '../store/slices/ProjectSlice';
 import DashboardSummary from '../components/BuyerDashboard/DashboardSummary';
 import CurrentProjects from '../components/BuyerDashboard/CurrentProjects';
 import PendingProjects from '../components/BuyerDashboard/PendingProjects';
+import ApprovedProjects from '../components/BuyerDashboard/ApprovedProjects';
 import MilestoneApproval from '../components/BuyerDashboard/MilestoneApproval';
 import PaymentTracking from '../components/BuyerDashboard/PaymentTracking';
 import DocumentsSection from '../components/BuyerDashboard/DocumentsSection';
@@ -219,9 +220,10 @@ export default function BuyerDashboardPage() {
           <MilestoneApproval />
         </div>
         
-        {/* Pending Projects Section - Full Width */}
-        <div className="mb-6 sm:mb-8">
+        {/* Pending and Approved Projects */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <PendingProjects projects={clientProjects} />
+          <ApprovedProjects projects={clientProjects} />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
