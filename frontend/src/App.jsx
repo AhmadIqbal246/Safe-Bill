@@ -35,6 +35,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AcceptProjectInvite from "./pages/AcceptProjectInvite";
 import HowToAcceptProjectInvite from "./pages/HowToAcceptProjectInvite";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
 import Billings from "./pages/Billings";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -88,6 +90,8 @@ function App() {
           <Route path='/contact-us' element={<ContactUs/>}/>
           <Route path='/accept-project-invite' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><AcceptProjectInvite/></ProtectedRoute>}/>
           <Route path='/how-to-accept-project-invite' element={<HowToAcceptProjectInvite/>}/>
+          <Route path='/privacy-policy' element={<PrivacyPolicyPage/>}/>
+          <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
           <Route path='/billings' element={<Billings/>}/>
           {/* Add more routes as needed */}
         </Routes>
