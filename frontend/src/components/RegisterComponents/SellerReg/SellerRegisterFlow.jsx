@@ -1208,9 +1208,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   />
                   <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
                     {t('seller_registration.agree_to_terms')}{" "}
-                    <a href="#" className="text-blue-600 hover:underline">
+                    <Link to="/terms-of-service" className="text-blue-600 hover:underline">
                       {t('seller_registration.terms_of_service')}
-                    </a>{" "}
+                    </Link>{" "}
                     {t('seller_registration.and')}{" "}
                     <Link to="/privacy-policy" className="text-blue-600 hover:underline">
                       {t('seller_registration.privacy_policy')}

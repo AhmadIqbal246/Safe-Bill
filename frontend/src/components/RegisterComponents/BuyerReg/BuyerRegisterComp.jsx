@@ -322,11 +322,19 @@ export default function BuyerRegisterComp() {
             <p className="text-gray-500 text-xs text-center mt-2">
               By creating an account, you agree to our{" "}
               <Link
+                to="/terms-of-service"
+                className="text-[#01257D] hover:underline"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
                 to="/privacy-policy"
                 className="text-[#01257D] hover:underline"
               >
                 Privacy Policy
               </Link>
+              .
             </p>
           </form>
         </div>

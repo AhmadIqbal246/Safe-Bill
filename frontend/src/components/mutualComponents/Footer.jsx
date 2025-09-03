@@ -35,7 +35,7 @@ export default function Footer() {
         <div className="flex-1 min-w-[140px]">
           <div className="text-[#00FFFF] font-semibold mb-2">{t('footer.legal_links')}</div>
           <ul className="space-y-1">
-            <li><Link to="#" className="hover:underline text-[#96C2DB]">{t('footer.terms')}</Link></li>
+            <li><Link to="/terms-of-service" className="hover:underline text-[#96C2DB]">{t('footer.terms')}</Link></li>
             <li><Link to="/privacy-policy" className="hover:underline text-[#96C2DB]">{t('footer.privacy')}</Link></li>
           </ul>
         </div>

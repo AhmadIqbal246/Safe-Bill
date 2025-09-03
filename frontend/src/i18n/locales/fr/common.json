@@ -244,6 +244,7 @@
     "confirm_password_placeholder": "Confirmez votre mot de passe",
     "terms_agreement": "J'accepte les",
     "terms_of_service": "Conditions de Service",
+    "privacy_policy": "Politique de Confidentialité",
     "and": "et la",
     "professional_directory": "Voulez-vous être dans l'Annuaire Professionnel ?",
     "previous": "Précédent",
@@ -283,6 +284,7 @@
     "confirm_password_placeholder": "Confirmer votre mot de passe",
     "agree_to_terms": "J'accepte les",
     "terms_of_service": "Conditions d'utilisation",
+    "privacy_policy": "Politique de Confidentialité",
     "and": "et",
     "must_agree_to_terms": "Vous devez accepter les conditions",
     "professional_directory_question": "Voulez-vous apparaître dans l'annuaire professionnel ?",
@@ -1080,6 +1082,150 @@
     "updates": {
       "title": "Mises à Jour de la Politique",
       "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de SafeBill après toute modification constitue une acceptation de la politique mise à jour."
+    },
+    "copyright": "© {year} SafeBill. Tous droits réservés."
+  },
+  "terms_of_service": {
+    "title": "Conditions d'Utilisation",
+    "subtitle": "Veuillez lire attentivement ces conditions avant d'utiliser SafeBill. Ces conditions régissent votre utilisation de notre plateforme et de nos services.",
+    "last_updated": "Dernière mise à jour :",
+    "introduction": {
+      "title": "Introduction",
+      "content1": "Bienvenue sur SafeBill (\"nous\", \"notre\" ou \"nos\"). Ces Conditions d'Utilisation (\"Conditions\") régissent votre utilisation de notre plateforme qui facilite la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
+      "content2": "En accédant ou en utilisant SafeBill, vous acceptez d'être lié par ces Conditions. Si vous n'acceptez pas ces Conditions, veuillez ne pas utiliser nos services."
+    },
+    "acceptance": {
+      "title": "Acceptation des Conditions",
+      "content": "En créant un compte, en accédant à notre plateforme ou en utilisant l'un de nos services, vous reconnaissez avoir lu, compris et accepté d'être lié par ces Conditions d'Utilisation et notre Politique de Confidentialité.",
+      "agreement": "Votre utilisation continue de SafeBill constitue votre acceptation de toute mise à jour ou modification de ces Conditions."
+    },
+    "service_description": {
+      "title": "Description du Service",
+      "content": "SafeBill fournit une plateforme complète pour la gestion de projets et les transactions sécurisées entre acheteurs et vendeurs. Nos services incluent :",
+      "features": {
+        "project_management": "Gestion de Projets",
+        "project_management_desc": "Créer, gérer et suivre des projets avec des exigences et spécifications détaillées",
+        "milestone_tracking": "Suivi des Étapes",
+        "milestone_tracking_desc": "Définir et surveiller les étapes du projet avec des déclencheurs de paiement automatisés",
+        "secure_payments": "Paiements Sécurisés",
+        "secure_payments_desc": "Traiter les paiements de manière sécurisée via des passerelles de paiement intégrées",
+        "communication": "Outils de Communication",
+        "communication_desc": "Fonctionnalités de messagerie et de collaboration intégrées pour les équipes de projet"
+      }
+    },
+    "user_accounts": {
+      "title": "Comptes Utilisateurs",
+      "registration": {
+        "title": "Inscription au Compte",
+        "items": [
+          "Vous devez fournir des informations exactes et complètes lors de la création d'un compte",
+          "Vous êtes responsable de maintenir la confidentialité de vos identifiants de compte",
+          "Vous devez avoir au moins 18 ans pour créer un compte",
+          "Une personne ou entité ne peut pas maintenir plusieurs comptes"
+        ]
+      },
+      "responsibilities": {
+        "title": "Responsabilités de l'Utilisateur",
+        "items": [
+          "Maintenir des informations de compte exactes et à jour",
+          "Utiliser la plateforme en conformité avec toutes les lois et réglementations applicables",
+          "Respecter les droits et la vie privée des autres utilisateurs",
+          "Signaler immédiatement toute activité suspecte ou frauduleuse"
+        ]
+      }
+    },
+    "payment_terms": {
+      "title": "Conditions de Paiement",
+      "content": "SafeBill facilite les paiements sécurisés entre acheteurs et vendeurs. Tout le traitement des paiements est géré par nos partenaires de paiement intégrés.",
+      "payment_processing": {
+        "title": "Traitement des Paiements",
+        "items": [
+          "Les paiements sont traités de manière sécurisée via Stripe et d'autres processeurs de paiement certifiés",
+          "Toutes les transactions sont soumises aux frais applicables tels que divulgués au moment du paiement",
+          "Les litiges de paiement sont traités selon notre processus de résolution des litiges",
+          "Les remboursements sont soumis aux conditions convenues entre acheteurs et vendeurs"
+        ]
+      },
+      "refund_policy": "Les demandes de remboursement doivent être soumises dans les 30 jours suivant la transaction originale et sont soumises à approbation basée sur le statut d'achèvement du projet et les conditions."
+    },
+    "prohibited_uses": {
+      "title": "Utilisations Interdites",
+      "content": "Vous acceptez de ne pas utiliser SafeBill pour des activités illégales ou interdites. Les activités suivantes sont strictement interdites :",
+      "illegal_activities": {
+        "title": "Activités Illégales",
+        "items": [
+          "Blanchiment d'argent ou financement du terrorisme",
+          "Fraude ou pratiques trompeuses",
+          "Violation des droits de propriété intellectuelle",
+          "Harcèlement ou discrimination"
+        ]
+      },
+      "platform_abuse": {
+        "title": "Abus de Plateforme",
+        "items": [
+          "Créer de faux comptes ou usurper l'identité d'autrui",
+          "Tenter de pirater ou compromettre la sécurité du système",
+          "Spam ou envoi de communications non sollicitées",
+          "Interférer avec l'utilisation légitime de la plateforme par d'autres utilisateurs"
+        ]
+      }
+    },
+    "intellectual_property": {
+      "title": "Propriété Intellectuelle",
+      "safebill_content": {
+        "title": "Contenu SafeBill",
+        "content": "Tout le contenu, les fonctionnalités et la fonctionnalité de SafeBill, y compris mais sans s'y limiter le texte, les graphiques, les logos et les logiciels, sont la propriété de SafeBill et sont protégés par les lois internationales de droit d'auteur, de marque de commerce et autres lois de propriété intellectuelle."
+      },
+      "user_content": {
+        "title": "Contenu Utilisateur",
+        "content": "Vous conservez la propriété du contenu que vous téléchargez sur SafeBill. En téléchargeant du contenu, vous accordez à SafeBill une licence non exclusive et sans redevance d'utiliser, d'afficher et de distribuer votre contenu selon les besoins pour fournir nos services."
+      }
+    },
+    "disclaimers": {
+      "title": "Avertissements",
+      "service_availability": {
+        "title": "Disponibilité du Service",
+        "content": "SafeBill est fourni \"tel quel\" et \"tel que disponible\". Nous ne garantissons pas que nos services seront ininterrompus, sans erreur ou complètement sécurisés. Nous nous réservons le droit de modifier ou d'interrompre les services à tout moment."
+      },
+      "third_party_services": {
+        "title": "Services Tiers",
+        "content": "Notre plateforme peut s'intégrer avec des services tiers. Nous ne sommes pas responsables de la disponibilité, du contenu ou des pratiques de ces services tiers. Votre utilisation des services tiers est soumise à leurs conditions respectives."
+      }
+    },
+    "limitation_liability": {
+      "title": "Limitation de Responsabilité",
+      "content": "Dans la mesure maximale permise par la loi, SafeBill ne sera pas responsable de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris mais sans s'y limiter :",
+      "direct_damages": "Perte de profits ou de revenus",
+      "indirect_damages": "Perte de données ou d'informations",
+      "consequential_damages": "Interruption d'activité ou perte d'opportunités commerciales",
+      "lost_profits": "Blessures corporelles ou dommages matériels"
+    },
+    "termination": {
+      "title": "Résiliation",
+      "content": "Chaque partie peut résilier ces Conditions à tout moment. Lors de la résiliation, votre droit d'utiliser SafeBill cessera immédiatement.",
+      "user_termination": {
+        "title": "Résiliation par l'Utilisateur",
+        "content": "Vous pouvez résilier votre compte à tout moment en contactant notre équipe de support ou en utilisant la fonctionnalité de suppression de compte dans vos paramètres."
+      },
+      "company_termination": {
+        "title": "Résiliation par l'Entreprise",
+        "content": "Nous pouvons suspendre ou résilier votre compte immédiatement si vous violez ces Conditions ou vous engagez dans des activités interdites."
+      }
+    },
+    "governing_law": {
+      "title": "Loi Applicable",
+      "content": "Ces Conditions seront régies et interprétées conformément aux lois de la France, sans égard aux principes de conflit de lois. Tout litige découlant de ces Conditions sera soumis à la juridiction exclusive des tribunaux de France."
+    },
+    "contact": {
+      "title": "Nous Contacter",
+      "content": "Si vous avez des questions sur ces Conditions d'Utilisation, veuillez nous contacter :",
+      "email": "legal@safebill.com",
+      "phone": "+1 (555) 123-4567",
+      "address": "123 Business Street, City, State 12345"
+    },
+    "updates": {
+      "title": "Mises à Jour des Conditions",
+      "content": "Nous pouvons mettre à jour ces Conditions d'Utilisation de temps à autre. Nous informerons les utilisateurs de tout changement important par e-mail ou via notre plateforme. Votre utilisation continue de SafeBill après toute modification constitue une acceptation des Conditions mises à jour."
     },
     "copyright": "© {year} SafeBill. Tous droits réservés."
   }
