@@ -1,15 +1,54 @@
 from django.urls import path
-from .views import create_stripe_payment, check_payment_status
+from .views import (
+    create_stripe_payment,
+    check_payment_status,
+    list_billings,
+    balance_summary,
+    transfer_to_stripe_account,
+    get_transfer_info,
+    list_transfers,
+    generate_stripe_login_link,
+)
 
 urlpatterns = [
     path(
-        "create-stripe-payment/",
+        "create-stripe-payment/<int:project_id>/",
         create_stripe_payment,
         name="create_stripe_payment",
     ),
     path(
-        "check-payment-status/",
+        "check-payment-status/<int:project_id>/",
         check_payment_status,
         name="check_payment_status",
+    ),
+    path(
+        "billings/",
+        list_billings,
+        name="list_billings",
+    ),
+    path(
+        "balance/",
+        balance_summary,
+        name="balance_summary",
+    ),
+    path(
+        "transfer-to-stripe/",
+        transfer_to_stripe_account,
+        name="transfer_to_stripe_account",
+    ),
+    path(
+        "transfer-info/",
+        get_transfer_info,
+        name="get_transfer_info",
+    ),
+    path(
+        "transfers/",
+        list_transfers,
+        name="list_transfers",
+    ),
+    path(
+        "stripe-login-link/",
+        generate_stripe_login_link,
+        name="generate_stripe_login_link",
     ),
 ]

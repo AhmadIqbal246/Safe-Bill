@@ -14,7 +14,11 @@ from .serializers import (
 )
 from notifications.models import Notification
 from notifications.services import NotificationService
+from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectCreateAPIView(generics.CreateAPIView):
@@ -445,6 +449,23 @@ class MilestoneApprovalAPIView(APIView):
         if action_type == "approve":
             milestone.status = "approved"
             milestone.completion_date = timezone.now()
+
+            # Update balances when milestone is approved
+            try:
+                project = milestone.project
+                if project.user and project.client:
+                    # Process milestone payment: transfer from buyer's escrow to seller's balance
+                    BalanceService.process_milestone_payment(
+                        seller=project.user,
+                        buyer=project.client,
+                        milestone_amount=milestone.relative_payment,
+                    )
+            except Exception as e:
+
+                logger.error(
+                    f"Error updating balances for milestone {milestone.id}: {e}"
+                )
+
         elif action_type == "not_approved":
             milestone.status = "not_approved"
             milestone.completion_date = None

@@ -10,6 +10,9 @@ import disputeReducer from './slices/DisputeSlice';
 import chatReducer from './slices/ChatSlice';
 import adminReducer from './slices/AdminSlice';
 import stripeReducer from './slices/ConnectStripe';
+import paymentReducer from './slices/PaymentSlice';
+import fundsTransferReducer from './slices/FundsTransferSlice';
+
 
 // Example: import your reducers here
 // import userReducer from './features/user/userSlice';
@@ -27,6 +30,8 @@ export const store = configureStore({
     chat: chatReducer,
     admin: adminReducer,
     stripe: stripeReducer,
+    payment: paymentReducer,
+    fundsTransfer: fundsTransferReducer,
   },
 });
 

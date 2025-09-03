@@ -67,20 +67,29 @@ class PaymentStatusConsumer(AsyncJsonWebsocketConsumer):
     def _get_payment_status(self):
         """Get current payment status from database"""
         try:
-            payment = Payment.objects.get(project=self.project)
-            return {
-                "status": payment.status,
-                "amount": float(
-                    payment.amount
-                ),  # Convert Decimal to float for JSON serialization
-                "created_at": (
-                    payment.created_at.isoformat() if payment.created_at else None
-                ),
-                "updated_at": (
-                    payment.updated_at.isoformat() if payment.updated_at else None
-                ),
-            }
-        except Payment.DoesNotExist:
+            # Get the most recent payment for this project by this user
+            payment = (
+                Payment.objects.filter(project=self.project, user=self.user)
+                .order_by("-created_at")
+                .first()
+            )
+
+            if payment:
+                return {
+                    "status": payment.status,
+                    "amount": float(
+                        payment.amount
+                    ),  # Convert Decimal to float for JSON serialization
+                    "created_at": (
+                        payment.created_at.isoformat() if payment.created_at else None
+                    ),
+                    "updated_at": (
+                        payment.updated_at.isoformat() if payment.updated_at else None
+                    ),
+                }
+            else:
+                return {"status": "pending"}
+        except Exception:
             return {"status": "pending"}
 
     async def _send_current_payment_status(self):
