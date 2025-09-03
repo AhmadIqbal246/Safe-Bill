@@ -113,6 +113,14 @@ class BuyerRegistrationSerializer(serializers.ModelSerializer):
             'username', 'email', 'password', 'first_name', 'last_name', 'address'
         ]
 
+    def validate_email(self, value):
+        """
+        Check that the email is not already taken.
+        """
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('This email is already taken.')
+        return value
+
     def create(self, validated_data):
         # Remove buyer-specific fields from validated_data for User creation
         first_name = validated_data.pop('first_name')
