@@ -14,6 +14,9 @@ from payments.models import Payment
 from payments.utils import send_payment_websocket_update
 from utils.email_service import EmailService
 from notifications.services import NotificationService
+from payments.services import BalanceService
+from payments.transfer_service import TransferService
+
 
 User = get_user_model()
 
@@ -34,15 +37,13 @@ def connect_stripe(request):
 
     if stripe_account.account_id is None:
         account = stripe.Account.create(
+            type="express",
             country="FR",
-            capabilities={
-                "card_payments": {"requested": True},
-                "transfers": {"requested": True},
+            tos_acceptance={
+                "service_agreement": "full",
             },
-            controller={
-                "fees": {"payer": "application"},
-                "losses": {"payments": "application"},
-                "stripe_dashboard": {"type": "express"},
+            capabilities={
+                "transfers": {"requested": True},
             },
             metadata={
                 "user_id": str(user.id),
@@ -167,6 +168,18 @@ def stripe_connect_webhook(request):
             stripe_account.save()
             logger.info(f"Updated StripeAccount {stripe_account.id} with account data")
 
+            # Update or create payout preferences if payouts are enabled
+            if payouts_enabled:
+                # Check if this is a settings change by comparing with previous data
+                previous_data = (
+                    stripe_account.account_data.get("settings", {})
+                    if stripe_account.account_data
+                    else {}
+                )
+                current_settings = account.get("settings", {})
+
+                # Removed payout preferences update - sellers manage directly in Stripe Dashboard
+
         except StripeAccount.DoesNotExist:
             logger.error(f"StripeAccount not found for account {account_id}")
         except Exception as e:
@@ -199,6 +212,13 @@ def stripe_connect_webhook(request):
         except Exception as e:
             logger.error(f"Error disconnecting Stripe account {account_id}: {e}")
 
+    # Handle transfer webhook events
+    elif event["type"] == "transfer.created":
+        TransferService.handle_transfer_created(event)
+    elif event["type"] == "transfer.updated":
+        TransferService.handle_transfer_updated(event)
+    elif event["type"] == "transfer.reversed":
+        TransferService.handle_transfer_reversed(event)
     else:
         logger.info(f"Unhandled event type: {event['type']}")
 
@@ -583,6 +603,16 @@ def stripe_identity_webhook(request):
         payment.status = "paid"
         payment.webhook_response = event
         payment.save()
+
+        try:
+            # The payment is held in escrow until milestones are approved
+            if project.client:
+                BalanceService.update_buyer_balance_on_payment(
+                    buyer=project.client, payment_amount=payment.amount
+                )
+        except Exception as e:
+            logger.error(f"Error updating buyer balance: {e}")
+            # Don't break the webhook flow if balance update fails
 
         # Email: notify client of successful payment
         try:

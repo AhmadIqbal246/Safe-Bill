@@ -49,24 +49,24 @@ export default function InviteViewProject() {
       );
 
       setProject(res.data);
-      
+
       // Automatically add client to project if not already added
       // This ensures the buyer can see pending projects on their dashboard
       if (res.data && !res.data.client) {
         try {
           await axios.post(
             `${backendBaseUrl}api/projects/invite/${token}/`,
-            { action: 'view' }, // Special action to just add client without approval
+            { action: "view" }, // Special action to just add client without approval
             {
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${sessionStorage.getItem("access")}`,
               },
               withCredentials: true,
             }
           );
         } catch (addError) {
-          console.log('Client already added or error adding client:', addError);
+          console.log("Client already added or error adding client:", addError);
         }
       }
     } catch (err) {
@@ -148,9 +148,8 @@ export default function InviteViewProject() {
     if (action === "approve") {
       try {
         const res = await axios.post(
-          `${backendBaseUrl}api/payments/create-stripe-payment/`,
+          `${backendBaseUrl}api/payments/create-stripe-payment/${project.id}/`,
           {
-            token: token,
             redirect_url: `${frontendBaseUrl}project-invite?token=${token}`,
           },
           {
