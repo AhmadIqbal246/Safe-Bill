@@ -1212,9 +1212,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
                       {t('seller_registration.terms_of_service')}
                     </a>{" "}
                     {t('seller_registration.and')}{" "}
-                    <a href="#" className="text-blue-600 hover:underline">
+                    <Link to="/privacy-policy" className="text-blue-600 hover:underline">
                       {t('seller_registration.privacy_policy')}
-                    </a>
+                    </Link>
                   </label>
                 </div>
                 {errors.agreeToTerms && (

@@ -36,7 +36,7 @@ export default function Footer() {
           <div className="text-[#00FFFF] font-semibold mb-2">{t('footer.legal_links')}</div>
           <ul className="space-y-1">
             <li><Link to="#" className="hover:underline text-[#96C2DB]">{t('footer.terms')}</Link></li>
-            <li><Link to="#" className="hover:underline text-[#96C2DB]">{t('footer.privacy')}</Link></li>
+            <li><Link to="/privacy-policy" className="hover:underline text-[#96C2DB]">{t('footer.privacy')}</Link></li>
           </ul>
         </div>
       </div>

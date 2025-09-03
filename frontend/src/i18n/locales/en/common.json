@@ -242,7 +242,6 @@
     "terms_agreement": "I agree to the",
     "terms_of_service": "Terms of Service",
     "and": "and",
-    "privacy_policy": "Privacy Policy",
     "professional_directory": "Do you Want to be in Professional Directory?",
     "previous": "Previous",
     "create_account": "Create my account",
@@ -282,7 +281,6 @@
     "agree_to_terms": "I agree to the",
     "terms_of_service": "Terms of Service",
     "and": "and",
-    "privacy_policy": "Privacy Policy",
     "must_agree_to_terms": "You must agree to the terms",
     "professional_directory_question": "Do you Want to be in Professional Directory?",
     "previous": "Previous",
@@ -968,5 +966,119 @@
     "note3": "You can approve or reject projects based on your requirements",
     "get_started_button": "Get Started Now",
     "get_started_note": "Ready to accept your first project invitation? Click the button above to begin!"
+  },
+  "privacy_policy": {
+    "title": "Privacy Policy",
+    "subtitle": "Your privacy is important to us. This policy explains how SafeBill collects, uses, and protects your information.",
+    "last_updated": "Last updated:",
+    "introduction": {
+      "title": "Introduction",
+      "content1": "SafeBill (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform for project management, milestone tracking, and secure payments between buyers and sellers.",
+      "content2": "By using SafeBill, you agree to the collection and use of information in accordance with this policy."
+    },
+    "information_collection": {
+      "title": "Information We Collect",
+      "personal_info": {
+        "title": "Personal Information",
+        "items": [
+          "Name, email address, and contact information",
+          "Business information (company name, SIRET number, business type)",
+          "Profile information and preferences",
+          "Payment and billing information (processed securely through Stripe)"
+        ]
+      },
+      "project_info": {
+        "title": "Project Information",
+        "items": [
+          "Project details, descriptions, and requirements",
+          "Quotes, proposals, and project documents",
+          "Milestone information and completion status",
+          "Communication history between buyers and sellers"
+        ]
+      },
+      "technical_info": {
+        "title": "Technical Information",
+        "items": [
+          "IP address, browser type, and device information",
+          "Usage patterns and platform interactions",
+          "Cookies and similar tracking technologies",
+          "Log files and analytics data"
+        ]
+      }
+    },
+    "how_we_use": {
+      "title": "How We Use Your Information",
+      "service_provision": {
+        "title": "Service Provision",
+        "content": "To provide, maintain, and improve our platform services, including project management, milestone tracking, and secure payment processing."
+      },
+      "communication": {
+        "title": "Communication",
+        "content": "To send you important updates, notifications, and respond to your inquiries and support requests."
+      },
+      "security_compliance": {
+        "title": "Security & Compliance",
+        "content": "To ensure platform security, prevent fraud, and comply with legal obligations and regulations."
+      },
+      "analytics_improvement": {
+        "title": "Analytics & Improvement",
+        "content": "To analyze usage patterns, improve user experience, and develop new features and services."
+      }
+    },
+    "information_sharing": {
+      "title": "Information Sharing",
+      "content": "We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:",
+      "service_providers": "Service Providers: With trusted third-party service providers who assist in platform operations (e.g., Stripe for payments, email services)",
+      "legal_requirements": "Legal Requirements: When required by law, court order, or to protect our rights and safety",
+      "business_transfers": "Business Transfers: In connection with a merger, acquisition, or sale of assets",
+      "consent": "Consent: When you explicitly consent to sharing your information"
+    },
+    "data_security": {
+      "title": "Data Security",
+      "content": "We implement industry-standard security measures to protect your information:",
+      "ssl_encryption": "SSL/TLS encryption for data transmission",
+      "secure_storage": "Secure database storage with encryption",
+      "security_audits": "Regular security audits and updates",
+      "access_controls": "Access controls and authentication"
+    },
+    "your_rights": {
+      "title": "Your Rights",
+      "access_portability": {
+        "title": "Access & Portability",
+        "content": "Request access to your personal data and receive it in a portable format"
+      },
+      "correction": {
+        "title": "Correction",
+        "content": "Request correction of inaccurate or incomplete personal information"
+      },
+      "deletion": {
+        "title": "Deletion",
+        "content": "Request deletion of your personal data under certain circumstances"
+      },
+      "objection": {
+        "title": "Objection",
+        "content": "Object to processing of your personal data for certain purposes"
+      }
+    },
+    "cookies": {
+      "title": "Cookies and Tracking",
+      "content": "We use cookies and similar technologies to enhance your experience:",
+      "essential_cookies": "Essential Cookies: Required for platform functionality and security",
+      "analytics_cookies": "Analytics Cookies: Help us understand how you use our platform",
+      "preference_cookies": "Preference Cookies: Remember your settings and preferences",
+      "browser_control": "You can control cookie settings through your browser preferences."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "content": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
+      "email": "privacy@safebill.com",
+      "phone": "+1 (555) 123-4567",
+      "address": "123 Business Street, City, State 12345"
+    },
+    "updates": {
+      "title": "Policy Updates",
+      "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last updated\" date. Your continued use of SafeBill after any modifications constitutes acceptance of the updated policy."
+    },
+    "copyright": "© {year} SafeBill. All rights reserved."
   }
 }

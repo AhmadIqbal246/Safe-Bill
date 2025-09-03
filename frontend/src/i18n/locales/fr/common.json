@@ -245,7 +245,6 @@
     "terms_agreement": "J'accepte les",
     "terms_of_service": "Conditions de Service",
     "and": "et la",
-    "privacy_policy": "Politique de Confidentialité",
     "professional_directory": "Voulez-vous être dans l'Annuaire Professionnel ?",
     "previous": "Précédent",
     "create_account": "Créer mon compte",
@@ -285,7 +284,6 @@
     "agree_to_terms": "J'accepte les",
     "terms_of_service": "Conditions d'utilisation",
     "and": "et",
-    "privacy_policy": "Politique de confidentialité",
     "must_agree_to_terms": "Vous devez accepter les conditions",
     "professional_directory_question": "Voulez-vous apparaître dans l'annuaire professionnel ?",
     "previous": "Précédent",
@@ -970,5 +968,119 @@
     "note3": "Vous pouvez approuver ou rejeter les projets selon vos exigences",
     "get_started_button": "Commencer Maintenant",
     "get_started_note": "Prêt à accepter votre première invitation de projet ? Cliquez sur le bouton ci-dessus pour commencer !"
+  },
+  "privacy_policy": {
+    "title": "Politique de Confidentialité",
+    "subtitle": "Votre confidentialité est importante pour nous. Cette politique explique comment SafeBill collecte, utilise et protège vos informations.",
+    "last_updated": "Dernière mise à jour :",
+    "introduction": {
+      "title": "Introduction",
+      "content1": "SafeBill (\"nous\", \"notre\" ou \"nos\") s'engage à protéger votre confidentialité. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme pour la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
+      "content2": "En utilisant SafeBill, vous acceptez la collecte et l'utilisation d'informations conformément à cette politique."
+    },
+    "information_collection": {
+      "title": "Informations que Nous Collectons",
+      "personal_info": {
+        "title": "Informations Personnelles",
+        "items": [
+          "Nom, adresse e-mail et informations de contact",
+          "Informations commerciales (nom de l'entreprise, numéro SIRET, type d'entreprise)",
+          "Informations de profil et préférences",
+          "Informations de paiement et de facturation (traitées de manière sécurisée via Stripe)"
+        ]
+      },
+      "project_info": {
+        "title": "Informations sur les Projets",
+        "items": [
+          "Détails, descriptions et exigences des projets",
+          "Devis, propositions et documents de projet",
+          "Informations sur les étapes et statut d'achèvement",
+          "Historique des communications entre acheteurs et vendeurs"
+        ]
+      },
+      "technical_info": {
+        "title": "Informations Techniques",
+        "items": [
+          "Adresse IP, type de navigateur et informations sur l'appareil",
+          "Modèles d'utilisation et interactions avec la plateforme",
+          "Cookies et technologies de suivi similaires",
+          "Fichiers journaux et données d'analyse"
+        ]
+      }
+    },
+    "how_we_use": {
+      "title": "Comment Nous Utilisons Vos Informations",
+      "service_provision": {
+        "title": "Prestation de Services",
+        "content": "Pour fournir, maintenir et améliorer nos services de plateforme, y compris la gestion de projets, le suivi des étapes et le traitement sécurisé des paiements."
+      },
+      "communication": {
+        "title": "Communication",
+        "content": "Pour vous envoyer des mises à jour importantes, des notifications et répondre à vos demandes et demandes de support."
+      },
+      "security_compliance": {
+        "title": "Sécurité et Conformité",
+        "content": "Pour assurer la sécurité de la plateforme, prévenir la fraude et se conformer aux obligations légales et réglementaires."
+      },
+      "analytics_improvement": {
+        "title": "Analyse et Amélioration",
+        "content": "Pour analyser les modèles d'utilisation, améliorer l'expérience utilisateur et développer de nouvelles fonctionnalités et services."
+      }
+    },
+    "information_sharing": {
+      "title": "Partage d'Informations",
+      "content": "Nous ne vendons, n'échangeons ni ne louons vos informations personnelles à des tiers. Nous ne pouvons partager vos informations que dans les circonstances suivantes :",
+      "service_providers": "Prestataires de Services : Avec des prestataires de services tiers de confiance qui assistent dans les opérations de la plateforme (par exemple, Stripe pour les paiements, services e-mail)",
+      "legal_requirements": "Exigences Légales : Lorsque requis par la loi, ordonnance du tribunal ou pour protéger nos droits et notre sécurité",
+      "business_transfers": "Transferts d'Entreprise : En relation avec une fusion, acquisition ou vente d'actifs",
+      "consent": "Consentement : Lorsque vous consentez explicitement au partage de vos informations"
+    },
+    "data_security": {
+      "title": "Sécurité des Données",
+      "content": "Nous mettons en œuvre des mesures de sécurité standard de l'industrie pour protéger vos informations :",
+      "ssl_encryption": "Chiffrement SSL/TLS pour la transmission de données",
+      "secure_storage": "Stockage sécurisé de base de données avec chiffrement",
+      "security_audits": "Audits de sécurité et mises à jour réguliers",
+      "access_controls": "Contrôles d'accès et authentification"
+    },
+    "your_rights": {
+      "title": "Vos Droits",
+      "access_portability": {
+        "title": "Accès et Portabilité",
+        "content": "Demander l'accès à vos données personnelles et les recevoir dans un format portable"
+      },
+      "correction": {
+        "title": "Correction",
+        "content": "Demander la correction d'informations personnelles inexactes ou incomplètes"
+      },
+      "deletion": {
+        "title": "Suppression",
+        "content": "Demander la suppression de vos données personnelles dans certaines circonstances"
+      },
+      "objection": {
+        "title": "Objection",
+        "content": "Vous opposer au traitement de vos données personnelles à certaines fins"
+      }
+    },
+    "cookies": {
+      "title": "Cookies et Suivi",
+      "content": "Nous utilisons des cookies et des technologies similaires pour améliorer votre expérience :",
+      "essential_cookies": "Cookies Essentiels : Requis pour la fonctionnalité et la sécurité de la plateforme",
+      "analytics_cookies": "Cookies d'Analyse : Nous aident à comprendre comment vous utilisez notre plateforme",
+      "preference_cookies": "Cookies de Préférence : Se souviennent de vos paramètres et préférences",
+      "browser_control": "Vous pouvez contrôler les paramètres des cookies via les préférences de votre navigateur."
+    },
+    "contact": {
+      "title": "Nous Contacter",
+      "content": "Si vous avez des questions sur cette Politique de Confidentialité ou nos pratiques de données, veuillez nous contacter :",
+      "email": "privacy@safebill.com",
+      "phone": "+1 (555) 123-4567",
+      "address": "123 Business Street, City, State 12345"
+    },
+    "updates": {
+      "title": "Mises à Jour de la Politique",
+      "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de SafeBill après toute modification constitue une acceptation de la politique mise à jour."
+    },
+    "copyright": "© {year} SafeBill. Tous droits réservés."
   }
 }
