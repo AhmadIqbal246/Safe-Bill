@@ -13,6 +13,7 @@
     "@headlessui/react": "^2.2.4",
     "@react-google-maps/api": "^2.20.7",
     "@reduxjs/toolkit": "^2.8.2",
+    "@stripe/react-connect-js": "^3.3.26",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",

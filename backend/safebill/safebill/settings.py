@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "chat",
     "adminpanelApp",
     "connect_stripe",
+    "payments",
 ]
 
 MIDDLEWARE = [

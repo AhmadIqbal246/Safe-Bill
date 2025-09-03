@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import notificationWebSocketService from '../../services/notificationWebSocketService.js';
 
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetchNotifications',
@@ -87,8 +88,62 @@ const notificationSlice = createSlice({
     error: null,
     markAllLoading: false,
     markAllError: null,
+    websocketConnected: false,
   },
-  reducers: {},
+  reducers: {
+    // WebSocket actions
+    connectWebSocket: (state, action) => {
+      const token = action.payload;
+      notificationWebSocketService.connect(token);
+      state.websocketConnected = true;
+    },
+    disconnectWebSocket: (state) => {
+      notificationWebSocketService.disconnect();
+      state.websocketConnected = false;
+    },
+    addNotification: (state, action) => {
+      const notification = action.payload;
+      const existingIndex = state.notifications.findIndex(n => n.id === notification.id);
+      if (existingIndex === -1) {
+        // Add notification to the beginning of the list
+        state.notifications.unshift(notification);
+      } else {
+        // Update existing notification in place to avoid duplicates
+        state.notifications[existingIndex] = { ...state.notifications[existingIndex], ...notification };
+      }
+    },
+    addNotifications: (state, action) => {
+      const incoming = Array.isArray(action.payload) ? action.payload : [];
+      for (const notification of incoming) {
+        const existingIndex = state.notifications.findIndex(n => n.id === notification.id);
+        if (existingIndex === -1) {
+          state.notifications.push(notification);
+        } else {
+          state.notifications[existingIndex] = { ...state.notifications[existingIndex], ...notification };
+        }
+      }
+    },
+    updateNotification: (state, action) => {
+      const updatedNotification = action.payload;
+      const index = state.notifications.findIndex(n => n.id === updatedNotification.id);
+      if (index !== -1) {
+        state.notifications[index] = updatedNotification;
+      }
+    },
+    markNotificationAsRead: (state, action) => {
+      const notificationId = action.payload;
+      const notification = state.notifications.find(n => n.id === notificationId);
+      if (notification) {
+        notification.is_read = true;
+      }
+    },
+    markAllAsRead: (state) => {
+      state.notifications = state.notifications.map(n => ({ ...n, is_read: true }));
+    },
+    setWebSocketConnectionStatus: (state, action) => {
+      state.websocketConnected = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchNotifications.pending, (state) => {
@@ -125,5 +180,17 @@ const notificationSlice = createSlice({
       });
   },
 });
+
+// Export actions
+export const {
+  connectWebSocket,
+  disconnectWebSocket,
+  addNotification,
+  addNotifications,
+  updateNotification,
+  markNotificationAsRead,
+  markAllAsRead,
+  setWebSocketConnectionStatus,
+} = notificationSlice.actions;
 
 export default notificationSlice.reducer; 

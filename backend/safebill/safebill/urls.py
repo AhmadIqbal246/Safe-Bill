@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/", include("chat.urls")),
     path("api/admin/", include("adminpanelApp.urls")),
     path("api/connect-stripe/", include("connect_stripe.urls")),
+    path("api/payments/", include("payments.urls")),
     # Add other app urls here
 ]
 

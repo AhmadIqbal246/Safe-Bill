@@ -1,31 +1,39 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
-import axios from 'axios';
-import ProjectStatusBadge from '../components/common/ProjectStatusBadge';
+import React, { useEffect, useState, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
+import axios from "axios";
+import ProjectStatusBadge from "../components/common/ProjectStatusBadge";
+import Loader from "../components/common/Loader";
+import paymentWebSocketService from "../services/paymentWebSocketService";
+import { toast } from "react-toastify";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
 const backendBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const frontendBaseUrl = import.meta.env.VITE_FRONTEND_URL;
 
 function getQuoteFileUrl(file) {
-  if (!file) return '#';
-  if (file.startsWith('http')) return file;
-  return backendBaseUrl.replace(/\/$/, '') + file;
+  if (!file) return "#";
+  if (file.startsWith("http")) return file;
+  return backendBaseUrl.replace(/\/$/, "") + file;
 }
 
 export default function InviteViewProject() {
   const query = useQuery();
-  const token = query.get('token');
+  const token = query.get("token");
+  const checkoutStatus = query.get("status");
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [actionMessage, setActionMessage] = useState('');
+  const [actionMessage, setActionMessage] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [checkoutProcessing, setCheckoutProcessing] = useState(false);
 
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -33,31 +41,32 @@ export default function InviteViewProject() {
         `${backendBaseUrl}api/projects/invite/${token}/`,
         {
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("access")}`,
           },
           withCredentials: true,
         }
       );
+
       setProject(res.data);
-      
+
       // Automatically add client to project if not already added
       // This ensures the buyer can see pending projects on their dashboard
       if (res.data && !res.data.client) {
         try {
           await axios.post(
             `${backendBaseUrl}api/projects/invite/${token}/`,
-            { action: 'view' }, // Special action to just add client without approval
+            { action: "view" }, // Special action to just add client without approval
             {
               headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${sessionStorage.getItem("access")}`,
               },
               withCredentials: true,
             }
           );
         } catch (addError) {
-          console.log('Client already added or error adding client:', addError);
+          console.log("Client already added or error adding client:", addError);
         }
       }
     } catch (err) {
@@ -69,52 +78,137 @@ export default function InviteViewProject() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
-    if (token) fetchProject();
-  }, [token]);
+    if (token) {
+      fetchProject();
+    }
+  }, [token, fetchProject]);
+
+  // Redirect buyer when project becomes approved
+  useEffect(() => {
+    if (project?.status === "approved") {
+      setTimeout(() => {
+        toast.success("Project approved successfully");
+        navigate("/buyer-dashboard");
+      }, 5000);
+    }
+  }, [project?.status, navigate]);
+
+  // WebSocket connection for real-time payment updates
+  useEffect(() => {
+    if (token && project?.id) {
+      const accessToken = sessionStorage.getItem("access");
+
+      // Set up WebSocket event handlers
+      paymentWebSocketService.on("paymentStatusUpdate", (data) => {
+        setPaymentStatus(data.status);
+        setCheckoutProcessing(false);
+      });
+
+      paymentWebSocketService.on("projectStatusUpdate", (data) => {
+        setProject((prevProject) => ({
+          ...prevProject,
+          status: data.status,
+        }));
+      });
+
+      // Connect to WebSocket
+      paymentWebSocketService.connect(accessToken, token);
+
+      // Cleanup on unmount
+      return () => {
+        paymentWebSocketService.off("paymentStatusUpdate");
+        paymentWebSocketService.off("projectStatusUpdate");
+        paymentWebSocketService.disconnect();
+      };
+    }
+  }, [token, project?.id]);
+
+  // Handle checkout processing delay
+  useEffect(() => {
+    if (checkoutStatus) {
+      setCheckoutProcessing(true);
+
+      // Wait 5 seconds before stopping checkout processing
+      const timeout = setTimeout(() => {
+        setCheckoutProcessing(false);
+      }, 5000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [checkoutStatus]);
 
   const handleProjectAction = async (action) => {
     setActionLoading(true);
-    setActionMessage('');
+    setActionMessage("");
     setError(null);
-    
-    try {
-      const res = await axios.post(
-        `${backendBaseUrl}api/projects/invite/${token}/`,
-        { action },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+
+    if (action === "approve") {
+      try {
+        const res = await axios.post(
+          `${backendBaseUrl}api/payments/create-stripe-payment/${project.id}/`,
+          {
+            redirect_url: `${frontendBaseUrl}project-invite?token=${token}`,
           },
-          withCredentials: true,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionStorage.getItem("access")}`,
+            },
+            withCredentials: true,
+          }
+        );
+        if (res.status === 200) {
+          window.location.href = res.data.stripe_checkout_session_url;
         }
-      );
-      
-      setActionMessage(res.data.detail);
-      
-      // Refresh project data to get updated status
-      setTimeout(() => {
-        fetchProject();
-      }, 1000);
-      
-    } catch (err) {
-      setError(
-        err.response && err.response.data && err.response.data.detail
-          ? err.response.data.detail
-          : err.message
-      );
-    } finally {
-      setActionLoading(false);
+      } catch (err) {
+        setError(err.response.data.detail);
+      }
+      return;
     }
+
+    // try {
+    //   const res = await axios.post(
+    //     `${backendBaseUrl}api/projects/invite/${token}/`,
+    //     { action },
+    //     {
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         Authorization: `Bearer ${sessionStorage.getItem('access')}`,
+    //       },
+    //       withCredentials: true,
+    //     }
+    //   );
+
+    //   setActionMessage(res.data.detail);
+
+    //   // Refresh project data to get updated status
+    //   setTimeout(() => {
+    //     fetchProject();
+    //   }, 1000);
+
+    // } catch (err) {
+    //   setError(
+    //     err.response && err.response.data && err.response.data.detail
+    //       ? err.response.data.detail
+    //       : err.message
+    //   );
+    // } finally {
+    //   setActionLoading(false);
+    // }
+  };
+
+  const retryPayment = async () => {
+    setPaymentStatus("pending");
+    handleProjectAction("approve");
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-lg text-gray-500">Loading project...</div>
+        <Loader size="large" text="Loading project..." />
       </div>
     );
   }
@@ -146,23 +240,39 @@ export default function InviteViewProject() {
           <h2 className="text-lg font-bold mb-4">Project Information</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-2">
             <div>
-              <div className="text-xs text-gray-400 font-semibold mb-1">Project Name</div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">
+                Project Name
+              </div>
               <div className="text-gray-900 font-medium">{project.name}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-400 font-semibold mb-1">Client Email</div>
-              <div className="text-gray-900 font-medium">{project.client_email}</div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">
+                Client Email
+              </div>
+              <div className="text-gray-900 font-medium">
+                {project.client_email}
+              </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400 font-semibold mb-1">Created At</div>
-              <div className="text-gray-900 font-medium">{project.created_at}</div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">
+                Created At
+              </div>
+              <div className="text-gray-900 font-medium">
+                {project.created_at}
+              </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400 font-semibold mb-1">Reference Number</div>
-              <div className="text-gray-900 font-medium">{project.reference_number}</div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">
+                Reference Number
+              </div>
+              <div className="text-gray-900 font-medium">
+                {project.reference_number}
+              </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400 font-semibold mb-1">Status</div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">
+                Status
+              </div>
               <ProjectStatusBadge status={project.status} size="small" />
             </div>
           </div>
@@ -177,16 +287,28 @@ export default function InviteViewProject() {
                 {/* PDF Preview Container */}
                 <div className="bg-white rounded-lg p-6 mb-4 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-center mb-4">
-                    <svg className="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    <svg
+                      className="w-16 h-16 text-red-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div className="text-gray-700 mb-4">
-                    <div className="font-semibold text-lg mb-2">Quote Document</div>
-                    <div className="text-sm text-gray-500">Click below to view the full PDF document</div>
+                    <div className="font-semibold text-lg mb-2">
+                      Quote Document
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Click below to view the full PDF document
+                    </div>
                   </div>
                 </div>
-                
+
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
@@ -195,9 +317,24 @@ export default function InviteViewProject() {
                     rel="noopener noreferrer"
                     className="px-6 py-3 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors text-sm flex items-center justify-center gap-2"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
                     </svg>
                     View Quote PDF
                   </a>
@@ -206,8 +343,18 @@ export default function InviteViewProject() {
                     download
                     className="px-6 py-3 bg-gray-600 text-white rounded-md font-semibold hover:bg-gray-700 transition-colors text-sm flex items-center justify-center gap-2"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     Download PDF
                   </a>
@@ -223,14 +370,20 @@ export default function InviteViewProject() {
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
           <h2 className="text-lg font-bold mb-4">Payment Validation</h2>
           <div className="mb-4">
-            <div className="text-xs text-gray-400 font-semibold mb-1">Total Amount</div>
-            <div className="text-gray-900 font-bold text-lg mb-2">${project.total_amount?.toLocaleString()}</div>
+            <div className="text-xs text-gray-400 font-semibold mb-1">
+              Total Amount
+            </div>
+            <div className="text-gray-900 font-bold text-lg mb-2">
+              ${project.total_amount?.toLocaleString()}
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
             {project.installments?.map((inst, idx) => (
               <div key={idx} className="bg-[#F6F0F0] rounded-lg p-4">
                 <div className="font-semibold mb-1">Installment {idx + 1}</div>
-                <div className="text-gray-900 font-medium mb-1">${parseFloat(inst.amount).toLocaleString()}</div>
+                <div className="text-gray-900 font-medium mb-1">
+                  ${parseFloat(inst.amount).toLocaleString()}
+                </div>
                 <div className="text-xs text-gray-500 mb-1">{inst.step}</div>
                 <div className="text-xs text-gray-400">{inst.description}</div>
               </div>
@@ -238,72 +391,261 @@ export default function InviteViewProject() {
           </div>
           <div className="flex items-center mb-4">
             <input type="checkbox" id="terms" className="mr-2" />
-            <label htmlFor="terms" className="text-sm text-gray-700">I agree to the terms and conditions of this project and payment schedule.</label>
+            <label htmlFor="terms" className="text-sm text-gray-700">
+              I agree to the terms and conditions of this project and payment
+              schedule.
+            </label>
           </div>
           {/* <div className="flex gap-4">
             <button className="px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors">Pay by Card</button>
             <button className="px-6 py-2 bg-emerald-600 text-white rounded-md font-semibold hover:bg-emerald-700 transition-colors">Pay by Bank Transfer</button>
           </div> */}
         </div>
+
+        {/* Checkout Processing Section */}
+        {checkoutProcessing && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-lg font-bold mb-4">Processing Payment</h2>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <Loader
+                size="large"
+                text="Processing your payment, please wait..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Payment Status Section */}
+        {paymentStatus && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-lg font-bold mb-4">Payment Status</h2>
+
+            {/* Pending Payment */}
+            {paymentStatus === "pending" && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <svg
+                    className="w-8 h-8 text-orange-600 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <div>
+                    <h3 className="text-lg font-semibold text-orange-800">
+                      Payment Pending
+                    </h3>
+                    <p className="text-orange-700">
+                      Please make a payment to start the project.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payment In Progress */}
+            {paymentStatus === "payment_in_progress" && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <Loader
+                  size="large"
+                  text="Please wait, your payment is being processed..."
+                />
+              </div>
+            )}
+
+            {/* Failed Payment */}
+            {paymentStatus === "failed" && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <svg
+                    className="w-8 h-8 text-red-600 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-800">
+                      Payment Failed
+                    </h3>
+                    <p className="text-red-700">
+                      Your payment could not be processed. Please try again.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={retryPayment}
+                  className="bg-red-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Retry Payment
+                </button>
+              </div>
+            )}
+
+            {/* Successful Payment */}
+            {(paymentStatus === "succeeded" || paymentStatus === "paid") && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-center">
+                  <svg
+                    className="w-8 h-8 text-green-600 mr-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-800">
+                      Payment Successful
+                    </h3>
+                    <p className="text-green-700">
+                      Your payment has been processed successfully. Project will
+                      be updated shortly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {/* Project Action Buttons */}
-        {project.status === 'pending' && (
+        {project.status === "pending" && (
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
             <h2 className="text-lg font-bold mb-4">Project Approval</h2>
             <p className="text-gray-600 mb-6">
-              Please review the project details above. You can either approve or reject this project.
+              Please review the project details above. You can either approve or
+              reject this project.
             </p>
-            
+
             {actionMessage && (
-              <div className={`mb-4 p-3 rounded-lg ${
-                actionMessage.includes('approved') ? 'bg-green-100 text-green-800' :
-                actionMessage.includes('rejected') ? 'bg-red-100 text-red-800' :
-                'bg-blue-100 text-blue-800'
-              }`}>
+              <div
+                className={`mb-4 p-3 rounded-lg ${
+                  actionMessage.includes("approved")
+                    ? "bg-green-100 text-green-800"
+                    : actionMessage.includes("rejected")
+                    ? "bg-red-100 text-red-800"
+                    : "bg-blue-100 text-blue-800"
+                }`}
+              >
                 {actionMessage}
               </div>
             )}
-            
+
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => handleProjectAction('approve')}
+                onClick={() => handleProjectAction("approve")}
                 disabled={actionLoading}
                 className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {actionLoading ? (
                   <>
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Processing...
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                     Approve Project
                   </>
                 )}
               </button>
-              
+
               <button
-                onClick={() => handleProjectAction('reject')}
+                onClick={() => handleProjectAction("reject")}
                 disabled={actionLoading}
                 className="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {actionLoading ? (
                   <>
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 0 018-8v8z"/>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 0 018-8v8z"
+                      />
                     </svg>
                     Processing...
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                     Reject Project
                   </>
@@ -312,37 +654,97 @@ export default function InviteViewProject() {
             </div>
           </div>
         )}
-        
+
+        {/* Payment In Progress Status */}
+        {project.status === "payment_in_progress" && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center">
+              <svg
+                className="w-8 h-8 text-yellow-600 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <h3 className="text-lg font-semibold text-yellow-800">
+                  Payment In Progress
+                </h3>
+                <p className="text-yellow-700">
+                  Your payment is currently being processed. Please wait while
+                  we confirm your payment.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Status Messages for Non-Pending Projects */}
-        {project.status === 'approved' && (
+        {project.status === "approved" && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
             <div className="flex items-center">
-              <svg className="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-8 h-8 text-green-600 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               <div>
-                <h3 className="text-lg font-semibold text-green-800">Project Approved</h3>
-                <p className="text-green-700">This project has been approved and is now active.</p>
+                <h3 className="text-lg font-semibold text-green-800">
+                  Project Approved
+                </h3>
+                <p className="text-green-700">
+                  This project has been approved and is now active.
+                </p>
               </div>
             </div>
           </div>
         )}
-        
-        {project.status === 'not_approved' && (
+
+        {project.status === "not_approved" && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
             <div className="flex items-center">
-              <svg className="w-8 h-8 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-8 h-8 text-red-600 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
               <div>
-                <h3 className="text-lg font-semibold text-red-800">Project Rejected</h3>
-                <p className="text-red-700">This project has been rejected and is no longer active.</p>
+                <h3 className="text-lg font-semibold text-red-800">
+                  Project Rejected
+                </h3>
+                <p className="text-red-700">
+                  This project has been rejected and is no longer active.
+                </p>
               </div>
             </div>
           </div>
         )}
-        
-        <div className="text-center text-xs text-gray-400 mt-6">Secured with SSL encryption and processed through Stripe</div>
+
+        <div className="text-center text-xs text-gray-400 mt-6">
+          Secured with SSL encryption and processed through Stripe
+        </div>
       </div>
     </>
   );

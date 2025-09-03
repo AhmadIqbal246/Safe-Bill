@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
@@ -23,6 +24,7 @@ const paymentConfigs = [
 
 export default function ProjectCreation() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
@@ -95,6 +97,68 @@ export default function ProjectCreation() {
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.project);
 
+  // Simple inline error normalizer (no separate file)
+  const normalizeError = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    const data = err?.response?.data || err;
+    if (typeof data === 'string') {
+      let s = data.trim();
+      // If wrapped in quotes, strip them
+      if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.slice(1, -1);
+      }
+      // First parse attempt
+      try {
+        const parsed1 = JSON.parse(s);
+        // If it parses to a string again, try a second parse (double-encoded JSON)
+        if (typeof parsed1 === 'string') {
+          try {
+            const parsed2 = JSON.parse(parsed1);
+            return normalizeError({ response: { data: parsed2 } });
+          } catch {
+            return parsed1;
+          }
+        }
+        return normalizeError({ response: { data: parsed1 } });
+      } catch {
+        console.log(s);
+      }
+      return s;
+    }
+    if (data?.detail && typeof data.detail === 'string') return data.detail;
+    if (data && typeof data === 'object') {
+      // Handle nested DRF errors e.g. { quote: { file: ["..."] } }
+      if (data.quote && typeof data.quote === 'object') {
+        if (Array.isArray(data.quote.file)) {
+          try { return data.quote.file.join(', '); } catch {
+            console.log(data.quote.file);
+          }
+        }
+      }
+      // Common DRF pattern: { field: ["msg1", "msg2"], ... }
+      if (Array.isArray(data.file)) {
+        try { return data.file.join(', '); } catch {
+          console.log(data.file);
+        }
+      }
+      try {
+        const values = Object.values(data).flatMap((v) => {
+          if (v && typeof v === 'object' && !Array.isArray(v)) {
+            // Flatten nested object values
+            return Object.values(v).flatMap((vv) => Array.isArray(vv) ? vv : [vv]);
+          }
+          if (Array.isArray(v)) return v;
+          return [v];
+        }).map((x) => (typeof x === 'string' ? x : JSON.stringify(x)));
+        if (values.length) return values.join(', ');
+      } catch {
+        console.log(data);
+      }
+    }
+    return 'An unexpected error occurred';
+  };
+
   useEffect(() => {
     if (success) {
       toast.success(t('project_creation.project_created_successfully'));
@@ -103,12 +167,10 @@ export default function ProjectCreation() {
       setClientEmail('');
       setQuoteFile(null);
       dispatch(fetchNotifications());
+      navigate('/my-quotes');
     } else if (error) {
-      toast.error(
-        typeof error === 'string'
-          ? error
-          : error.detail || Object.values(error).flat().join(', ')
-      );
+      const message = normalizeError(error);
+      toast.error(message || t('common.unexpected_error'));
       dispatch(resetProjectState());
     }
   }, [success, error, dispatch, t]);
