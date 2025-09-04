@@ -79,6 +79,11 @@ export default function SafeBillHeader({
     (user.role === "buyer" || user.role === "professional-buyer")
   );
 
+  const canSeeSellerDashboard = !!(
+    user &&
+    (user.role === "seller")
+  );
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -200,6 +205,14 @@ export default function SafeBillHeader({
             {canSeeProjectInvite && (
               <Link
                 to="/buyer-dashboard"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </Link>
+            )}
+            {canSeeSellerDashboard && (
+              <Link
+                to="/seller-dashboard"
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
               >
                 Dashboard
@@ -534,6 +547,14 @@ export default function SafeBillHeader({
                   {t(item.label)}
                 </Link>
               ))}
+              {canSeeSellerDashboard && (
+              <Link
+                to="/seller-dashboard"
+                className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+              >
+                Dashboard
+              </Link>
+            )}
               {canSeeAdminPanel && (
                 <Link
                   to="/admin"
@@ -542,6 +563,14 @@ export default function SafeBillHeader({
                   Admin Panel
                 </Link>
               )}
+              {canSeeProjectInvite && (
+              <Link
+                to="/buyer-dashboard"
+                className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+              >
+                Dashboard
+              </Link>
+            )}
               {canSeeProjectInvite && (
                 <Link
                   to="/how-to-accept-project-invite"

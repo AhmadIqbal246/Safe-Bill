@@ -3,6 +3,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
 from .models import Project, Quote, PaymentInstallment, Milestone
 from .serializers import (
@@ -535,3 +536,33 @@ class ClientProjectDetailAPIView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(client=self.request.user)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_completed_projects(request):
+    """
+    Get all completed projects for the authenticated seller
+    """
+    user = request.user
+    
+    # Only sellers can access this endpoint
+    if user.role != 'seller':
+        return Response(
+            {'detail': 'Only sellers can access completed projects.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Get all completed projects for this seller
+    completed_projects = Project.objects.filter(
+        user=user,
+        status='completed'
+    ).order_by('-created_at')
+    
+    # Serialize the projects
+    serializer = ProjectListSerializer(completed_projects, many=True)
+    
+    return Response({
+        'projects': serializer.data,
+        'count': completed_projects.count()
+    })

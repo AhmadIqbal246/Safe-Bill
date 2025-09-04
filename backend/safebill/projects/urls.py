@@ -11,6 +11,7 @@ from .views import (
     MilestoneDetailAPIView,
     MilestoneApprovalAPIView,
     ProjectStatusUpdateAPIView,
+    get_completed_projects,
 )
 
 urlpatterns = [
@@ -38,6 +39,7 @@ urlpatterns = [
         ProjectStatusUpdateAPIView.as_view(),
         name="project-status-update",
     ),
+    path("completed-projects/", get_completed_projects, name="completed-projects"),
     # Milestone endpoints
     path(
         "projects/<int:project_id>/milestones/",
