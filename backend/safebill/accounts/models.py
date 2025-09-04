@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Avg, Count
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
 # Create your models here.
 
@@ -29,6 +32,8 @@ class User(AbstractUser):
         upload_to='profile_pics/', null=True, blank=True
     )
     about = models.TextField(null=True, blank=True)
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00, help_text="Average rating from all received ratings")
+    rating_count = models.PositiveIntegerField(default=0, help_text="Total number of ratings received")
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -105,3 +110,36 @@ class BuyerModel(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.user.email})"
+
+
+class SellerRating(models.Model):
+    """Rating that a buyer gives to a seller for a specific project."""
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_ratings')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_ratings')
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE, related_name='seller_ratings')
+    rating = models.PositiveSmallIntegerField(default=0)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('seller', 'buyer', 'project')
+
+    def __str__(self):
+        return f"{self.seller.username} rated {self.rating} by {self.buyer.username} for {self.project_id}"
+
+
+@receiver([post_save, post_delete], sender=SellerRating)
+def update_seller_rating_stats(sender, instance, **kwargs):
+    """Update seller's average rating and rating count when ratings change"""
+    seller = instance.seller
+    
+    # Calculate new average rating and count
+    rating_stats = SellerRating.objects.filter(seller=seller).aggregate(
+        avg_rating=Avg('rating'),
+        rating_count=Count('id')
+    )
+    
+    # Update seller's rating fields
+    seller.average_rating = rating_stats['avg_rating'] or 0.00
+    seller.rating_count = rating_stats['rating_count'] or 0
+    seller.save(update_fields=['average_rating', 'rating_count'])

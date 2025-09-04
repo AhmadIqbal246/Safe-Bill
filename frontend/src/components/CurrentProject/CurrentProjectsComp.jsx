@@ -87,18 +87,18 @@ export default function CurrentProjectsComp() {
               </button>
             </div>
           </div>
-          {/* Progress Bar (static for now) */}
+          {/* Progress Bar - dynamic from backend progress_pct */}
           <div className="flex items-center gap-2 mt-2">
             <span className="text-gray-500 text-sm">{t('current_projects.progress')}</span>
             <div className="flex-1 mx-4">
               <div className="w-full h-2 bg-[#E6F0FA] rounded-full">
                 <div
                   className="h-2 bg-[#01257D] rounded-full transition-all"
-                  style={{ width: `60%` }}
+                  style={{ width: `${Math.min(Math.max(currentProject.progress_pct ?? 0, 0), 100)}%` }}
                 />
               </div>
             </div>
-            <span className="text-gray-700 text-sm font-semibold">60%</span>
+            <span className="text-gray-700 text-sm font-semibold">{currentProject.progress_pct ?? 0}%</span>
           </div>
           {/* Breakdown: show steps and amounts from installments */}
           <div className="flex flex-col md:flex-row justify-between mt-4 gap-4">

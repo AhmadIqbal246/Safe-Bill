@@ -121,7 +121,20 @@
     "kyc_validated": "KYC Validé",
     "insured": "Assuré",
     "professional_liability": "Responsabilité Professionnelle",
-    "trusted_by_proconnect": "Approuvé par ProConnect"
+    "trusted_by_proconnect": "Approuvé par ProConnect",
+    "rating_section": "Évaluer ce Vendeur",
+    "rating_label": "Note :",
+    "select_project_to_rate": "Sélectionner un Projet à Évaluer",
+    "select_project": "Sélectionner un projet",
+    "search_projects": "Rechercher des projets...",
+    "reference": "Référence :",
+    "no_eligible_projects": "Aucun projet éligible trouvé",
+    "submit_rating": "Soumettre la Note",
+    "submitting": "Soumission...",
+    "rating_instructions": "Seuls les acheteurs de projets 'En Cours' ou 'Terminés' peuvent évaluer, une fois par projet.",
+    "no_ratings": "Aucune note",
+    "review": "avis",
+    "reviews": "avis"
   },
   "quote_request": {
     "title": "Demander un Devis",
@@ -600,7 +613,7 @@
     "project_details": "Détails du Projet",
     "project_id": "ID du Projet",
     "category": "Catégorie",
-    "duration": "Durée",
+    "duration": "Temps écoulé",
     "escrow_protection": "Protection d'Escrow",
     "active": "Actif",
     "dispute": "Litige",
@@ -861,6 +874,7 @@
   },
   "project_status": {
     "pending": "En attente",
+    "payment_in_progress": "Paiement en cours",
     "approved": "Approuvé",
     "not_approved": "Non approuvé",
     "in_progress": "En cours",

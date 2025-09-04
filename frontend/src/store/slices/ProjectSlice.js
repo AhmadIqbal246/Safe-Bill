@@ -281,6 +281,43 @@ export const fetchClientProjectDetail = createAsyncThunk(
   }
 );
 
+export const fetchEligibleProjectsForRating = createAsyncThunk(
+  'project/fetchEligibleProjectsForRating',
+  async (sellerId, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/accounts/eligible-projects/${sellerId}/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return { sellerId, projects: response.data };
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
+export const submitSellerRating = createAsyncThunk(
+  'project/submitSellerRating',
+  async ({ sellerId, projectId, rating, comment }, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      await axios.post(
+        `${BASE_URL}api/accounts/rate-seller/`,
+        { seller: sellerId, project: projectId, rating, comment: comment || '' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return { sellerId, projectId };
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 const projectSlice = createSlice({
   name: 'project',
   initialState: {
@@ -305,6 +342,11 @@ const projectSlice = createSlice({
     clientProjectDetail: null,
     clientProjectDetailLoading: false,
     clientProjectDetailError: null,
+    eligibleProjectsBySeller: {},
+    eligibleProjectsLoading: false,
+    eligibleProjectsError: null,
+    ratingSubmitting: false,
+    ratingError: null,
   },
   reducers: {
     resetProjectState: (state) => {
@@ -478,6 +520,35 @@ const projectSlice = createSlice({
       .addCase(fetchClientProjectDetail.rejected, (state, action) => {
         state.clientProjectDetailLoading = false;
         state.clientProjectDetailError = action.payload || 'Failed to fetch client project detail';
+      })
+      // Eligible projects for rating
+      .addCase(fetchEligibleProjectsForRating.pending, (state) => {
+        state.eligibleProjectsLoading = true;
+        state.eligibleProjectsError = null;
+      })
+      .addCase(fetchEligibleProjectsForRating.fulfilled, (state, action) => {
+        state.eligibleProjectsLoading = false;
+        const { sellerId, projects } = action.payload;
+        state.eligibleProjectsBySeller[sellerId] = projects;
+      })
+      .addCase(fetchEligibleProjectsForRating.rejected, (state, action) => {
+        state.eligibleProjectsLoading = false;
+        state.eligibleProjectsError = action.payload || 'Failed to load eligible projects';
+      })
+      // Submit rating
+      .addCase(submitSellerRating.pending, (state) => {
+        state.ratingSubmitting = true;
+        state.ratingError = null;
+      })
+      .addCase(submitSellerRating.fulfilled, (state, action) => {
+        state.ratingSubmitting = false;
+        const { sellerId, projectId } = action.payload;
+        const list = state.eligibleProjectsBySeller[sellerId] || [];
+        state.eligibleProjectsBySeller[sellerId] = list.filter(p => String(p.id) !== String(projectId));
+      })
+      .addCase(submitSellerRating.rejected, (state, action) => {
+        state.ratingSubmitting = false;
+        state.ratingError = action.payload || 'Failed to submit rating';
       });
   },
 });

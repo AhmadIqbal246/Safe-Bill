@@ -10,7 +10,8 @@ import {
   filterSellersByTypeAndArea,
   filterSellersByTypeAreaAndSkills,
   resetFilterState,
-  fetchAllSellers
+  fetchAllSellers,
+  fetchAllSellersComplete
 } from '../../store/slices/FilterSlice';
 import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
 
@@ -72,11 +73,13 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   const [selectedServiceTypeLabel, setSelectedServiceTypeLabel] = useState(''); // Store the display label
   const [selectedArea, setSelectedArea] = useState(initialFilters.area || '');
   const [selectedAreaLabel, setSelectedAreaLabel] = useState(''); // Store the display label
+  const [selectedRating, setSelectedRating] = useState(initialFilters.minRating || '');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Only fetch when Apply Filters is clicked
   const [appliedServiceType, setAppliedServiceType] = useState(initialFilters.serviceType || '');
   const [appliedArea, setAppliedArea] = useState(initialFilters.area || '');
+  const [appliedRating, setAppliedRating] = useState(initialFilters.minRating || '');
 
   // Set labels when initial filters are provided
   useEffect(() => {
@@ -108,9 +111,9 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
 
   // Fetch all sellers on mount and when all filters are cleared
   useEffect(() => {
-    if (!appliedServiceType && !appliedArea) {
+    if (!appliedServiceType && !appliedArea && !appliedRating) {
       dispatch(resetFilterState());
-      dispatch(fetchAllSellers());
+      dispatch(fetchAllSellersComplete({ minRating: appliedRating }));
       return;
     }
     
@@ -118,16 +121,23 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
     if (appliedServiceType && appliedArea) {
       dispatch(filterSellersByTypeAndArea({
         serviceType: appliedServiceType,
-        serviceArea: appliedArea
+        serviceArea: appliedArea,
+        minRating: appliedRating
       }));
     } else if (appliedServiceType) {
-      dispatch(filterSellersByServiceType(appliedServiceType));
+      dispatch(filterSellersByServiceType({
+        serviceType: appliedServiceType,
+        minRating: appliedRating
+      }));
     } else if (appliedArea) {
-      dispatch(filterSellersByServiceArea(appliedArea));
+      dispatch(filterSellersByServiceArea({
+        serviceArea: appliedArea,
+        minRating: appliedRating
+      }));
     }
     setCurrentPage(1);
     // eslint-disable-next-line
-  }, [appliedServiceType, appliedArea, dispatch]);
+  }, [appliedServiceType, appliedArea, appliedRating, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -136,7 +146,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   }, [error]);
 
   // Sort sellers by name (A-Z)
-  const sortedSellers = [...(sellers || [])].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedSellers = Array.isArray(sellers) ? [...sellers].sort((a, b) => a.name.localeCompare(b.name)) : [];
 
   // Pagination logic
   const totalPages = Math.ceil(sortedSellers.length / RESULTS_PER_PAGE);
@@ -189,11 +199,28 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
       };
       selected = selectedAreaLabel;
       label = 'Select Area';
+    } else if (openFilter === 'rating') {
+      options = [
+        { value: '1', label: '1+ stars' },
+        { value: '2', label: '2+ stars' },
+        { value: '3', label: '3+ stars' },
+        { value: '4', label: '4+ stars' },
+        { value: '5', label: '5+ stars' }
+      ];
+      onSelect = (option) => { 
+        setSelectedRating(option.value); 
+        setOpenFilter(null); 
+        setSearchTerm(''); 
+      };
+      selected = selectedRating ? `${selectedRating}+ stars` : '';
+      label = 'Select Minimum Rating';
     }
 
     // Filter options based on search term
     const filteredOptions = options.filter(option => {
       if (openFilter === 'serviceType') {
+        return option.label.toLowerCase().includes(searchTerm.toLowerCase());
+      } else if (openFilter === 'rating') {
         return option.label.toLowerCase().includes(searchTerm.toLowerCase());
       } else {
         return option.toLowerCase().includes(searchTerm.toLowerCase());
@@ -228,6 +255,20 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                       return (
                         <button
                           key={opt.id}
+                          className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
+                            selected === opt.label 
+                              ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                              : 'text-[#111827] cursor-pointer'
+                          }`}
+                          onClick={() => onSelect(opt)}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    } else if (openFilter === 'rating') {
+                      return (
+                        <button
+                          key={opt.value}
                           className={`px-4 py-2 rounded-md text-left hover:bg-[#F0F4F8] transition-colors ${
                             selected === opt.label 
                               ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
@@ -292,19 +333,24 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             isActive = true;
             display = selectedAreaLabel;
           }
+          if (f === 'Rating' && selectedRating) {
+            isActive = true;
+            display = `${selectedRating}+ stars`;
+          }
           return (
             <button
               key={f}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors focus:outline-none cursor-pointer ${
-                (f === 'Service type' || f === 'Area')
+                (f === 'Service type' || f === 'Area' || f === 'Rating')
                   ? 'bg-[#E6F0FA] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
                   : 'bg-[#E6F0FA] text-[#01257D] cursor-not-allowed opacity-70'
               }`}
               onClick={() => {
                 if (f === 'Service type') setOpenFilter('serviceType');
                 else if (f === 'Area') setOpenFilter('area');
+                else if (f === 'Rating') setOpenFilter('rating');
               }}
-              disabled={!(f === 'Service type' || f === 'Area')}
+              disabled={!(f === 'Service type' || f === 'Area' || f === 'Rating')}
             >
               {display}
             </button>
@@ -317,6 +363,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           onClick={() => {
             setAppliedServiceType(selectedServiceType);
             setAppliedArea(selectedArea);
+            setAppliedRating(selectedRating);
           }}
         >
           Apply Filters
@@ -328,10 +375,12 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             setSelectedServiceTypeLabel(''); // Clear the label
             setSelectedArea('');
             setSelectedAreaLabel(''); // Clear the label
+            setSelectedRating('');
             setAppliedServiceType('');
             setAppliedArea('');
+            setAppliedRating('');
             dispatch(resetFilterState());
-            dispatch(fetchAllSellers());
+            dispatch(fetchAllSellersComplete());
           }}
         >
           Clear All
@@ -342,13 +391,15 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
         <div className="flex justify-center items-center py-12">
           <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
         </div>
-      ) : error ? null : sellers && sellers.length === 0 ? (
+      ) : error ? null : Array.isArray(sellers) && sellers.length === 0 ? (
         <div className="text-center text-[#96C2DB] py-12">No professionals found for the selected filters.</div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {paginatedSellers.map((pro, idx) => {
-              const dummy = dummyRatings[(currentPage - 1) * RESULTS_PER_PAGE + idx] || { rating: 4.5, reviews: 50 };
+              // Use real rating data from API
+              const rating = pro.average_rating || 0;
+              const reviewCount = pro.rating_count || 0;
               return (
                 <div 
                   key={pro.name} 
@@ -363,7 +414,10 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                   <div className="font-semibold text-[#111827] text-base">{pro.name}</div>
                   <div className="text-[#6B7280] text-sm mb-1">{getBusinessActivityLabel(pro.business_type)}</div>
                   <div className="text-[#178582] text-sm font-semibold">
-                    {dummy.rating} <span className="text-[#6B7280] font-normal">({dummy.reviews})</span>
+                    {rating > 0 ? rating.toFixed(1) : 'No ratings'} 
+                    <span className="text-[#6B7280] font-normal">
+                      ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+                    </span>
                   </div>
                 </div>
               );
