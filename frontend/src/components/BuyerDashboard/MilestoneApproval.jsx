@@ -113,23 +113,23 @@ export default function MilestoneApproval() {
 
   const getActionMessage = (action) => {
     switch (action) {
-      case 'approve': return 'Are you sure you want to approve this milestone?';
+      case 'approve': return 'Approve this milestone? The payment will be trasfered to the seller and will not be refundable.';
       case 'not_approved': return 'Are you sure you want to mark this milestone as not approved?';
       case 'review_request': return 'Are you sure you want to send this milestone for review?';
       default: return 'Are you sure you want to perform this action?';
     }
   };
 
-  const capitalizeStatus = (status) => {
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(' ');
-  };
+  // const capitalizeStatus = (status) => {
+  //   return status.split('_').map(word => 
+  //     word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  //   ).join(' ');
+  // };
 
-  const handleViewComment = (comment) => {
-    setSelectedComment(comment);
-    setViewCommentDialogOpen(true);
-  };
+  // const handleViewComment = (comment) => {
+  //   setSelectedComment(comment);
+  //   setViewCommentDialogOpen(true);
+  // };
 
   const handleViewDescription = (description) => {
     setSelectedDescription(description);
