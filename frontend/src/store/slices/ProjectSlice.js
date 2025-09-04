@@ -80,6 +80,26 @@ export const fetchClientProjects = createAsyncThunk(
   }
 );
 
+export const fetchCompletedProjects = createAsyncThunk(
+  'project/fetchCompletedProjects',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/projects/completed-projects/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || 'Network error');
+    }
+  }
+);
+
 export const fetchMilestones = createAsyncThunk(
   'project/fetchMilestones',
   async (projectId, { rejectWithValue }) => {
@@ -326,6 +346,8 @@ const projectSlice = createSlice({
     success: false,
     project: null,
     projects: [],
+    completedProjects: [],
+    completedProjectsCount: 0,
     clientProjects: [],
     clientProjectsLoading: false,
     clientProjectsError: null,
@@ -390,6 +412,19 @@ const projectSlice = createSlice({
       .addCase(fetchProjects.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch projects';
+      })
+      .addCase(fetchCompletedProjects.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCompletedProjects.fulfilled, (state, action) => {
+        state.loading = false;
+        state.completedProjects = action.payload.projects;
+        state.completedProjectsCount = action.payload.count;
+      })
+      .addCase(fetchCompletedProjects.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch completed projects';
       })
       .addCase(fetchClientProjects.pending, (state) => {
         state.clientProjectsLoading = true;

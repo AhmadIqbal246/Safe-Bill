@@ -10,7 +10,8 @@ from .views import (
     MilestoneListAPIView,
     MilestoneDetailAPIView,
     MilestoneApprovalAPIView,
-    ProjectStatusUpdateAPIView
+    ProjectStatusUpdateAPIView,
+    get_completed_projects
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path('delete/<int:pk>/', ProjectDeleteAPIView.as_view(), name='project-delete'),
     path('invite/<str:token>/', ProjectInviteAPIView.as_view(), name='project-invite'),
     path('status-update/<int:project_id>/', ProjectStatusUpdateAPIView.as_view(), name='project-status-update'),
+    path('completed-projects/', get_completed_projects, name='completed-projects'),
     
     # Milestone endpoints
     path('projects/<int:project_id>/milestones/', MilestoneListAPIView.as_view(), name='milestone-list'),
