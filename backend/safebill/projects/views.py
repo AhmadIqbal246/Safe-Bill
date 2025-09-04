@@ -454,10 +454,11 @@ class MilestoneApprovalAPIView(APIView):
             try:
                 project = milestone.project
                 if project.user and project.client:
-                    # Process milestone payment: transfer from buyer's escrow to seller's balance
-                    BalanceService.process_milestone_payment(
+                    # Process milestone payment and create payout hold tied to the project
+                    BalanceService.process_milestone_payment_with_project(
                         seller=project.user,
                         buyer=project.client,
+                        project=project,
                         milestone_amount=milestone.relative_payment,
                     )
             except Exception as e:
