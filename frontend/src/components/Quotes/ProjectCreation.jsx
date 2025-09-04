@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchPlatformFees } from '../../store/slices/PaymentSlice';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
@@ -25,6 +26,10 @@ const paymentConfigs = [
 export default function ProjectCreation() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error, success } = useSelector((state) => state.project);
+  const [buyerFeePct, setBuyerFeePct] = useState(0); // 0.00 - 1.00
+  const [sellerFeePct, setSellerFeePct] = useState(0.05); // default 5%
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
@@ -36,6 +41,47 @@ export default function ProjectCreation() {
   const [installmentRows, setInstallmentRows] = useState(
     paymentConfigs[installments - 1].map(row => ({ ...row }))
   );
+
+  // Fetch dynamic platform fees via Redux (shared API)
+  const { platformFees } = useSelector((state) => state.payment || {});
+  useEffect(() => {
+    dispatch(fetchPlatformFees());
+  }, [dispatch]);
+  useEffect(() => {
+    if (platformFees) {
+      const buyer = Number(platformFees?.buyer_fee_pct) || 0;
+      const seller = Number(platformFees?.seller_fee_pct) || 0.05;
+      setBuyerFeePct(buyer);
+      setSellerFeePct(seller);
+    }
+  }, [platformFees]);
+
+  // Calculate fees per milestone
+  const calculateMilestoneFees = (amount) => {
+    const numericAmount = Number(amount);
+    const platformFee = numericAmount * (buyerFeePct + sellerFeePct);
+    const stripeFee = (numericAmount + platformFee) * 0.029 + 0.30;
+    const sellerNet = numericAmount - (numericAmount * sellerFeePct) - stripeFee;
+    
+    return {
+      amount: numericAmount,
+      platformFee: +platformFee.toFixed(2),
+      stripeFee: +stripeFee.toFixed(2),
+      sellerNet: +sellerNet.toFixed(2)
+    };
+  };
+
+  // Calculate fees for each milestone
+  const milestoneFees = installmentRows.map(row => {
+    const amount = Number(String(row.amount).replace(/[^0-9.]/g, '')) || 0;
+    return {
+      ...row,
+      ...calculateMilestoneFees(amount)
+    };
+  });
+
+  // Calculate total net earnings
+  const totalSellerNet = milestoneFees.reduce((sum, milestone) => sum + milestone.sellerNet, 0);
 
   // Update rows when installments count changes
   React.useEffect(() => {
@@ -94,11 +140,10 @@ export default function ProjectCreation() {
     }));
   };
 
-  const dispatch = useDispatch();
-  const { loading, error, success } = useSelector((state) => state.project);
+  
 
   // Simple inline error normalizer (no separate file)
-  const normalizeError = (err) => {
+  const normalizeError = useCallback((err) => {
     if (!err) return '';
     if (typeof err === 'string') return err;
     const data = err?.response?.data || err;
@@ -157,7 +202,7 @@ export default function ProjectCreation() {
       }
     }
     return 'An unexpected error occurred';
-  };
+  }, []);
 
   useEffect(() => {
     if (success) {
@@ -173,7 +218,7 @@ export default function ProjectCreation() {
       toast.error(message || t('common.unexpected_error'));
       dispatch(resetProjectState());
     }
-  }, [success, error, dispatch, t]);
+  }, [success, error, dispatch, t, navigate, normalizeError]);
 
   return (
     <div className="max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
@@ -250,18 +295,25 @@ export default function ProjectCreation() {
             </button>
           ))}
         </div>
-        <div className="overflow-x-auto rounded-xl border border-gray-200 max-w-[300px] sm:max-w-full mx-auto">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 max-w-full mx-auto">
           <table className="min-w-full text-xs sm:text-sm">
             <thead className="bg-[#E6F0FA]">
               <tr>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.amount')}</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.trigger_step')}</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.description')}</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold">
+                  Total Fees
+                  <div className="text-xs font-normal text-gray-500 mt-1">
+                    (Platform: {(buyerFeePct + sellerFeePct) * 100}% + Stripe: 2.9% + $0.30)
+                  </div>
+                </th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold">Net Amount</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.edit')}</th>
               </tr>
             </thead>
             <tbody>
-              {installmentRows.map((row, i) => (
+              {milestoneFees.map((milestone, i) => (
                 <tr key={i} className="border-t border-gray-100">
                   {editingIndex === i ? (
                     <>
@@ -292,6 +344,8 @@ export default function ProjectCreation() {
                           className="w-40 sm:w-56 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
                         />
                       </td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-gray-500">-</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-gray-500">-</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 flex gap-1 sm:gap-2">
                         <button
                           className="px-1 sm:px-2 py-1 bg-green-600 text-white rounded text-xs sm:text-sm"
@@ -309,9 +363,11 @@ export default function ProjectCreation() {
                     </>
                   ) : (
                     <>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">{row.amount}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{row.step}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{row.desc}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium">${milestone.amount.toLocaleString()}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{milestone.step}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{milestone.desc}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-${(milestone.platformFee + milestone.stripeFee).toLocaleString()}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">${milestone.sellerNet.toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <button
                           className="p-1 hover:bg-gray-100 rounded cursor-pointer"
@@ -327,6 +383,16 @@ export default function ProjectCreation() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Final Total Only */}
+        <div className="mt-6 flex justify-end">
+          <div className=" border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 justify-between">
+              <span className="text-lg font-semibold text-gray-900">{t('project_creation.final_total') || 'Total Net Earnings'}: </span>
+              <span className="text-xl font-bold text-[#01257D]">${totalSellerNet.toLocaleString()}</span>
+            </div>
+          </div>
         </div>
       </div>
 
