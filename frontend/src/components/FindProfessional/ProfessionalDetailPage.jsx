@@ -7,6 +7,8 @@ import {
   Shield,
   FileCheck,
   Users,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 import axios from "axios";
 import SafeBillHeader from "../mutualComponents/Navbar/Navbar";
@@ -21,6 +23,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { fetchEligibleProjectsForRating, submitSellerRating } from '../../store/slices/ProjectSlice';
 import { toast } from 'react-toastify';
+import ProjectStatusBadge from '../common/ProjectStatusBadge';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -85,6 +88,8 @@ export default function ProfessionalDetailPage() {
   const [error, setError] = useState(null);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [ratingValue, setRatingValue] = useState(0);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [projectSearchTerm, setProjectSearchTerm] = useState('');
   const { eligibleProjectsBySeller, eligibleProjectsLoading, eligibleProjectsError, ratingSubmitting, ratingError } = useSelector(state => state.project);
   const dispatch = useDispatch();
 
@@ -261,11 +266,15 @@ export default function ProfessionalDetailPage() {
                   ? t('professional_detail.serving_areas', { count: safeProfessional.selected_service_areas.length })
                   : t('professional_detail.service_areas_not_specified')}
               </span>
-              {/* <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                <span className="font-semibold text-[#111827]">4.8</span>
-                <span className="text-gray-500 ml-1">(24 reviews)</span>
-              </div> */}
+                          <div className="flex items-center">
+              <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
+              <span className="font-semibold text-[#111827]">
+                {professional.average_rating > 0 ? professional.average_rating.toFixed(1) : t('professional_detail.no_ratings')}
+              </span>
+              <span className="text-gray-500 ml-1">
+                ({professional.rating_count} {professional.rating_count === 1 ? t('professional_detail.review') : t('professional_detail.reviews')})
+              </span>
+            </div>
             </div>
 
             <button
@@ -289,38 +298,112 @@ export default function ProfessionalDetailPage() {
 
         {/* Rate Seller Section */}
         <div className="p-8 mb-8">
-          <h2 className="text-2xl font-bold text-[#111827] mb-4">Rate this Seller</h2>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <h2 className="text-2xl font-bold text-[#111827] mb-4">{t('professional_detail.rating_section')}</h2>
+          <div className="flex flex-col gap-6">
+            {/* Star Rating */}
             <div className="flex items-center gap-1">
+              <span className="text-sm font-medium text-gray-700 mr-3">{t('professional_detail.rating_label')}</span>
               {[1,2,3,4,5].map((star) => (
                 <button
                   key={star}
                   onClick={() => setRatingValue(star)}
-                  className={`w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer ${ratingValue >= star ? 'bg-[#01257D] text-white' : 'bg-[#E6F0FA] text-[#01257D]'}`}
+                  className={`w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer transition-colors ${ratingValue >= star ? 'bg-[#01257D] text-white' : 'bg-[#E6F0FA] text-[#01257D] hover:bg-[#c7e0fa]'}`}
                 >
                   ★
                 </button>
               ))}
             </div>
-            <select
-              className="border rounded-lg px-3 py-2"
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-            >
-              <option value="">Select project</option>
-              {(eligibleProjectsBySeller[professionalId] || []).map((p) => (
-                <option key={p.id} value={p.id}>{p.name} ({p.status})</option>
-              ))}
-            </select>
+
+            {/* Project Selection Dropdown */}
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('professional_detail.select_project_to_rate')}
+              </label>
+              <button
+                type="button"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+              >
+                <span className={selectedProjectId ? 'text-gray-900' : 'text-gray-500'}>
+                  {selectedProjectId ? 
+                    (() => {
+                      const project = (eligibleProjectsBySeller[professionalId] || []).find(p => String(p.id) === String(selectedProjectId));
+                      return project ? project.name : t('professional_detail.select_project');
+                    })()
+                    : t('professional_detail.select_project')
+                  }
+                </span>
+                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showProjectDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showProjectDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-10 max-h-60 overflow-hidden">
+                  <div className="p-2 border-b">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder={t('professional_detail.search_projects')}
+                        value={projectSearchTerm}
+                        onChange={(e) => setProjectSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {(eligibleProjectsBySeller[professionalId] || [])
+                      .filter(project => 
+                        project.name.toLowerCase().includes(projectSearchTerm.toLowerCase())
+                      )
+                      .map((project) => (
+                        <button
+                          key={project.id}
+                          type="button"
+                          className={`w-full px-4 py-3 text-left hover:bg-[#F0F4F8] transition-colors border-b border-gray-100 last:border-b-0 ${
+                            String(selectedProjectId) === String(project.id)
+                              ? 'bg-[#E6F0FA] text-[#01257D] font-semibold' 
+                              : 'text-gray-700'
+                          }`}
+                          onClick={() => {
+                            setSelectedProjectId(String(project.id));
+                            setShowProjectDropdown(false);
+                            setProjectSearchTerm('');
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium">{project.name}</div>
+                              <div className="text-sm text-gray-500 mt-1">
+                                {t('professional_detail.reference')} {project.reference_number}
+                              </div>
+                            </div>
+                            <div className="ml-3">
+                              <ProjectStatusBadge status={project.status} size="small" />
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    {(eligibleProjectsBySeller[professionalId] || []).length === 0 && (
+                      <div className="px-4 py-3 text-gray-500 text-center">
+                        {t('professional_detail.no_eligible_projects')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
             <button
               onClick={submitRating}
               disabled={!ratingValue || !selectedProjectId || ratingSubmitting}
-              className="bg-[#01257D] text-white px-5 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+              className="bg-[#01257D] text-white px-6 py-3 rounded-lg disabled:opacity-50 cursor-pointer font-medium hover:bg-[#2346a0] transition-colors self-start"
             >
-              {ratingSubmitting ? 'Submitting...' : 'Submit Rating'}
+              {ratingSubmitting ? t('professional_detail.submitting') : t('professional_detail.submit_rating')}
             </button>
           </div>
-          <p className="text-sm text-gray-500 mt-2">Only buyers of 'In Progress' or 'Completed' projects can rate, once per project.</p>
+          <p className="text-sm text-gray-500 mt-4">{t('professional_detail.rating_instructions')}</p>
         </div>
 
         {/* Skills Section */}

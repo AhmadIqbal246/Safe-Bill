@@ -10,7 +10,8 @@ import {
   filterSellersByTypeAndArea,
   filterSellersByTypeAreaAndSkills,
   resetFilterState,
-  fetchAllSellers
+  fetchAllSellers,
+  fetchAllSellersComplete
 } from '../../store/slices/FilterSlice';
 import { businessActivityStructure, serviceAreaOptions } from '../../constants/registerationTypes';
 
@@ -110,7 +111,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   useEffect(() => {
     if (!appliedServiceType && !appliedArea) {
       dispatch(resetFilterState());
-      dispatch(fetchAllSellers());
+      dispatch(fetchAllSellersComplete());
       return;
     }
     
@@ -136,7 +137,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   }, [error]);
 
   // Sort sellers by name (A-Z)
-  const sortedSellers = [...(sellers || [])].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedSellers = Array.isArray(sellers) ? [...sellers].sort((a, b) => a.name.localeCompare(b.name)) : [];
 
   // Pagination logic
   const totalPages = Math.ceil(sortedSellers.length / RESULTS_PER_PAGE);
@@ -331,7 +332,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             setAppliedServiceType('');
             setAppliedArea('');
             dispatch(resetFilterState());
-            dispatch(fetchAllSellers());
+            dispatch(fetchAllSellersComplete());
           }}
         >
           Clear All
@@ -342,13 +343,15 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
         <div className="flex justify-center items-center py-12">
           <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
         </div>
-      ) : error ? null : sellers && sellers.length === 0 ? (
+      ) : error ? null : Array.isArray(sellers) && sellers.length === 0 ? (
         <div className="text-center text-[#96C2DB] py-12">No professionals found for the selected filters.</div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {paginatedSellers.map((pro, idx) => {
-              const dummy = dummyRatings[(currentPage - 1) * RESULTS_PER_PAGE + idx] || { rating: 4.5, reviews: 50 };
+              // Use real rating data from API
+              const rating = pro.average_rating || 0;
+              const reviewCount = pro.rating_count || 0;
               return (
                 <div 
                   key={pro.name} 
@@ -363,7 +366,10 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                   <div className="font-semibold text-[#111827] text-base">{pro.name}</div>
                   <div className="text-[#6B7280] text-sm mb-1">{getBusinessActivityLabel(pro.business_type)}</div>
                   <div className="text-[#178582] text-sm font-semibold">
-                    {dummy.rating} <span className="text-[#6B7280] font-normal">({dummy.reviews})</span>
+                    {rating > 0 ? rating.toFixed(1) : 'No ratings'} 
+                    <span className="text-[#6B7280] font-normal">
+                      ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+                    </span>
                   </div>
                 </div>
               );

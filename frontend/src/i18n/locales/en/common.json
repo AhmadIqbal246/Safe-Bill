@@ -120,7 +120,20 @@
     "kyc_validated": "KYC Validated",
     "insured": "Insured",
     "professional_liability": "Professional Liability",
-    "trusted_by_proconnect": "Trusted by ProConnect"
+    "trusted_by_proconnect": "Trusted by ProConnect",
+    "rating_section": "Rate this Seller",
+    "rating_label": "Rating:",
+    "select_project_to_rate": "Select Project to Rate",
+    "select_project": "Select project",
+    "search_projects": "Search projects...",
+    "reference": "Reference:",
+    "no_eligible_projects": "No eligible projects found",
+    "submit_rating": "Submit Rating",
+    "submitting": "Submitting...",
+    "rating_instructions": "Only buyers of 'In Progress' or 'Completed' projects can rate, once per project.",
+    "no_ratings": "No ratings",
+    "review": "review",
+    "reviews": "reviews"
   },
   "quote_request": {
     "title": "Request Quote",
