@@ -431,7 +431,13 @@
      "send_payment_invitation": "Send Payment Invitation",
      "sending": "Sending...",
      "project_created_successfully": "Project created successfully!",
-     "fill_all_fields": "Please fill all fields and upload the signed quote."
+     "fill_all_fields": "Please fill all fields and upload the signed quote.",
+     "summary": "Payment Summary",
+     "review_before_send": "Review before sending",
+     "subtotal": "Subtotal",
+     "platform_fee_label": "Platform fee",
+     "stripe_fee": "Stripe fee (2.9% + €0.30)",
+     "final_total": "Final Total"
    },
    "my_profile": {
      "title": "My Profile",
@@ -1231,6 +1237,7 @@
     "title": "Billings & Payments",
     "subtitle": "Track your payment history and manage your balance",
     "loading": "Loading billing information...",
+    "common_loading": "Loading...",
     "balance_summary": "Balance Summary",
     "payment_history": "Payment History",
     "current_balance": "Current Balance",
@@ -1288,7 +1295,26 @@
       "succeeded": "Succeeded",
       "failed": "Failed",
       "payment_in_progress": "Payment in Progress"
-    }
+    },
+    "payout_holds": "Payout Holds",
+    "on_hold": "On Hold",
+    "no_holds": "No payout holds",
+    "release_in": "Releases in",
+    "days": "days",
+    "recently_released": "Recently Released",
+    "none_recent": "None recently released"
+  },
+  "transfers": {
+    "title": "Transfer History",
+    "subtitle": "View your transfer history and status",
+    "loading": "Loading transfers...",
+    "no_transfers": "No transfers found",
+    "no_transfers_description": "Your transfer history will appear here once you initiate transfers.",
+    "amount": "Amount",
+    "status": "Status",
+    "created": "Created",
+    "completed": "Completed",
+    "transfer_id": "Transfer ID"
   },
   "common": {
     "error": "Error",

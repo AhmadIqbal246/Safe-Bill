@@ -434,7 +434,13 @@
      "send_payment_invitation": "Envoyer l'Invitation de Paiement",
      "sending": "Envoi...",
      "project_created_successfully": "Projet créé avec succès !",
-     "fill_all_fields": "Veuillez remplir tous les champs et télécharger le devis signé."
+     "fill_all_fields": "Veuillez remplir tous les champs et télécharger le devis signé.",
+     "summary": "Résumé de paiement",
+     "review_before_send": "Vérifiez avant d'envoyer",
+     "subtotal": "Sous-total",
+     "platform_fee_label": "Frais de plateforme",
+     "stripe_fee": "Frais Stripe (2,9 % + 0,30 €)",
+     "final_total": "Total final"
    },
    "my_profile": {
      "title": "Mon Profil",
@@ -1234,6 +1240,7 @@
     "title": "Facturation et Paiements",
     "subtitle": "Suivez votre historique de paiements et gérez votre solde",
     "loading": "Chargement des informations de facturation...",
+    "common_loading": "Chargement...",
     "balance_summary": "Résumé du Solde",
     "payment_history": "Historique des Paiements",
     "current_balance": "Solde Actuel",
@@ -1291,7 +1298,26 @@
       "succeeded": "Réussi",
       "failed": "Échoué",
       "payment_in_progress": "Paiement en Cours"
-    }
+    },
+    "payout_holds": "Fonds en Attente",
+    "on_hold": "En attente",
+    "no_holds": "Aucun fonds en attente",
+    "release_in": "Libération dans",
+    "days": "jours",
+    "recently_released": "Récemment libérés",
+    "none_recent": "Aucun récemment libéré"
+  },
+  "transfers": {
+    "title": "Historique des Transferts",
+    "subtitle": "Consultez votre historique de transferts et statut",
+    "loading": "Chargement des transferts...",
+    "no_transfers": "Aucun transfert trouvé",
+    "no_transfers_description": "Votre historique de transferts apparaîtra ici une fois que vous initierez des transferts.",
+    "amount": "Montant",
+    "status": "Statut",
+    "created": "Créé",
+    "completed": "Terminé",
+    "transfer_id": "ID de Transfert"
   },
   "common": {
     "error": "Erreur",
