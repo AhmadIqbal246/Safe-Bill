@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchPlatformFees } from "../store/slices/PaymentSlice";
 import { useLocation, useNavigate } from "react-router-dom";
 import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
 import axios from "axios";
@@ -21,6 +23,8 @@ function getQuoteFileUrl(file) {
 }
 
 export default function InviteViewProject() {
+  const dispatch = useDispatch();
+  const { platformFees } = useSelector((state) => state.payment || {});
   const query = useQuery();
   const token = query.get("token");
   const checkoutStatus = query.get("status");
@@ -32,6 +36,18 @@ export default function InviteViewProject() {
   const [actionMessage, setActionMessage] = useState("");
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [checkoutProcessing, setCheckoutProcessing] = useState(false);
+
+  // Fetch platform fees on mount
+  useEffect(() => {
+    dispatch(fetchPlatformFees());
+  }, [dispatch]);
+
+  // Derived fee breakdown from project.total_amount using dynamic fees
+  const baseAmount = project?.total_amount ? Number(project.total_amount) : 0;
+  const buyerFeePct = Number(platformFees?.buyer_fee_pct || 0);
+  const platformFee = +((baseAmount * buyerFeePct)).toFixed(2);
+  const stripeFee = +(((baseAmount + platformFee) * 0.029) + 0.30).toFixed(2);
+  const buyerTotal = +(baseAmount + (baseAmount * buyerFeePct) + stripeFee).toFixed(2);
 
   const fetchProject = useCallback(async () => {
     setLoading(true);
@@ -374,7 +390,7 @@ export default function InviteViewProject() {
               Total Amount
             </div>
             <div className="text-gray-900 font-bold text-lg mb-2">
-              ${project.total_amount?.toLocaleString()}
+              ${baseAmount.toLocaleString()}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
@@ -389,6 +405,19 @@ export default function InviteViewProject() {
               </div>
             ))}
           </div>
+          {/* Total Payment Section */}
+          <div className="bg-white rounded-lg p-4 border-2 border-gray-300 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-lg font-semibold text-gray-900">Total Payment Required</span>
+              <span className="text-2xl font-bold text-[#01257D]">${buyerTotal.toLocaleString()}</span>
+            </div>
+            <div className="text-sm text-gray-600 space-y-1">
+              <div>Project Amount: ${baseAmount.toLocaleString()}</div>
+              <div>Platform Fee ({buyerFeePct * 100}%): ${platformFee.toLocaleString()}</div>
+              <div>Stripe Fee (2.9% + $0.30): ${stripeFee.toLocaleString()}</div>
+            </div>
+          </div>
+
           <div className="flex items-center mb-4">
             <input type="checkbox" id="terms" className="mr-2" />
             <label htmlFor="terms" className="text-sm text-gray-700">
