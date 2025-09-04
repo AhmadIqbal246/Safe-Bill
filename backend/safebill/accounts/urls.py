@@ -17,7 +17,9 @@ from .views import (
     verify_siret_api,
     BuyerRegistrationView,
     filter_sellers_by_location,
-    get_seller_details
+    get_seller_details,
+    SellerRatingCreateView,
+    EligibleProjectsForRating
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -72,5 +74,7 @@ urlpatterns = [
         get_seller_details,
         name='get-seller-details'
     ),
+    path('rate-seller/', SellerRatingCreateView.as_view(), name='rate-seller'),
+    path('eligible-projects/<int:seller_id>/', EligibleProjectsForRating.as_view(), name='eligible-projects'),
     path('verify-siret/', verify_siret_api, name='verify-siret'),
 ] 

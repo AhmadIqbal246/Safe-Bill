@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, BuyerModel
+from .models import User, BuyerModel, SellerRating
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import BusinessDetail
@@ -209,6 +209,53 @@ class BankAccountSerializer(serializers.ModelSerializer):
                 'bic_swift': 'This BIC/SWIFT is already in use.'
             })
         return data 
+
+
+class SellerRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SellerRating
+        fields = ['seller', 'buyer', 'project', 'rating', 'comment', 'created_at']
+        read_only_fields = ['buyer', 'created_at']
+
+    def validate(self, data):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            raise serializers.ValidationError('Authentication required')
+
+        # Only buyers can rate
+        if getattr(user, 'role', None) not in ['buyer', 'professional-buyer']:
+            raise serializers.ValidationError('Only buyers can rate sellers')
+
+        seller = data.get('seller')
+        project = data.get('project')
+        if not seller or getattr(seller, 'role', None) != 'seller':
+            raise serializers.ValidationError('Ratings can only be given to sellers')
+
+        # Project eligibility: must belong to seller and buyer and be in correct status
+        from projects.models import Project
+        try:
+            proj = Project.objects.get(id=project.id)
+        except Project.DoesNotExist:
+            raise serializers.ValidationError('Invalid project')
+
+        if proj.user_id != seller.id:
+            raise serializers.ValidationError('Project is not owned by this seller')
+        if proj.client_id != user.id:
+            raise serializers.ValidationError('You are not the client of this project')
+        if proj.status not in ['in_progress', 'completed']:
+            raise serializers.ValidationError('Project has not started yet')
+
+        rating = data.get('rating', 0)
+        if rating < 0 or rating > 5:
+            raise serializers.ValidationError('Rating must be between 0 and 5')
+
+        # Uniqueness per (seller, buyer, project)
+        if SellerRating.objects.filter(seller=seller, buyer=user, project=project).exists():
+            raise serializers.ValidationError('You have already rated this project')
+
+        data['buyer'] = user
+        return data
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

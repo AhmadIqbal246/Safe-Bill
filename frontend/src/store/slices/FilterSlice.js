@@ -15,6 +15,38 @@ export const fetchAllSellers = createAsyncThunk(
   }
 );
 
+export const fetchAllSellersComplete = createAsyncThunk(
+  'filter/fetchAllSellersComplete',
+  async (_, { rejectWithValue }) => {
+    try {
+      let allSellers = [];
+      let nextUrl = `${BASE_URL}api/accounts/all-sellers/`;
+      
+      // Fetch all pages
+      while (nextUrl) {
+        const response = await axios.get(nextUrl);
+        const data = response.data;
+        
+        // Add current page results to all sellers
+        if (data.results) {
+          allSellers = [...allSellers, ...data.results];
+        } else if (Array.isArray(data)) {
+          // Handle non-paginated response
+          allSellers = [...allSellers, ...data];
+          break;
+        }
+        
+        // Check if there's a next page
+        nextUrl = data.next;
+      }
+      
+      return allSellers;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || 'Network error');
+    }
+  }
+);
+
 export const filterSellersByServiceType = createAsyncThunk(
   'filter/filterSellersByServiceType',
   async (serviceType, { rejectWithValue }) => {
@@ -133,9 +165,22 @@ const filterSlice = createSlice({
       })
       .addCase(fetchAllSellers.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        // Handle both old format (array) and new paginated format (object with results)
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(fetchAllSellers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchAllSellersComplete.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllSellersComplete.fulfilled, (state, action) => {
+        state.loading = false;
+        state.sellers = action.payload;
+      })
+      .addCase(fetchAllSellersComplete.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -145,7 +190,7 @@ const filterSlice = createSlice({
       })
       .addCase(filterSellersByServiceType.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(filterSellersByServiceType.rejected, (state, action) => {
         state.loading = false;
@@ -157,7 +202,7 @@ const filterSlice = createSlice({
       })
       .addCase(filterSellersByServiceArea.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(filterSellersByServiceArea.rejected, (state, action) => {
         state.loading = false;
@@ -169,7 +214,7 @@ const filterSlice = createSlice({
       })
       .addCase(filterSellersByTypeAndArea.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(filterSellersByTypeAndArea.rejected, (state, action) => {
         state.loading = false;
@@ -181,7 +226,7 @@ const filterSlice = createSlice({
       })
       .addCase(filterSellersBySkills.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(filterSellersBySkills.rejected, (state, action) => {
         state.loading = false;
@@ -193,7 +238,7 @@ const filterSlice = createSlice({
       })
       .addCase(filterSellersByTypeAreaAndSkills.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(filterSellersByTypeAreaAndSkills.rejected, (state, action) => {
         state.loading = false;
@@ -205,7 +250,7 @@ const filterSlice = createSlice({
       })
       .addCase(filterSellersByLocation.fulfilled, (state, action) => {
         state.loading = false;
-        state.sellers = action.payload;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(filterSellersByLocation.rejected, (state, action) => {
         state.loading = false;

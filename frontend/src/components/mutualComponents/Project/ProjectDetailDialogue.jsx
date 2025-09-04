@@ -5,6 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 export default function ProjectDetailDialogue({ open, onClose, project }) {
   const { t } = useTranslation();
+  const truncate = (text, max = 140) => {
+    if (!text) return '';
+    const str = String(text);
+    return str.length > max ? `${str.slice(0, max)}…` : str;
+  };
   
   if (!project) return null;
   return (
@@ -50,7 +55,9 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
                     <tr key={idx} className="border-t border-gray-100">
                       <td className="px-3 py-2">{inst.step}</td>
                       <td className="px-3 py-2 text-[#01257D] font-semibold">${parseFloat(inst.amount).toLocaleString()}</td>
-                      <td className="px-3 py-2 text-gray-600">{inst.description}</td>
+                      <td className="px-3 py-2 text-gray-600" title={inst.description}>
+                        {truncate(inst.description)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

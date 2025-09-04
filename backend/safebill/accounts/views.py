@@ -7,7 +7,7 @@ from .serializers import (
     SellerRegistrationSerializer, UserTokenObtainPairSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
      BankAccountSerializer,
-    UserProfileSerializer, BuyerRegistrationSerializer
+    UserProfileSerializer, BuyerRegistrationSerializer, SellerRatingSerializer
 )
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -19,6 +19,11 @@ from rest_framework.decorators import api_view, permission_classes
 from utils.email_service import EmailService
 import re
 import unicodedata
+from rest_framework.generics import CreateAPIView
+from rest_framework.pagination import PageNumberPagination
+from django.db import models
+from .models import SellerRating
+from projects.models import Project
 
 
 def _get_seller_data(seller):
@@ -35,6 +40,8 @@ def _get_seller_data(seller):
         'company_name': seller.company_name,
         'categories': seller.selected_categories,
         'subcategories': seller.selected_subcategories,
+        'average_rating': float(seller.user.average_rating),
+        'rating_count': seller.user.rating_count,
     }
 
 User = get_user_model()
@@ -472,11 +479,27 @@ def filter_sellers_by_type_area_and_skills(request):
     return Response(data)
 
 
+class SellerPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
 @api_view(['GET'])
 def list_all_sellers(request):
-    sellers = BusinessDetail.objects.filter(user__role='seller')
-    data = [_get_seller_data(seller) for seller in sellers]
-    return Response(data)
+    """List all sellers with pagination and optional filtering"""
+    paginator = SellerPagination()
+    
+    # Base queryset
+    sellers = BusinessDetail.objects.filter(user__role='seller').select_related('user')
+
+    # Order by rating (highest first), then by name
+    sellers = sellers.order_by('-user__average_rating', 'user__username')
+    
+    # Apply pagination
+    paginated_sellers = paginator.paginate_queryset(sellers, request)
+    data = [_get_seller_data(seller) for seller in paginated_sellers]
+    
+    return paginator.get_paginated_response(data)
 
 
 @api_view(['GET'])
@@ -491,6 +514,51 @@ def get_seller_details(request, seller_id):
             {'detail': 'Seller not found.'},
             status=404
         )
+
+
+class SellerRatingCreateView(CreateAPIView):
+    serializer_class = SellerRatingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SellerRating.objects.all()
+
+
+class EligibleProjectsForRating(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, seller_id):
+        """Return buyer's projects with this seller that are eligible for rating.
+        Eligible statuses: in_progress, completed. Excludes projects already rated.
+        """
+        buyer = request.user
+        # Only buyers can request
+        if getattr(buyer, 'role', None) not in ['buyer', 'professional-buyer']:
+            return Response({'detail': 'Only buyers can rate.'}, status=403)
+
+        projects = Project.objects.filter(
+            user_id=seller_id,
+            client=buyer,
+            status__in=['in_progress', 'completed']
+        ).order_by('-id')
+
+        data = []
+        for p in projects:
+            already_rated = SellerRating.objects.filter(
+                seller_id=seller_id, buyer=buyer, project=p
+            ).exists()
+            if not already_rated:
+                # Get reference number from the related quote
+                reference_number = getattr(p.quote, 'reference_number', None) if hasattr(p, 'quote') else None
+                data.append({
+                    'id': p.id,
+                    'name': p.name,
+                    'status': p.status,
+                    'reference_number': reference_number,
+                })
+
+        return Response(data)
+
 
 
 def _normalize_label(text: str) -> str:
