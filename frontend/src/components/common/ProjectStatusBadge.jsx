@@ -10,6 +10,10 @@ const ProjectStatusBadge = ({ status, size = 'default' }) => {
       color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       label: 'project_status.pending'
     },
+    payment_in_progress: {
+      color: 'bg-orange-100 text-orange-800 border-orange-200',
+      label: 'project_status.payment_in_progress'
+    },
     approved: {
       color: 'bg-green-100 text-green-800 border-green-200',
       label: 'project_status.approved'

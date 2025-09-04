@@ -855,6 +855,7 @@
   },
   "project_status": {
     "pending": "En attente",
+    "payment_in_progress": "Paiement en cours",
     "approved": "Approuvé",
     "not_approved": "Non approuvé",
     "in_progress": "En cours",

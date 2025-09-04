@@ -46,6 +46,7 @@ export default function ProjectDetailPage() {
       case 'pending': return 'bg-yellow-500';
       case 'not_approved': return 'bg-red-500';
       case 'review_request': return 'bg-orange-500';
+      case 'in_progress': return 'bg-blue-500';
       default: return 'bg-gray-500';
     }
   };
@@ -56,9 +57,13 @@ export default function ProjectDetailPage() {
       case 'pending': return t('project_detail.in_progress');
       case 'not_approved': return t('project_detail.not_approved');
       case 'review_request': return t('project_detail.review_request');
+      case 'in_progress': return t('project_detail.in_progress');
+      case 'completed': return t('project_detail.completed');
       default: return t('project_detail.not_submitted');
     }
   };
+
+  // ... keep existing code (loading and error states) ...
 
   if (clientProjectDetailLoading) {
     return (
@@ -108,10 +113,11 @@ export default function ProjectDetailPage() {
   }
 
   const project = clientProjectDetail;
-  const progress = getProgressPercentage(project);
   const totalAmount = project.total_amount || 0;
   const paidAmount = project.installments?.filter(inst => inst.step === 'Project Completion').reduce((sum, inst) => sum + parseFloat(inst.amount), 0) || 0;
   const pendingAmount = totalAmount - paidAmount;
+
+  console.log(project.status);
 
   return (
     <>
@@ -149,12 +155,9 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  {t('project_detail.in_progress')}
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)} text-white`}>
+                  {getStatusText(project.status)}
                 </span>
-                <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
-                  {t('project_detail.contact_seller')}
-                </button>
                 <button 
                   onClick={() => navigate('/dispute-submit', { state: { project } })}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
@@ -168,59 +171,61 @@ export default function ProjectDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Project Progress */}
+              {/* Project Progress - Milestones only */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('project_detail.project_progress')}</h2>
                 <div className="relative">
-                  {/* Timeline Container */}
-                  <div className="flex items-center justify-between">
-                    {project.installments?.map((installment, index) => {
-                      const milestone = project.milestones?.find(m => m.related_installment === installment.id);
-                      const isCompleted = milestone?.status === 'approved';
-                      const isCurrent = milestone?.status === 'pending';
-                      const isFuture = !isCompleted && !isCurrent;
-                      
-                      // Determine if the line to the next stage should be colored
-                      // Only color the line if this stage is completed
-                      const shouldColorLine = isCompleted;
-                      
-                      return (
-                        <div key={installment.id} className="flex flex-col items-center relative">
-                          {/* Circle Icon */}
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
-                            isCompleted ? 'bg-[#01257D]' : isCurrent ? 'bg-[#01257D]' : 'bg-gray-300'
-                          }`}>
-                            {isCompleted ? (
-                              <span className="text-white text-lg font-bold">✓</span>
-                            ) : isCurrent ? (
-                              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <span className="text-gray-600 text-lg font-bold">{index + 1}</span>
-                            )}
-                          </div>
-                          
-                          {/* Stage Text */}
-                          <div className="text-center">
-                            <div className="font-medium text-gray-900 text-sm mb-1">{installment.step}</div>
-                            <div className="text-xs text-gray-600">
-                              ${parseFloat(installment.amount).toLocaleString()} {isCompleted ? t('project_detail.paid') : t('project_detail.pending')}
+                  {/* Milestones timeline */}
+                  <div className="relative">
+                    {/* Background line connecting all milestones */}
+                    <div className="absolute top-5 left-5 right-5 h-1 bg-gray-200 rounded-full"></div>
+                    
+                    {/* Progress line showing completion */}
+                    <div 
+                      className="absolute top-5 left-5 h-1 bg-[#01257D] rounded-full transition-all duration-300"
+                      style={{ 
+                        width: project.milestones?.length > 1 
+                          ? `${((project.milestones.filter(m => m.status === 'approved').length - 1) / (project.milestones.length - 1)) * 100}%` 
+                          : '0%'
+                      }}
+                    ></div>
+
+                    {/* Milestone nodes */}
+                    <div className="flex justify-between relative">
+                      {project.milestones?.map((milestone, index) => {
+                        const status = milestone.status;
+                        const isCompleted = status === 'approved';
+                        const isPending = status === 'pending' || status === 'in_progress';
+
+                        return (
+                          <div key={milestone.id} className="flex flex-col items-center relative">
+                            {/* Node */}
+                            <div className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                              isCompleted 
+                                ? 'bg-[#01257D] border-[#01257D] text-white' 
+                                : isPending 
+                                ? 'bg-[#E6F0FA] border-[#01257D] text-[#01257D]' 
+                                : 'bg-white border-gray-300 text-gray-600'
+                            }`}>
+                              {isCompleted ? '✓' : index + 1}
+                            </div>
+                            
+                            {/* Labels */}
+                            <div className="mt-3 text-center max-w-32">
+                              <div className="text-sm font-medium text-gray-900 mb-1">{milestone.name}</div>
+                              <div className={`text-xs ${isCompleted ? 'text-green-600' : isPending ? 'text-orange-600' : 'text-gray-500'}`}>
+                                ${parseFloat(milestone.relative_payment).toLocaleString()} {isCompleted ? t('project_detail.paid') : isPending ? t('project_detail.in_progress') : t('project_detail.pending')}
+                              </div>
                             </div>
                           </div>
-                          
-                          {/* Connecting Line - only show colored line if this stage is completed */}
-                          {index < project.installments.length - 1 && (
-                            <div className={`absolute top-6 left-full w-full h-0.5 ${
-                              shouldColorLine ? 'bg-[#01257D]' : 'bg-gray-300'
-                            }`} style={{ width: 'calc(100% - 3rem)' }}></div>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Milestones & Payments */}
+              {/* ... keep existing code (Milestones & Payments table) ... */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('project_detail.milestones_payments')}</h2>
                 <div className="overflow-x-auto">
@@ -255,7 +260,7 @@ export default function ProjectDetailPage() {
                           </td>
                           <td className="py-3 px-4">
                             {milestone.status === 'pending' && (
-                              <button className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
+                              <button  className="text-[#01257D] hover:text-[#2346a0] text-sm cursor-pointer">
                                 {t('project_detail.review')}
                               </button>
                             )}
@@ -267,13 +272,10 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
 
-              {/* Project Documents */}
+              {/* ... keep existing code (Project Documents section) ... */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold text-gray-900">{t('project_detail.project_documents')}</h2>
-                  <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
-                    {t('project_detail.download_all')}
-                  </button>
                 </div>
                 <div className="space-y-4">
                   {project.quote?.file && (
@@ -326,7 +328,7 @@ export default function ProjectDetailPage() {
               </div>
             </div>
 
-            {/* Right Column */}
+            {/* ... keep existing code (Right Column) ... */}
             <div className="space-y-6">
               {/* Payment Summary */}
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -349,23 +351,15 @@ export default function ProjectDetailPage() {
                     <div className="font-semibold text-gray-900">${pendingAmount > 0 ? project.installments?.find(inst => inst.step !== 'Project Completion')?.amount || 0 : 0}</div>
                     <div className="text-xs text-gray-500">{t('project_detail.development_milestone')}</div>
                   </div>
-                  <button className="w-full mt-4 px-4 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer">
-                    {t('project_detail.pay_now')}
-                  </button>
                 </div>
               </div>
 
-              {/* Project Details */}
+              {/* Quote Details */}
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('project_detail.project_details')}</h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">{t('project_detail.project_id')}</span>
-                    <span className="font-medium text-gray-900">MPRJ-{project.id.toString().padStart(6, '0')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{t('project_detail.category')}</span>
-                    <span className="font-medium text-gray-900">{project.name}</span>
+                    <span className="font-medium text-gray-900">{project.reference_number}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">{t('project_detail.duration')}</span>
@@ -392,4 +386,4 @@ export default function ProjectDetailPage() {
       </div>
     </>
   );
-} 
+}

@@ -32,13 +32,14 @@ class MilestoneSerializer(serializers.ModelSerializer):
         format="%Y-%m-%d %H:%M:%S", 
         required=False
     )
+    related_installment = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Milestone
         fields = [
             'id', 'project', 'name', 'description', 'supporting_doc',
             'completion_notice', 'review_comment', 'created_date', 'completion_date',
-            'status', 'relative_payment'
+            'status', 'relative_payment', 'related_installment'
         ]
         read_only_fields = ['id', 'created_date']
 
@@ -167,6 +168,9 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 class ProjectListSerializer(serializers.ModelSerializer):
     reference_number = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
+    approved_milestones = serializers.SerializerMethodField()
+    total_milestones = serializers.SerializerMethodField()
+    progress_pct = serializers.SerializerMethodField()
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
@@ -175,7 +179,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             'id', 'name', 'client_email', 'client', 'quote', 'installments',
-            'reference_number', 'total_amount', 'created_at', 'status', 'project_type'
+            'reference_number', 'total_amount', 'created_at', 'status', 'project_type',
+            'approved_milestones', 'total_milestones', 'progress_pct'
         ]
 
     def get_reference_number(self, obj):
@@ -185,6 +190,26 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
     def get_total_amount(self, obj):
         return sum(float(inst.amount) for inst in obj.installments.all())
+
+    def get_approved_milestones(self, obj):
+        try:
+            return obj.milestones.filter(status='approved').count()
+        except Exception:
+            return 0
+
+    def get_total_milestones(self, obj):
+        try:
+            return obj.milestones.count()
+        except Exception:
+            return 0
+
+    def get_progress_pct(self, obj):
+        total = self.get_total_milestones(obj)
+        if not total:
+            return 0
+        approved = self.get_approved_milestones(obj)
+        pct = round((approved / total) * 100)
+        return max(0, min(100, pct))
 
 
 class ClientProjectSerializer(serializers.ModelSerializer):
@@ -196,6 +221,9 @@ class ClientProjectSerializer(serializers.ModelSerializer):
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
     milestones = MilestoneSerializer(many=True, read_only=True)
+    approved_milestones = serializers.SerializerMethodField()
+    total_milestones = serializers.SerializerMethodField()
+    progress_pct = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     seller_name = serializers.CharField(source='user.username', read_only=True)
 
@@ -204,7 +232,7 @@ class ClientProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'seller_name', 'quote', 'installments', 'milestones',
             'reference_number', 'total_amount', 'created_at', 'status', 'project_type',
-            'invite_token'
+            'invite_token', 'approved_milestones', 'total_milestones', 'progress_pct'
         ]
 
     def get_reference_number(self, obj):
@@ -214,4 +242,24 @@ class ClientProjectSerializer(serializers.ModelSerializer):
 
     def get_total_amount(self, obj):
         return sum(float(inst.amount) for inst in obj.installments.all())
+
+    def get_approved_milestones(self, obj):
+        try:
+            return obj.milestones.filter(status='approved').count()
+        except Exception:
+            return 0
+
+    def get_total_milestones(self, obj):
+        try:
+            return obj.milestones.count()
+        except Exception:
+            return 0
+
+    def get_progress_pct(self, obj):
+        total = self.get_total_milestones(obj)
+        if not total:
+            return 0
+        approved = self.get_approved_milestones(obj)
+        pct = round((approved / total) * 100)
+        return max(0, min(100, pct))
  
