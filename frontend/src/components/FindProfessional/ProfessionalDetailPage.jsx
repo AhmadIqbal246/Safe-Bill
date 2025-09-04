@@ -12,13 +12,15 @@ import axios from "axios";
 import SafeBillHeader from "../mutualComponents/Navbar/Navbar";
 // import QuoteRequestDialog from "./QuoteRequestDialog";
 import Chat from "../mutualComponents/Chat/Chat";
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedContact, toggleChat } from '../../store/slices/ChatSlice';
 import {
   businessActivityStructure,
   serviceAreaOptions,
 } from "../../constants/registerationTypes";
 import { useTranslation } from 'react-i18next';
+import { fetchEligibleProjectsForRating, submitSellerRating } from '../../store/slices/ProjectSlice';
+import { toast } from 'react-toastify';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -81,6 +83,9 @@ export default function ProfessionalDetailPage() {
   const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [ratingValue, setRatingValue] = useState(0);
+  const { eligibleProjectsBySeller, eligibleProjectsLoading, eligibleProjectsError, ratingSubmitting, ratingError } = useSelector(state => state.project);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -110,6 +115,11 @@ export default function ProfessionalDetailPage() {
     };
 
     fetchProfessionalDetails();
+    dispatch(fetchEligibleProjectsForRating(professionalId))
+      .unwrap()
+      .catch((err) => {
+        toast.error(err?.detail || 'Failed to load eligible projects');
+      });
   }, [professionalId]);
 
   if (loading) {
@@ -137,6 +147,22 @@ export default function ProfessionalDetailPage() {
       </div>
     );
   }
+  const submitRating = async () => {
+    if (!selectedProjectId || !ratingValue) {
+      toast.info('Select a project and rating');
+      return;
+    }
+    dispatch(submitSellerRating({ sellerId: professionalId, projectId: selectedProjectId, rating: ratingValue, comment: '' }))
+      .unwrap()
+      .then(() => {
+        toast.success('Thanks for your rating!');
+        setRatingValue(0);
+        setSelectedProjectId('');
+      })
+      .catch((err) => {
+        toast.error(err?.detail || 'Failed to submit rating');
+      });
+  };
 
   // Ensure professional has required fields with safe defaults
   const safeProfessional = {
@@ -259,6 +285,42 @@ export default function ProfessionalDetailPage() {
           <p className="rounded-lg px-4 py-3 text-gray-700 leading-relaxed break-words">
             {professional.about || t('professional_detail.no_about_info')}
           </p>
+        </div>
+
+        {/* Rate Seller Section */}
+        <div className="p-8 mb-8">
+          <h2 className="text-2xl font-bold text-[#111827] mb-4">Rate this Seller</h2>
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <div className="flex items-center gap-1">
+              {[1,2,3,4,5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRatingValue(star)}
+                  className={`w-8 h-8 rounded-full border flex items-center justify-center cursor-pointer ${ratingValue >= star ? 'bg-[#01257D] text-white' : 'bg-[#E6F0FA] text-[#01257D]'}`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <select
+              className="border rounded-lg px-3 py-2"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="">Select project</option>
+              {(eligibleProjectsBySeller[professionalId] || []).map((p) => (
+                <option key={p.id} value={p.id}>{p.name} ({p.status})</option>
+              ))}
+            </select>
+            <button
+              onClick={submitRating}
+              disabled={!ratingValue || !selectedProjectId || ratingSubmitting}
+              className="bg-[#01257D] text-white px-5 py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+            >
+              {ratingSubmitting ? 'Submitting...' : 'Submit Rating'}
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 mt-2">Only buyers of 'In Progress' or 'Completed' projects can rate, once per project.</p>
         </div>
 
         {/* Skills Section */}

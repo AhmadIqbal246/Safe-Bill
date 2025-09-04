@@ -7,7 +7,7 @@ from .serializers import (
     SellerRegistrationSerializer, UserTokenObtainPairSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
      BankAccountSerializer,
-    UserProfileSerializer, BuyerRegistrationSerializer
+    UserProfileSerializer, BuyerRegistrationSerializer, SellerRatingSerializer
 )
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -19,6 +19,9 @@ from rest_framework.decorators import api_view, permission_classes
 from utils.email_service import EmailService
 import re
 import unicodedata
+from rest_framework.generics import CreateAPIView
+from .models import SellerRating
+from projects.models import Project
 
 
 def _get_seller_data(seller):
@@ -491,6 +494,48 @@ def get_seller_details(request, seller_id):
             {'detail': 'Seller not found.'},
             status=404
         )
+
+
+class SellerRatingCreateView(CreateAPIView):
+    serializer_class = SellerRatingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SellerRating.objects.all()
+
+
+class EligibleProjectsForRating(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, seller_id):
+        """Return buyer's projects with this seller that are eligible for rating.
+        Eligible statuses: in_progress, completed. Excludes projects already rated.
+        """
+        buyer = request.user
+        # Only buyers can request
+        if getattr(buyer, 'role', None) not in ['buyer', 'professional-buyer']:
+            return Response({'detail': 'Only buyers can rate.'}, status=403)
+
+        projects = Project.objects.filter(
+            user_id=seller_id,
+            client=buyer,
+            status__in=['in_progress', 'completed']
+        ).order_by('-id')
+
+        data = []
+        for p in projects:
+            already_rated = SellerRating.objects.filter(
+                seller_id=seller_id, buyer=buyer, project=p
+            ).exists()
+            if not already_rated:
+                data.append({
+                    'id': p.id,
+                    'name': p.name,
+                    'status': p.status,
+                })
+
+        return Response(data)
+
 
 
 def _normalize_label(text: str) -> str:

@@ -105,3 +105,19 @@ class BuyerModel(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.user.email})"
+
+
+class SellerRating(models.Model):
+    """Rating that a buyer gives to a seller for a specific project."""
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_ratings')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_ratings')
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE, related_name='seller_ratings')
+    rating = models.PositiveSmallIntegerField(default=0)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('seller', 'buyer', 'project')
+
+    def __str__(self):
+        return f"{self.seller.username} rated {self.rating} by {self.buyer.username} for {self.project_id}"
