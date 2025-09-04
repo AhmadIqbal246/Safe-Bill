@@ -37,7 +37,7 @@ import AcceptProjectInvite from "./pages/AcceptProjectInvite";
 import HowToAcceptProjectInvite from "./pages/HowToAcceptProjectInvite";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
-import Billings from "./pages/Billings";
+import BillingsPage from "./pages/BillingsPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -92,7 +92,7 @@ function App() {
           <Route path='/how-to-accept-project-invite' element={<HowToAcceptProjectInvite/>}/>
           <Route path='/privacy-policy' element={<PrivacyPolicyPage/>}/>
           <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
-          <Route path='/billings' element={<Billings/>}/>
+          <Route path='/billings' element={<BillingsPage/>}/>
           {/* Add more routes as needed */}
         </Routes>
       </Router>

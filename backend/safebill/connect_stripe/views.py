@@ -212,16 +212,6 @@ def stripe_connect_webhook(request):
         except Exception as e:
             logger.error(f"Error disconnecting Stripe account {account_id}: {e}")
 
-    # Handle transfer webhook events
-    elif event["type"] == "transfer.created":
-        TransferService.handle_transfer_created(event)
-    elif event["type"] == "transfer.updated":
-        TransferService.handle_transfer_updated(event)
-    elif event["type"] == "transfer.reversed":
-        TransferService.handle_transfer_reversed(event)
-    else:
-        logger.info(f"Unhandled event type: {event['type']}")
-
     return Response({"status": "success"}, status=200)
 
 
@@ -734,6 +724,17 @@ def stripe_identity_webhook(request):
             project_status="pending",
             updated_at=payment.updated_at,
         )
+
+    # Handle transfer webhook events
+    elif event["type"] == "transfer.created":
+        logger.info(f"Processing transfer.created webhook event")
+        TransferService.handle_transfer_created(event)
+    elif event["type"] == "transfer.updated":
+        logger.info(f"Processing transfer.updated webhook event")
+        TransferService.handle_transfer_updated(event)
+    elif event["type"] == "transfer.reversed":
+        logger.info(f"Processing transfer.reversed webhook event")
+        TransferService.handle_transfer_reversed(event)
 
     else:
         logger.info(f"Unhandled Stripe Identity event type: {event['type']}")

@@ -154,7 +154,7 @@ export default function TransferFunds({ balance }) {
     );
   }
 
-  const availableBalance = balance?.current_balance || 0;
+  const availableBalance = balance?.available_for_payout || 0;
   const transferAmountValue = parseFloat(transferAmount) || 0;
   const canTransfer = canTransferFromStore && availableBalance > 0 && transferAmountValue > 0 && transferAmountValue <= availableBalance;
 

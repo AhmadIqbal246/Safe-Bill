@@ -75,6 +75,13 @@ export default function BalanceSummary({ balance, loading, error }) {
       bgColor: 'bg-primary-50',
     },
     {
+      title: t('billings.available_for_transfer'),
+      value: `${parseFloat(balance.available_for_payout || 0).toLocaleString()} ${balance.currency}`,
+      icon: Lock,
+      color: 'text-secondary-600',
+      bgColor: 'bg-secondary-50',
+    },
+    {
       title: t('billings.total_earnings'),
       value: `${parseFloat(balance.total_earnings).toLocaleString()} ${balance.currency}`,
       icon: TrendingUp,
@@ -108,7 +115,7 @@ export default function BalanceSummary({ balance, loading, error }) {
         <h3 className="text-xl font-bold text-gray-900">{t('billings.balance_summary')}</h3>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className={` grid grid-cols-1  ${isSeller ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6`}>
         {balanceCards.map((card, index) => {
           const IconComponent = card.icon;
           return (

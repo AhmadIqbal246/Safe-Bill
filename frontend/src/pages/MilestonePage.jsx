@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchMilestones, updateMilestone, approveMilestone } from '../store/slices/ProjectSlice';
 import { fetchNotifications } from '../store/slices/NotificationSlice';
+import { fetchPlatformFees } from '../store/slices/PaymentSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Dialog } from '@headlessui/react';
 import { toast } from 'react-toastify';
@@ -21,9 +22,10 @@ export default function MilestonePage() {
     milestonesError,
     milestoneUpdateLoading,
     milestoneUpdateError,
-    approveMilestoneLoading,
-    approveMilestoneError
+    approveMilestoneLoading
   } = useSelector(state => state.project);
+
+  const { platformFees, platformFeesLoading } = useSelector(state => state.payment);
 
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -47,9 +49,34 @@ export default function MilestonePage() {
     if (project?.id) {
       dispatch(fetchMilestones(project.id));
     }
+    dispatch(fetchPlatformFees());
   }, [dispatch, project?.id]);
 
   const projectMilestones = milestones[project?.id] || [];
+
+  // Calculate net amount after seller fee and stripe fee
+  const calculateNetAmount = (amount) => {
+    const numericAmount = Number(amount);
+    const sellerFeePct = Number(platformFees?.seller_fee_pct || 0);
+    const buyerFeePct = Number(platformFees?.buyer_fee_pct || 0);
+    
+    // Calculate buyer fee (what buyer pays for platform)
+    const buyerFee = numericAmount * buyerFeePct;
+    
+    // Calculate stripe fee (on what buyer pays: amount + buyer fee)
+    const stripeFee = (numericAmount + buyerFee) * 0.029 + 0.30;
+    
+    // Calculate seller net (what seller receives after their fee and stripe fee)
+    const sellerNet = numericAmount - (numericAmount * sellerFeePct) - stripeFee;
+    
+    return {
+      grossAmount: numericAmount,
+      buyerFee: +buyerFee.toFixed(2),
+      stripeFee: +stripeFee.toFixed(2),
+      sellerFee: +(numericAmount * sellerFeePct).toFixed(2),
+      netAmount: +Math.max(sellerNet, 0).toFixed(2)
+    };
+  };
 
   // Helper functions for status-based controls
   const canEditMilestone = (milestone) => {
@@ -244,7 +271,16 @@ export default function MilestonePage() {
                   }>{capitalizeStatus(milestone.status)}</span></div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-lg font-semibold text-gray-800">${parseFloat(milestone.relative_payment).toLocaleString()}</div>
+                  <div className="text-right">
+                    <div className="text-lg font-semibold text-gray-800">
+                      ${parseFloat(milestone.relative_payment).toLocaleString()}
+                    </div>
+                    {platformFees && !platformFeesLoading && (
+                      <div className="text-sm text-green-600 font-medium">
+                        You receive: ${calculateNetAmount(milestone.relative_payment).netAmount.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={() => openEditModal(milestone)}
                     className={`p-2 rounded-md transition-colors ${
@@ -297,6 +333,13 @@ export default function MilestonePage() {
               {milestone.completion_notice && (
                 <div className="mb-2 text-sm text-gray-600">
                   <span className="font-medium">Completion Notice:</span> {milestone.completion_notice}
+                </div>
+              )}
+              
+              {/* Simple Fee Info */}
+              {platformFees && !platformFeesLoading && (
+                <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                  <span className="font-medium">Fees:</span> Platform {(Number(platformFees.seller_fee_pct) * 100).toFixed(1)}% + Stripe 2.9% + $0.30
                 </div>
               )}
               {milestone.review_comment && (

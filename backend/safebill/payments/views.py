@@ -5,13 +5,17 @@ from django.conf import settings
 import stripe
 from django.contrib.auth import get_user_model
 from projects.models import Project, PaymentInstallment
-from .models import Payment, Balance, Payout
+from decimal import Decimal, ROUND_HALF_UP
+from .models import Payment, Balance, Payout, PayoutHold, PlatformFeeConfig, PayoutHold
 from .serializers import (
     PaymentSerializer,
     BalanceSerializer,
     PayoutSerializer,
+    PayoutHoldSerializer,
+    PlatformFeeConfigSerializer,
 )
 from .transfer_service import TransferService
+from .services import BalanceService
 from connect_stripe.models import StripeAccount
 
 import logging
@@ -39,13 +43,41 @@ def create_stripe_payment(request, project_id):
         amount = sum(
             payment_installment.amount for payment_installment in payment_installments
         )
+        # Ensure Decimal math
+        amount = Decimal(str(amount))
+
+        # Fees from DB (platform split buyer/seller) and Stripe constants
+        cfg = PlatformFeeConfig.current()
+        buyer_fee_pct = Decimal(str(cfg.buyer_fee_pct))
+        seller_fee_pct = Decimal(str(cfg.seller_fee_pct))
+        stripe_fee_pct = Decimal("0.029")
+        stripe_fixed = Decimal("0.30")
+
+        # Platform fee is only the buyer fee (matching frontend logic)
+        platform_fee = (amount * buyer_fee_pct).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        # Stripe takes fee on total processed amount (amount + platform_fee)
+        stripe_fee_base = amount + platform_fee
+        stripe_fee = (stripe_fee_base * stripe_fee_pct + stripe_fixed).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+        # Buyer pays: base amount + buyer fee + stripe fee
+        buyer_total = (amount + (amount * buyer_fee_pct) + stripe_fee).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        # Seller receives: base amount - seller fee - stripe fee
+        seller_net = (amount - (amount * seller_fee_pct) - stripe_fee).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
         checkout_session = stripe.checkout.Session.create(
             customer_email=user.email,
             line_items=[
                 {
                     "price_data": {
                         "currency": "eur",
-                        "unit_amount": int(amount * 100),
+                        "unit_amount": int(buyer_total * 100),
                         "product_data": {"name": "Project Payment"},
                     },
                     "quantity": 1,
@@ -53,7 +85,18 @@ def create_stripe_payment(request, project_id):
             ],
             mode="payment",
             success_url=redirect_url,
-            metadata={"project_id": project.id},
+            metadata={
+                "project_id": project.id,
+                "base_amount": str(amount),
+                "platform_fee": str(platform_fee),
+                "stripe_fee": str(stripe_fee),
+                "buyer_total": str(buyer_total),
+                "seller_net": str(seller_net),
+                "buyer_fee_pct": str(buyer_fee_pct),
+                "seller_fee_pct": str(seller_fee_pct),
+                "buyer_fee_amount": str(amount * buyer_fee_pct),
+                "seller_fee_amount": str(amount * seller_fee_pct),
+            },
         )
         # Delete any existing payments for this project by this user
         Payment.objects.filter(project=project, user=user).delete()
@@ -62,6 +105,10 @@ def create_stripe_payment(request, project_id):
         Payment.objects.create(
             user=user,
             amount=amount,
+            platform_fee_amount=platform_fee,
+            stripe_fee_amount=stripe_fee,
+            buyer_total_amount=buyer_total,
+            seller_net_amount=seller_net,
             status="pending",
             project=project,
             stripe_payment_id=checkout_session.id,
@@ -113,6 +160,13 @@ def list_billings(request):
     Return the authenticated user's payments (billings).
     """
     user = request.user
+    # For buyers, reconcile escrow before returning billings
+    if hasattr(user, "role") and user.role != "seller":
+        try:
+            BalanceService.reconcile_buyer_escrow(user)
+        except Exception as e:
+            logger.error(f"Error reconciling buyer escrow for user {user.id}: {e}")
+
     payments = (
         Payment.objects.filter(user=user)
         .select_related("project")
@@ -255,6 +309,84 @@ def list_transfers(request):
             {"detail": "Failed to retrieve transfer history."},
             status=500,
         )
+
+
+# ====================================================================== Payout holds (seller) =============================================================
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_payout_holds(request):
+    """
+    Return payout holds for the authenticated seller (unreleased and recent released).
+    """
+    try:
+        user = request.user
+        if not hasattr(user, "role") or user.role != "seller":
+            return Response(
+                {"detail": "Only sellers can view payout holds."}, status=400
+            )
+
+        # Release matured holds for all users (including current user)
+        try:
+
+            sellers = User.objects.filter(role="seller")
+            total_released = 0
+            for seller in sellers:
+                released = BalanceService.release_matured_holds(seller)
+                total_released += released
+                if released > 0:
+                    logger.info(f"Released ${released} for seller {seller.email}")
+            if total_released > 0:
+                logger.info(f"Auto-released total ${total_released} for all sellers")
+        except Exception as e:
+            logger.error(f"Error in auto-release of matured holds: {e}")
+
+        # Only show unreleased holds (matured holds are automatically released above)
+        holds = (
+            PayoutHold.objects.filter(user=user, released=False)
+            .select_related("project")
+            .order_by("hold_until")
+        )
+        serializer = PayoutHoldSerializer(holds, many=True)
+        return Response(
+            {"results": serializer.data, "count": len(serializer.data)}, status=200
+        )
+    except Exception as e:
+        logger.error(f"Error listing payout holds: {e}")
+        return Response({"detail": "Failed to retrieve payout holds."}, status=500)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_platform_fees(request):
+    """
+    Return platform fee configuration based on user role.
+    - Sellers: see seller fee percentage
+    - Buyers: see buyer fee percentage
+    - Professional Buyers: see both buyer and seller fee percentages
+    """
+    user = request.user
+    cfg = PlatformFeeConfig.current()
+
+    # Prepare response data based on user role
+    if user.role == "seller":
+        response_data = {"seller_fee_pct": cfg.seller_fee_pct, "user_role": user.role}
+    elif user.role == "buyer":
+        response_data = {"buyer_fee_pct": cfg.buyer_fee_pct, "user_role": user.role}
+    elif user.role == "professional-buyer":
+        response_data = {
+            "buyer_fee_pct": cfg.buyer_fee_pct,
+            "seller_fee_pct": cfg.seller_fee_pct,
+            "user_role": user.role,
+        }
+    else:
+        # For admin/super-admin, return all fee information
+        response_data = {
+            "buyer_fee_pct": cfg.buyer_fee_pct,
+            "seller_fee_pct": cfg.seller_fee_pct,
+            "user_role": user.role,
+        }
+
+    return Response(response_data, status=200)
 
 
 @api_view(["POST"])
