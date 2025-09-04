@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { fetchBillings, fetchBalance } from '../store/slices/PaymentSlice';
-import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
-import BalanceSummary from '../components/Billings/BalanceSummary';
-import BillingsList from '../components/Billings/BillingsList';
-import TransferFunds from '../components/Billings/TransferFunds';
-import Loader from '../components/common/Loader';
-import MainLayout from '../components/Layout/MainLayout';
+import { fetchBillings, fetchBalance, fetchPayoutHolds, fetchTransfers } from '../../store/slices/PaymentSlice';
+import BalanceSummary from './BalanceSummary';
+import BillingsList from './BillingsList';
+import TransferFunds from './TransferFunds';
+import Loader from '../common/Loader';
+import PayoutHolds from './PayoutHolds';
+import TransfersList from './TransfersList';
 
 export default function Billings() {
   const { t } = useTranslation();
@@ -19,7 +19,13 @@ export default function Billings() {
     billingsError,
     balance, 
     balanceLoading, 
-    balanceError 
+    balanceError,
+    payoutHolds,
+    payoutHoldsLoading,
+    payoutHoldsError,
+    transfers,
+    transfersLoading,
+    transfersError,
   } = useSelector(state => state.payment);
   
   const { user } = useSelector(state => state.auth);
@@ -28,24 +34,28 @@ export default function Billings() {
     // Fetch both billings and balance data
     dispatch(fetchBillings());
     dispatch(fetchBalance());
-  }, [dispatch]);
+    if (user?.role === 'seller') {
+      dispatch(fetchPayoutHolds());
+      dispatch(fetchTransfers());
+    }
+  }, [dispatch, user]);
 
-  const isLoading = billingsLoading || balanceLoading;
-  const hasError = billingsError || balanceError;
+  const isLoading = billingsLoading || balanceLoading || payoutHoldsLoading || transfersLoading;
+  const hasError = billingsError || balanceError || payoutHoldsError || transfersError;
 
   if (isLoading && !billings.length && !balance) {
     return (
       
-        <MainLayout>
+        <>
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader size="large" text={t('billings.loading')} />
         </div>
-      </MainLayout>
+      </>
     );
   }
 
   return (
-    <MainLayout>
+    <>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -66,7 +76,7 @@ export default function Billings() {
                   {t('common.error')}
                 </h3>
                 <div className="mt-2 text-sm text-red-700">
-                  {billingsError || balanceError}
+                  {billingsError || balanceError || transfersError}
                 </div>
               </div>
             </div>
@@ -89,15 +99,33 @@ export default function Billings() {
           </div>
         )}
 
+        {/* Payout Holds - Only for Sellers */}
+        {user?.role === 'seller' && (
+          <div className="mb-8">
+            <PayoutHolds holds={payoutHolds} loading={payoutHoldsLoading} error={payoutHoldsError} />
+          </div>
+        )}
+
+        {/* Transfer History - Only for Sellers */}
+        {user?.role === 'seller' && (
+          <div className="mb-8">
+            <TransfersList 
+              transfers={transfers}
+              loading={transfersLoading}
+              error={transfersError}
+            />
+          </div>
+        )}
+
         {/* Billings List */}
-        <div>
+        {user?.role !== 'seller' && <div>
           <BillingsList 
             billings={billings}
             loading={billingsLoading}
             error={billingsError}
           />
-        </div>
+        </div>}
       </div>
-    </MainLayout>
+    </>
   );
 }
