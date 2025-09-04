@@ -410,15 +410,33 @@ class UserProfileView(APIView):
 @api_view(['GET'])
 def filter_sellers_by_service_type(request):
     service_type = request.GET.get('service_type')
+    min_rating = request.GET.get('min_rating')
+    
     if not service_type:
         return Response(
             {'detail': 'service_type query param is required.'},
             status=400
         )
+    
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         user__role='seller'
     )
+    
+    # Apply rating filter if provided
+    if min_rating:
+        try:
+            min_rating_float = float(min_rating)
+            sellers = sellers.filter(user__average_rating__gte=min_rating_float)
+        except ValueError:
+            return Response(
+                {'detail': 'min_rating must be a valid number.'},
+                status=400
+            )
+    
+    # Order by rating (highest first), then by name
+    sellers = sellers.order_by('-user__average_rating', 'user__username')
+    
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
@@ -426,15 +444,33 @@ def filter_sellers_by_service_type(request):
 @api_view(['GET'])
 def filter_sellers_by_service_area(request):
     service_area = request.GET.get('service_area')
+    min_rating = request.GET.get('min_rating')
+    
     if not service_area:
         return Response(
             {'detail': 'service_area query param is required.'},
             status=400
         )
+    
     sellers = BusinessDetail.objects.filter(
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
+    
+    # Apply rating filter if provided
+    if min_rating:
+        try:
+            min_rating_float = float(min_rating)
+            sellers = sellers.filter(user__average_rating__gte=min_rating_float)
+        except ValueError:
+            return Response(
+                {'detail': 'min_rating must be a valid number.'},
+                status=400
+            )
+    
+    # Order by rating (highest first), then by name
+    sellers = sellers.order_by('-user__average_rating', 'user__username')
+    
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
@@ -443,16 +479,34 @@ def filter_sellers_by_service_area(request):
 def filter_sellers_by_type_and_area(request):
     service_type = request.GET.get('service_type')
     service_area = request.GET.get('service_area')
+    min_rating = request.GET.get('min_rating')
+    
     if not service_type or not service_area:
         return Response(
             {'detail': 'Both service_type and service_area query params are required.'},
             status=400
         )
+    
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
+    
+    # Apply rating filter if provided
+    if min_rating:
+        try:
+            min_rating_float = float(min_rating)
+            sellers = sellers.filter(user__average_rating__gte=min_rating_float)
+        except ValueError:
+            return Response(
+                {'detail': 'min_rating must be a valid number.'},
+                status=400
+            )
+    
+    # Order by rating (highest first), then by name
+    sellers = sellers.order_by('-user__average_rating', 'user__username')
+    
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
@@ -460,6 +514,7 @@ def filter_sellers_by_type_and_area(request):
 def filter_sellers_by_type_area_and_skills(request):
     service_type = request.GET.get('service_type')
     service_area = request.GET.get('service_area')
+    min_rating = request.GET.get('min_rating')
     
     if not service_type or not service_area:
         return Response(
@@ -468,13 +523,26 @@ def filter_sellers_by_type_area_and_skills(request):
         )
     
     # Build the base query
-    query = BusinessDetail.objects.filter(
+    sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         selected_service_areas__contains=[service_area],
         user__role='seller'
     )
     
-    sellers = query
+    # Apply rating filter if provided
+    if min_rating:
+        try:
+            min_rating_float = float(min_rating)
+            sellers = sellers.filter(user__average_rating__gte=min_rating_float)
+        except ValueError:
+            return Response(
+                {'detail': 'min_rating must be a valid number.'},
+                status=400
+            )
+    
+    # Order by rating (highest first), then by name
+    sellers = sellers.order_by('-user__average_rating', 'user__username')
+    
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
@@ -488,9 +556,21 @@ class SellerPagination(PageNumberPagination):
 def list_all_sellers(request):
     """List all sellers with pagination and optional filtering"""
     paginator = SellerPagination()
+    min_rating = request.GET.get('min_rating')
     
     # Base queryset
     sellers = BusinessDetail.objects.filter(user__role='seller').select_related('user')
+
+    # Apply rating filter if provided
+    if min_rating:
+        try:
+            min_rating_float = float(min_rating)
+            sellers = sellers.filter(user__average_rating__gte=min_rating_float)
+        except ValueError:
+            return Response(
+                {'detail': 'min_rating must be a valid number.'},
+                status=400
+            )
 
     # Order by rating (highest first), then by name
     sellers = sellers.order_by('-user__average_rating', 'user__username')
@@ -584,6 +664,7 @@ def filter_sellers_by_location(request):
       - address (formatted)
       - lat
       - lng
+      - min_rating
 
     Strategy:
       1) If city and postal_code are provided, build a candidate service-area value
@@ -593,9 +674,21 @@ def filter_sellers_by_location(request):
     city = (request.GET.get('city') or '').strip()
     postal_code = (request.GET.get('postal_code') or '').strip()
     address = (request.GET.get('address') or '').strip()
+    min_rating = request.GET.get('min_rating')
 
     # Base queryset: sellers only
     qs = BusinessDetail.objects.filter(user__role='seller')
+
+    # Apply rating filter if provided
+    if min_rating:
+        try:
+            min_rating_float = float(min_rating)
+            qs = qs.filter(user__average_rating__gte=min_rating_float)
+        except ValueError:
+            return Response(
+                {'detail': 'min_rating must be a valid number.'},
+                status=400
+            )
 
     # Attempt 1: service area value derived from city + postal
     matched = None
@@ -619,6 +712,10 @@ def filter_sellers_by_location(request):
             matched = addr_qs
 
     sellers = matched if matched is not None else qs.none()
+    
+    # Order by rating (highest first), then by name
+    sellers = sellers.order_by('-user__average_rating', 'user__username')
+    
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 
