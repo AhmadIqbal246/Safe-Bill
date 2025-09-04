@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjects } from '../../store/slices/ProjectSlice';
+import { fetchCompletedProjects } from '../../store/slices/ProjectSlice';
 import { useTranslation } from 'react-i18next';
 
 const getRandomDate = () => {
@@ -14,21 +14,21 @@ const getRandomDate = () => {
 export default function CompletedProjectsComp() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const { projects, loading, error } = useSelector(state => state.project);
+  const { completedProjects, completedProjectsCount, loading, error } = useSelector(state => state.project);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState('date');
   const [clientFilter, setClientFilter] = useState('All');
   const pageSize = 4;
 
   useEffect(() => {
-    dispatch(fetchProjects());
+    dispatch(fetchCompletedProjects());
   }, [dispatch]);
 
   // Extract unique clients for filter
-  const clientOptions = ['All', ...Array.from(new Set((projects || []).map(p => p.client_email)))];
+  const clientOptions = ['All', ...Array.from(new Set((completedProjects || []).map(p => p.client_email)))];
 
   // Add a static/random completion date for demo
-  const projectsWithDate = (projects || []).map((p, idx) => ({
+  const projectsWithDate = (completedProjects || []).map((p, idx) => ({
     ...p,
     completion_date: getRandomDate(),
   }));

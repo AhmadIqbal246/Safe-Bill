@@ -271,9 +271,9 @@ export default function ProfessionalDetailPage() {
               <span className="font-semibold text-[#111827]">
                 {professional.average_rating > 0 ? professional.average_rating.toFixed(1) : t('professional_detail.no_ratings')}
               </span>
-              <span className="text-gray-500 ml-1">
+              {/* <span className="text-gray-500 ml-1">
                 ({professional.rating_count} {professional.rating_count === 1 ? t('professional_detail.review') : t('professional_detail.reviews')})
-              </span>
+              </span> */}
             </div>
             </div>
 
