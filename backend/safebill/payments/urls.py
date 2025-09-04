@@ -8,6 +8,8 @@ from .views import (
     get_transfer_info,
     list_transfers,
     generate_stripe_login_link,
+    list_payout_holds,
+    get_platform_fees,
 )
 
 urlpatterns = [
@@ -50,5 +52,15 @@ urlpatterns = [
         "stripe-login-link/",
         generate_stripe_login_link,
         name="generate_stripe_login_link",
+    ),
+    path(
+        "payout-holds/",
+        list_payout_holds,
+        name="list_payout_holds",
+    ),
+    path(
+        "fees/",
+        get_platform_fees,
+        name="get_platform_fees",
     ),
 ]

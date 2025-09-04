@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.utils import timezone
+from decimal import Decimal
 import logging
 import stripe
 
 from .models import Balance, Payout
+from .services import BalanceService
 from connect_stripe.models import StripeAccount
 from notifications.services import NotificationService
 
@@ -23,8 +25,17 @@ class TransferService:
         try:
             # Get user's balance
             try:
+                # Release any matured holds first
+                BalanceService.release_matured_holds(user)
                 balance = Balance.objects.get(user=user)
-                transfer_amount = amount or balance.current_balance
+                max_available = balance.available_for_payout
+                if amount is None:
+                    transfer_amount = max_available
+                else:
+                    transfer_amount = amount
+
+                # Convert to Decimal for consistent financial calculations
+                transfer_amount_decimal = Decimal(str(transfer_amount))
 
                 if transfer_amount <= 0:
                     return {
@@ -32,10 +43,10 @@ class TransferService:
                         "error": "No funds available for transfer",
                     }
 
-                if transfer_amount > balance.current_balance:
+                if transfer_amount > max_available:
                     return {
                         "success": False,
-                        "error": "Insufficient balance for transfer",
+                        "error": "Insufficient available-for-payout funds",
                     }
 
             except Balance.DoesNotExist:
@@ -57,7 +68,7 @@ class TransferService:
 
             # Create transfer to connected account
             transfer = stripe.Transfer.create(
-                amount=int(transfer_amount),  # Amount in cents
+                amount=int(transfer_amount * 100),  # Amount in cents
                 currency=currency.lower(),
                 destination=stripe_account.account_id,
                 description=f"Platform earnings transfer for {user.email}",
@@ -72,33 +83,34 @@ class TransferService:
             # Create Payout record to track the transfer
             payout = Payout.objects.create(
                 user=user,
-                amount=transfer_amount,
+                amount=transfer_amount_decimal,
                 currency=currency,
                 status="in_transit",  # Stripe transfer is created but not yet completed
                 stripe_transfer_id=transfer.id,
                 stripe_account_id=stripe_account.account_id,
             )
 
-            # Update user's balance
-            balance.current_balance -= transfer_amount
-            balance.save()
+            # Note: Balance will be deducted when webhook confirms transfer success
+            logger.info(
+                f"Transfer created for user {user.id}: {transfer_amount_decimal} {currency} - "
+                f"Balance will be deducted when webhook confirms success"
+            )
 
             # Send notification
             NotificationService.create_notification(
                 user,
-                f"Transfer of {transfer_amount} {currency} has been sent to your Stripe account. "
-                f"You can manage payouts to your bank account in your Stripe Dashboard.",
+                f"Transfer of {transfer_amount_decimal} {currency} has been sent to your Stripe account.",
             )
 
             logger.info(
-                f"Transfer created for user {user.id}: {transfer.id} - {transfer_amount} {currency}"
+                f"Transfer created for user {user.id}: {transfer.id} - {transfer_amount_decimal} {currency}"
             )
 
             return {
                 "success": True,
                 "transfer_id": transfer.id,
                 "payout_id": payout.id,
-                "amount": float(transfer_amount),
+                "amount": float(transfer_amount_decimal),
                 "currency": currency,
                 "destination": stripe_account.account_id,
             }
@@ -192,17 +204,55 @@ class TransferService:
     @staticmethod
     def handle_transfer_created(event):
         """
-        Handle transfer.created webhook event
+        Handle transfer.created webhook event - deduct balance when transfer is created
         """
         try:
             transfer_data = event["data"]["object"]
             transfer_id = transfer_data["id"]
 
-            # Update payout status to in_transit
+            # Update payout status to in_transit and deduct balance
             try:
                 payout = Payout.objects.get(stripe_transfer_id=transfer_id)
+
+                # Check if payout is already paid to avoid duplicate processing
+                if payout.status == "paid":
+                    logger.info(
+                        f"Payout {payout.id} for transfer {transfer_id} is already paid - skipping processing"
+                    )
+                    return
+
                 payout.status = "in_transit"
                 payout.save()
+
+                logger.info(
+                    f"Updated payout {payout.id} status to 'in_transit' for transfer {transfer_id}"
+                )
+
+                # Deduct balance now that transfer is created by Stripe
+                try:
+                    balance = Balance.objects.get(user=payout.user)
+                    logger.info(
+                        f"BEFORE deduction - User {payout.user.id} balance: current={balance.current_balance}, available={balance.available_for_payout}"
+                    )
+                    logger.info(
+                        f"Deducting {payout.amount} {payout.currency} from user {payout.user.id} balance when transfer created"
+                    )
+                    balance.current_balance -= payout.amount
+                    balance.available_for_payout -= payout.amount
+                    balance.save()
+
+                    logger.info(
+                        f"AFTER deduction - User {payout.user.id} balance: current={balance.current_balance}, available={balance.available_for_payout}"
+                    )
+                    logger.info(
+                        f"Transfer created successfully for user {payout.user.id}: "
+                        f"{payout.amount} {payout.currency} - Balance deducted"
+                    )
+
+                except Balance.DoesNotExist:
+                    logger.error(
+                        f"Balance not found for user {payout.user.id} - could not deduct funds"
+                    )
 
                 logger.info(
                     f"Transfer created webhook processed for transfer {transfer_id}"
@@ -224,9 +274,23 @@ class TransferService:
             transfer_id = transfer_data["id"]
             status = transfer_data.get("status", "")
 
+            logger.info(
+                f"Processing transfer.updated webhook for transfer {transfer_id} with status: {status}"
+            )
+
             try:
                 payout = Payout.objects.get(stripe_transfer_id=transfer_id)
                 old_status = payout.status
+                logger.info(
+                    f"Found payout {payout.id} for user {payout.user.id}, amount: {payout.amount}, old_status: {old_status}"
+                )
+
+                # Check if payout is already paid to avoid duplicate processing
+                if payout.status == "paid":
+                    logger.info(
+                        f"Payout {payout.id} for transfer {transfer_id} is already paid - skipping processing"
+                    )
+                    return
 
                 # Map Stripe transfer status to our status
                 status_mapping = {
@@ -239,10 +303,26 @@ class TransferService:
 
                 new_status = status_mapping.get(status, status)
                 payout.status = new_status
+                payout.save()  # Save the status update
+
+                logger.info(
+                    f"Updated payout {payout.id} status from '{old_status}' to '{new_status}' for transfer {transfer_id}"
+                )
 
                 # Handle status-specific logic
                 if status == "paid":
+                    logger.info(
+                        f"Transfer status is 'paid' - transfer completed successfully for user {payout.user.id}"
+                    )
                     payout.completed_at = timezone.now()
+                    payout.save()  # Save the completion time
+
+                    # Balance was already deducted when transfer was created
+                    logger.info(
+                        f"Transfer completed successfully for user {payout.user.id}: "
+                        f"{payout.amount} {payout.currency} - Balance was already deducted when transfer created"
+                    )
+
                     # Send success notification
                     NotificationService.create_notification(
                         payout.user,
@@ -257,16 +337,20 @@ class TransferService:
                     )
                     payout.failure_reason = f"{failure_code}: {failure_message}"
 
-                    # Restore user balance since transfer failed
+                    # Restore balance since transfer failed (balance was deducted when transfer was created)
                     try:
                         balance = Balance.objects.get(user=payout.user)
-                        balance.current_balance += payout.amount
-                        balance.save()
-
                         logger.info(
-                            f"Restored balance of {payout.amount} {payout.currency} for user {payout.user.id}"
+                            f"Restoring balance for failed transfer - User {payout.user.id}: "
+                            f"current={balance.current_balance} -> {balance.current_balance + payout.amount}, "
+                            f"available={balance.available_for_payout} -> {balance.available_for_payout + payout.amount}"
                         )
-
+                        balance.current_balance += payout.amount
+                        balance.available_for_payout += payout.amount
+                        balance.save()
+                        logger.info(
+                            f"Balance restored for user {payout.user.id} after transfer failure"
+                        )
                     except Balance.DoesNotExist:
                         logger.error(
                             f"Balance not found for user {payout.user.id} - could not restore funds"
@@ -310,6 +394,7 @@ class TransferService:
                 try:
                     balance = Balance.objects.get(user=payout.user)
                     balance.current_balance += payout.amount
+                    balance.available_for_payout += payout.amount
                     balance.save()
 
                     logger.info(
