@@ -19,7 +19,7 @@ export const signedOutNavItems = [
 ];
 
 export const signedInNavItems = [
-  { label: "navbar.find_professionals", href: "/find-professionals" },
+  ,
   { label: "navbar.contact", href: "/contact-us" },
 ];
 
@@ -63,11 +63,14 @@ export default function SafeBillHeader({
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const profilePic = user && user.profile_pic ? String(user.profile_pic) : null;
   const computedProfilePic = profilePic
-    ? (profilePic.startsWith("http")
-        ? profilePic
-        : `${BASE_URL}${profilePic.startsWith("/") ? profilePic.slice(1) : profilePic}`)
+    ? profilePic.startsWith("http")
+      ? profilePic
+      : `${BASE_URL}${
+          profilePic.startsWith("/") ? profilePic.slice(1) : profilePic
+        }`
     : null;
-  const userAvatar = computedProfilePic || (user && user.avatar ? user.avatar : null);
+  const userAvatar =
+    computedProfilePic || (user && user.avatar ? user.avatar : null);
   console.log(userAvatar);
   const userEmail = user && user.email ? user.email : "";
 
@@ -88,10 +91,7 @@ export default function SafeBillHeader({
     (user.role === "buyer" || user.role === "professional-buyer")
   );
 
-  const canSeeSellerDashboard = !!(
-    user &&
-    (user.role === "seller")
-  );
+  const canSeeSellerDashboard = !!(user && user.role === "seller");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -204,15 +204,14 @@ export default function SafeBillHeader({
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {canSeeProjectInvite && (
               <Link
-                key={item.label}
-                to={item.href}
+                to="/find-professionals"
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
               >
-                {t(item.label)}
+                {t("navbar.find_professionals")}
               </Link>
-            ))}
+            )}
             {canSeeProjectInvite && (
               <Link
                 to="/buyer-dashboard"
@@ -242,9 +241,18 @@ export default function SafeBillHeader({
                 to="/how-to-accept-project-invite"
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
               >
-                How to Accept Project Invite
+                {t("navbar.how_to_accept_project_invite")}
               </Link>
             )}
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                {t(item.label)}
+              </Link>
+            ))}
           </nav>
 
           {/* Right Side - Desktop */}
@@ -549,23 +557,22 @@ export default function SafeBillHeader({
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
-              {navItems.map((item) => (
+              {canSeeProjectInvite && (
                 <Link
-                  key={item.label}
-                  to={item.href}
+                  to="/find-professionals"
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
-                  {t(item.label)}
+                  {t("navbar.find_professionals")}
                 </Link>
-              ))}
+              )}
               {canSeeSellerDashboard && (
-              <Link
-                to="/seller-dashboard"
-                className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
-              >
-                Dashboard
-              </Link>
-            )}
+                <Link
+                  to="/seller-dashboard"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  Dashboard
+                </Link>
+              )}
               {canSeeAdminPanel && (
                 <Link
                   to="/admin"
@@ -575,21 +582,30 @@ export default function SafeBillHeader({
                 </Link>
               )}
               {canSeeProjectInvite && (
-              <Link
-                to="/buyer-dashboard"
-                className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
-              >
-                Dashboard
-              </Link>
-            )}
+                <Link
+                  to="/buyer-dashboard"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  Dashboard
+                </Link>
+              )}
               {canSeeProjectInvite && (
                 <Link
                   to="/how-to-accept-project-invite"
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
-                  How to Accept Project Invite
+                  {t("navbar.how_to_accept_project_invite")}
                 </Link>
               )}
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  {t(item.label)}
+                </Link>
+              ))}
 
               {/* Language Switcher - Mobile in menu */}
               <div className="flex items-center gap-2 px-3 py-2">

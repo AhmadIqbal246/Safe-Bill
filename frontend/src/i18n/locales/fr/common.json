@@ -12,7 +12,8 @@
     "sign_out": "Se déconnecter",
     "settings": "Paramètres",
     "billing": "Facturation",
-    "no_unread_notifications": "Aucune notification non lue."
+    "no_unread_notifications": "Aucune notification non lue.",
+    "how_to_accept_project_invite": "Comment accepter un invité de projet"
   },
   "chat": { 
     "messages": "Messages", 

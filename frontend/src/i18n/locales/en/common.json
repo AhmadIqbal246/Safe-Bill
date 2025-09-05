@@ -12,7 +12,8 @@
     "sign_out": "Sign out",
     "settings": "Settings",
     "billing": "Billing",
-    "no_unread_notifications": "No unread notifications."
+    "no_unread_notifications": "No unread notifications.",
+    "how_to_accept_project_invite": "How to Accept Project Invite"
   },
   "chat": { 
     "messages": "Messages", 
