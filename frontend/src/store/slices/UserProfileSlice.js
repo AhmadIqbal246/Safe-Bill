@@ -69,7 +69,15 @@ export const updateUserProfile = createAsyncThunk(
         dataToSend,
         { headers }
       );
+
+      // After a successful update, refresh the cached auth.user (to get profile_pic etc.)
+      try {
+        await dispatch(fetchUserProfile());
+      } catch (_) {
+        // ignore refresh failures; UI already has patched data
+      }
       return response.data;
+
     } catch (err) {
       return rejectWithValue(
         err.response && err.response.data ? err.response.data : err.message

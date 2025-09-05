@@ -59,7 +59,16 @@ export default function SafeBillHeader({
   const user = useSelector((state) => state.auth.user);
   const isSignedIn = !!user;
   const userName = user ? user.name || user.username || "User" : "User";
-  const userAvatar = user && user.avatar ? user.avatar : null;
+  // Prefer uploaded profile picture if available, fallback to existing avatar or null
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const profilePic = user && user.profile_pic ? String(user.profile_pic) : null;
+  const computedProfilePic = profilePic
+    ? (profilePic.startsWith("http")
+        ? profilePic
+        : `${BASE_URL}${profilePic.startsWith("/") ? profilePic.slice(1) : profilePic}`)
+    : null;
+  const userAvatar = computedProfilePic || (user && user.avatar ? user.avatar : null);
+  console.log(userAvatar);
   const userEmail = user && user.email ? user.email : "";
 
   // Determine admin panel visibility from session/user
@@ -95,7 +104,9 @@ export default function SafeBillHeader({
     useNotificationWebSocket();
 
   useEffect(() => {
-    if (isSignedIn) dispatch(fetchNotifications());
+    if (isSignedIn) {
+      dispatch(fetchNotifications());
+    }
   }, [dispatch, isSignedIn]);
   const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
 

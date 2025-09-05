@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
+import { fetchUserProfile } from './UserProfileSlice';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -51,12 +52,26 @@ export const loginUser = createAsyncThunk(
         { email, password }
       );
       // Decode user info from access token
-      const user = jwtDecode(response.data.access);
-      // Save to sessionStorage
+      const decodedUser = jwtDecode(response.data.access);
+      // Save tokens immediately for subsequent authorized calls
       sessionStorage.setItem('access', response.data.access);
       sessionStorage.setItem('refresh', response.data.refresh);
-      sessionStorage.setItem('user', JSON.stringify(user));
-      return { ...response.data, user };
+
+      // Fetch profile once to get fields like profile_pic
+      let mergedUser = decodedUser;
+      try {
+        const profileResp = await axios.get(`${BASE_URL}api/accounts/profile/`, {
+          headers: { 'Authorization': `Bearer ${response.data.access}` },
+        });
+        mergedUser = { ...decodedUser, ...profileResp.data };
+      } catch (e) {
+        // If profile fetch fails, proceed with decoded token payload only
+        mergedUser = decodedUser;
+      }
+
+      // Persist final user payload
+      sessionStorage.setItem('user', JSON.stringify(mergedUser));
+      return { ...response.data, user: mergedUser };
     } catch (err) {
       if (err.response && err.response.data) {
         return rejectWithValue(err.response.data);
@@ -163,6 +178,16 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.success = false;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        const mergedUser = {
+          ...(state.user || {}),
+          ...action.payload,
+        };
+        state.user = mergedUser;
+        sessionStorage.setItem('user', JSON.stringify(mergedUser));
+      })
+      .addCase(fetchUserProfile.rejected, (state) => {
       })
       .addCase(registerBuyer.pending, (state) => {
         state.loading = true;

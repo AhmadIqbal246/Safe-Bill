@@ -91,6 +91,26 @@ export default function MyProfileComp() {
     }
   }, [success, dispatch, t]);
 
+  // Show validation/server errors from update without replacing the page
+  useEffect(() => {
+    if (error && editModalOpen) {
+      const err = error;
+      if (typeof err === 'string') {
+        toast.error(err);
+      } else if (err && typeof err === 'object') {
+        Object.entries(err).forEach(([field, messages]) => {
+          if (Array.isArray(messages)) {
+            messages.forEach((m) => toast.error(`${field}: ${m}`));
+          } else {
+            toast.error(`${field}: ${messages}`);
+          }
+        });
+      } else {
+        toast.error(t('my_profile.failed_update_profile'));
+      }
+    }
+  }, [error, editModalOpen, t]);
+
   useEffect(() => {
     if (feedbackSuccess) {
       toast.success(t('my_profile.feedback_submitted_successfully'));
@@ -142,7 +162,8 @@ export default function MyProfileComp() {
   if (loading) {
     return <div className="text-center py-12 text-gray-400">{t('my_profile.loading')}</div>;
   }
-  if (error) {
+  // Only show global load failure if we do not have a profile yet
+  if (!profile && error) {
     return (
       <div className="text-center py-12 text-red-500">
         {typeof error === "string" ? error : t('my_profile.failed_load_profile')}
