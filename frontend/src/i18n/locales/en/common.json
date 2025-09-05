@@ -926,7 +926,17 @@
     "project_deleted_successfully": "Project deleted successfully",
     "failed_delete_project": "Failed to delete project",
     "failed_load_projects": "Failed to load projects",
-    "no_projects_found": "No projects found"
+    "no_projects_found": "No projects found",
+    "start_project": "Start Project",
+    "project_started_successfully": "Project started successfully!",
+    "failed_start_project": "Failed to start project.",
+    "complete_project": "Complete Project",
+    "project_completed_successfully": "Project completed successfully!",
+    "failed_complete_project": "Failed to complete project.",
+    "milestones_not_approved": "The following milestones are not approved",
+    "invalid_status_error": "Project must be in 'In Progress' status to be completed.",
+    "no_milestones_error": "Project must have milestones to be completed.",
+    "cannot_complete_project": "Cannot complete project - not all milestones are approved"
   },
   "accept_project_invite": {
     "title": "Accept Project Invite",

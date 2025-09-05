@@ -929,7 +929,17 @@
     "project_deleted_successfully": "Projet supprimé avec succès",
     "failed_delete_project": "Échec de la suppression du projet",
     "failed_load_projects": "Échec du chargement des projets",
-    "no_projects_found": "Aucun projet trouvé"
+    "no_projects_found": "Aucun projet trouvé",
+    "start_project": "Démarrer le Projet",
+    "project_started_successfully": "Projet démarré avec succès !",
+    "failed_start_project": "Échec du démarrage du projet.",
+    "complete_project": "Terminer le Projet",
+    "project_completed_successfully": "Projet terminé avec succès !",
+    "failed_complete_project": "Échec de la finalisation du projet.",
+    "milestones_not_approved": "Les jalons suivants ne sont pas approuvés",
+    "invalid_status_error": "Le projet doit être en statut 'En cours' pour être terminé.",
+    "no_milestones_error": "Le projet doit avoir des jalons pour être terminé.",
+    "cannot_complete_project": "Impossible de terminer le projet - tous les jalons ne sont pas approuvés"
   },
   "accept_project_invite": {
     "title": "Accepter l'Invitation au Projet",

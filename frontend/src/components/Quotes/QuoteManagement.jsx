@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Download, Trash2, Play } from 'lucide-react';
+import { Eye, Edit, Download, Trash2, Play, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjects, deleteProject, updateProjectStatus } from '../../store/slices/ProjectSlice';
+import { fetchProjects, deleteProject, updateProjectStatus, completeProject } from '../../store/slices/ProjectSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { useTranslation } from 'react-i18next';
@@ -16,10 +16,11 @@ export default function QuoteManagement() {
   const [activeSort, setActiveSort] = useState('Status');
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { projects, loading, error } = useSelector(state => state.project);
+  const { projects, loading, error, completeProjectError } = useSelector(state => state.project);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ open: false, projectId: null });
   const [startingProjectId, setStartingProjectId] = useState(null);
+  const [completingProjectId, setCompletingProjectId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -67,9 +68,56 @@ export default function QuoteManagement() {
       toast.success(t('quote_management.project_started_successfully'));
       dispatch(fetchProjects()); // Refresh projects to update status
     } catch (err) {
-      toast.error(typeof err === 'string' ? err : t('quote_management.failed_start_project'));
+      // Handle different types of errors with specific messages
+      if (err && typeof err === 'object') {
+        const errorMessage = err.detail || err.message || t('quote_management.failed_start_project');
+        toast.error(errorMessage, { autoClose: 6000 });
+      } else {
+        // Fallback for string errors
+        toast.error(typeof err === 'string' ? err : t('quote_management.failed_start_project'));
+      }
     } finally {
       setStartingProjectId(null);
+    }
+  };
+
+  const handleCompleteProject = async (projectId) => {
+    setCompletingProjectId(projectId);
+    try {
+      await dispatch(completeProject(projectId)).unwrap();
+      toast.success(t('quote_management.project_completed_successfully'));
+      dispatch(fetchProjects()); // Refresh projects to update status
+    } catch (err) {
+      // Handle different types of errors with specific messages
+      if (err && typeof err === 'object') {
+        if (err.error_type === 'milestones_not_approved') {
+          const milestoneNames = err.non_approved_milestones ? 
+            err.non_approved_milestones.join(', ') : 'some milestones';
+          toast.error(
+            `${t('quote_management.failed_complete_project')} ${t('quote_management.milestones_not_approved')}: ${milestoneNames}`,
+            { autoClose: 8000 }
+          );
+        } else if (err.error_type === 'invalid_status') {
+          toast.error(
+            `${t('quote_management.failed_complete_project')} ${t('quote_management.invalid_status_error')}`,
+            { autoClose: 6000 }
+          );
+        } else if (err.error_type === 'no_milestones') {
+          toast.error(
+            `${t('quote_management.failed_complete_project')} ${t('quote_management.no_milestones_error')}`,
+            { autoClose: 6000 }
+          );
+        } else {
+          // Generic error message
+          const errorMessage = err.detail || err.message || t('quote_management.failed_complete_project');
+          toast.error(errorMessage, { autoClose: 6000 });
+        }
+      } else {
+        // Fallback for string errors
+        toast.error(typeof err === 'string' ? err : t('quote_management.failed_complete_project'));
+      }
+    } finally {
+      setCompletingProjectId(null);
     }
   };
 
@@ -149,7 +197,7 @@ export default function QuoteManagement() {
           <div className="flex justify-center items-center py-12">
             <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
           </div>
-        ) : error ? (
+        ) : error && !completeProjectError ? (
           <div className="text-center text-red-500 py-12">{typeof error === 'string' ? error : t('quote_management.failed_load_projects')}</div>
         ) : filteredProjects.length === 0 ? (
           <div className="text-center text-gray-400 py-12">{t('quote_management.no_projects_found')}</div>
@@ -187,7 +235,7 @@ export default function QuoteManagement() {
                         href={p.quote && p.quote.file} download>
                         <Download className="w-4 h-4" />
                       </a>
-                      <button className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.edit')}><Edit className="w-4 h-4" /></button>
+                      {/* <button className="p-1 hover:bg-gray-100 rounded" title={t('quote_management.edit')}><Edit className="w-4 h-4" /></button> */}
                       {p.status === 'approved' && (
                         <button
                           className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${
@@ -204,14 +252,30 @@ export default function QuoteManagement() {
                           )}
                         </button>
                       )}
-                      <button
+                      {p.status === 'in_progress' && (
+                        <button
+                          className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${
+                            completingProjectId === p.id ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          title={t('quote_management.complete_project')}
+                          onClick={() => handleCompleteProject(p.id)}
+                          disabled={completingProjectId === p.id}
+                        >
+                          {completingProjectId === p.id ? (
+                            <div className="w-4 h-4 border-2 border-[#01257D] border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4 text-blue-600" />
+                          )}
+                        </button>
+                      )}
+                      {/* <button
                         className={`p-1 hover:bg-gray-100 rounded cursor-pointer ${deletingId === p.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={t('quote_management.delete')}
                         onClick={() => handleDelete(p.id)}
                         disabled={deletingId === p.id}
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </button> */}
                     </td>
                   </tr>
                 ))}

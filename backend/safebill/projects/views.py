@@ -180,6 +180,97 @@ class ProjectStatusUpdateAPIView(APIView):
         )
 
 
+class ProjectCompletionAPIView(APIView):
+    """
+    API view for updating project status from 'in_progress' to 'completed'
+    Only sellers can update their own projects
+    Project can only be completed if all milestones are approved
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, project_id):
+        try:
+            # Get the project and verify ownership
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response(
+                {
+                    "detail": "Project not found or you do not have permission to modify it."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if user has seller role
+        if not hasattr(request.user, "role") or request.user.role not in ["seller"]:
+            return Response(
+                {"detail": "Only sellers can complete projects."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Validate current status
+        if project.status != "in_progress":
+            return Response(
+                {
+                    "detail": f'Project can only be completed when current status is "In Progress". Current status: {project.status}',
+                    "error_type": "invalid_status",
+                    "current_status": project.status,
+                    "required_status": "in_progress"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if all milestones are approved
+        milestones = project.milestones.all()
+        if not milestones.exists():
+            return Response(
+                {
+                    "detail": "Project cannot be completed without any milestones.",
+                    "error_type": "no_milestones"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if all milestones are approved
+        non_approved_milestones = milestones.exclude(status="approved")
+        if non_approved_milestones.exists():
+            non_approved_names = [m.name for m in non_approved_milestones]
+            milestone_list = ', '.join(non_approved_names)
+            return Response(
+                {
+                    "detail": f"Project cannot be completed. The following milestones are not approved: {milestone_list}",
+                    "error_type": "milestones_not_approved",
+                    "non_approved_milestones": non_approved_names
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Update status to completed
+        project.status = "completed"
+        project.save()
+
+        # Create notification for the client
+        if project.client:
+            NotificationService.create_notification(
+                project.client,
+                f"Project '{project.name}' has been completed by {request.user.username}.",
+            )
+
+        # Create notification for the seller
+        NotificationService.create_notification(
+            request.user,
+            f"You have successfully completed project '{project.name}'.",
+        )
+
+        return Response(
+            {
+                "detail": 'Project status updated successfully to "completed".',
+                "new_status": "completed",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class MilestoneListAPIView(generics.ListAPIView):
     """
     List milestones for a specific project
