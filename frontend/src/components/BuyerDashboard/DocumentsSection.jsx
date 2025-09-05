@@ -1,18 +1,33 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 
 export default function DocumentsSection({ projects = [] }) {
-  // Extract documents from projects (quotes and any other files)
-  const allDocuments = projects.map(project => ({
-    id: project.id,
-    name: `${project.name} - Quote`,
-    file: project.quote?.file,
-    reference_number: project.quote?.reference_number,
-    uploaded_date: project.created_at,
-    type: 'quote'
-  }));
+  const [search, setSearch] = useState('');
 
-  // For now, show first 2 documents
-  const displayDocuments = allDocuments.slice(0, 2);
+  // Extract quotes from all projects the buyer is part of
+  const allDocuments = useMemo(() => {
+    return (projects || [])
+      .filter(p => p && p.quote && p.quote.file)
+      .map((project) => ({
+        id: project.id,
+        name: project.name || `Project #${project.id}`,
+        file: project.quote?.file,
+        reference_number: project.quote?.reference_number,
+        uploaded_date: project.created_at,
+        type: 'quote'
+      }))
+      // newest first
+      .sort((a, b) => new Date(b.uploaded_date) - new Date(a.uploaded_date));
+  }, [projects]);
+
+  // Search filter by project name or reference number
+  const filteredDocuments = useMemo(() => {
+    const term = (search || '').trim().toLowerCase();
+    if (!term) return allDocuments;
+    return allDocuments.filter(doc =>
+      (doc.name || '').toLowerCase().includes(term) ||
+      (doc.reference_number || '').toLowerCase().includes(term)
+    );
+  }, [allDocuments, search]);
 
   const getFileIcon = (fileName) => {
     if (fileName?.includes('.pdf')) return '📄';
@@ -22,11 +37,15 @@ export default function DocumentsSection({ projects = [] }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } catch (_) {
+      return '';
+    }
   };
 
   const handleDownload = (fileUrl) => {
@@ -37,32 +56,88 @@ export default function DocumentsSection({ projects = [] }) {
 
   return (
     <div style={{ flex: 1, borderRadius: 12, boxShadow: '0 1px 4px #e5e7eb', padding: 24, minWidth: 340 }}>
-      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>Documents</div>
-      
-      {displayDocuments.length > 0 ? (
-        <div style={{ marginBottom: 16 }}>
-          {displayDocuments.map((doc, index) => (
-            <div key={doc.id} style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginBottom: index < displayDocuments.length - 1 ? 8 : 0 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ fontWeight: 600, fontSize: 18 }}>Documents (Quotes)</div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by project or reference..."
+          style={{
+            border: '1px solid #e5e7eb',
+            borderRadius: 8,
+            padding: '8px 12px',
+            fontSize: 14,
+            width: 220
+          }}
+        />
+      </div>
+
+      {/* Table header */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 170px 70px',
+        gap: 12,
+        padding: '8px 12px',
+        background: '#F9FAFB',
+        border: '1px solid #F3F4F6',
+        borderRadius: 8,
+        color: '#6B7280',
+        fontSize: 12,
+        fontWeight: 600,
+        marginBottom: 8
+      }}>
+        <div>Project name</div>
+        <div>Creation date</div>
+        <div style={{ textAlign: 'right' }}>Action</div>
+      </div>
+
+      {filteredDocuments.length > 0 ? (
+        <div style={{ marginBottom: 8, maxHeight: 280, overflowY: 'auto' }}>
+          {filteredDocuments.map((doc, index) => (
+            <div key={`${doc.id}-${index}`} style={{ 
+              display: 'grid',
+              gridTemplateColumns: '1fr 170px 70px',
+              gap: 12,
+              alignItems: 'center',
+              borderBottom: index < filteredDocuments.length - 1 ? '1px solid #f3f4f6' : 'none',
+              padding: '10px 12px'
             }}>
-              <span>{getFileIcon(doc.file)} {doc.name}</span>
-              <span style={{ color: '#6b7280', fontSize: 13 }}>
-                Uploaded {formatDate(doc.uploaded_date)}
-              </span>
-              <button 
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  cursor: 'pointer', 
-                  fontSize: 18 
-                }}
-                onClick={() => handleDownload(doc.file)}
-              >
-                ⬇️
-              </button>
+              {/* Project name + ref */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <span style={{ fontSize: 18 }}>{getFileIcon(doc.file)}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontWeight: 600, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {doc.name}
+                  </span>
+                  {doc.reference_number && (
+                    <span style={{ color: '#6b7280', fontSize: 12 }}>Ref: {doc.reference_number}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Creation date */}
+              <div style={{ color: '#6b7280', fontSize: 13, whiteSpace: 'nowrap' }}>
+                {formatDate(doc.uploaded_date)}
+              </div>
+
+              {/* Action */}
+              <div style={{ textAlign: 'right' }}>
+                <button 
+                  style={{ 
+                    background: 'none', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    cursor: 'pointer', 
+                    fontSize: 14,
+                    padding: '6px 10px'
+                  }}
+                  title="Download"
+                  onClick={() => handleDownload(doc.file)}
+                >
+                  Download
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -71,20 +146,6 @@ export default function DocumentsSection({ projects = [] }) {
           No documents found
         </div>
       )}
-      
-      <button style={{ 
-        width: '100%', 
-        background: '#f5f7fa', 
-        border: '1px dashed #153A7D', 
-        borderRadius: 8, 
-        padding: '12px 0', 
-        color: '#153A7D', 
-        fontWeight: 500, 
-        fontSize: 16, 
-        cursor: 'pointer' 
-      }}>
-        + Upload Document
-      </button>
     </div>
   );
 }
