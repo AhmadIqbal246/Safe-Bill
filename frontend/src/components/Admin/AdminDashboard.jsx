@@ -21,9 +21,14 @@ import {
   assignMediator,
   fetchAdminAssignedDisputes,
   mediatorUpdateStatus,
+  fetchRevenueSummary,
+  fetchRevenueMonths,
+  fetchPaidPayments,
+  fetchTransfers,
 } from '../../store/slices/AdminSlice';
 import { Dialog } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
+import PaymentManagement from './PaymentManagement';
 
 // Static data for now; can be replaced by API data later
 const useStaticAdminData = () => {
@@ -134,8 +139,43 @@ export default function AdminDashboard() {
   const currentAdmins = adminState.currentAdmins || [];
   const disputes = adminState.disputes || [];
   const assignedDisputes = adminState.assignedDisputes || [];
+  const revenue = adminState.revenue || { summary: null, months: [] };
 
   const totalAssignedDisputes = assignedDisputes.length;
+
+  // Process revenue data for charts
+  const processedRevenueData = useMemo(() => {
+    // Use revenue data from overview API (already processed by backend)
+    if (overview.revenueBars && overview.revenueBars.length > 0) {
+      return overview.revenueBars;
+    }
+    
+    // Fallback: process revenue months if available
+    if (revenue.months && revenue.months.length > 0) {
+      const sortedMonths = [...revenue.months].sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+      });
+
+      const last7Months = sortedMonths.slice(0, 7).reverse();
+      
+      return last7Months.map(month => ({
+        month: new Date(month.year, month.month - 1).toLocaleDateString('en-US', { month: 'short' }),
+        revenue: parseFloat(month.total_revenue) || 0,
+      }));
+    }
+    
+    // Final fallback to static data
+    return staticData.revenueBars;
+  }, [overview.revenueBars, revenue.months, staticData.revenueBars]);
+
+  // Get total transactions from revenue data
+  const totalTransactions = useMemo(() => {
+    if (revenue.summary && revenue.summary.current_month) {
+      return revenue.summary.current_month.total_payments || 0;
+    }
+    return overview.kpis.transactions || 0;
+  }, [revenue.summary, overview.kpis.transactions]);
 
   console.log(totalAssignedDisputes);
 
@@ -149,6 +189,10 @@ export default function AdminDashboard() {
           dispatch(fetchOverview()),
           dispatch(fetchUsersByRole('seller')),
           dispatch(fetchUsersByRole('buyer')),
+          dispatch(fetchRevenueSummary()),
+          dispatch(fetchRevenueMonths()),
+          dispatch(fetchPaidPayments()),
+          dispatch(fetchTransfers()),
         ]);
 
         if (isSuperAdmin) {
@@ -160,8 +204,9 @@ export default function AdminDashboard() {
         if (!isSuperAdmin && isAdmin) {
           await dispatch(fetchAdminAssignedDisputes());
         }
-      } catch (e) {
+      } catch (error) {
         setError('Failed to load admin overview');
+        console.error('Error loading admin data:', error);
       } finally {
         setLoading(false);
       }
@@ -239,7 +284,7 @@ export default function AdminDashboard() {
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard title={t('admin.user_count')} value={overview.kpis.userCount || 0} />
-        <StatCard title={t('admin.transactions')} value={overview.kpis.transactions || 0} />
+        <StatCard title={t('admin.transactions')} value={totalTransactions} />
         <StatCard title={t('admin.disputes')} value={userData.role === 'super-admin' ? overview.kpis.disputes : totalAssignedDisputes || 0} />
       </div>
 
@@ -278,17 +323,57 @@ export default function AdminDashboard() {
           </div>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={overview.revenueBars} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+              <BarChart data={processedRevenueData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value) => [`${value} EUR`, 'Revenue']}
+                  labelFormatter={(label) => `Month: ${label}`}
+                />
                 <Bar dataKey="revenue" fill="#94A3B8" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
+
+      {/* Revenue Summary Section */}
+      {revenue.summary && (
+        <div className="bg-white rounded-xl border border-gray-200 mb-8">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <div className="font-medium">Revenue Summary</div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-[#01257D]">
+                  {revenue.summary.current_month?.total_revenue || 0} EUR
+                </div>
+                <div className="text-sm text-gray-500">Current Month Revenue</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-emerald-600">
+                  {revenue.summary.current_month?.buyer_revenue || 0} EUR
+                </div>
+                <div className="text-sm text-gray-500">Buyer Revenue</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-blue-600">
+                  {revenue.summary.current_month?.seller_revenue || 0} EUR
+                </div>
+                <div className="text-sm text-gray-500">Seller Revenue</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-gray-600">
+                  {revenue.summary.total_revenue?.total_revenue || 0} EUR
+                </div>
+                <div className="text-sm text-gray-500">Total Revenue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Current Admins Section (Super Admin Only) */}
       {isSuperAdmin && (
@@ -327,6 +412,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Payment Management */}
+      <PaymentManagement />
 
       {/* User Management */}
       <div className="bg-white rounded-xl border border-gray-200 mb-8">

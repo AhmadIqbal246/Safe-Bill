@@ -4,8 +4,11 @@ from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 import stripe
 from django.contrib.auth import get_user_model
-from projects.models import Project, PaymentInstallment
-from decimal import Decimal, ROUND_HALF_UP
+from projects.models import Project, PaymentInstallment, Milestone
+from decimal import Decimal, ROUND_HALF_UP, DecimalException
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.db.models import Sum, Q
 from .models import Payment, Balance, Payout, PayoutHold, PlatformFeeConfig, PayoutHold
 from .serializers import (
     PaymentSerializer,
@@ -15,7 +18,7 @@ from .serializers import (
     PlatformFeeConfigSerializer,
 )
 from .transfer_service import TransferService
-from .services import BalanceService
+from .services import BalanceService, FeeCalculationService
 from connect_stripe.models import StripeAccount
 
 import logging
@@ -46,31 +49,12 @@ def create_stripe_payment(request, project_id):
         # Ensure Decimal math
         amount = Decimal(str(amount))
 
-        # Fees from DB (platform split buyer/seller) and Stripe constants
-        cfg = PlatformFeeConfig.current()
-        buyer_fee_pct = Decimal(str(cfg.buyer_fee_pct))
-        seller_fee_pct = Decimal(str(cfg.seller_fee_pct))
-        stripe_fee_pct = Decimal("0.029")
-        stripe_fixed = Decimal("0.30")
-
-        # Platform fee is only the buyer fee (matching frontend logic)
-        platform_fee = (amount * buyer_fee_pct).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-        # Stripe takes fee on total processed amount (amount + platform_fee)
-        stripe_fee_base = amount + platform_fee
-        stripe_fee = (stripe_fee_base * stripe_fee_pct + stripe_fixed).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-
-        # Buyer pays: base amount + buyer fee + stripe fee
-        buyer_total = (amount + (amount * buyer_fee_pct) + stripe_fee).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-        # Seller receives: base amount - seller fee - stripe fee
-        seller_net = (amount - (amount * seller_fee_pct) - stripe_fee).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        # Calculate all fees using the centralized service
+        fees = FeeCalculationService.calculate_fees(amount)
+        platform_fee = fees["platform_fee"]
+        stripe_fee = fees["stripe_fee"]
+        buyer_total = fees["buyer_total"]
+        seller_net = fees["seller_net"]
         checkout_session = stripe.checkout.Session.create(
             customer_email=user.email,
             line_items=[
@@ -92,10 +76,10 @@ def create_stripe_payment(request, project_id):
                 "stripe_fee": str(stripe_fee),
                 "buyer_total": str(buyer_total),
                 "seller_net": str(seller_net),
-                "buyer_fee_pct": str(buyer_fee_pct),
-                "seller_fee_pct": str(seller_fee_pct),
-                "buyer_fee_amount": str(amount * buyer_fee_pct),
-                "seller_fee_amount": str(amount * seller_fee_pct),
+                "buyer_fee_pct": str(fees["buyer_fee_pct"]),
+                "seller_fee_pct": str(fees["seller_fee_pct"]),
+                "buyer_fee_amount": str(fees["buyer_fee_amount"]),
+                "seller_fee_amount": str(fees["seller_fee_amount"]),
             },
         )
         # Delete any existing payments for this project by this user
@@ -217,13 +201,13 @@ def transfer_to_stripe_account(request):
         amount = request.data.get("amount")
         if amount:
             try:
-                amount = float(amount)
+                amount = Decimal(str(amount))
                 if amount <= 0:
                     return Response(
                         {"detail": "Amount must be greater than 0."},
                         status=400,
                     )
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, DecimalException):
                 return Response(
                     {"detail": "Invalid amount format."},
                     status=400,
@@ -429,5 +413,126 @@ def generate_stripe_login_link(request):
         )
         return Response(
             {"detail": "Failed to generate login link"},
+            status=500,
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def revenue_comparison(request):
+    """
+    Get current month's revenue and compare with last month's revenue
+    based on completed milestones for the authenticated seller.
+    """
+    try:
+        user = request.user
+
+        # Check if user has seller role
+        if not hasattr(user, "role") or user.role != "seller":
+            return Response(
+                {"detail": "Only sellers can access revenue data."},
+                status=400,
+            )
+
+        # Get current date and calculate month boundaries
+        now = timezone.now()
+        current_month_start = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        # Calculate last month's start and end
+        if current_month_start.month == 1:
+            last_month_start = current_month_start.replace(
+                year=current_month_start.year - 1, month=12
+            )
+        else:
+            last_month_start = current_month_start.replace(
+                month=current_month_start.month - 1
+            )
+
+        last_month_end = current_month_start - timedelta(microseconds=1)
+
+        # Get seller's projects
+        seller_projects = Project.objects.filter(user=user)
+
+        # Calculate current month revenue from approved milestones
+        current_month_milestones = Milestone.objects.filter(
+            project__in=seller_projects,
+            status="approved",
+            completion_date__gte=current_month_start,
+            completion_date__lt=now,
+        )
+
+        current_month_revenue = current_month_milestones.aggregate(
+            total=Sum("relative_payment")
+        )["total"] or Decimal("0")
+
+        # Calculate last month revenue from approved milestones
+        last_month_milestones = Milestone.objects.filter(
+            project__in=seller_projects,
+            status="approved",
+            completion_date__gte=last_month_start,
+            completion_date__lte=last_month_end,
+        )
+
+        last_month_revenue = last_month_milestones.aggregate(
+            total=Sum("relative_payment")
+        )["total"] or Decimal("0")
+
+        # Calculate percentage change
+        if last_month_revenue > 0:
+            percentage_change = (
+                (current_month_revenue - last_month_revenue) / last_month_revenue
+            ) * 100
+        else:
+            # If last month had no revenue, we can't calculate percentage
+            percentage_change = None
+
+        # Determine if it's an increase or decrease
+        if percentage_change is not None:
+            is_increase = percentage_change > 0
+            change_type = "increase" if is_increase else "decrease"
+        else:
+            change_type = "no_previous_data"
+
+        # Get additional stats
+        current_month_milestone_count = current_month_milestones.count()
+        last_month_milestone_count = last_month_milestones.count()
+
+        # Get current month name for display
+        current_month_name = current_month_start.strftime("%B %Y")
+        last_month_name = last_month_start.strftime("%B %Y")
+
+        response_data = {
+            "current_month": {
+                "month": current_month_name,
+                "revenue": float(current_month_revenue),
+                "milestone_count": current_month_milestone_count,
+                "currency": "EUR",  # Assuming EUR based on the payment views
+            },
+            "last_month": {
+                "month": last_month_name,
+                "revenue": float(last_month_revenue),
+                "milestone_count": last_month_milestone_count,
+                "currency": "EUR",
+            },
+            "comparison": {
+                "revenue_difference": float(current_month_revenue - last_month_revenue),
+                "percentage_change": (
+                    float(percentage_change) if percentage_change is not None else None
+                ),
+                "change_type": change_type,
+                "is_positive": is_increase if percentage_change is not None else True,
+            },
+        }
+
+        return Response(response_data, status=200)
+
+    except Exception as e:
+        logger.error(
+            f"Error calculating revenue comparison for user {request.user.id}: {e}"
+        )
+        return Response(
+            {"detail": "Failed to calculate revenue comparison."},
             status=500,
         )

@@ -13,6 +13,112 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+class FeeCalculationService:
+    """
+    Service class for calculating all platform and Stripe fees
+    """
+
+    @staticmethod
+    def calculate_fees(base_amount):
+        """
+        Calculate all fees for a given base amount.
+
+        Args:
+            base_amount (Decimal): The base project amount
+
+        Returns:
+            dict: Dictionary containing all calculated fees and amounts
+        """
+        # Ensure Decimal math
+        base_amount = Decimal(str(base_amount))
+
+        # Get fee configuration
+        cfg = PlatformFeeConfig.current()
+        buyer_fee_pct = Decimal(str(cfg.buyer_fee_pct))
+        seller_fee_pct = Decimal(str(cfg.seller_fee_pct))
+
+        # Stripe constants
+        stripe_fee_pct = Decimal("0.029")
+        stripe_fixed = Decimal("0.30")
+
+        # Calculate platform fees
+        buyer_fee_amount = base_amount * buyer_fee_pct
+        seller_fee_amount = base_amount * seller_fee_pct
+
+        # Platform fee is only the buyer fee (matching frontend logic)
+        platform_fee = buyer_fee_amount
+
+        # Stripe takes fee on total processed amount (base_amount + platform_fee)
+        stripe_fee_base = base_amount + platform_fee
+        stripe_fee = stripe_fee_base * stripe_fee_pct + stripe_fixed
+
+        # Calculate final amounts
+        # Buyer pays: base amount + buyer fee + stripe fee
+        buyer_total = base_amount + buyer_fee_amount + stripe_fee
+
+        # Seller receives: base amount - seller fee - stripe fee
+        seller_net = base_amount - seller_fee_amount - stripe_fee
+
+        return {
+            "base_amount": base_amount,
+            "buyer_fee_pct": buyer_fee_pct,
+            "seller_fee_pct": seller_fee_pct,
+            "buyer_fee_amount": buyer_fee_amount,
+            "seller_fee_amount": seller_fee_amount,
+            "platform_fee": platform_fee,
+            "stripe_fee_pct": stripe_fee_pct,
+            "stripe_fixed": stripe_fixed,
+            "stripe_fee": stripe_fee,
+            "buyer_total": buyer_total,
+            "seller_net": seller_net,
+        }
+
+    @staticmethod
+    def calculate_seller_net_for_amount(project, base_amount):
+        """
+        Calculate seller net amount for a given base amount using existing payment data if available.
+
+        Args:
+            project: Project object
+            base_amount (Decimal): The base amount to calculate net for
+
+        Returns:
+            Decimal: Seller net amount
+        """
+        # Ensure Decimal math
+        base_amount = Decimal(str(base_amount))
+
+        # Try to use existing payment data for this project
+        payment = Payment.objects.filter(project=project, status="paid").first()
+
+        if payment and payment.amount > Decimal("0.00"):
+            # Use the same fee structure as the existing payment
+            net_factor = payment.seller_net_amount / payment.amount
+            net_amount = base_amount * net_factor
+            logger.info(
+                f"Using stored payment fees for project {project.id}: net_factor={net_factor}, net_amount={net_amount}"
+            )
+            return net_amount
+        else:
+            # Calculate using current fee configuration
+            fees = FeeCalculationService.calculate_fees(base_amount)
+            return fees["seller_net"]
+
+    @staticmethod
+    def estimate_seller_net(base_amount):
+        """
+        Estimate seller net amount for a given base amount using current fee configuration.
+
+        Args:
+            base_amount (Decimal): The base amount to calculate net for
+
+        Returns:
+            Decimal: Estimated seller net amount
+        """
+        fees = FeeCalculationService.calculate_fees(base_amount)
+        return max(fees["seller_net"], Decimal("0.00"))
+
+
 class BalanceService:
     """
     Service class for managing user balances and payments
@@ -321,28 +427,7 @@ class BalanceService:
         """
         if base_amount <= Decimal("0.00"):
             return Decimal("0.00")
-        cfg = PlatformFeeConfig.current()
-        buyer_fee_pct = Decimal(str(cfg.buyer_fee_pct))
-        seller_fee_pct = Decimal(str(cfg.seller_fee_pct))
-        stripe_fee_pct = Decimal("0.029")
-        stripe_fixed = Decimal("0.30")
-
-        # Calculate buyer fee (what buyer pays for platform)
-        buyer_fee = (base_amount * buyer_fee_pct).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-
-        # Stripe fee is calculated on what buyer actually pays (base + buyer_fee)
-        stripe_fee_base = base_amount + buyer_fee
-        stripe_fee = (stripe_fee_base * stripe_fee_pct + stripe_fixed).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
-
-        # Seller net: base amount - seller fee - stripe fee
-        seller_net = (
-            base_amount - (base_amount * seller_fee_pct) - stripe_fee
-        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        return max(seller_net, Decimal("0.00"))
+        return FeeCalculationService.estimate_seller_net(base_amount)
 
     @staticmethod
     def _project_net_for_amount(project, base_amount: Decimal) -> Decimal:
@@ -350,26 +435,6 @@ class BalanceService:
         Compute seller's net for a given project and base amount using actual
         paid Payment ratios when available; otherwise fall back to fee estimate.
         """
-        payment = (
-            Payment.objects.filter(project=project, status="paid")
-            .order_by("-updated_at")
-            .first()
+        return FeeCalculationService.calculate_seller_net_for_amount(
+            project, base_amount
         )
-        if payment and payment.amount > Decimal("0.00"):
-            # Use the actual stored seller_net_amount from the verified payment
-            net_factor = (payment.seller_net_amount / payment.amount).quantize(
-                Decimal("0.0001"), rounding=ROUND_HALF_UP
-            )
-            net_amount = (base_amount * net_factor).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
-            logger.info(
-                f"Using stored payment fees for project {project.id}: net_factor={net_factor}, net_amount={net_amount}"
-            )
-            return net_amount
-
-        # Fallback to fee estimate if no paid payment found
-        logger.warning(
-            f"No paid payment found for project {project.id}, using fee estimate"
-        )
-        return BalanceService._estimate_seller_net(base_amount)

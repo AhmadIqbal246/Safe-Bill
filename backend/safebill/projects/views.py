@@ -17,6 +17,7 @@ from notifications.models import Notification
 from notifications.services import NotificationService
 from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
+from adminpanelApp.services import RevenueService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -215,7 +216,7 @@ class ProjectCompletionAPIView(APIView):
                     "detail": f'Project can only be completed when current status is "In Progress". Current status: {project.status}',
                     "error_type": "invalid_status",
                     "current_status": project.status,
-                    "required_status": "in_progress"
+                    "required_status": "in_progress",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -226,7 +227,7 @@ class ProjectCompletionAPIView(APIView):
             return Response(
                 {
                     "detail": "Project cannot be completed without any milestones.",
-                    "error_type": "no_milestones"
+                    "error_type": "no_milestones",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -235,12 +236,12 @@ class ProjectCompletionAPIView(APIView):
         non_approved_milestones = milestones.exclude(status="approved")
         if non_approved_milestones.exists():
             non_approved_names = [m.name for m in non_approved_milestones]
-            milestone_list = ', '.join(non_approved_names)
+            milestone_list = ", ".join(non_approved_names)
             return Response(
                 {
                     "detail": f"Project cannot be completed. The following milestones are not approved: {milestone_list}",
                     "error_type": "milestones_not_approved",
-                    "non_approved_milestones": non_approved_names
+                    "non_approved_milestones": non_approved_names,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -542,9 +543,11 @@ class MilestoneApprovalAPIView(APIView):
             milestone.status = "approved"
             milestone.completion_date = timezone.now()
 
+            # Get project reference
+            project = milestone.project
+
             # Update balances when milestone is approved
             try:
-                project = milestone.project
                 if project.user and project.client:
                     # Process milestone payment and create payout hold tied to the project
                     BalanceService.process_milestone_payment_with_project(
@@ -554,10 +557,20 @@ class MilestoneApprovalAPIView(APIView):
                         milestone_amount=milestone.relative_payment,
                     )
             except Exception as e:
-
                 logger.error(
                     f"Error updating balances for milestone {milestone.id}: {e}"
                 )
+
+            # Track seller revenue when milestone is approved
+            try:
+                RevenueService.add_seller_revenue(
+                    milestone_amount=milestone.relative_payment,
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error tracking seller revenue for milestone {milestone.id}: {e}"
+                )
+                # Don't break the milestone approval flow if revenue tracking fails
 
         elif action_type == "not_approved":
             milestone.status = "not_approved"
@@ -629,31 +642,27 @@ class ClientProjectDetailAPIView(generics.RetrieveAPIView):
         return Project.objects.filter(client=self.request.user)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_completed_projects(request):
     """
     Get all completed projects for the authenticated seller
     """
     user = request.user
-    
+
     # Only sellers can access this endpoint
-    if user.role != 'seller':
+    if user.role != "seller":
         return Response(
-            {'detail': 'Only sellers can access completed projects.'},
-            status=status.HTTP_403_FORBIDDEN
+            {"detail": "Only sellers can access completed projects."},
+            status=status.HTTP_403_FORBIDDEN,
         )
-    
+
     # Get all completed projects for this seller
-    completed_projects = Project.objects.filter(
-        user=user,
-        status='completed'
-    ).order_by('-created_at')
-    
+    completed_projects = Project.objects.filter(user=user, status="completed").order_by(
+        "-created_at"
+    )
+
     # Serialize the projects
     serializer = ProjectListSerializer(completed_projects, many=True)
-    
-    return Response({
-        'projects': serializer.data,
-        'count': completed_projects.count()
-    })
+
+    return Response({"projects": serializer.data, "count": completed_projects.count()})

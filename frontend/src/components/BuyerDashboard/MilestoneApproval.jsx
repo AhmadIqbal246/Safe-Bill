@@ -5,7 +5,7 @@ import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 
-export default function MilestoneApproval() {
+export default function MilestoneApproval({ onMilestoneAction }) {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMilestone, setSelectedMilestone] = useState(null);
@@ -84,6 +84,11 @@ export default function MilestoneApproval() {
       // Fetch updated data and notifications
       dispatch(fetchClientProjectsWithPendingMilestones());
       dispatch(fetchNotifications());
+      
+      // Refetch all data in parent component
+      if (onMilestoneAction) {
+        onMilestoneAction();
+      }
     } catch (err) {
       toast.error(typeof err === 'string' ? err : 'Failed to update milestone status');
     } finally {
