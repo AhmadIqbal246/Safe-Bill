@@ -111,7 +111,22 @@ const ChatContactList = () => {
                   <div className="flex items-start space-x-3">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-[#E6F0FA] rounded-full flex items-center justify-center">
+                      {contact.contact_info.profile_pic ? (
+                        <img
+                          src={contact.contact_info.profile_pic}
+                          alt={contact.contact_info.username}
+                          className="w-12 h-12 rounded-full object-cover"
+                          onError={(e) => {
+                            // Fallback to initial if image fails to load
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-12 h-12 bg-[#E6F0FA] rounded-full flex items-center justify-center ${contact.contact_info.profile_pic ? 'hidden' : ''}`}
+                        style={{ display: contact.contact_info.profile_pic ? 'none' : 'flex' }}
+                      >
                         <span className="text-[#01257D] font-semibold text-lg">
                           {contact.contact_info.username?.charAt(0).toUpperCase() || 'U'}
                         </span>
