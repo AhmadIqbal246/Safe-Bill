@@ -135,6 +135,11 @@ export default function AdminDashboard() {
   const disputes = adminState.disputes || [];
   const assignedDisputes = adminState.assignedDisputes || [];
 
+  const totalAssignedDisputes = assignedDisputes.length;
+
+  console.log(totalAssignedDisputes);
+
+
   useEffect(() => {
     async function load() {
       try {
@@ -235,7 +240,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard title={t('admin.user_count')} value={overview.kpis.userCount || 0} />
         <StatCard title={t('admin.transactions')} value={overview.kpis.transactions || 0} />
-        <StatCard title={t('admin.disputes')} value={overview.kpis.disputes || 0} />
+        <StatCard title={t('admin.disputes')} value={userData.role === 'super-admin' ? overview.kpis.disputes : totalAssignedDisputes || 0} />
       </div>
 
       {/* Charts */}
@@ -629,7 +634,7 @@ export default function AdminDashboard() {
       )}
 
       {/* KYC Validation */}
-      <div className="bg-white rounded-xl border border-gray-200">
+      {/* <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-4 py-3 border-b border-gray-200 font-medium">{t('admin.kyc_validation')}</div>
         <div className="overflow-x-auto max-h-80 overflow-y-auto">
           <table className="min-w-full text-sm">
@@ -661,7 +666,7 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
