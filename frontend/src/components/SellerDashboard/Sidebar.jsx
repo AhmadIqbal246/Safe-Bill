@@ -11,7 +11,7 @@ const links = [
   { labelKey: 'sidebar.disputes', to: '/seller-disputes' },
   { labelKey: 'sidebar.my_profile', to: '/profile' },
   { labelKey: 'sidebar.billings', to: '/billings' },
-  { labelKey: 'sidebar.documents', to: '/my-documents' },
+  // { labelKey: 'sidebar.documents', to: '/my-documents' },
   { labelKey: 'sidebar.support', to: '/support' },
 ];
 
