@@ -175,11 +175,11 @@ export default function DisputeDetailPage() {
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(dispute.status)}`}>
                   {getStatusText(dispute.status)}
                 </span>
-                {!isAdminView && (
+                {/* {!isAdminView && (
                   <button className="px-4 py-2 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors cursor-pointer">
                     {t('dispute_detail.contact_mediator')}
                   </button>
-                )}
+                )} */}
               </div>
             </div>
           </div>

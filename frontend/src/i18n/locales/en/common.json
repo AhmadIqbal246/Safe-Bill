@@ -32,7 +32,7 @@
     "view_all_professionals": "View All Professionals",
     "access_account": "Access Account",
     "view_categories": "View Categories",
-    "read_stories": "Read Stories",
+    "learn_more": "Learn More",
     "send_request": "Send Request",
     "sending": "Sending...",
     "id": "ID",
@@ -102,8 +102,8 @@
     "my_account_desc": "Manage your profile, projects, and payment methods in one place.",
     "browse_categories_title": "Browse Categories",
     "browse_categories_desc": "Explore all available services and find the perfect professional for your needs.",
-    "success_stories_title": "Success Stories",
-    "success_stories_desc": "Read about successful projects and satisfied clients from our community."
+    "dispute_resolution_title": "Dispute Resolution",
+    "dispute_resolution_desc": "Get peace of mind with our built-in mediation system to resolve any project disputes fairly."
   },
   "professional_detail": {
     "professional_services": "Professional Services",

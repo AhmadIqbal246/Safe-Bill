@@ -32,7 +32,7 @@
     "view_all_professionals": "Voir Tous les Professionnels",
     "access_account": "Accéder au Compte",
     "view_categories": "Voir les Catégories",
-    "read_stories": "Lire les Histoires",
+    "learn_more": "En Savoir Plus",
     "send_request": "Envoyer la Demande",
     "sending": "Envoi en cours...",
     "id": "ID",
@@ -103,8 +103,8 @@
     "my_account_desc": "Gérez votre profil, vos projets et vos méthodes de paiement en un seul endroit.",
     "browse_categories_title": "Parcourir les Catégories",
     "browse_categories_desc": "Explorez tous les services disponibles et trouvez le professionnel parfait pour vos besoins.",
-    "success_stories_title": "Histoires de Réussite",
-    "success_stories_desc": "Lisez les projets réussis et les clients satisfaits de notre communauté."
+    "dispute_resolution_title": "Résolution de Litiges",
+    "dispute_resolution_desc": "Ayez l'esprit tranquille avec notre système de médiation intégré pour résoudre équitablement tout litige de projet."
   },
   "professional_detail": {
     "professional_services": "Services Professionnels",

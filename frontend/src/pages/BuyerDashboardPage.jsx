@@ -232,7 +232,7 @@ export default function BuyerDashboardPage() {
         </div>
         
         <div className="flex justify-center mt-8 sm:mt-10">
-          <button className="bg-[#153A7D] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#1a4086] transition-colors">
+          <button className="bg-[#153A7D] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#1a4086] transition-colors" onClick={() => navigate('/contact-us')}>
             {t('buyer_dashboard.contact_support')}
           </button>
         </div>
