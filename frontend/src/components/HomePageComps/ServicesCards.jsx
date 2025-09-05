@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { User, LayoutGrid, Trophy, ArrowRight } from "lucide-react";
+import { User, LayoutGrid, Shield, ArrowRight } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 
 const cards = [
@@ -16,14 +16,14 @@ const cards = [
     titleKey: "homepage.browse_categories_title",
     descKey: "homepage.browse_categories_desc",
     linkKey: "actions.view_categories",
-    href: "#",
+    href: "/find-professionals",
   },
   {
-    icon: <Trophy className="w-7 h-7 text-[#01257D]" />,
-    titleKey: "homepage.success_stories_title",
-    descKey: "homepage.success_stories_desc",
-    linkKey: "actions.read_stories",
-    href: "",
+    icon: <Shield className="w-7 h-7 text-[#01257D]" />,
+    titleKey: "homepage.dispute_resolution_title",
+    descKey: "homepage.dispute_resolution_desc",
+    linkKey: "actions.learn_more",
+    href: "/contact-us",
   },
 ];
 
