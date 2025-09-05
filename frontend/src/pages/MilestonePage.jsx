@@ -37,6 +37,9 @@ export default function MilestonePage() {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   
+  // Individual milestone loading states
+  const [submittingMilestoneId, setSubmittingMilestoneId] = useState(null);
+  
   // View comment dialog state
   const [viewCommentDialogOpen, setViewCommentDialogOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState('');
@@ -198,6 +201,8 @@ export default function MilestonePage() {
   const confirmSubmission = async () => {
     if (!pendingAction) return;
     
+    setSubmittingMilestoneId(pendingAction.milestone.id);
+    
     try {
       await dispatch(approveMilestone({ 
         milestoneId: pendingAction.milestone.id, 
@@ -212,6 +217,8 @@ export default function MilestonePage() {
       toast.error(
         typeof err === 'string' ? err : 'Failed to submit milestone for approval.'
       );
+    } finally {
+      setSubmittingMilestoneId(null);
     }
     
     setConfirmationOpen(false);
@@ -227,13 +234,14 @@ export default function MilestonePage() {
   const renderMilestoneActions = (milestone) => {
     // Seller can only submit for approval if status allows it
     if (['not_submitted', 'not_approved', 'review_request'].includes(milestone.status)) {
+      const isSubmitting = submittingMilestoneId === milestone.id;
       return (
         <button
           className="px-3 py-1 bg-[#01257D] text-white rounded-md font-medium hover:bg-[#2346a0] transition-colors text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={approveMilestoneLoading}
+          disabled={isSubmitting}
           onClick={() => handleSubmitForApproval(milestone)}
         >
-          {approveMilestoneLoading ? 'Submitting...' : 'Submit for Approval'}
+          {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
         </button>
       );
     }
@@ -553,9 +561,9 @@ export default function MilestonePage() {
                 type="button"
                 className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                 onClick={confirmSubmission}
-                disabled={approveMilestoneLoading}
+                disabled={submittingMilestoneId !== null}
               >
-                {approveMilestoneLoading ? 'Submitting...' : 'Submit'}
+                {submittingMilestoneId !== null ? 'Submitting...' : 'Submit'}
               </button>
             </div>
           </Dialog.Panel>
