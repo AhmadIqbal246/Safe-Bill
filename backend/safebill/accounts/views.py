@@ -13,6 +13,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
 from rest_framework.decorators import api_view, permission_classes
@@ -72,6 +73,32 @@ User = get_user_model()
 # if we do not make this class, we will only get the token, not the user data
 class UserTokenObtainPairView(TokenObtainPairView):
     serializer_class = UserTokenObtainPairSerializer
+
+
+class LogoutView(APIView):
+    """Logout view that blacklists the refresh token"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+                return Response(
+                    {"detail": "Successfully logged out."}, 
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"detail": "Refresh token is required."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response(
+                {"detail": "Invalid token."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 #following view is being used to register both sellers and professional buyers, name is such because we got the requirement from the client way after the development

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../../store/slices/AuthSlices";
+import { logoutUser } from "../../../store/slices/AuthSlices";
 import {
   fetchNotifications,
   markNotificationRead,
@@ -110,8 +110,8 @@ export default function SafeBillHeader({
   }, [dispatch, isSignedIn]);
   const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
 
-  const handleSignOut = () => {
-    dispatch(logout());
+  const handleSignOut = async () => {
+    await dispatch(logoutUser());
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
     navigate("/");

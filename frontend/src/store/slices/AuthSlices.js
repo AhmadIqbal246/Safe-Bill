@@ -81,6 +81,46 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+// Logout thunk
+export const logoutUser = createAsyncThunk(
+  'auth/logoutUser',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const refresh = state.auth.refresh;
+      
+      if (refresh) {
+        await axios.post(
+          `${BASE_URL}api/accounts/logout/`,
+          { refresh },
+          {
+            headers: {
+              'Authorization': `Bearer ${state.auth.access}`,
+            },
+          }
+        );
+      }
+      
+      // Clear session storage
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('refresh');
+      sessionStorage.removeItem('user');
+      
+      return { success: true };
+    } catch (err) {
+      // Even if API call fails, clear local storage
+      sessionStorage.removeItem('access');
+      sessionStorage.removeItem('refresh');
+      sessionStorage.removeItem('user');
+      
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Logout failed but local data cleared' });
+    }
+  }
+);
+
 export const verifySiret = createAsyncThunk(
   'auth/verifySiret',
   async (siret, { rejectWithValue }) => {
