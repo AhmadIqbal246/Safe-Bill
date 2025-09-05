@@ -56,7 +56,7 @@ class PlatformFeeConfig(models.Model):
         max_digits=5,
         decimal_places=4,
         validators=[MinValueValidator(0), MaxValueValidator(1)],
-        default=0,
+        default=0.05,
     )
     seller_fee_pct = models.DecimalField(
         max_digits=5,
