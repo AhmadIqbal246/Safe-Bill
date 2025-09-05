@@ -85,7 +85,7 @@ export default function TransferFunds({ balance, onTransferComplete }) {
         onTransferComplete();
       }
     }
-  }, [lastTransfer, dispatch, onTransferComplete]);
+  }, [lastTransfer, dispatch]);
 
   // Handle Stripe login link error
   useEffect(() => {
@@ -121,6 +121,7 @@ export default function TransferFunds({ balance, onTransferComplete }) {
 
     // Dispatch the transfer action
     dispatch(createTransfer({ amount, currency: 'EUR' }));
+    fetchTransferInfo();
   };
 
   const handleStripeLogin = () => {

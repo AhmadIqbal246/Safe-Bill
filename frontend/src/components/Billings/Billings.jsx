@@ -31,19 +31,19 @@ export default function Billings() {
   const { user } = useSelector(state => state.auth);
 
   // Function to refetch all data
-  const refetchAllData = () => {
+  const refetchAllData = React.useCallback(() => {
     dispatch(fetchBillings());
     dispatch(fetchBalance());
     if (user?.role === 'seller') {
       dispatch(fetchPayoutHolds());
       dispatch(fetchTransfers());
     }
-  };
+  }, [dispatch, user]);
 
   useEffect(() => {
     // Fetch both billings and balance data
     refetchAllData();
-  }, [dispatch, user]);
+  }, [refetchAllData]);
 
   const isLoading = billingsLoading || balanceLoading || payoutHoldsLoading || transfersLoading;
   const hasError = billingsError || balanceError || payoutHoldsError || transfersError;

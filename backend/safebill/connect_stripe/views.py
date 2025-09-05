@@ -742,7 +742,18 @@ def stripe_identity_webhook(request):
         TransferService.handle_transfer_created(event)
     elif event["type"] == "transfer.reversed":
         logger.info(f"Processing transfer.reversed webhook event")
-        TransferService.handle_transfer_reversed(event)
+        transfer_data = event["data"]["object"]
+        transfer_id = transfer_data["id"]
+        reason = transfer_data.get("reversal_details", {}).get(
+            "reason", "Transfer reversed"
+        )
+        TransferService.handle_transfer_reversal(transfer_id, reason)
+    elif event["type"] == "transfer.failed":
+        logger.info(f"Processing transfer.failed webhook event")
+        transfer_data = event["data"]["object"]
+        transfer_id = transfer_data["id"]
+        reason = "Transfer failed"
+        TransferService.handle_transfer_reversal(transfer_id, reason)
 
     else:
         logger.info(f"Unhandled Stripe Identity event type: {event['type']}")
