@@ -19,7 +19,8 @@ from .views import (
     filter_sellers_by_location,
     get_seller_details,
     SellerRatingCreateView,
-    EligibleProjectsForRating
+    EligibleProjectsForRating,
+    filter_sellers_by_region
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -68,6 +69,11 @@ urlpatterns = [
         'filter-sellers-by-location/',
         filter_sellers_by_location,
         name='filter-sellers-by-location'
+    ),
+    path(
+        'filter-sellers-by-region/',
+        filter_sellers_by_region,
+        name='filter-sellers-by-region'
     ),
     path(
         'seller/<int:seller_id>/',

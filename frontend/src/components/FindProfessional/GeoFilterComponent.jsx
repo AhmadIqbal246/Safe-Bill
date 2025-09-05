@@ -2,8 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { serviceAreaOptions } from '../../constants/registerationTypes';
+import { serviceAreaOptions, regionToDepartments } from '../../constants/registerationTypes';
 import { filterSellersByServiceArea, filterSellersByLocation } from '../../store/slices/FilterSlice';
+import { filterSellersByRegion } from '../../store/slices/FilterSlice';
 
 const containerStyle = { width: '100%', height: '300px', borderRadius: '0.75rem' };
 const center = { lat: 37.7749, lng: -122.4194 };
@@ -39,6 +40,33 @@ function mapComponentsToServiceAreaValue(components) {
   return match ? match.value : null;
 }
 
+function mapComponentsToRegionKey(components = []) {
+  const { region } = pickCityAndPostal(components);
+  const norm = normalize(region);
+  // simple mappings for region names to our keys
+  const map = {
+    'auvergne-rhone-alpes': 'auvergne_rhone_alpes',
+    'bourgogne-franche-comte': 'bourgogne_franche_comte',
+    'bretagne': 'bretagne',
+    'centre-val de loire': 'centre_val_de_loire',
+    'corse': 'corse',
+    'grand est': 'grand_est',
+    'hauts-de-france': 'hauts_de_france',
+    'normandie': 'normandie',
+    'nouvelle-aquitaine': 'nouvelle_aquitaine',
+    'occitanie': 'occitanie',
+    'pays de la loire': 'pays_de_la_loire',
+    "provence-alpes-cote d'azur": 'provence_alpes_cote_d_azur',
+    'ile-de-france': 'ile_de_france',
+    'guadeloupe': 'outre_mer',
+    'martinique': 'outre_mer',
+    'guyane': 'outre_mer',
+    'la reunion': 'outre_mer',
+    'mayotte': 'outre_mer',
+  };
+  return map[norm] || null;
+}
+
 export default function GeoFilterComponent() {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -71,22 +99,27 @@ export default function GeoFilterComponent() {
         
         const value = mapComponentsToServiceAreaValue(result.address_components);
         if (value) {
-          // Find label for UI hint
           const opt = serviceAreaOptions.find(o => o.value === value);
           setMatchedAreaLabel(opt?.label || '');
-          // 1) Dispatch immediately so results update
-          dispatch(filterSellersByServiceArea(value));
-          // 2) Sync URL so ProfFilterComponent auto-applies and shows pre-applied indicator
+          dispatch(filterSellersByServiceArea({ serviceArea: value }));
           const params = new URLSearchParams(location.search);
           params.set('area', value);
           navigate({ search: params.toString() }, { replace: false });
         } else {
+          // Try region fallback
+          const regionKey = mapComponentsToRegionKey(result.address_components);
+          if (regionKey && regionToDepartments[regionKey]) {
+            setMatchedAreaLabel('');
+            dispatch(filterSellersByRegion(regionKey));
+            const params = new URLSearchParams(location.search);
+            params.set('region', regionKey);
+            navigate({ search: params.toString() }, { replace: false });
+            return;
+          }
+          // Ultimate fallback: flexible backend location filter
           setMatchedAreaLabel('');
-          console.warn('No matching service area found, falling back to location API.');
           const { city, postal } = pickCityAndPostal(result.address_components);
-          // Fallback: flexible backend location filter
           dispatch(filterSellersByLocation({ city, postalCode: postal, address: result.formatted_address }));
-          // Keep URL informative with best-available info
           const params = new URLSearchParams(location.search);
           if (postal) params.set('postal', postal);
           if (city) params.set('city', city);

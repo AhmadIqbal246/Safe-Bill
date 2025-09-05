@@ -265,6 +265,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     selected_service_areas = serializers.SerializerMethodField()
     #department_numbers = serializers.SerializerMethodField()
     profile_pic = serializers.ImageField(required=False, allow_null=True)
+    average_rating = serializers.SerializerMethodField()
+    rating_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -272,7 +274,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'username', 'email', 'phone_number',
             'type_of_activity', 'selected_categories', 'selected_subcategories',
              'selected_service_areas',
-            'about', 'profile_pic'
+            'about', 'profile_pic', 'average_rating', 'rating_count'
         ]
         read_only_fields = ['email']  # Only email is read-only now
 
@@ -305,6 +307,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return obj.business_detail.selected_service_areas
         except BusinessDetail.DoesNotExist:
             return []
+
+    def get_average_rating(self, obj):
+        return obj.average_rating
+
+    def get_rating_count(self, obj):
+        return obj.rating_count
 
     def update(self, instance, validated_data):
         # Allow username update with uniqueness check

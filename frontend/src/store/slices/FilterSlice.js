@@ -55,6 +55,20 @@ export const fetchAllSellersComplete = createAsyncThunk(
   }
 );
 
+export const filterSellersByRegion = createAsyncThunk(
+  'filter/filterSellersByRegion',
+  async (regionKey, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${BASE_URL}api/accounts/filter-sellers-by-region/`, {
+        params: { region: regionKey }
+      });
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || 'Network error');
+    }
+  }
+);
+
 export const filterSellersByServiceType = createAsyncThunk(
   'filter/filterSellersByServiceType',
   async ({ serviceType, minRating }, { rejectWithValue }) => {
@@ -195,7 +209,6 @@ const filterSlice = createSlice({
       })
       .addCase(fetchAllSellers.fulfilled, (state, action) => {
         state.loading = false;
-        // Handle both old format (array) and new paginated format (object with results)
         state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
       })
       .addCase(fetchAllSellers.rejected, (state, action) => {
@@ -211,6 +224,18 @@ const filterSlice = createSlice({
         state.sellers = action.payload;
       })
       .addCase(fetchAllSellersComplete.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(filterSellersByRegion.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(filterSellersByRegion.fulfilled, (state, action) => {
+        state.loading = false;
+        state.sellers = Array.isArray(action.payload) ? action.payload : action.payload.results || [];
+      })
+      .addCase(filterSellersByRegion.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

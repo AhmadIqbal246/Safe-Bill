@@ -73,7 +73,7 @@ function App() {
           <Route path='/current-projects' element={<ProtectedRoute requiredRole="seller"><CurrentProjects/></ProtectedRoute>}/>
           <Route path='/completed-projects' element={<ProtectedRoute requiredRole="seller"><CompletedProjects/></ProtectedRoute>}/>
           <Route path='/profile' element={<ProtectedRoute requiredRole="seller"><MyProfile/></ProtectedRoute>}/>
-          <Route path='/my-documents' element={<ProtectedRoute requiredRole="seller"><MyDocuments/></ProtectedRoute>}/>
+          {/* <Route path='/my-documents' element={<ProtectedRoute requiredRole="seller"><MyDocuments/></ProtectedRoute>}/> */}
           <Route path='/milestones' element={<ProtectedRoute requiredRole="seller"><MilestonePage/></ProtectedRoute>}/>
           <Route path='/support' element={<Support/>}/>
           <Route path='/project-invite' element={<ProtectedRoute redirectTo="/login"><InviteViewProject/></ProtectedRoute>}/>

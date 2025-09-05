@@ -21,9 +21,30 @@ import re
 import unicodedata
 from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
-from django.db import models
 from .models import SellerRating
 from projects.models import Project
+
+# Region to departments mapping (duplicate of frontend; backend needs minimal map)
+REGION_TO_DEPARTMENTS = {
+    'auvergne_rhone_alpes': [
+        'ain_01','allier_03','ardeche_07','cantal_15','drome_26','isere_38','loire_42','haute_loire_43','puy_de_dome_63','rhone_69','savoie_73','haute_savoie_74'
+    ],
+    'bourgogne_franche_comte': [
+        "cote_d_or_21","doubs_25","jura_39","nievre_58","haute_saone_70","saone_et_loire_71","yonne_89","territoire_de_belfort_90"
+    ],
+    'bretagne': ["cotes_d_armor_22","finistere_29","ille_et_vilaine_35","morbihan_56"],
+    'centre_val_de_loire': ["cher_18","eure_et_loir_28","indre_36","indre_et_loire_37","loir_et_cher_41","loiret_45"],
+    'corse': ["corse_du_sud_2a","haute_corse_2b"],
+    'grand_est': ["marne_51","haute_marne_52","meurthe_et_moselle_54","meuse_55","moselle_57","bas_rhin_67","haut_rhin_68","vosges_88"],
+    'hauts_de_france': ["aisne_02","nord_59","oise_60","pas_de_calais_62","somme_80"],
+    'normandie': ["calvados_14","eure_27","manche_50","orne_61","seine_maritime_76"],
+    'nouvelle_aquitaine': ["charente_16","charente_maritime_17","correze_19","creuse_23","dordogne_24","gironde_33","landes_40","lot_et_garonne_47","pyrenees_atlantiques_64","deux_sevres_79","vienne_86","haute_vienne_87"],
+    'occitanie': ["ariege_09","aude_11","aveyron_12","gard_30","haute_garonne_31","gers_32","herault_34","lot_46","lozere_48","hautes_pyrenees_65","pyrenees_orientales_66","tarn_81","tarn_et_garonne_82"],
+    'pays_de_la_loire': ["loire_atlantique_44","maine_et_loire_49","mayenne_53","sarthe_72","vendee_85"],
+    'provence_alpes_cote_d_azur': ["alpes_de_haute_provence_04","hautes_alpes_05","alpes_maritimes_06","bouches_du_rhone_13","var_83","vaucluse_84"],
+    'ile_de_france': ["paris_75","seine_et_marne_77","yvelines_78","essonne_91","hauts_de_seine_92","seine_saint_denis_93","val_de_marne_94","val_d_oise_95"],
+    'outre_mer': ["guadeloupe_971","martinique_972","guyane_973","la_reunion_974","mayotte_976"],
+}
 
 
 def _get_seller_data(seller):
@@ -716,6 +737,23 @@ def filter_sellers_by_location(request):
     # Order by rating (highest first), then by name
     sellers = sellers.order_by('-user__average_rating', 'user__username')
     
+    data = [_get_seller_data(seller) for seller in sellers]
+    return Response(data)
+
+
+@api_view(['GET'])
+def filter_sellers_by_region(request):
+    region_key = (request.GET.get('region') or '').strip()
+    if not region_key:
+        return Response({'detail': 'region query param is required.'}, status=400)
+    departments = REGION_TO_DEPARTMENTS.get(region_key)
+    if not departments:
+        return Response({'detail': 'Unknown region key.'}, status=400)
+    # Filter sellers that have selected_service_areas containing ANY of the department values
+    sellers = BusinessDetail.objects.filter(
+        user__role='seller',
+        selected_service_areas__overlap=departments
+    ).select_related('user').order_by('-user__average_rating', 'user__username')
     data = [_get_seller_data(seller) for seller in sellers]
     return Response(data)
 

@@ -9,6 +9,15 @@ import { CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -30,6 +39,43 @@ export default function Dashboard() {
   // Calculate real project counts
   const pendingQuotesCount = projects ? projects.filter(project => project.status === 'pending').length : 0;
   const currentProjectsCount = projects ? projects.filter(project => project.status === 'in_progress').length : 0;
+  const totalProjectsCount = projects ? projects.length : 0;
+
+  // Calculate monthly project creation data for the last 6 months
+  const getMonthlyProjectData = () => {
+    if (!projects || projects.length === 0) {
+      return [];
+    }
+
+    const currentDate = new Date();
+    const monthlyCounts = {};
+    
+    // Initialize last 6 months with 0 counts
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      
+      monthlyCounts[monthKey] = {
+        month: monthName,
+        projects: 0
+      };
+    }
+
+    // Count projects for each month
+    projects.forEach(project => {
+      const projectDate = new Date(project.created_at);
+      const monthKey = `${projectDate.getFullYear()}-${projectDate.getMonth()}`;
+      
+      if (monthlyCounts[monthKey]) {
+        monthlyCounts[monthKey].projects++;
+      }
+    });
+
+    return Object.values(monthlyCounts);
+  };
+
+  const monthlyData = getMonthlyProjectData();
   
   const overviewData = [
     {
@@ -38,6 +84,7 @@ export default function Dashboard() {
       change: '+10%',
       color: 'bg-white',
       btnKey: 'dashboard.view',
+      btnNavigate: '/my-quotes',
     },
     {
       labelKey: 'dashboard.current_projects',
@@ -45,6 +92,7 @@ export default function Dashboard() {
       change: '+5%',
       color: 'bg-white',
       btnKey: 'dashboard.view',
+      btnNavigate: '/current-projects',
     },
     {
       labelKey: 'dashboard.monthly_revenue',
@@ -52,13 +100,10 @@ export default function Dashboard() {
       change: '+15%',
       color: 'bg-white',
       btnKey: 'dashboard.view',
+      btnNavigate: '/billings',
     },
   ];
 
-  const deadlines = {
-    count: 3,
-    change: '-2%',
-  };
 
   // Icon selection based on message content (simple heuristic)
   function getNotificationIcon(message) {
@@ -282,7 +327,7 @@ export default function Dashboard() {
                   <div className="text-gray-500 text-xs sm:text-sm mb-1 w-full">{t(card.labelKey)}</div>
                   <div className="text-base sm:text-lg md:text-2xl font-bold mb-1">{card.value}</div>
                   <div className={`text-xs font-semibold mb-2 ${card.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{card.change}</div>
-                  <button className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors">{t(card.btnKey)}</button>
+                  <button className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer" onClick={() => navigate(card.btnNavigate)}>{t(card.btnKey)}</button>
                 </div>
               ))}
             </div>
@@ -307,14 +352,56 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          {/* Upcoming Deadlines section (mobile order: 3) */}
-          <div className="rounded-lg border border-[#E6F0FA] bg-white p-2 sm:p-3 md:p-5 shadow-sm flex flex-col justify-between min-w-0 w-full" style={{ minHeight: '120px' }}>
-            <div>
-              <div className="text-gray-500 text-xs sm:text-sm mb-1">{t('dashboard.upcoming_deadlines')}</div>
-              <div className="text-base sm:text-lg md:text-2xl font-bold">{deadlines.count}</div>
-              <div className={`text-xs font-semibold mb-3 sm:mb-4 ${deadlines.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{deadlines.change}</div>
+          {/* Total Projects and Monthly Chart section (mobile order: 3) */}
+          <div className="rounded-lg border border-[#E6F0FA] bg-white p-2 sm:p-3 md:p-5 shadow-sm min-w-0 w-full">
+            <div className="mb-3 sm:mb-4">
+              <div className="text-gray-500 text-xs sm:text-sm mb-1">Total Projects Created</div>
+              <div className="text-base sm:text-lg md:text-2xl font-bold">{totalProjectsCount}</div>
             </div>
-            <button className="w-full mt-auto px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-full font-semibold text-xs hover:bg-[#2346a0] transition-colors">{t('dashboard.view')}</button>
+            
+            {/* Monthly Project Creation Chart */}
+            <div className="mb-3 sm:mb-4">
+              <div className="text-gray-500 text-xs sm:text-sm mb-2">Monthly Projects Created</div>
+              <div style={{ width: '100%', height: '120px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="month" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: '#666' }}
+                    />
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: '#666' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '6px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value) => [value, 'Projects']}
+                    />
+                    <Bar 
+                      dataKey="projects" 
+                      fill="#01257D" 
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            <button 
+              className="w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-full font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer"
+              onClick={() => navigate('/my-quotes')}
+            >
+              {t('dashboard.view_all_projects')}
+            </button>
           </div>
           {/* Recent Projects Table (mobile order: 4) */}
           <div className="mt-6 sm:mt-8 min-w-0 w-full">
