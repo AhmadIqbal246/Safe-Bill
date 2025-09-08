@@ -447,7 +447,7 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def get_revenue_summary(request):
     """
     Get comprehensive revenue summary for admin panel
@@ -464,7 +464,7 @@ def get_revenue_summary(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def get_monthly_revenue(request, year, month):
     """
     Get revenue for specific month
@@ -498,7 +498,7 @@ def get_monthly_revenue(request, year, month):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def get_total_revenue(request):
     """
     Get total platform revenue across all months
@@ -515,7 +515,7 @@ def get_total_revenue(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def recalculate_monthly_revenue(request, year, month):
     """
     Recalculate revenue for a specific month from actual payment data
@@ -542,7 +542,7 @@ def recalculate_monthly_revenue(request, year, month):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def list_revenue_months(request):
     """
     List all months with revenue data
@@ -576,7 +576,7 @@ def list_revenue_months(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def get_paid_payments(request):
     """
     Get all paid payments for admin management
@@ -625,7 +625,7 @@ def get_paid_payments(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated, IsAdminRole])
 def get_transfers(request):
     """
     Get all transfers for admin management
