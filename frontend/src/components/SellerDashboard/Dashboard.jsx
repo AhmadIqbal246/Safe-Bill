@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProjects } from '../../store/slices/ProjectSlice';
+import { fetchRevenueComparison } from '../../store/slices/PaymentSlice';
 import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDialogue';
 import { useNavigate } from 'react-router-dom';
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '../../store/slices/NotificationSlice';
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { projects, loading, error } = useSelector(state => state.project);
   const { notifications, loading: notifLoading, error: notifError, markAllLoading, websocketConnected } = useSelector(state => state.notifications);
+  const { revenueComparison, revenueComparisonLoading, revenueComparisonError } = useSelector(state => state.payment);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
 
@@ -34,6 +36,7 @@ export default function Dashboard() {
   useEffect(() => {
     dispatch(fetchProjects());
     dispatch(fetchNotifications());
+    dispatch(fetchRevenueComparison());
   }, [dispatch]);
 
   // Calculate real project counts
@@ -77,6 +80,43 @@ export default function Dashboard() {
 
   const monthlyData = getMonthlyProjectData();
   
+  // Format revenue data
+  const formatRevenue = (amount, currency = 'EUR') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Format percentage change
+  const formatPercentageChange = (comparison) => {
+    if (!comparison || comparison.percentage_change === null) {
+      return '0%';
+    }
+    const sign = comparison.is_positive ? '+' : '';
+    return `${sign}${comparison.percentage_change.toFixed(1)}%`;
+  };
+
+  // Handle revenue comparison error
+  const getRevenueDisplay = () => {
+    if (revenueComparisonLoading) {
+      return { value: 'Loading...', change: 'Loading...', loading: true };
+    }
+    if (revenueComparisonError) {
+      return { value: 'Error', change: '0%', loading: false };
+    }
+    if (revenueComparison) {
+      return {
+        value: formatRevenue(revenueComparison.current_month.revenue, revenueComparison.current_month.currency),
+        change: formatPercentageChange(revenueComparison.comparison),
+        loading: false
+      };
+    }
+    return { value: '€0', change: '0%', loading: false };
+  };
+
   const overviewData = [
     {
       labelKey: 'dashboard.pending_quotes',
@@ -96,8 +136,7 @@ export default function Dashboard() {
     },
     {
       labelKey: 'dashboard.monthly_revenue',
-      value: '$25,000',
-      change: '+15%',
+      ...getRevenueDisplay(),
       color: 'bg-white',
       btnKey: 'dashboard.view',
       btnNavigate: '/billings',
@@ -325,9 +364,31 @@ export default function Dashboard() {
               {overviewData.map((card, idx) => (
                 <div key={idx} className="rounded-lg border border-[#E6F0FA] bg-white p-2 sm:p-3 md:p-5 flex flex-col items-start shadow-sm flex-1 min-w-0">
                   <div className="text-gray-500 text-xs sm:text-sm mb-1 w-full">{t(card.labelKey)}</div>
-                  <div className="text-base sm:text-lg md:text-2xl font-bold mb-1">{card.value}</div>
-                  <div className={`text-xs font-semibold mb-2 ${card.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>{card.change}</div>
-                  <button className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer" onClick={() => navigate(card.btnNavigate)}>{t(card.btnKey)}</button>
+                  <div className="text-base sm:text-lg md:text-2xl font-bold mb-1">
+                    {card.loading ? (
+                      <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                    ) : (
+                      card.value
+                    )}
+                  </div>
+                  <div className={`text-xs font-semibold mb-2 ${
+                    card.loading ? 'text-gray-400' : 
+                    card.change.startsWith('+') ? 'text-green-600' : 
+                    card.change.startsWith('-') ? 'text-red-600' : 'text-gray-600'
+                  }`}>
+                    {card.loading ? (
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-12"></div>
+                    ) : (
+                      card.change
+                    )}
+                  </div>
+                  <button 
+                    className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
+                    onClick={() => navigate(card.btnNavigate)}
+                    disabled={card.loading}
+                  >
+                    {t(card.btnKey)}
+                  </button>
                 </div>
               ))}
             </div>

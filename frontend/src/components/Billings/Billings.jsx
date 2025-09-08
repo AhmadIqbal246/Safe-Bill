@@ -30,8 +30,8 @@ export default function Billings() {
   
   const { user } = useSelector(state => state.auth);
 
-  useEffect(() => {
-    // Fetch both billings and balance data
+  // Function to refetch all data
+  const refetchAllData = React.useCallback(() => {
     dispatch(fetchBillings());
     dispatch(fetchBalance());
     if (user?.role === 'seller') {
@@ -39,6 +39,11 @@ export default function Billings() {
       dispatch(fetchTransfers());
     }
   }, [dispatch, user]);
+
+  useEffect(() => {
+    // Fetch both billings and balance data
+    refetchAllData();
+  }, [refetchAllData]);
 
   const isLoading = billingsLoading || balanceLoading || payoutHoldsLoading || transfersLoading;
   const hasError = billingsError || balanceError || payoutHoldsError || transfersError;
@@ -95,7 +100,7 @@ export default function Billings() {
         {/* Transfer Funds - Only for Sellers */}
         {user?.role === 'seller' && (
           <div className="mb-8">
-            <TransferFunds balance={balance} />
+            <TransferFunds balance={balance} onTransferComplete={refetchAllData} />
           </div>
         )}
 

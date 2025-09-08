@@ -36,6 +36,7 @@ export default function InviteViewProject() {
   const [actionMessage, setActionMessage] = useState("");
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [checkoutProcessing, setCheckoutProcessing] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Fetch platform fees on mount
   useEffect(() => {
@@ -162,6 +163,13 @@ export default function InviteViewProject() {
     setError(null);
 
     if (action === "approve") {
+      // Check if terms are accepted
+      if (!termsAccepted) {
+        toast.error("Please accept the terms and conditions to proceed with payment.");
+        setActionLoading(false);
+        return;
+      }
+
       try {
         const res = await axios.post(
           `${backendBaseUrl}api/payments/create-stripe-payment/${project.id}/`,
@@ -181,6 +189,8 @@ export default function InviteViewProject() {
         }
       } catch (err) {
         setError(err.response.data.detail);
+      } finally {
+        setActionLoading(false);
       }
       return;
     }
@@ -419,7 +429,13 @@ export default function InviteViewProject() {
           </div>
 
           <div className="flex items-center mb-4">
-            <input type="checkbox" id="terms" className="mr-2" />
+            <input 
+              type="checkbox" 
+              id="terms" 
+              className="mr-2" 
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+            />
             <label htmlFor="terms" className="text-sm text-gray-700">
               I agree to the terms and conditions of this project and payment
               schedule.

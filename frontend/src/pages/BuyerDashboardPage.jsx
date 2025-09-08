@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchClientProjects } from '../store/slices/ProjectSlice';
+import { fetchBalance, fetchBillings } from '../store/slices/PaymentSlice';
 import DashboardSummary from '../components/BuyerDashboard/DashboardSummary';
 import CurrentProjects from '../components/BuyerDashboard/CurrentProjects';
 import PendingProjects from '../components/BuyerDashboard/PendingProjects';
@@ -20,10 +21,17 @@ export default function BuyerDashboardPage() {
   const { clientProjects, clientProjectsLoading, clientProjectsError } = useSelector(
     (state) => state.project
   );
+  const { balance, balanceLoading, balanceError, billings } = useSelector(
+    (state) => state.payment
+  );
+  const { user } = useSelector(state => state.auth);
 
   useEffect(() => {
     dispatch(fetchClientProjects());
-  }, [dispatch]);
+    dispatch(fetchBalance());
+    // Fetch billing data for PaymentTracking component
+    dispatch(fetchBillings());
+  }, [dispatch, user]);
 
   // Calculate dashboard stats from client projects
   const activeProjects = clientProjects.filter(project => 
@@ -38,10 +46,16 @@ export default function BuyerDashboardPage() {
     project.payment_status === 'pending'
   ).length;
 
+  // Get the amount held in escrow from balance data
+  const paymentsHeldForProjects = balance?.held_in_escrow || 0;
+  const currency = balance?.currency || 'USD';
+
   const dashboardStats = {
     activeProjects,
     completedProjects,
-    pendingPayments
+    pendingPayments,
+    paymentsHeldForProjects,
+    currency
   };
 
   if (clientProjectsLoading) {
@@ -227,7 +241,9 @@ export default function BuyerDashboardPage() {
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <PaymentTracking projects={clientProjects} />
+          <PaymentTracking 
+            billings={billings} 
+          />
           <DocumentsSection projects={clientProjects} />
         </div>
         

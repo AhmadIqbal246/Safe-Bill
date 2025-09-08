@@ -16,6 +16,7 @@ from utils.email_service import EmailService
 from notifications.services import NotificationService
 from payments.services import BalanceService
 from payments.transfer_service import TransferService
+from adminpanelApp.services import RevenueService
 
 
 User = get_user_model()
@@ -604,6 +605,16 @@ def stripe_identity_webhook(request):
             logger.error(f"Error updating buyer balance: {e}")
             # Don't break the webhook flow if balance update fails
 
+        # Track buyer revenue (platform fee from buyer)
+        try:
+            RevenueService.add_buyer_revenue(
+                payment_amount=payment.amount,
+                platform_fee_amount=payment.platform_fee_amount,
+            )
+        except Exception as e:
+            logger.error(f"Error tracking buyer revenue: {e}")
+            # Don't break the webhook flow if revenue tracking fails
+
         # Email: notify client of successful payment
         try:
             if project.client:
@@ -726,15 +737,23 @@ def stripe_identity_webhook(request):
         )
 
     # Handle transfer webhook events
-    elif event["type"] == "transfer.created":
-        logger.info(f"Processing transfer.created webhook event")
+    elif event["type"] in ["transfer.created", "transfer.updated"]:
+        logger.info(f"Processing transfer.{event['type'].split('.')[1]} webhook event")
         TransferService.handle_transfer_created(event)
-    elif event["type"] == "transfer.updated":
-        logger.info(f"Processing transfer.updated webhook event")
-        TransferService.handle_transfer_updated(event)
     elif event["type"] == "transfer.reversed":
         logger.info(f"Processing transfer.reversed webhook event")
-        TransferService.handle_transfer_reversed(event)
+        transfer_data = event["data"]["object"]
+        transfer_id = transfer_data["id"]
+        reason = transfer_data.get("reversal_details", {}).get(
+            "reason", "Transfer reversed"
+        )
+        TransferService.handle_transfer_reversal(transfer_id, reason)
+    elif event["type"] == "transfer.failed":
+        logger.info(f"Processing transfer.failed webhook event")
+        transfer_data = event["data"]["object"]
+        transfer_id = transfer_data["id"]
+        reason = "Transfer failed"
+        TransferService.handle_transfer_reversal(transfer_id, reason)
 
     else:
         logger.info(f"Unhandled Stripe Identity event type: {event['type']}")

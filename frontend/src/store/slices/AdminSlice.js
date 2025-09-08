@@ -15,6 +15,18 @@ const initialState = {
   currentAdmins: [],
   disputes: [], // super-admin view
   assignedDisputes: [], // admin view
+  // Revenue management state
+  revenue: {
+    summary: null,
+    total: null,
+    months: [],
+    currentMonth: null,
+  },
+  // Payment management state
+  payments: {
+    paid: [],
+    transfers: [],
+  },
 };
 
 // Thunks
@@ -129,6 +141,94 @@ export const mediatorUpdateStatus = createAsyncThunk(
   }
 );
 
+// Revenue Management Thunks
+export const fetchRevenueSummary = createAsyncThunk(
+  'admin/fetchRevenueSummary',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('api/admin/revenue/summary/');
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load revenue summary' });
+    }
+  }
+);
+
+export const fetchTotalRevenue = createAsyncThunk(
+  'admin/fetchTotalRevenue',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('api/admin/revenue/total/');
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load total revenue' });
+    }
+  }
+);
+
+export const fetchRevenueMonths = createAsyncThunk(
+  'admin/fetchRevenueMonths',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('api/admin/revenue/months/');
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load revenue months' });
+    }
+  }
+);
+
+export const fetchMonthlyRevenue = createAsyncThunk(
+  'admin/fetchMonthlyRevenue',
+  async ({ year, month }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(`api/admin/revenue/month/${year}/${month}/`);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load monthly revenue' });
+    }
+  }
+);
+
+export const recalculateMonthlyRevenue = createAsyncThunk(
+  'admin/recalculateMonthlyRevenue',
+  async ({ year, month }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post(`api/admin/revenue/recalculate/${year}/${month}/`);
+      toast.success(`Revenue recalculated for ${year}-${month.toString().padStart(2, '0')}`);
+      return data;
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to recalculate revenue');
+      return rejectWithValue(err.response?.data || { detail: 'Failed to recalculate revenue' });
+    }
+  }
+);
+
+// Payment Management Thunks
+export const fetchPaidPayments = createAsyncThunk(
+  'admin/fetchPaidPayments',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('api/admin/payments/paid/');
+      return data.results || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load paid payments' });
+    }
+  }
+);
+
+export const fetchTransfers = createAsyncThunk(
+  'admin/fetchTransfers',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('api/admin/transfers/');
+      return data.results || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load transfers' });
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState,
@@ -142,6 +242,8 @@ const adminSlice = createSlice({
       state.currentAdmins = [];
       state.disputes = [];
       state.assignedDisputes = [];
+      state.revenue = initialState.revenue;
+      state.payments = initialState.payments;
     },
   },
   extraReducers: (builder) => {
@@ -203,6 +305,64 @@ const adminSlice = createSlice({
         const { disputeId, status } = action.payload;
         state.assignedDisputes = state.assignedDisputes.map(d => d.id === disputeId ? { ...d, status } : d);
         state.disputes = state.disputes.map(d => d.id === disputeId ? { ...d, status } : d);
+      })
+      // Revenue Management
+      .addCase(fetchRevenueSummary.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchRevenueSummary.fulfilled, (state, action) => {
+        state.loading = false;
+        state.revenue.summary = action.payload;
+        state.revenue.currentMonth = action.payload.current_month;
+      })
+      .addCase(fetchRevenueSummary.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        toast.error(action.payload?.detail || 'Failed to load revenue summary');
+      })
+      .addCase(fetchTotalRevenue.fulfilled, (state, action) => {
+        state.revenue.total = action.payload;
+      })
+      .addCase(fetchRevenueMonths.fulfilled, (state, action) => {
+        state.revenue.months = action.payload;
+      })
+      .addCase(fetchMonthlyRevenue.fulfilled, (state, action) => {
+        // Update the specific month in the months array or add it
+        const monthData = action.payload;
+        const existingIndex = state.revenue.months.findIndex(
+          m => m.year === monthData.year && m.month === monthData.month
+        );
+        if (existingIndex >= 0) {
+          state.revenue.months[existingIndex] = monthData;
+        } else {
+          state.revenue.months.push(monthData);
+        }
+      })
+      .addCase(recalculateMonthlyRevenue.fulfilled, (state, action) => {
+        // Update the recalculated month data
+        const monthData = action.payload;
+        const existingIndex = state.revenue.months.findIndex(
+          m => m.year === monthData.year && m.month === monthData.month
+        );
+        if (existingIndex >= 0) {
+          state.revenue.months[existingIndex] = monthData;
+        } else {
+          state.revenue.months.push(monthData);
+        }
+        // Update summary if it's the current month
+        if (state.revenue.summary && 
+            state.revenue.summary.current_month.year === monthData.year && 
+            state.revenue.summary.current_month.month === monthData.month) {
+          state.revenue.summary.current_month = monthData;
+        }
+      })
+      // Payment Management
+      .addCase(fetchPaidPayments.fulfilled, (state, action) => {
+        state.payments.paid = action.payload;
+      })
+      .addCase(fetchTransfers.fulfilled, (state, action) => {
+        state.payments.transfers = action.payload;
       });
   }
 });

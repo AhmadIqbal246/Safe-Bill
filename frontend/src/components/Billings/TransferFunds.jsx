@@ -23,7 +23,7 @@ import {
   clearStripeLoginLinkError,
 } from '../../store/slices/FundsTransferSlice';
 
-export default function TransferFunds({ balance }) {
+export default function TransferFunds({ balance, onTransferComplete }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
@@ -79,8 +79,11 @@ export default function TransferFunds({ balance }) {
       
       // Refresh transfer info and balance
       dispatch(fetchTransferInfo());
-      // You might want to refresh the balance in the parent component
-      window.location.reload(); // Simple refresh for now
+      
+      // Refetch all data in parent component
+      if (onTransferComplete) {
+        onTransferComplete();
+      }
     }
   }, [lastTransfer, dispatch]);
 
@@ -118,6 +121,7 @@ export default function TransferFunds({ balance }) {
 
     // Dispatch the transfer action
     dispatch(createTransfer({ amount, currency: 'EUR' }));
+    fetchTransferInfo();
   };
 
   const handleStripeLogin = () => {

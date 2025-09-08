@@ -10,6 +10,7 @@ from .views import (
     generate_stripe_login_link,
     list_payout_holds,
     get_platform_fees,
+    revenue_comparison,
 )
 
 urlpatterns = [
@@ -62,5 +63,10 @@ urlpatterns = [
         "fees/",
         get_platform_fees,
         name="get_platform_fees",
+    ),
+    path(
+        "revenue-comparison/",
+        revenue_comparison,
+        name="revenue_comparison",
     ),
 ]

@@ -124,6 +124,30 @@ export const fetchTransfers = createAsyncThunk(
   }
 );
 
+// Fetch revenue comparison data
+export const fetchRevenueComparison = createAsyncThunk(
+  'payment/fetchRevenueComparison',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/payments/revenue-comparison/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 const paymentSlice = createSlice({
   name: 'payment',
   initialState: {
@@ -151,6 +175,11 @@ const paymentSlice = createSlice({
     transfers: [],
     transfersLoading: false,
     transfersError: null,
+
+    // Revenue comparison (seller)
+    revenueComparison: null,
+    revenueComparisonLoading: false,
+    revenueComparisonError: null,
   },
   reducers: {
     clearPaymentState: (state) => {
@@ -225,6 +254,19 @@ const paymentSlice = createSlice({
       .addCase(fetchTransfers.rejected, (state, action) => {
         state.transfersLoading = false;
         state.transfersError = action.payload || 'Failed to fetch transfers';
+      })
+      // Fetch Revenue Comparison
+      .addCase(fetchRevenueComparison.pending, (state) => {
+        state.revenueComparisonLoading = true;
+        state.revenueComparisonError = null;
+      })
+      .addCase(fetchRevenueComparison.fulfilled, (state, action) => {
+        state.revenueComparisonLoading = false;
+        state.revenueComparison = action.payload;
+      })
+      .addCase(fetchRevenueComparison.rejected, (state, action) => {
+        state.revenueComparisonLoading = false;
+        state.revenueComparisonError = action.payload || 'Failed to fetch revenue comparison';
       });
   },
 });
