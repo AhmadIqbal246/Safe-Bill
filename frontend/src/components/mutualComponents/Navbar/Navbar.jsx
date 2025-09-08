@@ -19,7 +19,6 @@ export const signedOutNavItems = [
 ];
 
 export const signedInNavItems = [
-  ,
   { label: "navbar.contact", href: "/contact-us" },
 ];
 
@@ -111,10 +110,25 @@ export default function SafeBillHeader({
   const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
 
   const handleSignOut = async () => {
-    await dispatch(logoutUser());
+    try {
+      await dispatch(logoutUser());
+    } catch (e) {
+      // ignore
+    }
+    try {
+      // Clear any auth-related storage flags
+      sessionStorage.removeItem("admin_role");
+      sessionStorage.removeItem("token");
+      // If redux-persist is used, clear persisted state to avoid stale user
+      localStorage.removeItem("persist:root");
+      localStorage.removeItem("token");
+    } catch (e) {
+      // ignore storage errors
+    }
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    navigate("/");
+    // Force a hard reload to fully reset any persisted UI state
+    window.location.replace("/");
   };
 
   const navItems = isSignedIn ? signedInNavItems : signedOutNavItems;
