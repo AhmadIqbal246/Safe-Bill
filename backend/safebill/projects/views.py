@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
+from datetime import timedelta
 from .models import Project, Quote, PaymentInstallment, Milestone
 from .serializers import (
     ProjectCreateSerializer,
@@ -14,6 +15,9 @@ from .serializers import (
     MilestoneUpdateSerializer,
 )
 from notifications.models import Notification
+from utils.email_service import EmailService
+from django.conf import settings
+import secrets
 from notifications.services import NotificationService
 from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
@@ -342,7 +346,8 @@ class ProjectInviteAPIView(APIView):
         # Add the client to the project if not already added
         if not project.client:
             project.client = request.user
-            project.save()
+            project.invite_token_used = True
+            project.save(update_fields=["client", "invite_token_used"])
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
@@ -356,6 +361,79 @@ class ProjectInviteAPIView(APIView):
         # Return project details
         serializer = ProjectListSerializer(project)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, token):
+        """
+        Regenerate and resend an invite token for a project IF the previous one is expired.
+        Only the project owner (seller) can request a resend.
+        """
+        try:
+            project = Project.objects.get(invite_token=token)
+        except Project.DoesNotExist:
+            return Response(
+                {"detail": "Invalid invite token."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Only project owner can resend
+        if project.user != request.user:
+            return Response(
+                {"detail": "You do not have permission to resend this invitation."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Disallow resend if the invite has already been used
+        if project.invite_token_used:
+            return Response(
+                {"detail": "Invitation already used by client. Cannot resend."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Only allow resend if previous token is expired
+        if project.invite_token_expiry and project.invite_token_expiry > timezone.now():
+            return Response(
+                {"detail": "Invitation link has not expired yet."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Generate new token and expiry
+        new_token = secrets.token_urlsafe(32)
+        new_expiry = timezone.now() + timedelta(days=2)
+        project.invite_token = new_token
+        project.invite_token_expiry = new_expiry
+        project.invite_token_used = False
+        project.save(update_fields=["invite_token", "invite_token_expiry", "invite_token_used"])
+
+        # Send invite email to client
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+        invite_link = f"{frontend_url}/project-invite?token={new_token}"
+        try:
+            # Try to get preferred language from request header, default to 'en'
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en").split(",")[0]
+            EmailService.send_project_invitation_email(
+                client_email=project.client_email,
+                project_name=project.name,
+                invitation_url=invite_link,
+                invitation_token=new_token,
+                language=preferred_lang,
+            )
+        except Exception:
+            # Don't fail resend if email sending fails
+            pass
+
+        # Notify seller
+        NotificationService.create_notification(
+            request.user,
+            f"A new invitation link has been generated for project '{project.name}'.",
+        )
+
+        return Response(
+            {
+                "detail": "New invitation link generated and sent.",
+                "invite_token": new_token,
+                "invite_token_expiry": new_expiry,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, token):
         """
@@ -666,3 +744,28 @@ def get_completed_projects(request):
     serializer = ProjectListSerializer(completed_projects, many=True)
 
     return Response({"projects": serializer.data, "count": completed_projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_expired_project_invites(request):
+    """
+    List projects for the authenticated seller that have expired invite tokens.
+    """
+    user = request.user
+    if not hasattr(user, "role") or user.role != "seller":
+        return Response(
+            {"detail": "Only sellers can access expired invitations."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    expired = Project.objects.filter(
+        user=user,
+        invite_token__isnull=False,
+        invite_token_expiry__isnull=False,
+        invite_token_expiry__lt=timezone.now(),
+        invite_token_used=False,
+    ).order_by("-created_at")
+
+    serializer = ProjectListSerializer(expired, many=True)
+    return Response({"projects": serializer.data, "count": expired.count()})

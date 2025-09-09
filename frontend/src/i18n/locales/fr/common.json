@@ -354,6 +354,7 @@
     "my_quotes": "Mes devis",
     "current_projects": "Projets en cours",
     "completed_projects": "Projets terminés",
+    "expired_tokens": "Jetons expirés",
     "disputes": "Litiges",
     "my_profile": "Mon profil",
     "billings": "Facturation",
@@ -1350,6 +1351,15 @@
   "common": {
     "error": "Erreur",
     "error_loading_data": "Erreur lors du chargement des données",
-    "unexpected_error": "Une erreur inattendue s'est produite"
+    "unexpected_error": "Une erreur inattendue s'est produite",
+    "expired_tokens_description": "Ces projets ont des liens d'invitation expirés. Renvoyez pour générer une nouvelle invitation à votre client.",
+    "resend_invite": "Renvoyer l'invitation",
+    "no_expired_tokens": "Aucun jeton expiré",
+    "invite_resent": "Lien d'invitation renvoyé avec succès",
+    "loading": "Chargement...",
+    "actions": "Actions",
+    "project": "Projet",
+    "client_email": "Email du client",
+    "created_at": "Créé le"
   }
 }

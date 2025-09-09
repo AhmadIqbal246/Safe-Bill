@@ -38,6 +38,7 @@ import HowToAcceptProjectInvite from "./pages/HowToAcceptProjectInvite";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import BillingsPage from "./pages/BillingsPage";
+import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -68,6 +69,7 @@ function App() {
           <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage/></ProtectedRoute>}/>
           <Route path='/find-professionals' element={<ProtectedRoute><FindProfessionals/></ProtectedRoute>}/>
           <Route path='/seller-dashboard' element={<ProtectedRoute requiredRole="seller"><SellerDashboardPage/></ProtectedRoute>}/>
+          <Route path='/seller-dashboard/expired-invites' element={<ProtectedRoute requiredRole="seller"><SellerExpiredInvitesPage/></ProtectedRoute>}/>
           <Route path='/my-quotes' element={<ProtectedRoute><MyQuotesPage/></ProtectedRoute>}/>
           <Route path='/project-creation' element={<ProtectedRoute requiredRole="seller"><ProjectCreationPage/></ProtectedRoute>}/>
           <Route path='/current-projects' element={<ProtectedRoute requiredRole="seller"><CurrentProjects/></ProtectedRoute>}/>

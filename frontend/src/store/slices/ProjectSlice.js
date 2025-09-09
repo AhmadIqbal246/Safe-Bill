@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import i18n from '../../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -24,6 +25,7 @@ export const createProject = createAsyncThunk(
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -46,6 +48,7 @@ export const fetchProjects = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -68,6 +71,7 @@ export const fetchClientProjects = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -90,12 +94,55 @@ export const fetchCompletedProjects = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || 'Network error');
+    }
+  }
+);
+
+export const fetchExpiredInvites = createAsyncThunk(
+  'project/fetchExpiredInvites',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem('access');
+      const response = await axios.get(
+        `${BASE_URL}api/projects/expired-invites/`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
+export const resendExpiredInvite = createAsyncThunk(
+  'project/resendExpiredInvite',
+  async ({ token }, { rejectWithValue }) => {
+    try {
+      const access = sessionStorage.getItem('access');
+      const response = await axios.put(
+        `${BASE_URL}api/projects/invite/${encodeURIComponent(token)}/`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${access}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
     }
   }
 );
@@ -110,6 +157,7 @@ export const fetchMilestones = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -147,6 +195,7 @@ export const updateMilestone = createAsyncThunk(
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -169,6 +218,7 @@ export const deleteMilestone = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -191,6 +241,7 @@ export const deleteProject = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -214,6 +265,7 @@ export const updateProjectStatus = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -237,6 +289,7 @@ export const completeProject = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -268,6 +321,7 @@ export const approveMilestone = createAsyncThunk(
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -290,6 +344,7 @@ export const fetchClientProjectsWithPendingMilestones = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -312,6 +367,7 @@ export const fetchClientProjectDetail = createAsyncThunk(
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-User-Language': i18n.language,
           },
         }
       );
@@ -331,7 +387,7 @@ export const fetchEligibleProjectsForRating = createAsyncThunk(
       const token = sessionStorage.getItem('access');
       const response = await axios.get(
         `${BASE_URL}api/accounts/eligible-projects/${sellerId}/`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}`, 'X-User-Language': i18n.language } }
       );
       return { sellerId, projects: response.data };
     } catch (err) {
@@ -350,7 +406,7 @@ export const submitSellerRating = createAsyncThunk(
       await axios.post(
         `${BASE_URL}api/accounts/rate-seller/`,
         { seller: sellerId, project: projectId, rating, comment: comment || '' },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}`, 'X-User-Language': i18n.language } }
       );
       return { sellerId, projectId };
     } catch (err) {
@@ -371,6 +427,9 @@ const projectSlice = createSlice({
     projects: [],
     completedProjects: [],
     completedProjectsCount: 0,
+    expiredInvites: [],
+    expiredInvitesLoading: false,
+    expiredInvitesError: null,
     clientProjects: [],
     clientProjectsLoading: false,
     clientProjectsError: null,
@@ -450,6 +509,23 @@ const projectSlice = createSlice({
       .addCase(fetchCompletedProjects.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to fetch completed projects';
+      })
+      .addCase(fetchExpiredInvites.pending, (state) => {
+        state.expiredInvitesLoading = true;
+        state.expiredInvitesError = null;
+      })
+      .addCase(fetchExpiredInvites.fulfilled, (state, action) => {
+        state.expiredInvitesLoading = false;
+        state.expiredInvites = action.payload.projects || [];
+      })
+      .addCase(fetchExpiredInvites.rejected, (state, action) => {
+        state.expiredInvitesLoading = false;
+        state.expiredInvitesError = action.payload || 'Failed to fetch expired invites';
+      })
+      .addCase(resendExpiredInvite.fulfilled, (state, action) => {
+        // After resend, we can optimistically remove from list
+        const newToken = action.payload.invite_token;
+        state.expiredInvites = state.expiredInvites.filter(p => p.invite_token !== newToken);
       })
       .addCase(fetchClientProjects.pending, (state) => {
         state.clientProjectsLoading = true;

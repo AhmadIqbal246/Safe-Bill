@@ -26,6 +26,7 @@ class EmailService:
         context: Dict[str, Any],
         from_email: Optional[str] = None,
         fail_silently: bool = False,
+        language: str = "en",
     ) -> bool:
         """
         Send an HTML email using Django templates.
@@ -46,8 +47,25 @@ class EmailService:
             if not from_email:
                 from_email = settings.DEFAULT_FROM_EMAIL
 
-            # Render HTML template
-            html_content = render_to_string(f"emails/{template_name}.html", context)
+            # Try localized template first: emails/{template_name}_{language}.html
+            lang = (language or "en").split("-")[0].lower()
+            template_candidates = [
+                f"emails/{template_name}_{lang}.html",
+                f"emails/{template_name}.html",
+            ]
+
+            # Render HTML template (first existing)
+            last_error = None
+            html_content = None
+            for tmpl in template_candidates:
+                try:
+                    html_content = render_to_string(tmpl, context)
+                    break
+                except Exception as e:
+                    last_error = e
+                    continue
+            if html_content is None:
+                raise last_error or Exception("Email template not found")
 
             # Create plain text version by stripping HTML tags
             text_content = strip_tags(html_content)
@@ -347,7 +365,11 @@ class EmailService:
 
     @staticmethod
     def send_project_invitation_email(
-        client_email: str, project_name: str, invitation_url: str, invitation_token: str
+        client_email: str,
+        project_name: str,
+        invitation_url: str,
+        invitation_token: str,
+        language: str = "en",
     ) -> bool:
         """
         Send project invitation email to client.
@@ -372,9 +394,13 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = (
-            f"You've been invited to join the '{project_name}' " f"project on SafeBill"
-        )
+        lang = (language or "en").split("-")[0].lower()
+        if lang == "fr":
+            subject = f"Vous avez été invité à rejoindre le projet '{project_name}' sur SafeBill"
+        else:
+            subject = (
+                f"You've been invited to join the '{project_name}' project on SafeBill"
+            )
 
         return EmailService.send_email(
             subject=subject,
@@ -382,6 +408,7 @@ class EmailService:
             template_name="project_invitation",
             context=context,
             fail_silently=True,  # Don't fail if email can't be sent
+            language=language,
         )
 
     @staticmethod

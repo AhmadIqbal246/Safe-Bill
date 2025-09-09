@@ -26,7 +26,7 @@ TRANSFER_STATUS = [
 # Create your models here.
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2) # #original amount at the moment of buyer payment
     platform_fee_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
@@ -215,3 +215,11 @@ class PayoutHold(models.Model):
     def __str__(self):
         status = "released" if self.released else "on_hold"
         return f"PayoutHold({self.user.email}) {self.amount} {self.currency} - {status} until {self.hold_until}"
+
+
+#1000 = payment amount (from buyer)
+# 2 miletonses : 1st = 600 , 2nd = 400, total ammount = 1st + 2nd
+
+# Refundable amount = 1st milestone = 500, 
+#  paymenmt ammount - paid (milestones that are approved) = new total amount
+# new total amount - miletones that are not approved = refundable amount 
