@@ -408,13 +408,15 @@ class ProjectInviteAPIView(APIView):
         invite_link = f"{frontend_url}/project-invite?token={new_token}"
         try:
             # Try to get preferred language from request header, default to 'en'
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en").split(",")[0]
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            print(language)
             EmailService.send_project_invitation_email(
                 client_email=project.client_email,
                 project_name=project.name,
                 invitation_url=invite_link,
                 invitation_token=new_token,
-                language=preferred_lang,
+                language=language,
             )
         except Exception:
             # Don't fail resend if email sending fails

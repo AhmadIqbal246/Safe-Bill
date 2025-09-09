@@ -9,6 +9,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils.html import strip_tags
+from django.utils import translation
 
 logger = logging.getLogger(__name__)
 
@@ -135,11 +136,9 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = "Vérifiez Votre Email - SafeBill"
-        else:
-            subject = "Verify Your Email - SafeBill"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Verify Your Email - SafeBill")
 
         return EmailService.send_email(
             subject=subject,
@@ -174,11 +173,9 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = "Réinitialisez Votre Mot de Passe - SafeBill"
-        else:
-            subject = "Reset Your Password - SafeBill"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Reset Your Password - SafeBill")
 
         return EmailService.send_email(
             subject=subject,
@@ -211,11 +208,9 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = "Bienvenue sur SafeBill !"
-        else:
-            subject = "Welcome to SafeBill!"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Welcome to SafeBill!")
 
         return EmailService.send_email(
             subject=subject,
@@ -299,11 +294,9 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = f"Nouvelle Opportunité Commerciale - Message de {buyer_name}"
-        else:
-            subject = f"New Business Opportunity - Message from {buyer_name}"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("New Business Opportunity - Message from {buyer_name}").format(buyer_name=buyer_name)
 
         return EmailService.send_email(
             subject=subject,
@@ -378,11 +371,9 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = "Demande de Devis Envoyée avec Succès"
-        else:
-            subject = "Quote Request Sent Successfully"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Quote Request Sent Successfully")
 
         return EmailService.send_email(
             subject=subject,
@@ -414,6 +405,7 @@ class EmailService:
         """
         frontend_url = settings.FRONTEND_URL.rstrip("/")
 
+        print(language)
         context = {
             "project_name": project_name,
             "invitation_url": invitation_url,
@@ -423,13 +415,9 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        lang = (language or "en").split("-")[0].lower()
-        if lang == "fr":
-            subject = f"Vous avez été invité à rejoindre le projet '{project_name}' sur SafeBill"
-        else:
-            subject = (
-                f"You've been invited to join the '{project_name}' project on SafeBill"
-            )
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("You've been invited to join the '{project_name}' project on SafeBill").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,
@@ -464,11 +452,9 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = f"Paiement Réussi - {project_name}"
-        else:
-            subject = f"Payment Successful - {project_name}"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Payment Successful - {project_name}").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,
@@ -502,11 +488,9 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        # Localized subject
-        if language == 'fr':
-            subject = f"Paiement Échoué - {project_name}"
-        else:
-            subject = f"Payment Failed - {project_name}"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Payment Failed - {project_name}").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,

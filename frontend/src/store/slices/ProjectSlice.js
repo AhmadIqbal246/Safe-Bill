@@ -135,9 +135,11 @@ export const resendExpiredInvite = createAsyncThunk(
           headers: {
             'Authorization': `Bearer ${access}`,
             'Content-Type': 'application/json',
+            'X-User-Language': i18n.language,
           },
         }
       );
+      console.log(i18n.language)
       return response.data;
     } catch (err) {
       return rejectWithValue(
