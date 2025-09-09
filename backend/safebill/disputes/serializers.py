@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Dispute, DisputeDocument, DisputeEvent, DisputeComment
 from projects.serializers import ProjectListSerializer
 from notifications.models import Notification
+from utils.email_service import EmailService
 
 
 class DisputeDocumentSerializer(serializers.ModelSerializer):
@@ -145,6 +146,27 @@ class DisputeCreateSerializer(serializers.ModelSerializer):
             user=request.user,
             message=f"Your dispute for project '{project.name}' has been created successfully. Dispute ID: {dispute.dispute_id}"
         )
+
+        # Email seller (project owner) with localization
+        try:
+            preferred_lang = request.headers.get('X-User-Language') or request.META.get('HTTP_ACCEPT_LANGUAGE', 'en')
+            language = preferred_lang.split(',')[0][:2] if preferred_lang else 'en'
+
+            seller = project.user
+            seller_name = (
+                seller.get_full_name() or getattr(seller, 'username', None) or seller.email.split('@')[0]
+            )
+
+            EmailService.send_dispute_created_email(
+                seller_email=seller.email,
+                seller_name=seller_name,
+                project_name=project.name,
+                dispute_id=dispute.dispute_id,
+                language=language,
+            )
+        except Exception:
+            # Do not fail dispute creation if email sending fails
+            pass
         
         return dispute
 

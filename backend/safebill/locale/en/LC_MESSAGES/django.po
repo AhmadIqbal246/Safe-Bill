@@ -27,3 +27,9 @@ msgstr "New Business Opportunity - Message from {buyer_name}"
 
 msgid "You've been invited to join the '{project_name}' project on SafeBill"
 msgstr "You've been invited to join the '{project_name}' project on SafeBill"
+
+msgid "New dispute opened - {project_name}"
+msgstr "New dispute opened - {project_name}"
+
+msgid "A dispute ({dispute_id}) has been opened for project '{project_name}'."
+msgstr "A dispute ({dispute_id}) has been opened for project '{project_name}'."

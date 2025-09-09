@@ -260,6 +260,54 @@ class EmailService:
         )
 
     @staticmethod
+    def send_dispute_created_email(
+        seller_email: str,
+        seller_name: str,
+        project_name: str,
+        dispute_id: str,
+        language: str = "en",
+        dashboard_url: Optional[str] = None,
+    ) -> bool:
+        """
+        Send localized email to the seller when a dispute is created.
+
+        Args:
+            seller_email: Seller's email address
+            seller_name: Seller's name
+            project_name: Project name
+            dispute_id: Dispute reference id
+            language: Preferred language code ('en' | 'fr')
+            dashboard_url: Optional URL to view disputes
+        """
+        if not dashboard_url:
+            dashboard_url = f"{settings.FRONTEND_URL}seller-dashboard"
+
+        with translation.override((language or "en").split(",")[0][:2]):
+            notification_title = translation.gettext(
+                "New dispute opened - {project_name}"
+            ).format(project_name=project_name)
+            notification_message = translation.gettext(
+                "A dispute ({dispute_id}) has been opened for project '{project_name}'."
+            ).format(dispute_id=dispute_id, project_name=project_name)
+
+            context = {
+                "user_name": seller_name,
+                "notification_title": notification_title,
+                "notification_message": notification_message,
+                "action_url": dashboard_url,
+                "site_name": "SafeBill",
+                "support_email": settings.DEFAULT_FROM_EMAIL,
+            }
+
+            return EmailService.send_email(
+                subject=notification_title,
+                recipient_list=[seller_email],
+                template_name="notification",
+                context=context,
+                language=language,
+            )
+
+    @staticmethod
     def send_quote_chat_notification(
         seller_email: str,
         seller_name: str,
