@@ -145,13 +145,15 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
                 )
                 
                 # Send email using the new email service
+                # Use default language for WebSocket-triggered emails
                 EmailService.send_quote_chat_notification(
                     seller_email=seller.email,
                     seller_name=seller_name,
                     buyer_name=buyer_name,
                     buyer_email=buyer.email,
                     project_name=project.name,
-                    message_preview=message_preview
+                    message_preview=message_preview,
+                    language="en"  # Default to English for WebSocket emails
                 )
         except Exception as e:
             # Log error but don't break the chat functionality

@@ -1,0 +1,51 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Demande de Devis Envoyée avec Succès - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Confirmation de Demande{% endblock %}
+
+{% block content %}
+<h2>Demande de Devis Envoyée avec Succès</h2>
+
+<p>Bonjour !</p>
+
+<div class="success">
+    <p><strong>Votre demande de devis a été envoyée avec succès !</strong></p>
+</div>
+
+<div class="highlight">
+    <p><strong>Sujet :</strong> {{ subject }}</p>
+    <p><strong>ID Professionnel :</strong> {{ professional_id }}</p>
+    <p><strong>Envoyé à :</strong> {{ to_email }}</p>
+</div>
+
+<p>Votre demande de devis a été livrée au professionnel. Il recevra une notification et devrait vous répondre bientôt.</p>
+
+<h3>Que se passe-t-il ensuite ?</h3>
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Le professionnel examinera votre demande</li>
+    <li>Il peut vous contacter directement ou via notre plateforme</li>
+    <li>Vous recevrez des notifications sur toute réponse</li>
+    <li>Vous pouvez suivre le statut dans votre tableau de bord</li>
+</ul>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" class="btn">Voir Mes Demandes</a>
+</div>
+
+<div class="warning">
+    <p><strong>Note :</strong> Les temps de réponse peuvent varier selon la disponibilité du professionnel. La plupart des professionnels répondent dans les 24-48 heures.</p>
+</div>
+
+<p>Si vous ne recevez pas de réponse dans un délai raisonnable, vous pouvez :</p>
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Envoyer un message de suivi</li>
+    <li>Contacter d'autres professionnels pour le même service</li>
+    <li>Contacter notre équipe de support pour assistance</li>
+</ul>
+
+<p>Si vous avez des questions ou besoin d'assistance, veuillez contacter notre équipe de support à <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Cordialement,<br>
+L'Équipe {{ site_name }}</p>
+{% endblock %}

@@ -110,6 +110,7 @@ class EmailService:
         verification_url: str,
         user_type: str = "user",
         verification_code: str = None,
+        language: str = 'en',
     ) -> bool:
         """
         Send email verification email.
@@ -134,18 +135,23 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = "Verify Your Email - SafeBill"
+        # Localized subject
+        if language == 'fr':
+            subject = "Vérifiez Votre Email - SafeBill"
+        else:
+            subject = "Verify Your Email - SafeBill"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="email_verification",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_password_reset_email(
-        user_email: str, user_name: str, reset_url: str, reset_code: str = None
+        user_email: str, user_name: str, reset_url: str, reset_code: str = None, language: str = 'en'
     ) -> bool:
         """
         Send password reset email.
@@ -168,18 +174,23 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = "Reset Your Password - SafeBill"
+        # Localized subject
+        if language == 'fr':
+            subject = "Réinitialisez Votre Mot de Passe - SafeBill"
+        else:
+            subject = "Reset Your Password - SafeBill"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="password_reset",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_welcome_email(
-        user_email: str, user_name: str, user_type: str = "user"
+        user_email: str, user_name: str, user_type: str = "user", language: str = 'en'
     ) -> bool:
         """
         Send welcome email after successful registration.
@@ -200,13 +211,18 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        subject = "Welcome to SafeBill!"
+        # Localized subject
+        if language == 'fr':
+            subject = "Bienvenue sur SafeBill !"
+        else:
+            subject = "Welcome to SafeBill!"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="welcome",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -256,6 +272,7 @@ class EmailService:
         buyer_email: str,
         project_name: str,
         message_preview: str,
+        language: str = 'en',
     ) -> bool:
         """
         Send email notification to seller for new quote chat message.
@@ -282,13 +299,18 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        subject = f"New Business Opportunity - Message from {buyer_name}"
+        # Localized subject
+        if language == 'fr':
+            subject = f"Nouvelle Opportunité Commerciale - Message de {buyer_name}"
+        else:
+            subject = f"New Business Opportunity - Message from {buyer_name}"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[seller_email],
             template_name="quote_chat_notification",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -298,6 +320,7 @@ class EmailService:
         subject: str,
         body: str,
         professional_id: str,
+        language: str = 'en',
     ) -> bool:
         """
         Send quote request email to professional.
@@ -327,11 +350,12 @@ class EmailService:
             recipient_list=[professional_email],
             template_name="quote_request",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_quote_request_confirmation(
-        sender_email: str, subject: str, professional_id: str, to_email: str
+        sender_email: str, subject: str, professional_id: str, to_email: str, language: str = 'en'
     ) -> bool:
         """
         Send confirmation email to quote request sender.
@@ -354,13 +378,18 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        subject = "Quote Request Sent Successfully"
+        # Localized subject
+        if language == 'fr':
+            subject = "Demande de Devis Envoyée avec Succès"
+        else:
+            subject = "Quote Request Sent Successfully"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[sender_email],
             template_name="quote_request_confirmation",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -418,6 +447,7 @@ class EmailService:
         project_name: str,
         amount: str,
         dashboard_url: Optional[str] = None,
+        language: str = 'en',
     ) -> bool:
         """
         Send payment success email to client.
@@ -434,13 +464,18 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = f"Payment Successful - {project_name}"
+        # Localized subject
+        if language == 'fr':
+            subject = f"Paiement Réussi - {project_name}"
+        else:
+            subject = f"Payment Successful - {project_name}"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="payment_success_client",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -450,6 +485,7 @@ class EmailService:
         project_name: str,
         amount: str,
         retry_url: Optional[str] = None,
+        language: str = 'en',
     ) -> bool:
         """
         Send payment failed email to client.
@@ -466,11 +502,16 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = f"Payment Failed - {project_name}"
+        # Localized subject
+        if language == 'fr':
+            subject = f"Paiement Échoué - {project_name}"
+        else:
+            subject = f"Payment Failed - {project_name}"
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="payment_failed_client",
             context=context,
+            language=language,
         )
