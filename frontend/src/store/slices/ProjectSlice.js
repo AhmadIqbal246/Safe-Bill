@@ -18,6 +18,10 @@ export const createProject = createAsyncThunk(
       }
       // Installments as JSON string
       formData.append('installments', JSON.stringify(projectData.installments));
+      // VAT rate if provided
+      if (projectData.vat_rate !== undefined && projectData.vat_rate !== null && projectData.vat_rate !== '') {
+        formData.append('vat_rate', String(projectData.vat_rate));
+      }
       const response = await axios.post(
         `${BASE_URL}api/projects/create/`,
         formData,

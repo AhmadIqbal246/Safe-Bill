@@ -182,10 +182,11 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
 class ProjectCreateSerializer(serializers.ModelSerializer):
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
+    vat_rate = serializers.DecimalField(max_digits=4, decimal_places=1, required=False)
 
     class Meta:
         model = Project
-        fields = ["name", "client_email", "quote", "installments"]
+        fields = ["name", "client_email", "quote", "installments", "vat_rate"]
 
     def create(self, validated_data):
         user = self.context["request"].user

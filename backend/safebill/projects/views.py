@@ -80,6 +80,14 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         else:
             data["quote"] = {}
 
+        # Handle VAT rate (optional, defaults server-side)
+        vat_rate_val = request.data.get("vat_rate")
+        if vat_rate_val is not None and vat_rate_val != "":
+            try:
+                data["vat_rate"] = float(vat_rate_val)
+            except (TypeError, ValueError):
+                return Response({"vat_rate": ["Invalid VAT rate value"]}, status=400)
+
         # Create serializer with processed data
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

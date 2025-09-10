@@ -33,6 +33,7 @@ export default function ProjectCreation() {
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
+  const [vatRate, setVatRate] = useState('20.0');
   const [quoteFile, setQuoteFile] = useState(null);
   const [fileError, setFileError] = useState('');
   const fileInputRef = useRef(null);
@@ -137,6 +138,7 @@ export default function ProjectCreation() {
       client_email: clientEmail,
       quote: { file: quoteFile },
       installments: selectedConfig,
+      vat_rate: vatRate,
     }));
   };
 
@@ -393,6 +395,24 @@ export default function ProjectCreation() {
               <span className="text-xl font-bold text-[#01257D]">${totalSellerNet.toLocaleString()}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* VAT Selection */}
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">{t('project_creation.vat_section') || 'VAT Rate'}</h2>
+        <div className="relative inline-block">
+          <select
+            value={vatRate}
+            onChange={(e) => setVatRate(e.target.value)}
+            className="px-3 sm:px-4 py-2 sm:py-3 rounded-md border border-gray-200 bg-white text-gray-700 w-48 focus:outline-none focus:ring-2 focus:ring-[#01257D] text-sm sm:text-base"
+          >
+            <option value="20.0">20%</option>
+            <option value="10.0">10%</option>
+            <option value="5.5">5.5%</option>
+            <option value="2.1">2.1%</option>
+            <option value="0.0">0%</option>
+          </select>
         </div>
       </div>
 
