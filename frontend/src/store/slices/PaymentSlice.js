@@ -1,25 +1,30 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import i18n from '../../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Fetch platform fee configuration (buyer and seller percentages)
-export const fetchPlatformFees = createAsyncThunk(
-  'payment/fetchPlatformFees',
-  async (_, { rejectWithValue }) => {
+// Fetch platform fee configuration for a specific project
+export const fetchProjectPlatformFee = createAsyncThunk(
+  'payment/fetchProjectPlatformFee',
+  async ({ projectId, milestoneAmount = 0 }, { rejectWithValue }) => {
     try {
       const token = sessionStorage.getItem('access');
       const response = await axios.get(
-        `${BASE_URL}api/payments/fees/`,
+        `${BASE_URL}api/payments/project-fees/${projectId}/`,
         {
+          params: {
+            milestone_amount: milestoneAmount
+          },
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'X-User-Language': i18n.language,
           },
           withCredentials: true,
         }
       );
-      return response.data; // { buyer_fee_pct, seller_fee_pct }
+      return response.data; // { platform_fee_percentage, platform_fee_amount, milestone_amount, project_id }
     } catch (err) {
       return rejectWithValue(
         err.response && err.response.data ? err.response.data : err.message
@@ -151,10 +156,10 @@ export const fetchRevenueComparison = createAsyncThunk(
 const paymentSlice = createSlice({
   name: 'payment',
   initialState: {
-    // Platform fees
-    platformFees: null, // { buyer_fee_pct, seller_fee_pct }
-    platformFeesLoading: false,
-    platformFeesError: null,
+    // Project platform fees
+    projectPlatformFee: null, // { platform_fee_percentage, platform_fee_amount, milestone_amount, project_id }
+    projectPlatformFeeLoading: false,
+    projectPlatformFeeError: null,
 
     // Billings data
     billings: [],
@@ -189,18 +194,18 @@ const paymentSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Platform Fees
-      .addCase(fetchPlatformFees.pending, (state) => {
-        state.platformFeesLoading = true;
-        state.platformFeesError = null;
+      // Fetch Project Platform Fee
+      .addCase(fetchProjectPlatformFee.pending, (state) => {
+        state.projectPlatformFeeLoading = true;
+        state.projectPlatformFeeError = null;
       })
-      .addCase(fetchPlatformFees.fulfilled, (state, action) => {
-        state.platformFeesLoading = false;
-        state.platformFees = action.payload;
+      .addCase(fetchProjectPlatformFee.fulfilled, (state, action) => {
+        state.projectPlatformFeeLoading = false;
+        state.projectPlatformFee = action.payload;
       })
-      .addCase(fetchPlatformFees.rejected, (state, action) => {
-        state.platformFeesLoading = false;
-        state.platformFeesError = action.payload || 'Failed to fetch platform fees';
+      .addCase(fetchProjectPlatformFee.rejected, (state, action) => {
+        state.projectPlatformFeeLoading = false;
+        state.projectPlatformFeeError = action.payload || 'Failed to fetch project platform fee';
       })
       // Fetch Billings
       .addCase(fetchBillings.pending, (state) => {

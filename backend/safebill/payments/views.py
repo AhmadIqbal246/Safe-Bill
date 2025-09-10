@@ -373,6 +373,58 @@ def get_platform_fees(request):
     return Response(response_data, status=200)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_project_platform_fee(request, project_id):
+    """
+    Return platform fee information for a specific project.
+    Takes project_id as parameter and returns the platform fee percentage and calculated fee amount.
+    """
+    try:
+        from projects.models import Project
+        
+        # Get the project
+        project = Project.objects.get(id=project_id)
+        
+        # Get the platform fee percentage from the project
+        platform_fee_percentage = project.platform_fee_percentage
+        
+        # Calculate the fee amount for the milestone
+        milestone_amount = request.query_params.get('milestone_amount', 0)
+        try:
+            milestone_amount = float(milestone_amount)
+        except (ValueError, TypeError):
+            milestone_amount = 0.0
+            
+        # Convert milestone_amount to Decimal for proper calculation
+        from decimal import Decimal
+        milestone_amount_decimal = Decimal(str(milestone_amount))
+        
+        # Calculate platform fee amount using Decimal arithmetic
+        platform_fee_amount = (milestone_amount_decimal * platform_fee_percentage) / 100
+        
+        response_data = {
+            "platform_fee_percentage": float(platform_fee_percentage),
+            "platform_fee_amount": round(float(platform_fee_amount), 2),
+            "milestone_amount": milestone_amount,
+            "project_id": project_id
+        }
+        
+        return Response(response_data, status=200)
+        
+    except Project.DoesNotExist:
+        return Response(
+            {"error": "Project not found"}, 
+            status=404
+        )
+    except Exception as e:
+        logger.error(f"Error fetching project platform fee: {str(e)}")
+        return Response(
+            {"error": "Failed to fetch platform fee"}, 
+            status=500
+        )
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def generate_stripe_login_link(request):

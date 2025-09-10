@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchMilestones, updateMilestone, approveMilestone } from '../store/slices/ProjectSlice';
 import { fetchNotifications } from '../store/slices/NotificationSlice';
-import { fetchPlatformFees } from '../store/slices/PaymentSlice';
+import { fetchProjectPlatformFee } from '../store/slices/PaymentSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Dialog } from '@headlessui/react';
 import { toast } from 'react-toastify';
@@ -25,7 +25,7 @@ export default function MilestonePage() {
     approveMilestoneLoading
   } = useSelector(state => state.project);
 
-  const { platformFees, platformFeesLoading } = useSelector(state => state.payment);
+  const { projectPlatformFee, projectPlatformFeeLoading } = useSelector(state => state.payment);
 
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -51,32 +51,45 @@ export default function MilestonePage() {
   useEffect(() => {
     if (project?.id) {
       dispatch(fetchMilestones(project.id));
+      // Fetch platform fee for this project
+      dispatch(fetchProjectPlatformFee({ projectId: project.id, milestoneAmount: 0 }));
     }
-    dispatch(fetchPlatformFees());
   }, [dispatch, project?.id]);
 
   const projectMilestones = milestones[project?.id] || [];
 
-  // Calculate net amount after seller fee and stripe fee
+  // Function to fetch platform fee for a specific milestone amount
+  const fetchMilestonePlatformFee = (milestoneAmount) => {
+    if (project?.id) {
+      dispatch(fetchProjectPlatformFee({ 
+        projectId: project.id, 
+        milestoneAmount: milestoneAmount 
+      }));
+    }
+  };
+
+  // Calculate net amount after platform fee (simplified - no Stripe fees)
   const calculateNetAmount = (amount) => {
     const numericAmount = Number(amount);
-    const sellerFeePct = Number(platformFees?.seller_fee_pct || 0);
-    const buyerFeePct = Number(platformFees?.buyer_fee_pct || 0);
+    const platformFeePct = Number(projectPlatformFee?.platform_fee_percentage || 0);
     
-    // Calculate buyer fee (what buyer pays for platform)
-    const buyerFee = numericAmount * buyerFeePct;
+    // Use the calculated platform fee amount from API if available, otherwise calculate it
+    let platformFeeAmount;
+    if (projectPlatformFee && projectPlatformFee.milestone_amount === numericAmount) {
+      // Use the exact amount from API
+      platformFeeAmount = Number(projectPlatformFee.platform_fee_amount || 0);
+    } else {
+      // Calculate platform fee amount
+      platformFeeAmount = (numericAmount * platformFeePct) / 100;
+    }
     
-    // Calculate stripe fee (on what buyer pays: amount + buyer fee)
-    const stripeFee = (numericAmount + buyerFee) * 0.029 + 0.30;
-    
-    // Calculate seller net (what seller receives after their fee and stripe fee)
-    const sellerNet = numericAmount - (numericAmount * sellerFeePct) - stripeFee;
+    // Calculate seller net (what seller receives after platform fee)
+    const sellerNet = numericAmount - platformFeeAmount;
     
     return {
       grossAmount: numericAmount,
-      buyerFee: +buyerFee.toFixed(2),
-      stripeFee: +stripeFee.toFixed(2),
-      sellerFee: +(numericAmount * sellerFeePct).toFixed(2),
+      platformFee: +platformFeeAmount.toFixed(2),
+      platformFeePct: +platformFeePct.toFixed(1),
       netAmount: +Math.max(sellerNet, 0).toFixed(2)
     };
   };
@@ -283,7 +296,7 @@ export default function MilestonePage() {
                     <div className="text-lg font-semibold text-gray-800">
                       ${parseFloat(milestone.relative_payment).toLocaleString()}
                     </div>
-                    {platformFees && !platformFeesLoading && (
+                    {projectPlatformFee && !projectPlatformFeeLoading && (
                       <div className="text-sm text-green-600 font-medium">
                         You receive: ${calculateNetAmount(milestone.relative_payment).netAmount.toLocaleString()}
                       </div>
@@ -345,9 +358,9 @@ export default function MilestonePage() {
               )}
               
               {/* Simple Fee Info */}
-              {platformFees && !platformFeesLoading && (
+              {projectPlatformFee && !projectPlatformFeeLoading && (
                 <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  <span className="font-medium">Fees:</span> Platform {(Number(platformFees.seller_fee_pct) * 100).toFixed(1)}% + Stripe 2.9% + $0.30
+                  <span className="font-medium">Platform Fee:</span> {calculateNetAmount(milestone.relative_payment).platformFeePct}% (${calculateNetAmount(milestone.relative_payment).platformFee.toLocaleString()})
                 </div>
               )}
               {milestone.review_comment && (
