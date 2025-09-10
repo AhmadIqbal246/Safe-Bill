@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPlatformFees } from '../../store/slices/PaymentSlice';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
@@ -28,8 +27,6 @@ export default function ProjectCreation() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.project);
-  const [buyerFeePct, setBuyerFeePct] = useState(0); // 0.00 - 1.00
-  const [sellerFeePct, setSellerFeePct] = useState(0.05); // default 5%
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
@@ -43,33 +40,26 @@ export default function ProjectCreation() {
     paymentConfigs[installments - 1].map(row => ({ ...row }))
   );
 
-  // Fetch dynamic platform fees via Redux (shared API)
-  const { platformFees } = useSelector((state) => state.payment || {});
-  useEffect(() => {
-    dispatch(fetchPlatformFees());
-  }, [dispatch]);
-  useEffect(() => {
-    if (platformFees) {
-      const buyer = Number(platformFees?.buyer_fee_pct) || 0;
-      const seller = Number(platformFees?.seller_fee_pct) || 0.05;
-      setBuyerFeePct(buyer);
-      setSellerFeePct(seller);
-    }
-  }, [platformFees]);
+  // Calculate platform fee percentage based on total project amount (tiered system)
+  const getPlatformFeePct = (totalAmount) => {
+    if (totalAmount >= 500001) return 1.5;
+    if (totalAmount >= 400001) return 2.0;
+    if (totalAmount >= 300001) return 2.5;
+    if (totalAmount >= 200001) return 3.0;
+    if (totalAmount >= 100001) return 5.0;
+    if (totalAmount >= 1001) return 7.0;
+    return 10.0; // Default for amounts 500-1000
+  };
 
-  // Helper to compute per-row fees; platform fee uses project tier rate
+  // Helper to compute per-row fees; simplified platform fee only
   const computeRowFees = (amount, platformPct) => {
     const numericAmount = Number(amount) || 0;
-    const platformFee = +(numericAmount * platformPct).toFixed(2);
-    // Keep existing stripe/seller fee modeling
-    const platformFeeOld = numericAmount * (buyerFeePct + sellerFeePct);
-    const stripeFee = (numericAmount + platformFeeOld) * 0.029 + 0.30;
-    const sellerNet = numericAmount - (numericAmount * sellerFeePct) - stripeFee;
+    const platformFee = +(numericAmount * platformPct / 100).toFixed(2);
+    const sellerNet = numericAmount - platformFee;
     return {
       amount: numericAmount,
       platformFee,
-      stripeFee: +stripeFee.toFixed(2),
-      sellerNet: +sellerNet.toFixed(2),
+      netAmount: +Math.max(sellerNet, 0).toFixed(2),
     };
   };
 
@@ -78,18 +68,8 @@ export default function ProjectCreation() {
     const amount = Number(String(row.amount).replace(/[^0-9.]/g, '')) || 0;
     return sum + amount;
   }, 0);
-  const getPlatformFeePct = (total) => {
-    if (total >= 500001) return 0.015;
-    if (total >= 400001) return 0.02;
-    if (total >= 300001) return 0.025;
-    if (total >= 200001) return 0.03;
-    if (total >= 100001) return 0.05;
-    if (total >= 1001) return 0.07;
-    // For totals <= 1000 (including < 500), apply 10%
-    return 0.10;
-  };
   const platformPctForProject = getPlatformFeePct(totalProjectAmount);
-  const platformFeeForProject = +(totalProjectAmount * platformPctForProject).toFixed(2);
+  const platformFeeForProject = +(totalProjectAmount * platformPctForProject / 100).toFixed(2);
 
   // Calculate fees for each milestone using platformPctForProject
   const milestoneFees = installmentRows.map(row => {
@@ -101,7 +81,7 @@ export default function ProjectCreation() {
   });
 
   // Calculate total net earnings
-  const totalSellerNet = milestoneFees.reduce((sum, milestone) => sum + milestone.sellerNet, 0);
+  const totalSellerNet = milestoneFees.reduce((sum, milestone) => sum + milestone.netAmount, 0);
 
   // Update rows when installments count changes
   React.useEffect(() => {
@@ -386,7 +366,7 @@ export default function ProjectCreation() {
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{milestone.step}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{milestone.desc}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-€{(milestone.platformFee).toLocaleString()}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">€{milestone.sellerNet.toLocaleString()}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">€{milestone.netAmount.toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <button
                           className="p-1 hover:bg-gray-100 rounded cursor-pointer"
