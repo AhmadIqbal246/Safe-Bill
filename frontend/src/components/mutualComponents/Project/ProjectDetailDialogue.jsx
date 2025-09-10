@@ -24,6 +24,7 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.quote_reference')}</span> {project.quote?.reference_number}</div>
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.created_at')}</span> {project.created_at}</div>
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.total_amount')}</span> <span className="text-[#01257D] font-semibold">${parseFloat(project.total_amount).toLocaleString()}</span></div>
+            <div className="mb-1"><span className="font-semibold">VAT</span> {Number(project.vat_rate || 0).toFixed(1)}%</div>
             {project.quote?.file && (
               <div className="mb-1 flex items-center gap-2">
                 <span className="font-semibold">{t('project_dialog.quote_file')}</span>

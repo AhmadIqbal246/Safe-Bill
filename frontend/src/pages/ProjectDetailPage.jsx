@@ -210,6 +210,9 @@ export default function ProjectDetailPage() {
                 >
                   {getStatusText(project.status)}
                 </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                  VAT: {Number(project.vat_rate || 0).toFixed(1)}%
+                </span>
                 <button
                   onClick={() =>
                     navigate("/dispute-submit", { state: { project } })

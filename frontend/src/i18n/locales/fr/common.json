@@ -427,7 +427,7 @@
     "rejected": "Rejeté",
     "expired": "Expiré"
   },
-     "project_creation": {
+  "project_creation": {
      "title": "Création de Projet",
      "project_name_section": "Nom du Projet",
      "project_name_placeholder": "Entrez le nom du projet",
@@ -458,7 +458,10 @@
      "subtotal": "Sous-total",
      "platform_fee_label": "Frais de plateforme",
      "stripe_fee": "Frais Stripe (2,9 % + 0,30 €)",
-     "final_total": "Total final"
+     "final_total": "Total final",
+     "vat_section": "Taux de TVA",
+     "platform_fees": "Frais de plateforme",
+     "net_amount": "Montant Net"
    },
    "my_profile": {
      "title": "Mon Profil",

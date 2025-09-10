@@ -301,6 +301,14 @@ export default function InviteViewProject() {
               </div>
               <ProjectStatusBadge status={project.status} size="small" />
             </div>
+            <div>
+              <div className="text-xs text-gray-400 font-semibold mb-1">
+                VAT Rate
+              </div>
+              <div className="text-gray-900 font-medium">
+                {Number(project.vat_rate || 0).toFixed(1)}%
+              </div>
+            </div>
           </div>
         </div>
 
@@ -423,6 +431,7 @@ export default function InviteViewProject() {
             </div>
             <div className="text-sm text-gray-600 space-y-1">
               <div>Project Amount: ${baseAmount.toLocaleString()}</div>
+              <div>VAT ({Number(project.vat_rate || 0).toFixed(1)}%): Included/As Applicable</div>
               <div>Platform Fee ({buyerFeePct * 100}%): ${platformFee.toLocaleString()}</div>
               <div>Stripe Fee (2.9% + $0.30): ${stripeFee.toLocaleString()}</div>
             </div>

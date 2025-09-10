@@ -455,7 +455,10 @@
      "subtotal": "Subtotal",
      "platform_fee_label": "Platform fee",
      "stripe_fee": "Stripe fee (2.9% + €0.30)",
-     "final_total": "Final Total"
+     "final_total": "Final Total",
+     "vat_section": "VAT Rate",
+     "platform_fees": "Platform Fees",
+     "net_amount": "Net Amount"
    },
    "my_profile": {
      "title": "My Profile",
