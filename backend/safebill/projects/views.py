@@ -642,6 +642,8 @@ class MilestoneApprovalAPIView(APIView):
             # Get project reference
             project = milestone.project
 
+            print("DEBUGGER:: Milestone amount:", milestone.relative_payment)
+
             # Update balances when milestone is approved
             try:
                 if project.user and project.client:
