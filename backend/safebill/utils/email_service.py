@@ -9,6 +9,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils.html import strip_tags
+from django.utils import translation
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class EmailService:
         context: Dict[str, Any],
         from_email: Optional[str] = None,
         fail_silently: bool = False,
+        language: str = "en",
     ) -> bool:
         """
         Send an HTML email using Django templates.
@@ -46,8 +48,25 @@ class EmailService:
             if not from_email:
                 from_email = settings.DEFAULT_FROM_EMAIL
 
-            # Render HTML template
-            html_content = render_to_string(f"emails/{template_name}.html", context)
+            # Try localized template first: emails/{template_name}_{language}.html
+            lang = (language or "en").split("-")[0].lower()
+            template_candidates = [
+                f"emails/{template_name}_{lang}.html",
+                f"emails/{template_name}.html",
+            ]
+
+            # Render HTML template (first existing)
+            last_error = None
+            html_content = None
+            for tmpl in template_candidates:
+                try:
+                    html_content = render_to_string(tmpl, context)
+                    break
+                except Exception as e:
+                    last_error = e
+                    continue
+            if html_content is None:
+                raise last_error or Exception("Email template not found")
 
             # Create plain text version by stripping HTML tags
             text_content = strip_tags(html_content)
@@ -92,6 +111,7 @@ class EmailService:
         verification_url: str,
         user_type: str = "user",
         verification_code: str = None,
+        language: str = 'en',
     ) -> bool:
         """
         Send email verification email.
@@ -116,18 +136,21 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = "Verify Your Email - SafeBill"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Verify Your Email - SafeBill")
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="email_verification",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_password_reset_email(
-        user_email: str, user_name: str, reset_url: str, reset_code: str = None
+        user_email: str, user_name: str, reset_url: str, reset_code: str = None, language: str = 'en'
     ) -> bool:
         """
         Send password reset email.
@@ -150,18 +173,21 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = "Reset Your Password - SafeBill"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Reset Your Password - SafeBill")
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="password_reset",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_welcome_email(
-        user_email: str, user_name: str, user_type: str = "user"
+        user_email: str, user_name: str, user_type: str = "user", language: str = 'en'
     ) -> bool:
         """
         Send welcome email after successful registration.
@@ -182,13 +208,16 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        subject = "Welcome to SafeBill!"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Welcome to SafeBill!")
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="welcome",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -231,6 +260,54 @@ class EmailService:
         )
 
     @staticmethod
+    def send_dispute_created_email(
+        seller_email: str,
+        seller_name: str,
+        project_name: str,
+        dispute_id: str,
+        language: str = "en",
+        dashboard_url: Optional[str] = None,
+    ) -> bool:
+        """
+        Send localized email to the seller when a dispute is created.
+
+        Args:
+            seller_email: Seller's email address
+            seller_name: Seller's name
+            project_name: Project name
+            dispute_id: Dispute reference id
+            language: Preferred language code ('en' | 'fr')
+            dashboard_url: Optional URL to view disputes
+        """
+        if not dashboard_url:
+            dashboard_url = f"{settings.FRONTEND_URL}seller-dashboard"
+
+        with translation.override((language or "en").split(",")[0][:2]):
+            notification_title = translation.gettext(
+                "New dispute opened - {project_name}"
+            ).format(project_name=project_name)
+            notification_message = translation.gettext(
+                "A dispute ({dispute_id}) has been opened for project '{project_name}'."
+            ).format(dispute_id=dispute_id, project_name=project_name)
+
+            context = {
+                "user_name": seller_name,
+                "notification_title": notification_title,
+                "notification_message": notification_message,
+                "action_url": dashboard_url,
+                "site_name": "SafeBill",
+                "support_email": settings.DEFAULT_FROM_EMAIL,
+            }
+
+            return EmailService.send_email(
+                subject=notification_title,
+                recipient_list=[seller_email],
+                template_name="notification",
+                context=context,
+                language=language,
+            )
+
+    @staticmethod
     def send_quote_chat_notification(
         seller_email: str,
         seller_name: str,
@@ -238,6 +315,7 @@ class EmailService:
         buyer_email: str,
         project_name: str,
         message_preview: str,
+        language: str = 'en',
     ) -> bool:
         """
         Send email notification to seller for new quote chat message.
@@ -264,13 +342,16 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        subject = f"New Business Opportunity - Message from {buyer_name}"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("New Business Opportunity - Message from {buyer_name}").format(buyer_name=buyer_name)
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[seller_email],
             template_name="quote_chat_notification",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -280,6 +361,7 @@ class EmailService:
         subject: str,
         body: str,
         professional_id: str,
+        language: str = 'en',
     ) -> bool:
         """
         Send quote request email to professional.
@@ -309,11 +391,12 @@ class EmailService:
             recipient_list=[professional_email],
             template_name="quote_request",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_quote_request_confirmation(
-        sender_email: str, subject: str, professional_id: str, to_email: str
+        sender_email: str, subject: str, professional_id: str, to_email: str, language: str = 'en'
     ) -> bool:
         """
         Send confirmation email to quote request sender.
@@ -336,18 +419,25 @@ class EmailService:
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
         }
 
-        subject = "Quote Request Sent Successfully"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Quote Request Sent Successfully")
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[sender_email],
             template_name="quote_request_confirmation",
             context=context,
+            language=language,
         )
 
     @staticmethod
     def send_project_invitation_email(
-        client_email: str, project_name: str, invitation_url: str, invitation_token: str
+        client_email: str,
+        project_name: str,
+        invitation_url: str,
+        invitation_token: str,
+        language: str = "en",
     ) -> bool:
         """
         Send project invitation email to client.
@@ -363,6 +453,7 @@ class EmailService:
         """
         frontend_url = settings.FRONTEND_URL.rstrip("/")
 
+        print(language)
         context = {
             "project_name": project_name,
             "invitation_url": invitation_url,
@@ -372,9 +463,9 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = (
-            f"You've been invited to join the '{project_name}' " f"project on SafeBill"
-        )
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("You've been invited to join the '{project_name}' project on SafeBill").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,
@@ -382,6 +473,7 @@ class EmailService:
             template_name="project_invitation",
             context=context,
             fail_silently=True,  # Don't fail if email can't be sent
+            language=language,
         )
 
     @staticmethod
@@ -391,6 +483,7 @@ class EmailService:
         project_name: str,
         amount: str,
         dashboard_url: Optional[str] = None,
+        language: str = 'en',
     ) -> bool:
         """
         Send payment success email to client.
@@ -407,13 +500,16 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = f"Payment Successful - {project_name}"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Payment Successful - {project_name}").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="payment_success_client",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -423,6 +519,7 @@ class EmailService:
         project_name: str,
         amount: str,
         retry_url: Optional[str] = None,
+        language: str = 'en',
     ) -> bool:
         """
         Send payment failed email to client.
@@ -439,11 +536,14 @@ class EmailService:
             "support_email": settings.DEFAULT_FROM_EMAIL,
         }
 
-        subject = f"Payment Failed - {project_name}"
+        # Use Django's translation system
+        with translation.override(language):
+            subject = translation.gettext("Payment Failed - {project_name}").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,
             recipient_list=[user_email],
             template_name="payment_failed_client",
             context=context,
+            language=language,
         )

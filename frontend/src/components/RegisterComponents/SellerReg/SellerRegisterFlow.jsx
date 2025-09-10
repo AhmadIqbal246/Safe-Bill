@@ -133,7 +133,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
       if (!/^\d*$/.test(value)) {
         setErrors((prev) => ({
           ...prev,
-          [field]: t('registration.only_numbers_allowed_validation'),
+          [field]: t('seller_registration.only_numbers_allowed_validation'),
         }));
         return;
       } else {
@@ -211,13 +211,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
     if (!formData.businessNumber.trim()) {
       newErrors.businessNumber = t('seller_registration.business_registration_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.businessNumber)) {
-      newErrors.businessNumber = t('registration.only_numbers_allowed_validation');
+      newErrors.businessNumber = t('seller_registration.only_numbers_allowed_validation');
     }
     // Integer validation for phoneNumber
     if (!formData.phoneNumber.trim()) {
       newErrors.phoneNumber = t('seller_registration.phone_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = t('registration.only_numbers_allowed_validation');
+      newErrors.phoneNumber = t('seller_registration.only_numbers_allowed_validation');
     }
 
     // Password validation rules

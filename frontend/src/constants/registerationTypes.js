@@ -78,8 +78,6 @@ export const skillOptions = [
   { value: "evenementiel", label: "Événementiel" },
   
   // Ingénierie / Recherche et développement
-  { value: "materiel", label: "Matériel" },
-  { value: "services_ingenierie", label: "Services d'ingénierie" },
   { value: "bureau_etudes", label: "Bureau d'études" },
   { value: "innovation", label: "Innovation" },
   { value: "prototypage", label: "Prototypage" },
@@ -342,6 +340,45 @@ export const businessActivityStructure = [
         id: "construction",
         label: "Construction",
         subcategories: []
+      },
+      {
+        id: "genie_civil",
+        label: "Génie civil",
+        subcategories: []
+      },
+      {
+        id: "second_oeuvre",
+        label: "Second œuvre",
+        subcategories: [
+          { id: "plomberie", label: "Plomberie" },
+          { id: "carrelage_faience", label: "Carrelage et faïence" },
+          { id: "parquet", label: "Parquet (massif, contrecollé, stratifié)" },
+          { id: "moquette_textile", label: "Moquette et textile" },
+          { id: "sol_vinyle_pvc", label: "Sol vinyle/PVC" },
+          { id: "resine_epoxy", label: "Résine époxy" },
+          { id: "beton_cire", label: "Béton ciré" },
+          { id: "peinture_decorative_technique", label: "Peinture décorative et technique" },
+          { id: "papier_peint_revetements_muraux", label: "Papier peint et revêtements muraux" },
+          { id: "lambris_bois_pvc", label: "Lambris bois ou PVC" },
+          { id: "enduits_decoratifs", label: "Enduits décoratifs" },
+          { id: "carrelage_mural", label: "Carrelage mural" },
+          { id: "cloisons_seches_doublages", label: "Cloisons sèches et doublages" },
+          { id: "plafonds_suspendus", label: "Plafonds suspendus" },
+          { id: "faux_plafonds_decoratifs", label: "Faux plafonds décoratifs" },
+          { id: "peinture_plafond", label: "Peinture de plafond" },
+          { id: "plafonds_tendus", label: "Plafonds tendus" },
+          { id: "portes_interieures", label: "Portes intérieures" },
+          { id: "placards_rangements", label: "Placards et rangements" },
+          { id: "escaliers_interieurs", label: "Escaliers intérieurs" },
+          { id: "parquets_plinthes", label: "Parquets et plinthes" },
+          { id: "habillages_divers", label: "Habillages divers" },
+          { id: "autre", label: "Autre" }
+        ]
+      },
+      {
+        id: "materiaux",
+        label: "Matériaux",
+        subcategories: []
       }
     ]
   },
@@ -349,11 +386,6 @@ export const businessActivityStructure = [
     id: "commerce_distribution",
     label: "Commerce / Distribution",
     categories: [
-      {
-        id: "materiaux",
-        label: "Matériaux",
-        subcategories: []
-      },
       {
         id: "gros",
         label: "Gros",
@@ -411,8 +443,63 @@ export const businessActivityStructure = [
           { id: "typescript", label: "TypeScript" },
           { id: "php", label: "PHP" },
           { id: "python", label: "Python" },
-          { id: "ruby", label: "Ruby" }
+          { id: "ruby", label: "Ruby" },
+          { id: "java", label: "Java" },
+          { id: "csharp", label: "C#" },
+          { id: "go", label: "Go" },
+          { id: "perl", label: "Perl" },
+          { id: "swift", label: "Swift" },
+          { id: "kotlin", label: "Kotlin" },
+          { id: "dotnet", label: ".NET" },
+          { id: "nodejs", label: "Node.js" }
         ]
+      },
+      {
+        id: "applications_mobiles",
+        label: "Applications mobiles",
+        subcategories: [
+          { id: "applications_mobiles", label: "Applications mobiles" },
+          { id: "java", label: "Java" },
+          { id: "kotlin", label: "Kotlin" },
+          { id: "swift", label: "Swift" },
+          { id: "objective_c", label: "Objective-C" },
+          { id: "csharp", label: "C#" },
+          { id: "dart", label: "Dart" },
+          { id: "javascript", label: "JavaScript" },
+          { id: "python", label: "Python" },
+          { id: "cpp", label: "C++" },
+          { id: "html5", label: "HTML5" }
+        ]
+      },
+      {
+        id: "cybersecurite",
+        label: "Cybersécurité",
+        subcategories: []
+      },
+      {
+        id: "cloud_computing",
+        label: "Cloud computing",
+        subcategories: []
+      },
+      {
+        id: "ux_ui",
+        label: "UX/UI",
+        subcategories: []
+      },
+      {
+        id: "data",
+        label: "Data",
+        subcategories: []
+      },
+      {
+        id: "e_commerce",
+        label: "E-commerce",
+        subcategories: []
+      },
+      {
+        id: "reseaux_sociaux",
+        label: "Réseaux sociaux",
+        subcategories: []
       }
     ]
   },
@@ -514,16 +601,6 @@ export const businessActivityStructure = [
     id: "ingenierie_recherche_developpement",
     label: "Ingénierie / Recherche et développement",
     categories: [
-      {
-        id: "materiel",
-        label: "Matériel",
-        subcategories: []
-      },
-      {
-        id: "services",
-        label: "Services",
-        subcategories: []
-      },
       {
         id: "bureau_etudes",
         label: "Bureau d'études",
@@ -652,6 +729,21 @@ export const businessActivityStructure = [
         id: "etudes_marche",
         label: "Études de marché",
         subcategories: []
+      },
+      {
+        id: "creation_contenu",
+        label: "Création de contenu",
+        subcategories: []
+      },
+      {
+        id: "influence",
+        label: "Influence",
+        subcategories: []
+      },
+      {
+        id: "data_marketing",
+        label: "Data marketing",
+        subcategories: []
       }
     ]
   },
@@ -776,13 +868,23 @@ export const businessActivityStructure = [
         id: "gestion_equipements",
         label: "Gestion équipements",
         subcategories: []
+      },
+      {
+        id: "evenement_sportif",
+        label: "Événement sportif",
+        subcategories: []
       }
     ]
   },
   {
-    id: "services_aux_entreprises",
-    label: "Services aux entreprises",
+    id: "nettoyage_proprete_services_generaux",
+    label: "Nettoyage / Propreté / Services généraux",
     categories: [
+      {
+        id: "nettoyage_industriel",
+        label: "Nettoyage industriel",
+        subcategories: []
+      },
       {
         id: "proprete_locaux",
         label: "Propreté des locaux",
@@ -864,6 +966,89 @@ export const businessActivityStructure = [
     ]
   },
   {
+    id: "immobilier",
+    label: "Immobilier",
+    categories: [
+      {
+        id: "agence",
+        label: "Agence",
+        subcategories: []
+      },
+      {
+        id: "gestion_locative",
+        label: "Gestion locative",
+        subcategories: []
+      },
+      {
+        id: "promotion",
+        label: "Promotion",
+        subcategories: []
+      },
+      {
+        id: "syndic_copropriete",
+        label: "Syndic de copropriété",
+        subcategories: []
+      }
+    ]
+  },
+  {
+    id: "industrie",
+    label: "Industrie (tous secteurs confondus)",
+    categories: [
+      {
+        id: "metallurgie",
+        label: "Métallurgie",
+        subcategories: []
+      },
+      {
+        id: "textile",
+        label: "Textile",
+        subcategories: []
+      },
+      {
+        id: "chimie",
+        label: "Chimie",
+        subcategories: []
+      },
+      {
+        id: "machines",
+        label: "Machines",
+        subcategories: []
+      },
+      {
+        id: "electronique",
+        label: "Électronique",
+        subcategories: []
+      }
+    ]
+  },
+  {
+    id: "informatique_telecommunications",
+    label: "Informatique / Télécommunications",
+    categories: [
+      {
+        id: "developpement_logiciel",
+        label: "Développement logiciel",
+        subcategories: []
+      },
+      {
+        id: "reseaux",
+        label: "Réseaux",
+        subcategories: []
+      },
+      {
+        id: "materiel",
+        label: "Matériel",
+        subcategories: []
+      },
+      {
+        id: "services",
+        label: "Services",
+        subcategories: []
+      }
+    ]
+  },
+  {
     id: "technologies",
     label: "Technologies",
     categories: [
@@ -889,6 +1074,149 @@ export const businessActivityStructure = [
         ]
       }
     ]
+  },
+  {
+    id: "medical_paramedical_sante",
+    label: "Médical / Paramédical / Santé",
+    categories: [
+      {
+        id: "medecine_generale",
+        label: "Médecine générale",
+        subcategories: []
+      },
+      {
+        id: "paramedical",
+        label: "Paramédical",
+        subcategories: []
+      },
+      {
+        id: "soins_infirmiers",
+        label: "Soins infirmiers",
+        subcategories: []
+      },
+      {
+        id: "laboratoire",
+        label: "Laboratoire",
+        subcategories: []
+      },
+      {
+        id: "clinique",
+        label: "Clinique",
+        subcategories: []
+      },
+      {
+        id: "pharmacien",
+        label: "Pharmacien",
+        subcategories: []
+      },
+      {
+        id: "telemedecine",
+        label: "Télémédecine",
+        subcategories: []
+      },
+      {
+        id: "dispositifs_medicaux",
+        label: "Dispositifs médicaux",
+        subcategories: []
+      }
+    ]
+  },
+  {
+    id: "startups_innovation_technologique",
+    label: "Startups / Innovation technologique",
+    categories: [
+      {
+        id: "fintech",
+        label: "Fintech",
+        subcategories: []
+      },
+      {
+        id: "healthtech",
+        label: "Healthtech",
+        subcategories: []
+      },
+      {
+        id: "edtech",
+        label: "Edtech",
+        subcategories: []
+      },
+      {
+        id: "greentech",
+        label: "Greentech",
+        subcategories: []
+      },
+      {
+        id: "intelligence_artificielle",
+        label: "Intelligence artificielle",
+        subcategories: []
+      },
+      {
+        id: "blockchain",
+        label: "Blockchain",
+        subcategories: []
+      },
+      {
+        id: "iot",
+        label: "IoT",
+        subcategories: []
+      },
+      {
+        id: "robotique",
+        label: "Robotique",
+        subcategories: []
+      },
+      {
+        id: "incubateurs",
+        label: "Incubateurs",
+        subcategories: []
+      },
+      {
+        id: "accelerateurs",
+        label: "Accélérateurs",
+        subcategories: []
+      }
+    ]
+  },
+  {
+    id: "travail_temporaire_recrutement",
+    label: "Travail temporaire / Recrutement",
+    categories: [
+      {
+        id: "interim",
+        label: "Intérim",
+        subcategories: []
+      },
+      {
+        id: "cabinet_recrutement",
+        label: "Cabinet de recrutement",
+        subcategories: []
+      },
+      {
+        id: "chasse_tetes",
+        label: "Chasse de têtes",
+        subcategories: []
+      },
+      {
+        id: "portage_salarial",
+        label: "Portage salarial",
+        subcategories: []
+      },
+      {
+        id: "recrutement_digital",
+        label: "Recrutement digital",
+        subcategories: []
+      },
+      {
+        id: "talent_acquisition",
+        label: "Talent acquisition",
+        subcategories: []
+      }
+    ]
+  },
+  {
+    id: "autre",
+    label: "Autre",
+    categories: []
   }
 ];
 

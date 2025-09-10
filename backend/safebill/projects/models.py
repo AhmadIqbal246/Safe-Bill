@@ -43,6 +43,19 @@ class Project(models.Model):
         default="real_project",
         help_text="Type of project - real project or quote chat",
     )
+    invite_token_used = models.BooleanField(
+        default=False,
+        help_text="Whether the invite token has been used by the client",
+    )
+    refundable_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text=(
+            "Calculated refundable amount based on milestone adjustments and "
+            "payments"
+        ),
+    )
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"

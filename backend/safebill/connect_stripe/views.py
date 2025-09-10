@@ -633,6 +633,7 @@ def stripe_identity_webhook(request):
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
+                    language="en"  # Default to English for webhook emails
                 )
         except Exception:
             # Avoid breaking webhook flow if email fails
@@ -716,6 +717,7 @@ def stripe_identity_webhook(request):
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
+                    language="en"  # Default to English for webhook emails
                 )
         except Exception:
             # Avoid breaking webhook flow if email fails

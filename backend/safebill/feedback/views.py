@@ -119,13 +119,18 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
         try:
             instance = serializer.save()
             
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            
             # Send quote request email to the professional using new email service
             EmailService.send_quote_request_email(
                 professional_email=instance.to_email,
                 from_email=instance.from_email,
                 subject=instance.subject,
                 body=instance.body,
-                professional_id=instance.professional_id
+                professional_id=instance.professional_id,
+                language=language
             )
             
             # Send confirmation email to the sender using new email service
@@ -133,7 +138,8 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
                 sender_email=instance.from_email,
                 subject=instance.subject,
                 professional_id=instance.professional_id,
-                to_email=instance.to_email
+                to_email=instance.to_email,
+                language=language
             )
             
             return Response(

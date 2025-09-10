@@ -350,6 +350,7 @@
     "my_quotes": "My quotes",
     "current_projects": "Current projects",
     "completed_projects": "Completed projects",
+    "expired_tokens": "Expired tokens",
     "disputes": "Disputes",
     "my_profile": "My profile",
     "billings": "Billings",
@@ -1347,6 +1348,15 @@
   "common": {
     "error": "Error",
     "error_loading_data": "Error loading data",
-    "unexpected_error": "An unexpected error occurred"
+    "unexpected_error": "An unexpected error occurred",
+    "expired_tokens_description": "These projects have expired invitation links. Resend to generate a fresh invite for your client.",
+    "resend_invite": "Resend invite",
+    "no_expired_tokens": "No expired tokens found",
+    "invite_resent": "Invitation link resent successfully",
+    "loading": "Loading...",
+    "actions": "Actions",
+    "project": "Project",
+    "client_email": "Client email",
+    "created_at": "Created at"
   }
 }

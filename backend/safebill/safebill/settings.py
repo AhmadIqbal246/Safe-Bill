@@ -35,6 +35,20 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+# Allow custom headers for language detection
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-user-language',  # Custom header for language detection
+]
+
 # Initialise environment variables
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -75,6 +89,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "utils.language_middleware.LanguageMiddleware",  # Custom language middleware
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
 ]
 
@@ -158,6 +173,12 @@ AUTH_USER_MODEL = "accounts.User"
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
+
+# Supported languages
+LANGUAGES = [
+    ('en', 'English'),
+    ('fr', 'Français'),
+]
 
 TIME_ZONE = "UTC"
 

@@ -122,13 +122,18 @@ class SellerRegisterView(APIView):
             user_type = 'Professional Buyer' if role == 'professional-buyer' \
                 else 'Seller'
             
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            
             # Send verification email
             EmailService.send_verification_email(
                 user_email=user.email,
                 user_name=user_name,
                 verification_url=verification_url,
                 user_type=user_type,
-                verification_code=token
+                verification_code=token,
+                language=language
             )
             
             return Response(
@@ -152,13 +157,18 @@ class BuyerRegistrationView(APIView):
             # Get user name for email
             user_name = user.get_full_name() or user.username or user.email.split('@')[0]
             
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            
             # Send verification email
             EmailService.send_verification_email(
                 user_email=user.email,
                 user_name=user_name,
                 verification_url=verification_url,
                 user_type="buyer",
-                verification_code=token
+                verification_code=token,
+                language=language
             )
             
             return Response({'detail': 'Registration successful. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
@@ -181,10 +191,16 @@ class VerifyEmailView(APIView):
             
             # Send welcome email after successful verification
             user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            
             EmailService.send_welcome_email(
                 user_email=user.email,
                 user_name=user_name,
-                user_type=user.role
+                user_type=user.role,
+                language=language
             )
             
             return Response(
@@ -243,10 +259,16 @@ class VerifyEmailView(APIView):
                 
                 # Send welcome email after successful verification
                 user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+                
+                # Extract language from request headers
+                preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+                language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+                
                 EmailService.send_welcome_email(
                     user_email=user.email,
                     user_name=user_name,
-                    user_type=user.role
+                    user_type=user.role,
+                    language=language
                 )
                 
                 return Response(
@@ -311,13 +333,18 @@ class ResendVerificationView(APIView):
         # Get user name for email
         user_name = user.get_full_name() or user.username or user.email.split('@')[0]
         
+        # Extract language from request headers
+        preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+        language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+        
         # Send verification email
         EmailService.send_verification_email(
             user_email=user.email,
             user_name=user_name,
             verification_url=verification_url,
             user_type=user.role,
-            verification_code=token
+            verification_code=token,
+            language=language
         )
         
         return Response(
@@ -379,12 +406,17 @@ class PasswordResetRequestView(APIView):
             # Get user name for email
             user_name = user.get_full_name() or user.username or user.email.split('@')[0]
             
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            
             # Send password reset email using the new email service
             EmailService.send_password_reset_email(
                 user_email=user.email,
                 user_name=user_name,
                 reset_url=reset_url,
-                reset_code=token
+                reset_code=token,
+                language=language
             )
             
             return Response(

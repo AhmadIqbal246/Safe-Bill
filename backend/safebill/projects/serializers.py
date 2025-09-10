@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Project, Quote, PaymentInstallment, Milestone
+from payments.models import Payment
+from decimal import Decimal
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import timedelta
@@ -7,6 +9,7 @@ import secrets
 from utils.email_service import EmailService
 from django.conf import settings
 from notifications.models import Notification
+from django.db.models import Sum
 
 
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
@@ -77,6 +80,40 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_date", "project"]
 
     def update(self, instance, validated_data):
+        project = instance.project
+
+        # Validate milestone amount within paid amount limit if changing
+        if "relative_payment" in validated_data:
+            try:
+                total_paid = (
+                    Payment.objects.filter(project=project, status="paid")
+                    .values_list("amount", flat=True)
+                )
+                total_paid_amount = sum((Decimal(str(a)) for a in total_paid), Decimal("0"))
+            except Exception:
+                total_paid_amount = Decimal("0")
+
+            # Sum of other milestones (excluding current one)
+            other_total = (
+                project.milestones.exclude(id=instance.id)
+                .values_list("relative_payment", flat=True)
+            )
+            other_total_amount = sum((Decimal(str(a)) for a in other_total), Decimal("0"))
+
+            new_relative_payment = Decimal(str(validated_data.get("relative_payment")))
+
+            # Enforce: total milestones amount must not exceed amount paid by buyer
+            if other_total_amount + new_relative_payment > total_paid_amount:
+                print(other_total_amount + new_relative_payment)
+                print("Buyer Paid:", total_paid_amount)
+                raise serializers.ValidationError(
+                    {
+                        "relative_payment": [
+                            "Milestones total cannot exceed buyer-paid amount."
+                        ]
+                    }
+                )
+
         # Update milestone fields
         milestone = super().update(instance, validated_data)
 
@@ -93,6 +130,51 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
                 installment.amount = validated_data["relative_payment"]
 
             installment.save()
+
+        # If amount changed, compute and persist refundable_amount on the project
+        if "relative_payment" in validated_data:
+            try:
+                # i) amount paid for the project by the buyer
+                total_paid_amount = (
+                    Payment.objects.filter(project=project, status="paid")
+                    .aggregate(total_amount=Sum("amount"))
+                    .get("total_amount")
+                    or Decimal("0")
+                )
+                total_paid_amount = Decimal(str(total_paid_amount))
+
+                # ii) paid_amount: cumulative of approved milestones
+                approved_sum = (
+                    project.milestones.filter(status="approved")
+                    .aggregate(total=Sum("relative_payment"))
+                    .get("total")
+                    or Decimal("0")
+                )
+                approved_sum = Decimal(str(approved_sum))
+
+                # iii) new_amount = amount - paid_amount
+                new_amount = total_paid_amount - approved_sum
+
+                # iv) un_paid_amount: milestones status other than approved
+                unapproved_sum = (
+                    project.milestones.exclude(status="approved")
+                    .aggregate(total=Sum("relative_payment"))
+                    .get("total")
+                    or Decimal("0")
+                )
+                unapproved_sum = Decimal(str(unapproved_sum))
+
+                # v) refundable_amount = new_amount - un_paid_amount
+                refundable_amount = new_amount - unapproved_sum
+                if refundable_amount < Decimal("0"):
+                    refundable_amount = Decimal("0")
+
+                # Persist on project
+                project.refundable_amount = refundable_amount
+                project.save(update_fields=["refundable_amount"])
+            except Exception:
+                # Do not fail milestone update if refund calc errs
+                pass
 
         return milestone
 
@@ -143,11 +225,17 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         invite_link = f"{frontend_url}/project-invite?token={invite_token}"
 
         try:
+            # Try to infer language from request header if available
+            req = self.context.get("request")
+            preferred_lang = None
+            if req is not None:
+                preferred_lang = req.headers.get("X-User-Language") or req.META.get("HTTP_ACCEPT_LANGUAGE")
             EmailService.send_project_invitation_email(
                 client_email=project.client_email,
                 project_name=project.name,
                 invitation_url=invite_link,
                 invitation_token=invite_token,
+                language=(preferred_lang.split(",")[0] if preferred_lang else "en"),
             )
         except Exception as e:
             # Log the error but don't fail project creation
@@ -194,6 +282,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "created_at",
             "status",
             "project_type",
+            "invite_token",
             "approved_milestones",
             "total_milestones",
             "progress_pct",
