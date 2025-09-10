@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "adminpanelApp",
     "connect_stripe",
     "payments",
+
 ]
 
 MIDDLEWARE = [
@@ -238,3 +239,12 @@ STRIPE_CONNECT_WEBHOOK_SECRET = env("STRIPE_CONNECT_WEBHOOK_SECRET")
 STRIPE_VERIFICATION_FLOW_ID = env("STRIPE_VERIFICATION_FLOW_ID")
 
 # X-Frame-Options disabled for PDF iframe embedding
+
+# Celery Configuration
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_DEFAULT_QUEUE = 'emails'
