@@ -22,6 +22,10 @@ export const createProject = createAsyncThunk(
       if (projectData.vat_rate !== undefined && projectData.vat_rate !== null && projectData.vat_rate !== '') {
         formData.append('vat_rate', String(projectData.vat_rate));
       }
+      // Platform fee percentage if provided
+      if (projectData.platform_fee_percentage !== undefined && projectData.platform_fee_percentage !== null && projectData.platform_fee_percentage !== '') {
+        formData.append('platform_fee_percentage', String(projectData.platform_fee_percentage));
+      }
       const response = await axios.post(
         `${BASE_URL}api/projects/create/`,
         formData,

@@ -158,6 +158,7 @@ export default function ProjectCreation() {
       quote: { file: quoteFile },
       installments: selectedConfig,
       vat_rate: vatRate,
+      platform_fee_percentage: platformPctForProject * 100, // Convert to percentage (e.g., 0.10 -> 10.0)
     }));
   };
 

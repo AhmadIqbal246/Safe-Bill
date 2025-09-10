@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchPlatformFees } from "../store/slices/PaymentSlice";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
 import axios from "axios";
 import ProjectStatusBadge from "../components/common/ProjectStatusBadge";
@@ -23,8 +22,7 @@ function getQuoteFileUrl(file) {
 }
 
 export default function InviteViewProject() {
-  const dispatch = useDispatch();
-  const { platformFees } = useSelector((state) => state.payment || {});
+  const { t } = useTranslation();
   const query = useQuery();
   const token = query.get("token");
   const checkoutStatus = query.get("status");
@@ -38,17 +36,12 @@ export default function InviteViewProject() {
   const [checkoutProcessing, setCheckoutProcessing] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Fetch platform fees on mount
-  useEffect(() => {
-    dispatch(fetchPlatformFees());
-  }, [dispatch]);
 
-  // Derived fee breakdown from project.total_amount using dynamic fees
+  // Calculate total with VAT only (no platform fees or Stripe fees)
   const baseAmount = project?.total_amount ? Number(project.total_amount) : 0;
-  const buyerFeePct = Number(platformFees?.buyer_fee_pct || 0);
-  const platformFee = +((baseAmount * buyerFeePct)).toFixed(2);
-  const stripeFee = +(((baseAmount + platformFee) * 0.029) + 0.30).toFixed(2);
-  const buyerTotal = +(baseAmount + (baseAmount * buyerFeePct) + stripeFee).toFixed(2);
+  const vatRate = Number(project?.vat_rate || 0) / 100; // Convert percentage to decimal (e.g., 20% -> 0.20)
+  const vatAmount = +(baseAmount * vatRate).toFixed(2);
+  const buyerTotal = +(baseAmount + vatAmount).toFixed(2);
 
   const fetchProject = useCallback(async () => {
     setLoading(true);
@@ -234,7 +227,7 @@ export default function InviteViewProject() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader size="large" text="Loading project..." />
+        <Loader size="large" text={t('invite_view.loading_project')} />
       </div>
     );
   }
@@ -250,7 +243,7 @@ export default function InviteViewProject() {
   if (!project) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-lg text-gray-500">No project data to display.</div>
+        <div className="text-lg text-gray-500">{t('invite_view.no_project_data')}</div>
       </div>
     );
   }
@@ -259,21 +252,21 @@ export default function InviteViewProject() {
     <>
       <SafeBillHeader />
       <div className="max-w-4xl mx-auto py-10 px-4">
-        <h1 className="text-2xl font-bold mb-8">Review and Pay</h1>
+        <h1 className="text-2xl font-bold mb-8">{t('invite_view.review_and_pay')}</h1>
 
         {/* Project Information */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-bold mb-4">Project Information</h2>
+          <h2 className="text-lg font-bold mb-4">{t('invite_view.project_information')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-2">
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">
-                Project Name
+                {t('invite_view.project_name')}
               </div>
               <div className="text-gray-900 font-medium">{project.name}</div>
             </div>
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">
-                Client Email
+                {t('invite_view.client_email')}
               </div>
               <div className="text-gray-900 font-medium">
                 {project.client_email}
@@ -281,7 +274,7 @@ export default function InviteViewProject() {
             </div>
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">
-                Created At
+                {t('invite_view.created_at')}
               </div>
               <div className="text-gray-900 font-medium">
                 {project.created_at}
@@ -289,7 +282,7 @@ export default function InviteViewProject() {
             </div>
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">
-                Reference Number
+                {t('invite_view.reference_number')}
               </div>
               <div className="text-gray-900 font-medium">
                 {project.reference_number}
@@ -297,13 +290,13 @@ export default function InviteViewProject() {
             </div>
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">
-                Status
+                {t('invite_view.status')}
               </div>
               <ProjectStatusBadge status={project.status} size="small" />
             </div>
             <div>
               <div className="text-xs text-gray-400 font-semibold mb-1">
-                VAT Rate
+                {t('invite_view.vat_rate')}
               </div>
               <div className="text-gray-900 font-medium">
                 {Number(project.vat_rate || 0).toFixed(1)}%
@@ -314,7 +307,7 @@ export default function InviteViewProject() {
 
         {/* Quote Section */}
         <div className="mb-8">
-          <h2 className="text-lg font-bold mb-4">Quote</h2>
+          <h2 className="text-lg font-bold mb-4">{t('invite_view.quote')}</h2>
           <div className="flex flex-col items-center justify-center bg-[#F6F0F0] rounded-xl p-8 min-h-[400px]">
             {project.quote?.file ? (
               <div className="w-full text-center">
@@ -335,10 +328,10 @@ export default function InviteViewProject() {
                   </div>
                   <div className="text-gray-700 mb-4">
                     <div className="font-semibold text-lg mb-2">
-                      Quote Document
+                      {t('invite_view.quote_document')}
                     </div>
                     <div className="text-sm text-gray-500">
-                      Click below to view the full PDF document
+                      {t('invite_view.click_to_view_pdf')}
                     </div>
                   </div>
                 </div>
@@ -370,7 +363,7 @@ export default function InviteViewProject() {
                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                       />
                     </svg>
-                    View Quote PDF
+                    {t('invite_view.view_quote_pdf')}
                   </a>
                   <a
                     href={getQuoteFileUrl(project.quote.file)}
@@ -390,22 +383,22 @@ export default function InviteViewProject() {
                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    Download PDF
+                    {t('invite_view.download_pdf')}
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="text-gray-400">No quote file available.</div>
+              <div className="text-gray-400">{t('invite_view.no_quote_file')}</div>
             )}
           </div>
         </div>
 
         {/* Payment Validation Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-bold mb-4">Payment Validation</h2>
+          <h2 className="text-lg font-bold mb-4">{t('invite_view.payment_validation')}</h2>
           <div className="mb-4">
             <div className="text-xs text-gray-400 font-semibold mb-1">
-              Total Amount
+              {t('invite_view.total_amount')}
             </div>
             <div className="text-gray-900 font-bold text-lg mb-2">
               ${baseAmount.toLocaleString()}
@@ -414,7 +407,7 @@ export default function InviteViewProject() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
             {project.installments?.map((inst, idx) => (
               <div key={idx} className="bg-[#F6F0F0] rounded-lg p-4">
-                <div className="font-semibold mb-1">Installment {idx + 1}</div>
+                <div className="font-semibold mb-1">{t('invite_view.installment')} {idx + 1}</div>
                 <div className="text-gray-900 font-medium mb-1">
                   ${parseFloat(inst.amount).toLocaleString()}
                 </div>
@@ -426,14 +419,12 @@ export default function InviteViewProject() {
           {/* Total Payment Section */}
           <div className="bg-white rounded-lg p-4 border-2 border-gray-300 mb-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-lg font-semibold text-gray-900">Total Payment Required</span>
+              <span className="text-lg font-semibold text-gray-900">{t('invite_view.total_payment_required')}</span>
               <span className="text-2xl font-bold text-[#01257D]">${buyerTotal.toLocaleString()}</span>
             </div>
             <div className="text-sm text-gray-600 space-y-1">
-              <div>Project Amount: ${baseAmount.toLocaleString()}</div>
-              <div>VAT ({Number(project.vat_rate || 0).toFixed(1)}%): Included/As Applicable</div>
-              <div>Platform Fee ({buyerFeePct * 100}%): ${platformFee.toLocaleString()}</div>
-              <div>Stripe Fee (2.9% + $0.30): ${stripeFee.toLocaleString()}</div>
+              <div>{t('invite_view.project_amount')}: ${baseAmount.toLocaleString()}</div>
+              <div>{t('invite_view.vat')} ({Number(project.vat_rate || 0).toFixed(1)}%): ${vatAmount.toLocaleString()}</div>
             </div>
           </div>
 
@@ -446,8 +437,7 @@ export default function InviteViewProject() {
               onChange={(e) => setTermsAccepted(e.target.checked)}
             />
             <label htmlFor="terms" className="text-sm text-gray-700">
-              I agree to the terms and conditions of this project and payment
-              schedule.
+              {t('invite_view.agree_terms')}
             </label>
           </div>
           {/* <div className="flex gap-4">
@@ -459,11 +449,11 @@ export default function InviteViewProject() {
         {/* Checkout Processing Section */}
         {checkoutProcessing && (
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <h2 className="text-lg font-bold mb-4">Processing Payment</h2>
+            <h2 className="text-lg font-bold mb-4">{t('invite_view.processing_payment')}</h2>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <Loader
                 size="large"
-                text="Processing your payment, please wait..."
+                text={t('invite_view.processing_payment_wait')}
               />
             </div>
           </div>
@@ -472,7 +462,7 @@ export default function InviteViewProject() {
         {/* Payment Status Section */}
         {paymentStatus && (
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <h2 className="text-lg font-bold mb-4">Payment Status</h2>
+            <h2 className="text-lg font-bold mb-4">{t('invite_view.payment_status')}</h2>
 
             {/* Pending Payment */}
             {paymentStatus === "pending" && (
@@ -493,10 +483,10 @@ export default function InviteViewProject() {
                   </svg>
                   <div>
                     <h3 className="text-lg font-semibold text-orange-800">
-                      Payment Pending
+                      {t('invite_view.payment_pending')}
                     </h3>
                     <p className="text-orange-700">
-                      Please make a payment to start the project.
+                      {t('invite_view.payment_pending_message')}
                     </p>
                   </div>
                 </div>
@@ -508,7 +498,7 @@ export default function InviteViewProject() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <Loader
                   size="large"
-                  text="Please wait, your payment is being processed..."
+                  text={t('invite_view.payment_processing_wait')}
                 />
               </div>
             )}
@@ -532,10 +522,10 @@ export default function InviteViewProject() {
                   </svg>
                   <div>
                     <h3 className="text-lg font-semibold text-red-800">
-                      Payment Failed
+                      {t('invite_view.payment_failed')}
                     </h3>
                     <p className="text-red-700">
-                      Your payment could not be processed. Please try again.
+                      {t('invite_view.payment_failed_message')}
                     </p>
                   </div>
                 </div>
@@ -556,7 +546,7 @@ export default function InviteViewProject() {
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                  Retry Payment
+                  {t('invite_view.retry_payment')}
                 </button>
               </div>
             )}
@@ -580,11 +570,10 @@ export default function InviteViewProject() {
                   </svg>
                   <div>
                     <h3 className="text-lg font-semibold text-green-800">
-                      Payment Successful
+                      {t('invite_view.payment_successful')}
                     </h3>
                     <p className="text-green-700">
-                      Your payment has been processed successfully. Project will
-                      be updated shortly.
+                      {t('invite_view.payment_successful_message')}
                     </p>
                   </div>
                 </div>
@@ -595,10 +584,9 @@ export default function InviteViewProject() {
         {/* Project Action Buttons */}
         {project.status === "pending" && (
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <h2 className="text-lg font-bold mb-4">Project Approval</h2>
+            <h2 className="text-lg font-bold mb-4">{t('invite_view.project_approval')}</h2>
             <p className="text-gray-600 mb-6">
-              Please review the project details above. You can either approve or
-              reject this project.
+              {t('invite_view.project_approval_message')}
             </p>
 
             {actionMessage && (
@@ -639,7 +627,7 @@ export default function InviteViewProject() {
                         d="M4 12a8 8 0 018-8v8z"
                       />
                     </svg>
-                    Processing...
+                    {t('invite_view.processing')}
                   </>
                 ) : (
                   <>
@@ -656,7 +644,7 @@ export default function InviteViewProject() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Approve Project
+                    {t('invite_view.approve_project')}
                   </>
                 )}
               </button>
@@ -684,7 +672,7 @@ export default function InviteViewProject() {
                         d="M4 12a8 0 018-8v8z"
                       />
                     </svg>
-                    Processing...
+                    {t('invite_view.processing')}
                   </>
                 ) : (
                   <>
@@ -701,7 +689,7 @@ export default function InviteViewProject() {
                         d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
-                    Reject Project
+                    {t('invite_view.reject_project')}
                   </>
                 )}
               </button>
@@ -728,11 +716,10 @@ export default function InviteViewProject() {
               </svg>
               <div>
                 <h3 className="text-lg font-semibold text-yellow-800">
-                  Payment In Progress
+                  {t('invite_view.payment_in_progress')}
                 </h3>
                 <p className="text-yellow-700">
-                  Your payment is currently being processed. Please wait while
-                  we confirm your payment.
+                  {t('invite_view.payment_in_progress_message')}
                 </p>
               </div>
             </div>
@@ -758,10 +745,10 @@ export default function InviteViewProject() {
               </svg>
               <div>
                 <h3 className="text-lg font-semibold text-green-800">
-                  Project Approved
+                  {t('invite_view.project_approved')}
                 </h3>
                 <p className="text-green-700">
-                  This project has been approved and is now active.
+                  {t('invite_view.project_approved_message')}
                 </p>
               </div>
             </div>
@@ -786,10 +773,10 @@ export default function InviteViewProject() {
               </svg>
               <div>
                 <h3 className="text-lg font-semibold text-red-800">
-                  Project Rejected
+                  {t('invite_view.project_rejected')}
                 </h3>
                 <p className="text-red-700">
-                  This project has been rejected and is no longer active.
+                  {t('invite_view.project_rejected_message')}
                 </p>
               </div>
             </div>
@@ -797,7 +784,7 @@ export default function InviteViewProject() {
         )}
 
         <div className="text-center text-xs text-gray-400 mt-6">
-          Secured with SSL encryption and processed through Stripe
+          {t('invite_view.secured_ssl')}
         </div>
       </div>
     </>

@@ -88,6 +88,14 @@ class ProjectCreateAPIView(generics.CreateAPIView):
             except (TypeError, ValueError):
                 return Response({"vat_rate": ["Invalid VAT rate value"]}, status=400)
 
+        # Handle platform fee percentage (optional, defaults server-side)
+        platform_fee_pct_val = request.data.get("platform_fee_percentage")
+        if platform_fee_pct_val is not None and platform_fee_pct_val != "":
+            try:
+                data["platform_fee_percentage"] = float(platform_fee_pct_val)
+            except (TypeError, ValueError):
+                return Response({"platform_fee_percentage": ["Invalid platform fee percentage value"]}, status=400)
+
         # Create serializer with processed data
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

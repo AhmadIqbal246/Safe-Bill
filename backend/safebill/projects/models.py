@@ -62,6 +62,12 @@ class Project(models.Model):
         default=20.0,
         help_text="Applicable VAT rate percentage (e.g. 20.0 for 20%)",
     )
+    platform_fee_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10.0,
+        help_text="Platform fee percentage applied to this project (e.g. 10.0 for 10%)",
+    )
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"

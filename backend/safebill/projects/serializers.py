@@ -183,10 +183,11 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
     vat_rate = serializers.DecimalField(max_digits=4, decimal_places=1, required=False)
+    platform_fee_percentage = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
 
     class Meta:
         model = Project
-        fields = ["name", "client_email", "quote", "installments", "vat_rate"]
+        fields = ["name", "client_email", "quote", "installments", "vat_rate", "platform_fee_percentage"]
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -285,6 +286,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "project_type",
             "invite_token",
             "vat_rate",
+            "platform_fee_percentage",
             "approved_milestones",
             "total_milestones",
             "progress_pct",
@@ -351,6 +353,7 @@ class ClientProjectSerializer(serializers.ModelSerializer):
             "project_type",
             "invite_token",
             "vat_rate",
+            "platform_fee_percentage",
             "approved_milestones",
             "total_milestones",
             "progress_pct",
