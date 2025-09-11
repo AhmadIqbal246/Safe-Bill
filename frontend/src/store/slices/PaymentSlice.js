@@ -1,25 +1,25 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import i18n from '../../i18n';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import i18n from "../../i18n";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Fetch platform fee configuration for a specific project
 export const fetchProjectPlatformFee = createAsyncThunk(
-  'payment/fetchProjectPlatformFee',
+  "payment/fetchProjectPlatformFee",
   async ({ projectId, milestoneAmount = 0 }, { rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem('access');
+      const token = sessionStorage.getItem("access");
       const response = await axios.get(
         `${BASE_URL}api/payments/project-fees/${projectId}/`,
         {
           params: {
-            milestone_amount: milestoneAmount
+            milestone_amount: milestoneAmount,
           },
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-User-Language': i18n.language,
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-User-Language": i18n.language,
           },
           withCredentials: true,
         }
@@ -35,19 +35,16 @@ export const fetchProjectPlatformFee = createAsyncThunk(
 
 // Fetch user's payment history (billings)
 export const fetchBillings = createAsyncThunk(
-  'payment/fetchBillings',
+  "payment/fetchBillings",
   async (_, { rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem('access');
-      const response = await axios.get(
-        `${BASE_URL}api/payments/billings/`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const token = sessionStorage.getItem("access");
+      const response = await axios.get(`${BASE_URL}api/payments/billings/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (err) {
       return rejectWithValue(
@@ -59,19 +56,16 @@ export const fetchBillings = createAsyncThunk(
 
 // Fetch user's balance summary
 export const fetchBalance = createAsyncThunk(
-  'payment/fetchBalance',
+  "payment/fetchBalance",
   async (_, { rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem('access');
-      const response = await axios.get(
-        `${BASE_URL}api/payments/balance/`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const token = sessionStorage.getItem("access");
+      const response = await axios.get(`${BASE_URL}api/payments/balance/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (err) {
       return rejectWithValue(
@@ -83,16 +77,16 @@ export const fetchBalance = createAsyncThunk(
 
 // Fetch seller payout holds
 export const fetchPayoutHolds = createAsyncThunk(
-  'payment/fetchPayoutHolds',
+  "payment/fetchPayoutHolds",
   async (_, { rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem('access');
+      const token = sessionStorage.getItem("access");
       const response = await axios.get(
         `${BASE_URL}api/payments/payout-holds/`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -107,19 +101,37 @@ export const fetchPayoutHolds = createAsyncThunk(
 
 // Fetch seller transfer history (payouts)
 export const fetchTransfers = createAsyncThunk(
-  'payment/fetchTransfers',
+  "payment/fetchTransfers",
   async (_, { rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem('access');
-      const response = await axios.get(
-        `${BASE_URL}api/payments/transfers/`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      const token = sessionStorage.getItem("access");
+      const response = await axios.get(`${BASE_URL}api/payments/transfers/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
       );
+    }
+  }
+);
+
+// Fetch buyer refunded payments
+export const fetchRefundedPayments = createAsyncThunk(
+  "payment/fetchRefundedPayments",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem("access");
+      const response = await axios.get(`${BASE_URL}api/payments/refunds/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (err) {
       return rejectWithValue(
@@ -131,16 +143,16 @@ export const fetchTransfers = createAsyncThunk(
 
 // Fetch revenue comparison data
 export const fetchRevenueComparison = createAsyncThunk(
-  'payment/fetchRevenueComparison',
+  "payment/fetchRevenueComparison",
   async (_, { rejectWithValue }) => {
     try {
-      const token = sessionStorage.getItem('access');
+      const token = sessionStorage.getItem("access");
       const response = await axios.get(
         `${BASE_URL}api/payments/revenue-comparison/`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         }
       );
@@ -153,8 +165,59 @@ export const fetchRevenueComparison = createAsyncThunk(
   }
 );
 
+export const RefundPayment = createAsyncThunk(
+  "payment/RefundPayment",
+  async ({ projectId }, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem("access");
+      const response = await axios.post(
+        `${BASE_URL}api/payments/payment-refund/${projectId}/`,
+        {
+          status: "pending",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    }
+    catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
+export const updateRefundBalance = createAsyncThunk(
+  "payment/updateRefundBalance",
+  async ({ milestoneId }, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem("access");
+      const response = await axios.post(
+        `${BASE_URL}api/payments/update-refund-balance/${milestoneId}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return response.data;
+    }
+  catch (err) {
+    return rejectWithValue(
+      err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 const paymentSlice = createSlice({
-  name: 'payment',
+  name: "payment",
   initialState: {
     // Project platform fees
     projectPlatformFee: null, // { platform_fee_percentage, platform_fee_amount, milestone_amount, project_id }
@@ -165,7 +228,7 @@ const paymentSlice = createSlice({
     billings: [],
     billingsLoading: false,
     billingsError: null,
-    
+
     // Balance data
     balance: null,
     balanceLoading: false,
@@ -181,10 +244,25 @@ const paymentSlice = createSlice({
     transfersLoading: false,
     transfersError: null,
 
+    // Refunded payments (buyer)
+    refunded: [],
+    refundedLoading: false,
+    refundedError: null,
+
     // Revenue comparison (seller)
     revenueComparison: null,
     revenueComparisonLoading: false,
     revenueComparisonError: null,
+
+    // Refund payment
+    refundPayment: null,
+    refundPaymentLoading: false,
+    refundPaymentError: null,
+
+    // Update refund balance
+    updateRefundBalance: null,
+    updateRefundBalanceLoading: false,
+    updateRefundBalanceError: null,
   },
   reducers: {
     clearPaymentState: (state) => {
@@ -205,7 +283,8 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchProjectPlatformFee.rejected, (state, action) => {
         state.projectPlatformFeeLoading = false;
-        state.projectPlatformFeeError = action.payload || 'Failed to fetch project platform fee';
+        state.projectPlatformFeeError =
+          action.payload || "Failed to fetch project platform fee";
       })
       // Fetch Billings
       .addCase(fetchBillings.pending, (state) => {
@@ -218,9 +297,9 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchBillings.rejected, (state, action) => {
         state.billingsLoading = false;
-        state.billingsError = action.payload || 'Failed to fetch billings';
+        state.billingsError = action.payload || "Failed to fetch billings";
       })
-      
+
       // Fetch Balance
       .addCase(fetchBalance.pending, (state) => {
         state.balanceLoading = true;
@@ -232,7 +311,7 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchBalance.rejected, (state, action) => {
         state.balanceLoading = false;
-        state.balanceError = action.payload || 'Failed to fetch balance';
+        state.balanceError = action.payload || "Failed to fetch balance";
       })
       // Fetch Payout Holds
       .addCase(fetchPayoutHolds.pending, (state) => {
@@ -245,7 +324,8 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchPayoutHolds.rejected, (state, action) => {
         state.payoutHoldsLoading = false;
-        state.payoutHoldsError = action.payload || 'Failed to fetch payout holds';
+        state.payoutHoldsError =
+          action.payload || "Failed to fetch payout holds";
       })
       // Fetch Transfers
       .addCase(fetchTransfers.pending, (state) => {
@@ -258,7 +338,20 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchTransfers.rejected, (state, action) => {
         state.transfersLoading = false;
-        state.transfersError = action.payload || 'Failed to fetch transfers';
+        state.transfersError = action.payload || "Failed to fetch transfers";
+      })
+      // Fetch Refunded Payments (buyer)
+      .addCase(fetchRefundedPayments.pending, (state) => {
+        state.refundedLoading = true;
+        state.refundedError = null;
+      })
+      .addCase(fetchRefundedPayments.fulfilled, (state, action) => {
+        state.refundedLoading = false;
+        state.refunded = action.payload.results || [];
+      })
+      .addCase(fetchRefundedPayments.rejected, (state, action) => {
+        state.refundedLoading = false;
+        state.refundedError = action.payload || "Failed to fetch refunded payments";
       })
       // Fetch Revenue Comparison
       .addCase(fetchRevenueComparison.pending, (state) => {
@@ -271,7 +364,34 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchRevenueComparison.rejected, (state, action) => {
         state.revenueComparisonLoading = false;
-        state.revenueComparisonError = action.payload || 'Failed to fetch revenue comparison';
+        state.revenueComparisonError =
+          action.payload || "Failed to fetch revenue comparison";
+      })
+      // Refund Payment
+      .addCase(RefundPayment.pending, (state) => {
+        state.refundPaymentLoading = true;
+        state.refundPaymentError = null;
+      })
+      .addCase(RefundPayment.fulfilled, (state, action) => {
+        state.refundPaymentLoading = false;
+        state.refundPayment = action.payload;
+      })
+      .addCase(RefundPayment.rejected, (state, action) => {
+        state.refundPaymentLoading = false;
+        state.refundPaymentError = action.payload || "Failed to refund payment";
+      })
+      // Update Refund Balance
+      .addCase(updateRefundBalance.pending, (state) => {
+        state.updateRefundBalanceLoading = true;
+        state.updateRefundBalanceError = null;
+      })
+      .addCase(updateRefundBalance.fulfilled, (state, action) => {
+        state.updateRefundBalanceLoading = false;
+        state.updateRefundBalance = action.payload;
+      })
+      .addCase(updateRefundBalance.rejected, (state, action) => {
+        state.updateRefundBalanceLoading = false;
+        state.updateRefundBalanceError = action.payload || "Failed to update refund balance";
       });
   },
 });

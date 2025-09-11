@@ -2,7 +2,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
-from .models import Balance, Payment, PayoutHold, PlatformFeeConfig
+from .models import Balance, Payment, PayoutHold
 from django.contrib.auth import get_user_model
 from projects.models import Project, Milestone
 from notifications.services import NotificationService
@@ -15,62 +15,40 @@ logger = logging.getLogger(__name__)
 
 class FeeCalculationService:
     """
-    Service class for calculating all platform and Stripe fees
+    Service class for calculating amounts: buyer pays base + VAT only;
+    platform fee applies to the seller side (reduces seller net).
     """
 
     @staticmethod
-    def calculate_fees(base_amount):
+    def calculate_fees(base_amount, platform_fee_percentage, vat_rate):
         """
-        Calculate all fees for a given base amount.
+        Calculate core amounts for a given base amount.
 
         Args:
             base_amount (Decimal): The base project amount
 
         Returns:
-            dict: Dictionary containing all calculated fees and amounts
+            dict: Dictionary containing calculated amounts
         """
         # Ensure Decimal math
         base_amount = Decimal(str(base_amount))
-
-        # Get fee configuration
-        cfg = PlatformFeeConfig.current()
-        buyer_fee_pct = Decimal(str(cfg.buyer_fee_pct))
-        seller_fee_pct = Decimal(str(cfg.seller_fee_pct))
-
-        # Stripe constants
-        stripe_fee_pct = Decimal("0.029")
-        stripe_fixed = Decimal("0.30")
-
-        # Calculate platform fees
-        buyer_fee_amount = base_amount * buyer_fee_pct
-        seller_fee_amount = base_amount * seller_fee_pct
-
-        # Platform fee is only the buyer fee (matching frontend logic)
-        platform_fee = buyer_fee_amount
-
-        # Stripe takes fee on total processed amount (base_amount + platform_fee)
-        stripe_fee_base = base_amount + platform_fee
-        stripe_fee = stripe_fee_base * stripe_fee_pct + stripe_fixed
+        platform_fee_percentage = Decimal(str(platform_fee_percentage))
+        platform_fee_amount = (base_amount * platform_fee_percentage) / Decimal("100")
+        vat_amount = (base_amount * vat_rate) / Decimal("100")
 
         # Calculate final amounts
-        # Buyer pays: base amount + buyer fee + stripe fee
-        buyer_total = base_amount + buyer_fee_amount + stripe_fee
+        # Buyer pays: base amount + VAT only
+        buyer_total = base_amount + vat_amount
 
-        # Seller receives: base amount - seller fee - stripe fee
-        seller_net = base_amount - seller_fee_amount - stripe_fee
+        # Seller receives: base amount - platform fee
+        seller_net = base_amount - platform_fee_amount
 
         return {
             "base_amount": base_amount,
-            "buyer_fee_pct": buyer_fee_pct,
-            "seller_fee_pct": seller_fee_pct,
-            "buyer_fee_amount": buyer_fee_amount,
-            "seller_fee_amount": seller_fee_amount,
-            "platform_fee": platform_fee,
-            "stripe_fee_pct": stripe_fee_pct,
-            "stripe_fixed": stripe_fixed,
-            "stripe_fee": stripe_fee,
+            "platform_fee": platform_fee_amount,
             "buyer_total": buyer_total,
             "seller_net": seller_net,
+            "vat_amount": vat_amount,
         }
 
     @staticmethod
@@ -101,11 +79,13 @@ class FeeCalculationService:
             return net_amount
         else:
             # Calculate using current fee configuration
-            fees = FeeCalculationService.calculate_fees(base_amount)
+            fees = FeeCalculationService.calculate_fees(
+                base_amount, project.platform_fee_percentage, project.vat_rate
+            )
             return fees["seller_net"]
 
     @staticmethod
-    def estimate_seller_net(base_amount):
+    def estimate_seller_net(base_amount, project):
         """
         Estimate seller net amount for a given base amount using current fee configuration.
 
@@ -115,7 +95,9 @@ class FeeCalculationService:
         Returns:
             Decimal: Estimated seller net amount
         """
-        fees = FeeCalculationService.calculate_fees(base_amount)
+        fees = FeeCalculationService.calculate_fees(
+            base_amount, project.platform_fee_percentage, project.vat_rate
+        )
         return max(fees["seller_net"], Decimal("0.00"))
 
 
@@ -352,35 +334,6 @@ class BalanceService:
                 return balance
 
     @staticmethod
-    def process_milestone_payment(seller, buyer, milestone_amount):
-        """
-        Process payment for a completed milestone.
-        This transfers funds from buyer's escrow to seller's balance (net) and
-        creates a payout hold for the seller (net).
-
-        Args:
-            seller: User object (the seller)
-            buyer: User object (the buyer)
-            milestone_amount: Decimal amount for the milestone
-        """
-        with transaction.atomic():
-            # Release funds from buyer's escrow (gross amount tracked in escrow)
-            BalanceService.release_escrow_funds(buyer, milestone_amount)
-
-            # Estimate net amount using fee formula when project context is unknown
-            net_amount = BalanceService._estimate_seller_net(milestone_amount)
-
-            # Add funds to seller's balance using net amount
-            BalanceService.update_seller_balance_on_milestone_approval(
-                seller, net_amount
-            )
-
-        # Create payout hold outside the balance lock
-        # Need project context; caller should pass seller's current project via keyword if needed
-        # The caller (MilestoneApprovalAPIView) knows the project; we add a project-aware overload
-        return True
-
-    @staticmethod
     def process_milestone_payment_with_project(
         seller, buyer, project, milestone_amount
     ):
@@ -397,11 +350,10 @@ class BalanceService:
             if not payment:
                 logger.error(f"No verified payment found for project {project.id}")
                 return False
-
-            # Compute net amount using the verified payment's fee structure
-            net_amount = BalanceService._project_net_for_amount(
-                project, milestone_amount
-            )
+            platform_fee_amount = (
+                project.platform_fee_percentage * milestone_amount
+            ) / Decimal("100")
+            net_amount = milestone_amount - platform_fee_amount
 
             logger.info(
                 f"Processing milestone payment: project={project.id}, milestone_amount={milestone_amount}, net_amount={net_amount}"
@@ -422,8 +374,7 @@ class BalanceService:
     def _estimate_seller_net(base_amount: Decimal) -> Decimal:
         """
         Estimate seller's net for a given base amount using fee formula.
-        For seller net: base_amount - seller_fee - stripe_fee
-        Stripe fee is calculated on (base_amount + buyer_fee) since that's what buyer pays
+        For seller net: base_amount minus platform fee (seller side only).
         """
         if base_amount <= Decimal("0.00"):
             return Decimal("0.00")

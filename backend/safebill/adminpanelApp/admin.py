@@ -9,8 +9,8 @@ class PlatformRevenueAdmin(admin.ModelAdmin):
     list_display = [
         "year",
         "month",
-        "buyer_revenue",
         "seller_revenue",
+        "vat_collected",
         "total_revenue",
         "total_payments",
         "total_milestones_approved",
@@ -25,7 +25,7 @@ class PlatformRevenueAdmin(admin.ModelAdmin):
         ("Period", {"fields": ("year", "month")}),
         (
             "Revenue Breakdown",
-            {"fields": ("buyer_revenue", "seller_revenue", "total_revenue")},
+            {"fields": ("seller_revenue", "vat_collected", "total_revenue")},
         ),
         (
             "Transaction Counts",
@@ -42,10 +42,6 @@ class PlatformRevenueAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         # Only allow adding through the service methods
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        # Allow viewing but not manual editing to maintain data integrity
         return False
 
     def has_delete_permission(self, request, obj=None):

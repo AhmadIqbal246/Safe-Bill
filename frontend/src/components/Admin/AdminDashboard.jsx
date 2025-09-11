@@ -25,6 +25,7 @@ import {
   fetchRevenueMonths,
   fetchPaidPayments,
   fetchTransfers,
+  fetchRefunds,
 } from '../../store/slices/AdminSlice';
 import { Dialog } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
@@ -193,6 +194,7 @@ export default function AdminDashboard() {
           dispatch(fetchRevenueMonths()),
           dispatch(fetchPaidPayments()),
           dispatch(fetchTransfers()),
+          dispatch(fetchRefunds()),
         ]);
 
         if (isSuperAdmin) {
@@ -354,9 +356,9 @@ export default function AdminDashboard() {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-semibold text-emerald-600">
-                  {revenue.summary.current_month?.buyer_revenue || 0} EUR
+                  {revenue.summary.current_month?.vat_collected || 0} EUR
                 </div>
-                <div className="text-sm text-gray-500">Buyer Revenue</div>
+                <div className="text-sm text-gray-500">VAT Collected</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-semibold text-blue-600">

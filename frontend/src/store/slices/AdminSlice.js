@@ -26,6 +26,7 @@ const initialState = {
   payments: {
     paid: [],
     transfers: [],
+    refunds: [],
   },
 };
 
@@ -229,6 +230,18 @@ export const fetchTransfers = createAsyncThunk(
   }
 );
 
+export const fetchRefunds = createAsyncThunk(
+  'admin/fetchRefunds',
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get('api/admin/payments/refunds/');
+      return data.results || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { detail: 'Failed to load refunds' });
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: 'admin',
   initialState,
@@ -363,6 +376,9 @@ const adminSlice = createSlice({
       })
       .addCase(fetchTransfers.fulfilled, (state, action) => {
         state.payments.transfers = action.payload;
+      })
+      .addCase(fetchRefunds.fulfilled, (state, action) => {
+        state.payments.refunds = action.payload;
       });
   }
 });

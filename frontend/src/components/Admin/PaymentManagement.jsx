@@ -8,6 +8,7 @@ const PaymentManagement = () => {
   const adminState = useSelector(state => state.admin);
   const paidPayments = useMemo(() => adminState.payments?.paid || [], [adminState.payments?.paid]);
   const transfers = useMemo(() => adminState.payments?.transfers || [], [adminState.payments?.transfers]);
+  const refunds = useMemo(() => adminState.payments?.refunds || [], [adminState.payments?.refunds]);
 
   // Filter data based on search
   const filteredPayments = useMemo(() => {
@@ -31,6 +32,17 @@ const PaymentManagement = () => {
       transfer.stripe_account_id?.toLowerCase().includes(q)
     );
   }, [transfers, search]);
+
+  const filteredRefunds = useMemo(() => {
+    if (!search) return refunds;
+    const q = search.toLowerCase();
+    return refunds.filter(refund => 
+      refund.user_name?.toLowerCase().includes(q) ||
+      refund.user_email?.toLowerCase().includes(q) ||
+      refund.project_title?.toLowerCase().includes(q) ||
+      refund.stripe_refund_id?.toLowerCase().includes(q)
+    );
+  }, [refunds, search]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-EU', {
@@ -89,6 +101,12 @@ const PaymentManagement = () => {
           >
             Transfers ({transfers.length})
           </button>
+          <button
+            className={`pb-2 border-b-2 ${tab === 'refunds' ? 'border-[#01257D] text-[#01257D]' : 'border-transparent text-gray-500'}`}
+            onClick={() => setTab('refunds')}
+          >
+            Refunds ({refunds.length})
+          </button>
         </div>
       </div>
       
@@ -101,7 +119,7 @@ const PaymentManagement = () => {
                 <th className="text-left font-medium px-4 py-3 min-w-[150px]">Project</th>
                 <th className="text-left font-medium px-4 py-3 min-w-[120px]">Project Amount</th>
                 {/* <th className="text-left font-medium px-4 py-3">Platform Fee</th> */}
-                <th className="text-left font-medium px-4 py-3 min-w-[100px]">Stripe Fee</th>
+                {/* <th className="text-left font-medium px-4 py-3 min-w-[100px]">Stripe Fee</th> */}
                 <th className="text-left font-medium px-4 py-3 min-w-[120px]">Total Paid</th>
                 {/* <th className="text-left font-medium px-4 py-3">Seller Net</th> */}
                 <th className="text-left font-medium px-4 py-3 min-w-[100px]">Status</th>
@@ -124,7 +142,7 @@ const PaymentManagement = () => {
                   </td>
                   <td className="px-4 py-3 font-medium whitespace-nowrap">{formatCurrency(payment.amount)}</td>
                   {/* <td className="px-4 py-3 text-emerald-600">{formatCurrency(payment.platform_fee_amount)}</td> */}
-                  <td className="px-4 py-3 text-blue-600 whitespace-nowrap">{formatCurrency(payment.stripe_fee_amount)}</td>
+                  {/* <td className="px-4 py-3 text-blue-600 whitespace-nowrap">{formatCurrency(payment.stripe_fee_amount || 0)}</td> */}
                   <td className="px-4 py-3 font-medium whitespace-nowrap">{formatCurrency(payment.buyer_total_amount)}</td>
                   {/* <td className="px-4 py-3 font-medium">{formatCurrency(payment.seller_net_amount)}</td> */}
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -149,7 +167,7 @@ const PaymentManagement = () => {
               )}
             </tbody>
           </table>
-        ) : (
+        ) : tab === 'transfers' ? (
           <table className="min-w-full text-sm whitespace-nowrap">
             <thead className="bg-gray-50 text-gray-600">
               <tr>
@@ -200,6 +218,53 @@ const PaymentManagement = () => {
                 <tr>
                   <td colSpan="7" className="px-4 py-3 text-center text-gray-500">
                     {search ? 'No transfers found matching your search.' : 'No transfers found.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : (
+          <table className="min-w-full text-sm whitespace-nowrap">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="text-left font-medium px-4 py-3 min-w-[200px]">User</th>
+                <th className="text-left font-medium px-4 py-3 min-w-[150px]">Project</th>
+                <th className="text-left font-medium px-4 py-3 min-w-[120px]">Amount</th>
+                <th className="text-left font-medium px-4 py-3 min-w-[100px]">Status</th>
+                <th className="text-left font-medium px-4 py-3 min-w-[200px]">Stripe Refund ID</th>
+                <th className="text-left font-medium px-4 py-3 min-w-[150px]">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRefunds.map((refund) => (
+                <tr key={`refund-${refund.id}`} className="border-t border-gray-100">
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div>
+                      <div className="font-medium">{refund.user_name}</div>
+                      <div className="text-gray-500 text-xs">{refund.user_email}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="truncate" title={refund.project_title}>
+                      {refund.project_title}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-medium whitespace-nowrap">{formatCurrency(refund.amount)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(refund.status)}`}>
+                      {refund.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs font-mono whitespace-nowrap">
+                    {refund.stripe_refund_id}
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(refund.created_at)}</td>
+                </tr>
+              ))}
+              {filteredRefunds.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="px-4 py-3 text-center text-gray-500">
+                    {search ? 'No refunds found matching your search.' : 'No refunds found.'}
                   </td>
                 </tr>
               )}

@@ -8,7 +8,7 @@ export default function DashboardSummary({ stats = {} }) {
     completedProjects = 0, 
     pendingPayments = 0,
     paymentsHeldForProjects = 0,
-    currency = 'USD'
+    currency = 'EUR'
   } = stats;
 
   return (
