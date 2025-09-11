@@ -13,6 +13,7 @@ from .serializers import (
     ClientProjectSerializer,
     MilestoneSerializer,
     MilestoneUpdateSerializer,
+    SellerReceiptProjectSerializer,
 )
 from notifications.models import Notification
 from utils.email_service import EmailService
@@ -776,6 +777,46 @@ def get_completed_projects(request):
     serializer = ProjectListSerializer(completed_projects, many=True)
 
     return Response({"projects": serializer.data, "count": completed_projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def seller_receipts(request):
+    """
+    Return completed projects for the authenticated seller with milestone details
+    for receipts.
+    """
+    user = request.user
+    if getattr(user, "role", None) != "seller":
+        return Response({"detail": "Only sellers can access this endpoint."}, status=403)
+
+    projects = (
+        Project.objects.filter(user=user, status="completed")
+        .prefetch_related("milestones", "installments", "quote")
+        .order_by("-created_at")
+    )
+    serializer = SellerReceiptProjectSerializer(projects, many=True)
+    return Response({"projects": serializer.data, "count": projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def buyer_receipts(request):
+    """
+    Return completed projects for the authenticated buyer with milestone details
+    for receipts.
+    """
+    user = request.user
+    if getattr(user, "role", None) not in ["buyer", "professional-buyer"]:
+        return Response({"detail": "Only buyers can access this endpoint."}, status=403)
+
+    projects = (
+        Project.objects.filter(client=user, status="completed")
+        .prefetch_related("milestones", "installments", "quote")
+        .order_by("-created_at")
+    )
+    serializer = SellerReceiptProjectSerializer(projects, many=True)
+    return Response({"projects": serializer.data, "count": projects.count()})
 
 
 @api_view(["GET"])

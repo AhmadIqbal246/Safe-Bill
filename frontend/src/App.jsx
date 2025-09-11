@@ -39,6 +39,8 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import BillingsPage from "./pages/BillingsPage";
 import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
+import SellerReceipts from "./pages/SellerReceipts";
+import BuyerReceipts from "./pages/BuyerReceipts";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -74,6 +76,7 @@ function App() {
           <Route path='/project-creation' element={<ProtectedRoute requiredRole="seller"><ProjectCreationPage/></ProtectedRoute>}/>
           <Route path='/current-projects' element={<ProtectedRoute requiredRole="seller"><CurrentProjects/></ProtectedRoute>}/>
           <Route path='/completed-projects' element={<ProtectedRoute requiredRole="seller"><CompletedProjects/></ProtectedRoute>}/>
+          <Route path='/seller-dashboard/receipts' element={<ProtectedRoute requiredRole="seller"><SellerReceipts/></ProtectedRoute>}/>
           <Route path='/profile' element={<ProtectedRoute requiredRole="seller"><MyProfile/></ProtectedRoute>}/>
           {/* <Route path='/my-documents' element={<ProtectedRoute requiredRole="seller"><MyDocuments/></ProtectedRoute>}/> */}
           <Route path='/milestones' element={<ProtectedRoute requiredRole="seller"><MilestonePage/></ProtectedRoute>}/>
@@ -82,6 +85,7 @@ function App() {
           <Route path='/professional-buyer' element={<ProfessionalBuyerPage/>}/>
           <Route path='/not-authorized' element={<NotAuthorized/>}/>
           <Route path='/buyer-dashboard' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><BuyerDashboardPage/></ProtectedRoute>}/>
+          <Route path='/buyer-dashboard/receipts' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><BuyerReceipts/></ProtectedRoute>}/>
           <Route path='/project/:projectId' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><ProjectDetailPage/></ProtectedRoute>}/>
           <Route path='/dispute-submit' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><DisputeSubmit/></ProtectedRoute>}/>
           <Route path='/disputes' element={<ProtectedRoute><DisputesPage/></ProtectedRoute>}/>

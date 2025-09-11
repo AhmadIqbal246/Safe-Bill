@@ -393,3 +393,62 @@ class ClientProjectSerializer(serializers.ModelSerializer):
         approved = self.get_approved_milestones(obj)
         pct = round((approved / total) * 100)
         return max(0, min(100, pct))
+
+
+class SellerReceiptProjectSerializer(serializers.ModelSerializer):
+    """
+    Serializer tailored for seller receipts with milestones and totals.
+    """
+
+    reference_number = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
+    quote = QuoteSerializer()
+    installments = PaymentInstallmentSerializer(many=True)
+    milestones = MilestoneSerializer(many=True, read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    completion_date = serializers.SerializerMethodField()
+    seller_username = serializers.CharField(source="user.username", read_only=True)
+    seller_email = serializers.EmailField(source="user.email", read_only=True)
+    buyer_username = serializers.CharField(source="client.username", read_only=True)
+    buyer_email = serializers.EmailField(source="client.email", read_only=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "name",
+            "quote",
+            "installments",
+            "milestones",
+            "reference_number",
+            "total_amount",
+            "created_at",
+            "completion_date",
+            "status",
+            "project_type",
+            "vat_rate",
+            "platform_fee_percentage",
+            "seller_username",
+            "seller_email",
+            "buyer_username",
+            "buyer_email",
+        ]
+
+    def get_reference_number(self, obj):
+        if hasattr(obj, "quote") and obj.quote:
+            return obj.quote.reference_number
+        return None
+
+    def get_total_amount(self, obj):
+        return sum(float(inst.amount) for inst in obj.installments.all())
+
+    def get_completion_date(self, obj):
+        # Use the latest milestone completion_date as completion date fallback
+        latest = (
+            obj.milestones.filter(completion_date__isnull=False)
+            .order_by("-completion_date")
+            .first()
+        )
+        return (
+            latest.completion_date.strftime("%Y-%m-%d %H:%M:%S") if latest else None
+        )
