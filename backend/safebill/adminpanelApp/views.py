@@ -14,6 +14,8 @@ from notifications.models import Notification
 from .permissions import IsAdminRole, IsSuperAdmin, IsAdmin
 from .services import RevenueService
 from .models import PlatformRevenue
+from payments.models import Refund
+from payments.serializers import RefundSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -663,4 +665,41 @@ def get_transfers(request):
         )
 
 
-0
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def get_refunded_payments(request):
+    """
+    Get all refunded payments for admin management (Refund records)
+    """
+    try:
+
+        refunds = (
+            Refund.objects.filter(status="paid")
+            .select_related("project", "user")
+            .order_by("-created_at")
+        )
+        serializer = RefundSerializer(refunds, many=True)
+        # Enrich minimal user/project fields for admin table convenience
+        results = []
+        for r, s in zip(refunds, serializer.data):
+            s = dict(s)
+            s.update(
+                {
+                    "user_email": getattr(r.user, "email", None),
+                    "user_name": (
+                        (r.user.get_full_name() or r.user.username or r.user.email)
+                        if getattr(r, "user", None)
+                        else None
+                    ),
+                    "project_title": getattr(r.project, "name", None),
+                }
+            )
+            results.append(s)
+
+        return Response({"results": results}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error getting refunded payments: {e}")
+        return Response(
+            {"error": "Failed to get refunded payments"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

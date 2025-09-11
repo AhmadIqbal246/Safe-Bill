@@ -758,6 +758,10 @@ def stripe_identity_webhook(request):
     elif event["type"] == "refund.created":
         refund = event["data"]["object"]
         refund_id = refund["metadata"]["refund_id"]
+        project_id = refund["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.refundable_amount = 0.00
+        project.save()
         refund = Refund.objects.get(id=refund_id)
         # client = refund.project.client
         # balance = Balance.objects.get(user=client)
@@ -770,6 +774,10 @@ def stripe_identity_webhook(request):
     elif event["type"] == "refund.updated":
         refund = event["data"]["object"]
         refund_id = refund["metadata"]["refund_id"]
+        project_id = refund["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.refundable_amount = 0.00
+        project.save()
         refund = Refund.objects.get(id=refund_id)
         refund.status = "paid"
         refund.save()

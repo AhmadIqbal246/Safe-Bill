@@ -25,6 +25,7 @@ import {
   fetchRevenueMonths,
   fetchPaidPayments,
   fetchTransfers,
+  fetchRefunds,
 } from '../../store/slices/AdminSlice';
 import { Dialog } from '@headlessui/react';
 import { useNavigate } from 'react-router-dom';
@@ -193,6 +194,7 @@ export default function AdminDashboard() {
           dispatch(fetchRevenueMonths()),
           dispatch(fetchPaidPayments()),
           dispatch(fetchTransfers()),
+          dispatch(fetchRefunds()),
         ]);
 
         if (isSuperAdmin) {

@@ -296,6 +296,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "approved_milestones",
             "total_milestones",
             "progress_pct",
+            "refundable_amount",
         ]
 
     def get_reference_number(self, obj):
@@ -449,6 +450,4 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             .order_by("-completion_date")
             .first()
         )
-        return (
-            latest.completion_date.strftime("%Y-%m-%d %H:%M:%S") if latest else None
-        )
+        return latest.completion_date.strftime("%Y-%m-%d %H:%M:%S") if latest else None

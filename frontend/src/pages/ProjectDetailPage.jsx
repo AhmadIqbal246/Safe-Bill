@@ -107,7 +107,10 @@ export default function ProjectDetailPage() {
     try {
       await dispatch(RefundPayment({ projectId })).unwrap();
       toast.success('Refund request submitted successfully!');
-      dispatch(fetchClientProjectDetail(projectId));
+      // Refetch project details once after 10 seconds to allow backend/Stripe to settle
+      setTimeout(() => {
+        dispatch(fetchClientProjectDetail(projectId));
+      }, 3000);
     } catch (err) {
       toast.error(
         typeof err === 'string' 

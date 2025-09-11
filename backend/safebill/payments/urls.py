@@ -3,6 +3,7 @@ from .views import (
     create_stripe_payment,
     check_payment_status,
     list_billings,
+    list_refunded_payments,
     balance_summary,
     transfer_to_stripe_account,
     get_transfer_info,
@@ -30,6 +31,11 @@ urlpatterns = [
         "billings/",
         list_billings,
         name="list_billings",
+    ),
+    path(
+        "refunds/",
+        list_refunded_payments,
+        name="list_refunded_payments",
     ),
     path(
         "balance/",

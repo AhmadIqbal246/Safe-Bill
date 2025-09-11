@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { fetchBillings, fetchBalance, fetchPayoutHolds, fetchTransfers } from '../../store/slices/PaymentSlice';
+import { fetchBillings, fetchBalance, fetchPayoutHolds, fetchTransfers, fetchRefundedPayments } from '../../store/slices/PaymentSlice';
 import BalanceSummary from './BalanceSummary';
 import BillingsList from './BillingsList';
 import TransferFunds from './TransferFunds';
 import Loader from '../common/Loader';
 import PayoutHolds from './PayoutHolds';
 import TransfersList from './TransfersList';
+import RefundsList from './RefundsList';
 
 export default function Billings() {
   const { t } = useTranslation();
@@ -26,6 +27,9 @@ export default function Billings() {
     transfers,
     transfersLoading,
     transfersError,
+    refunded,
+    refundedLoading,
+    refundedError,
   } = useSelector(state => state.payment);
   
   const { user } = useSelector(state => state.auth);
@@ -38,6 +42,9 @@ export default function Billings() {
       dispatch(fetchPayoutHolds());
       dispatch(fetchTransfers());
     }
+    if (user?.role === 'buyer') {
+      dispatch(fetchRefundedPayments());
+    }
   }, [dispatch, user]);
 
   useEffect(() => {
@@ -45,8 +52,8 @@ export default function Billings() {
     refetchAllData();
   }, [refetchAllData]);
 
-  const isLoading = billingsLoading || balanceLoading || payoutHoldsLoading || transfersLoading;
-  const hasError = billingsError || balanceError || payoutHoldsError || transfersError;
+  const isLoading = billingsLoading || balanceLoading || payoutHoldsLoading || transfersLoading || refundedLoading;
+  const hasError = billingsError || balanceError || payoutHoldsError || transfersError || refundedError;
 
   if (isLoading && !billings.length && !balance) {
     return (
@@ -119,6 +126,13 @@ export default function Billings() {
               loading={transfersLoading}
               error={transfersError}
             />
+          </div>
+        )}
+
+        {/* Refunded Payments - Only for Buyers */}
+        {user?.role === 'buyer' && (
+          <div className="mb-8">
+            <RefundsList refunds={refunded} loading={refundedLoading} error={refundedError} />
           </div>
         )}
 

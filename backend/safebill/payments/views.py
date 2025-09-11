@@ -9,6 +9,7 @@ from decimal import Decimal, ROUND_HALF_UP, DecimalException
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Sum, Q
+from django.utils import timezone
 from .models import Payment, Balance, Payout, PayoutHold, PayoutHold, Refund
 from .serializers import (
     PaymentSerializer,
@@ -166,6 +167,33 @@ def list_billings(request):
     return Response(
         {"count": len(serializer.data), "results": serializer.data}, status=200
     )
+
+
+# ====================================================================== Buyer Refunded Payments =============================================================
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_refunded_payments(request):
+    """
+    Return the authenticated buyer's refunded payments (Refunds).
+    Only buyers should access this endpoint; sellers get 400.
+    """
+    user = request.user
+    try:
+        if hasattr(user, "role") and user.role != "buyer":
+            return Response({"detail": "Only buyers can view refunds."}, status=400)
+
+        refunds = (
+            Refund.objects.filter(user=user)
+            .select_related("project")
+            .order_by("-created_at")
+        )
+        serializer = RefundSerializer(refunds, many=True)
+        return Response(
+            {"count": len(serializer.data), "results": serializer.data}, status=200
+        )
+    except Exception as e:
+        logger.error(f"Error listing refunded payments: {e}")
+        return Response({"detail": "Failed to retrieve refunded payments."}, status=500)
 
 
 # ====================================================================== Balance summary ======================================================================
@@ -575,28 +603,79 @@ def payment_refund(request, project_id):
         user = request.user
         project = Project.objects.get(id=project_id)
         amount = project.refundable_amount
-        status = request.data.get("status", "pending")
-        payment = Payment.objects.get(project=project)
-        stripe_payment_id = payment.stripe_payment_id
         stripe.api_key = settings.STRIPE_API_KEY
 
+        # Validate refundable amount
+        if not amount or Decimal(str(amount)) <= 0:
+            return Response({"detail": "No refundable amount available."}, status=400)
+
+        # Prevent duplicate if an active refund exists (paid or pending <5 minutes old)
+
+        five_minutes_ago = timezone.now() - timedelta(minutes=5)
+
+        existing = (
+            Refund.objects.filter(user=user, project=project)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if existing:
+            if existing.status == "paid":
+                return Response(
+                    {"detail": "A refund has already been processed for this project."},
+                    status=400,
+                )
+            if existing.status == "pending" and existing.created_at >= five_minutes_ago:
+                return Response(
+                    {"detail": "A refund is already in progress. Please wait."},
+                    status=400,
+                )
+            # Auto-expire stale pending refunds (>5 minutes)
+            if existing.status == "pending" and existing.created_at < five_minutes_ago:
+                existing.status = "failed"
+                existing.save(update_fields=["status", "updated_at"])
+
+        payment = Payment.objects.get(project=project)
+        stripe_payment_id = payment.stripe_payment_id
+
+        # Create refund record first (pending)
         refund = Refund.objects.create(
             user=user,
             project=project,
             amount=amount,
-            status=status,
+            status="pending",
         )
+
+        # Create Stripe refund
+        session = stripe.checkout.Session.retrieve(stripe_payment_id)
+        payment_intent_id = session.payment_intent
 
         stripe_refund = stripe.Refund.create(
-            payment_intent=stripe_payment_id,
-            amount=int(amount * 100),
+            payment_intent=payment_intent_id,
+            amount=int(Decimal(str(amount)) * 100),
             reason="requested_by_customer",
-            metadata={"refund_id": str(refund.id)},
+            metadata={"refund_id": str(refund.id), "project_id": str(project.id)},
         )
+
         refund.stripe_refund_id = stripe_refund.id
+        # If Stripe marks it succeeded immediately, mark paid; else keep pending
+        status_mapping = {"succeeded": "paid", "failed": "failed", "canceled": "failed"}
+        mapped = status_mapping.get(getattr(stripe_refund, "status", ""))
+        if mapped:
+            refund.status = mapped
         refund.save()
 
-        return Response({"detail": "Refund created successfully"}, status=201)
+        return Response(
+            {
+                "detail": "Refund request created",
+                "refund": {
+                    "id": refund.id,
+                    "status": refund.status,
+                    "stripe_refund_id": refund.stripe_refund_id,
+                },
+            },
+            status=201,
+        )
     except Exception as e:
         logger.error(f"Error creating refund: {e}")
         return Response({"detail": "Failed to create refund."}, status=500)

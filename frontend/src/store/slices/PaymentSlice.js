@@ -120,6 +120,27 @@ export const fetchTransfers = createAsyncThunk(
   }
 );
 
+// Fetch buyer refunded payments
+export const fetchRefundedPayments = createAsyncThunk(
+  "payment/fetchRefundedPayments",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem("access");
+      const response = await axios.get(`${BASE_URL}api/payments/refunds/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 // Fetch revenue comparison data
 export const fetchRevenueComparison = createAsyncThunk(
   "payment/fetchRevenueComparison",
@@ -223,6 +244,11 @@ const paymentSlice = createSlice({
     transfersLoading: false,
     transfersError: null,
 
+    // Refunded payments (buyer)
+    refunded: [],
+    refundedLoading: false,
+    refundedError: null,
+
     // Revenue comparison (seller)
     revenueComparison: null,
     revenueComparisonLoading: false,
@@ -313,6 +339,19 @@ const paymentSlice = createSlice({
       .addCase(fetchTransfers.rejected, (state, action) => {
         state.transfersLoading = false;
         state.transfersError = action.payload || "Failed to fetch transfers";
+      })
+      // Fetch Refunded Payments (buyer)
+      .addCase(fetchRefundedPayments.pending, (state) => {
+        state.refundedLoading = true;
+        state.refundedError = null;
+      })
+      .addCase(fetchRefundedPayments.fulfilled, (state, action) => {
+        state.refundedLoading = false;
+        state.refunded = action.payload.results || [];
+      })
+      .addCase(fetchRefundedPayments.rejected, (state, action) => {
+        state.refundedLoading = false;
+        state.refundedError = action.payload || "Failed to fetch refunded payments";
       })
       // Fetch Revenue Comparison
       .addCase(fetchRevenueComparison.pending, (state) => {

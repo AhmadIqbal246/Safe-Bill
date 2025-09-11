@@ -101,6 +101,16 @@ class PayoutHoldSerializer(serializers.ModelSerializer):
 
 
 class RefundSerializer(serializers.ModelSerializer):
+    project = ProjectSlimSerializer(read_only=True)
+
     class Meta:
         model = Refund
-        fields = ["id", "amount", "status", "created_at", "updated_at", "project"]
+        fields = [
+            "id",
+            "amount",
+            "status",
+            "stripe_refund_id",
+            "created_at",
+            "updated_at",
+            "project",
+        ]
