@@ -1,10 +1,12 @@
 import React from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function ReceiptsSection() {
+  const { t } = useTranslation();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [projects, setProjects] = React.useState([]);
@@ -104,24 +106,24 @@ export default function ReceiptsSection() {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Receipts</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t('receipts.title')}</h3>
         <div className="flex items-center gap-2 w-full sm:w-80">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by project name"
+            placeholder={t('receipts.search_placeholder')}
             className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#01257D]"
           />
         </div>
       </div>
 
       {loading ? (
-        <div className="py-10 text-center text-gray-500">Loading...</div>
+        <div className="py-10 text-center text-gray-500">{t('receipts.loading')}</div>
       ) : error ? (
         <div className="py-10 text-center text-red-600">{error}</div>
       ) : paged.length === 0 ? (
-        <div className="py-10 text-center text-gray-500">No receipts found.</div>
+        <div className="py-10 text-center text-gray-500">{t('receipts.none_found')}</div>
       ) : (
         <div className="space-y-4">
           {paged.map((p) => {
@@ -131,29 +133,29 @@ export default function ReceiptsSection() {
                 <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-t-md">
                   <div>
                     <div className="font-medium text-[#01257D]">{p.name}</div>
-                    <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
+                    <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => toggleExpand(p.id)}
                       className="px-3 py-2 text-sm rounded-md border bg-white hover:bg-gray-50 cursor-pointer"
                     >
-                      {expands[p.id] ? 'Hide' : 'Details'}
+                      {expands[p.id] ? t('receipts.hide') : t('receipts.details')}
                     </button>
                     <button
                       onClick={() => downloadPdf(p)}
                       className="px-3 py-2 text-sm rounded-md bg-[#01257D] text-white cursor-pointer hover:bg-[#1d3f99]"
                     >
-                      Download PDF
+                      {t('receipts.download_pdf')}
                     </button>
                   </div>
                 </div>
                 {expands[p.id] && (
                   <>
                     <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                      <div><span className="text-gray-500">Total</span><div className="font-semibold">€{total.toLocaleString()}</div></div>
-                      <div><span className="text-gray-500">VAT</span><div className="font-semibold">{vatPct.toFixed(1)}% (+€{vatAmount.toLocaleString()})</div></div>
-                      <div><span className="text-gray-500">Paid</span><div className="font-semibold text-green-700">€{buyerPaid.toLocaleString()}</div></div>
+                      <div><span className="text-gray-500">{t('receipts.total')}</span><div className="font-semibold">€{total.toLocaleString()}</div></div>
+                      <div><span className="text-gray-500">{t('receipts.vat')}</span><div className="font-semibold">{vatPct.toFixed(1)}% (+€{vatAmount.toLocaleString()})</div></div>
+                      <div><span className="text-gray-500">{t('receipts.paid')}</span><div className="font-semibold text-green-700">€{buyerPaid.toLocaleString()}</div></div>
                     </div>
 
                     {/* Milestones table (buyer sees actual milestone amounts) */}
@@ -162,9 +164,9 @@ export default function ReceiptsSection() {
                         <table className="min-w-full text-sm">
                           <thead>
                             <tr className="text-left text-gray-500">
-                              <th className="py-2 pr-4">Milestone</th>
-                              <th className="py-2 pr-4">Completed at</th>
-                              <th className="py-2 pr-0 text-right">Amount</th>
+                              <th className="py-2 pr-4">{t('receipts.milestone')}</th>
+                              <th className="py-2 pr-4">{t('receipts.completed_at')}</th>
+                              <th className="py-2 pr-0 text-right">{t('receipts.amount')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -187,41 +189,41 @@ export default function ReceiptsSection() {
                   <div id={`buyer-receipt-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4" style={{ background: '#ffffff' }}>
                     {/* Brand header */}
                     <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
-                      <div className="text-xl font-bold" style={{ color: '#01257D' }}>SafeBill</div>
-                      <div className="text-xs text-gray-500">Buyer Receipt</div>
+                      <div className="text-xl font-bold" style={{ color: '#01257D' }}>{t('receipts.brand')}</div>
+                      <div className="text-xs text-gray-500">{t('receipts.buyer_copy')}</div>
                     </div>
 
                     {/* Project meta */}
                     <div className="mb-5">
                       <div className="text-lg font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
+                      <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
                     </div>
 
                     {/* Summary grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-6">
                       <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                        <div className="text-gray-500">Total</div>
+                        <div className="text-gray-500">{t('receipts.total')}</div>
                         <div className="text-base font-semibold">€{total.toLocaleString()}</div>
                       </div>
                       <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                        <div className="text-gray-500">VAT</div>
+                        <div className="text-gray-500">{t('receipts.vat')}</div>
                         <div className="text-base font-semibold">{vatPct.toFixed(1)}% (+€{vatAmount.toLocaleString()})</div>
                       </div>
                       <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                        <div className="text-gray-500">Paid</div>
+                        <div className="text-gray-500">{t('receipts.paid')}</div>
                         <div className="text-base font-semibold text-green-700">€{buyerPaid.toLocaleString()}</div>
                       </div>
                     </div>
 
                     {/* Milestones */}
                     <div className="text-sm">
-                      <div className="font-semibold mb-2">Milestones</div>
+                      <div className="font-semibold mb-2">{t('receipts.milestones')}</div>
                       <table className="w-full text-xs border border-gray-200 rounded-md overflow-hidden">
                         <thead>
                           <tr className="bg-gray-50 text-gray-600">
-                            <th className="py-2 px-2 text-left">Name</th>
-                            <th className="py-2 px-2 text-left">Completed at</th>
-                            <th className="py-2 px-2 text-right">Amount</th>
+                            <th className="py-2 px-2 text-left">{t('receipts.name')}</th>
+                            <th className="py-2 px-2 text-left">{t('receipts.completed_at')}</th>
+                            <th className="py-2 px-2 text-right">{t('receipts.amount')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -238,7 +240,7 @@ export default function ReceiptsSection() {
 
                     {/* Footer */}
                     <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
-                      <div>Generated by SafeBill</div>
+                      <div>{t('receipts.generated_by')}</div>
                       <div>www.safebill.app</div>
                     </div>
                   </div>
@@ -252,14 +254,14 @@ export default function ReceiptsSection() {
       {/* Pagination */}
       {!loading && total > 0 && (
         <div className="mt-4 flex items-center justify-between">
-          <div className="text-xs text-gray-600">Showing {total === 0 ? 0 : startIdx + 1}–{endIdx} of {total}</div>
+          <div className="text-xs text-gray-600">{t('receipts.showing')} {total === 0 ? 0 : startIdx + 1}–{endIdx} {t('receipts.of')} {total}</div>
           <div className="flex items-center gap-2">
             <button
               className="px-3 py-2 text-sm rounded-md border bg-white hover:bg-gray-50 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
-              Prev
+              {t('receipts.prev')}
             </button>
             <div className="flex items-center gap-1">
               {Array.from({ length: totalPages }).map((_, i) => (
@@ -277,7 +279,7 @@ export default function ReceiptsSection() {
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
-              Next
+              {t('receipts.next')}
             </button>
           </div>
         </div>

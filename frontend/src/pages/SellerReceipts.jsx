@@ -4,10 +4,12 @@ import axios from 'axios';
 import MainLayout from '../components/Layout/MainLayout';
 import Loader from '../components/common/Loader';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function SellerReceipts() {
+  const { t } = useTranslation();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [projects, setProjects] = React.useState([]);
@@ -127,23 +129,23 @@ export default function SellerReceipts() {
   }
 
   return (
-      <MainLayout title="Receipts">
+      <MainLayout title={t('receipts.title')}>
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-            <h1 className="text-xl font-bold text-gray-900">Receipts</h1>
+            <h1 className="text-xl font-bold text-gray-900">{t('receipts.title')}</h1>
             <div className="w-full md:w-80">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by project name"
+                placeholder={t('receipts.search_placeholder')}
                 className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#01257D]"
               />
             </div>
           </div>
 
           {projects.length === 0 ? (
-            <div className="text-gray-500 text-center py-10">No completed projects.</div>
+            <div className="text-gray-500 text-center py-10">{t('receipts.no_completed')}</div>
           ) : (
             <div className="space-y-6">
               {paged.map((p) => {
@@ -153,20 +155,20 @@ export default function SellerReceipts() {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-gray-50">
                       <div>
                         <div className="text-lg font-semibold text-[#01257D]">{p.name}</div>
-                        <div className="text-sm text-gray-600">Ref: {p.reference_number || '-'}</div>
-                        <div className="text-xs text-gray-500">Start: {p.created_at} {p.completion_date ? `• Completed: ${p.completion_date}` : ''}</div>
+                        <div className="text-sm text-gray-600">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                        <div className="text-xs text-gray-500">{t('receipts.start')} {p.created_at} {p.completion_date ? `• ${t('receipts.completed')}: ${p.completion_date}` : ''}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => toggleExpand(p.id)} className="px-3 py-2 text-sm rounded-md bg-white border cursor-pointer hover:bg-gray-100">{expands[p.id] ? 'Hide' : 'Details'}</button>
-                        <button onClick={() => downloadPdf(p)} className="px-3 py-2 text-sm rounded-md bg-[#01257D] text-white cursor-pointer hover:bg-[#1d3f99]">Download PDF</button>
+                        <button onClick={() => toggleExpand(p.id)} className="px-3 py-2 text-sm rounded-md bg-white border cursor-pointer hover:bg-gray-100">{expands[p.id] ? t('receipts.hide') : t('receipts.details')}</button>
+                        <button onClick={() => downloadPdf(p)} className="px-3 py-2 text-sm rounded-md bg-[#01257D] text-white cursor-pointer hover:bg-[#1d3f99]">{t('receipts.download_pdf')}</button>
                       </div>
                     </div>
 
                     <div className="p-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div><span className="text-gray-500">Total amount</span><div className="font-semibold">€{total.toLocaleString()}</div></div>
-                        <div><span className="text-gray-500">Platform fee</span><div className="font-semibold">{pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div></div>
-                        <div><span className="text-gray-500">Seller receives</span><div className="font-semibold text-green-700">€{sellerNet.toLocaleString()}</div></div>
+                        <div><span className="text-gray-500">{t('receipts.total_amount')}</span><div className="font-semibold">€{total.toLocaleString()}</div></div>
+                        <div><span className="text-gray-500">{t('receipts.platform_fee')}</span><div className="font-semibold">{pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div></div>
+                        <div><span className="text-gray-500">{t('receipts.seller_receives')}</span><div className="font-semibold text-green-700">€{sellerNet.toLocaleString()}</div></div>
                       </div>
                     </div>
 
@@ -176,10 +178,10 @@ export default function SellerReceipts() {
                           <table className="min-w-full text-sm">
                             <thead>
                               <tr className="text-left text-gray-500">
-                                <th className="py-2 pr-4">Milestone</th>
-                                <th className="py-2 pr-4">Completed at</th>
-                                <th className="py-2 pr-4 text-right">Amount</th>
-                                <th className="py-2 pr-0 text-right">After fee</th>
+                                <th className="py-2 pr-4">{t('receipts.milestone')}</th>
+                                <th className="py-2 pr-4">{t('receipts.completed_at')}</th>
+                                <th className="py-2 pr-4 text-right">{t('receipts.amount')}</th>
+                                <th className="py-2 pr-0 text-right">{t('receipts.after_fee')}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -205,8 +207,8 @@ export default function SellerReceipts() {
                       <div id={`receipt-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4" style={{ background: '#ffffff' }}>
                         {/* Brand header */}
                         <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
-                          <div className="text-xl font-bold" style={{ color: '#01257D' }}>SafeBill</div>
-                          <div className="text-xs text-gray-500">Seller Receipt</div>
+                          <div className="text-xl font-bold" style={{ color: '#01257D' }}>{t('receipts.brand')}</div>
+                          <div className="text-xs text-gray-500">{t('receipts.seller_copy')}</div>
                         </div>
 
                         {/* Project meta */}
@@ -219,15 +221,15 @@ export default function SellerReceipts() {
                         {/* Summary grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-6">
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">Total</div>
+                            <div className="text-gray-500">{t('receipts.total')}</div>
                             <div className="text-base font-semibold">€{total.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">Platform fee</div>
+                            <div className="text-gray-500">{t('receipts.platform_fee')}</div>
                             <div className="text-base font-semibold">{pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">Seller receives</div>
+                            <div className="text-gray-500">{t('receipts.seller_receives')}</div>
                             <div className="text-base font-semibold text-green-700">€{sellerNet.toLocaleString()}</div>
                           </div>
                         </div>
@@ -238,10 +240,10 @@ export default function SellerReceipts() {
                           <table className="w-full text-xs border border-gray-200 rounded-md overflow-hidden">
                             <thead>
                               <tr className="bg-gray-50 text-gray-600">
-                                <th className="py-2 px-2 text-left">Name</th>
-                                <th className="py-2 px-2 text-left">Completed at</th>
-                                <th className="py-2 px-2 text-right">Amount</th>
-                                <th className="py-2 px-2 text-right">After fee</th>
+                                <th className="py-2 px-2 text-left">{t('receipts.name')}</th>
+                                <th className="py-2 px-2 text-left">{t('receipts.completed_at')}</th>
+                                <th className="py-2 px-2 text-right">{t('receipts.amount')}</th>
+                                <th className="py-2 px-2 text-right">{t('receipts.after_fee')}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -262,7 +264,7 @@ export default function SellerReceipts() {
 
                         {/* Footer */}
                         <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
-                          <div>Generated by SafeBill</div>
+                          <div>{t('receipts.generated_by')}</div>
                           <div>www.safebill.app</div>
                         </div>
                       </div>
