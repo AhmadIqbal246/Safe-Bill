@@ -197,6 +197,14 @@ export default function ReceiptsSection() {
                     <div className="mb-5">
                       <div className="text-lg font-semibold text-gray-900">{p.name}</div>
                       <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                      <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {Number(p.vat_rate || 0).toFixed(1)}%</div>
+                      {/* Seller/Buyer identities if available on buyer endpoint */}
+                      {p.seller_username && (
+                        <div className="text-xs text-gray-500">{t('receipts.seller_label')}: {p.seller_username} ({p.seller_email || '-'})</div>
+                      )}
+                      {p.buyer_username && (
+                        <div className="text-xs text-gray-500">{t('receipts.buyer_label')}: {p.buyer_username} ({p.buyer_email || '-'})</div>
+                      )}
                     </div>
 
                     {/* Summary grid */}

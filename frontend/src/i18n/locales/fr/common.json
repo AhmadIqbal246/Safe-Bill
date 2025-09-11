@@ -290,13 +290,12 @@
     "select_business_activity": "Sélectionner l'Activité Commerciale",
     "search_business_activity": "Rechercher une activité commerciale...",
     "categories_label": "Catégories (Optionnel)",
-    "select_categories": "Sélectionner les Catégories (Optionnel)",
+    "select_categories": "Sélectionner les Catégories",
     "search_categories": "Rechercher des catégories...",
-    "categories_selected": "catégorie(s) sélectionnée(s)",
+    "selected": "sélectionné(s)",
     "subcategories_label": "Sous-catégories (Optionnel)",
-    "select_subcategories": "Sélectionner les Sous-catégories (Optionnel)",
+    "select_subcategories": "Sélectionner les Sous-catégories",
     "search_subcategories": "Rechercher des sous-catégories...",
-    "subcategories_selected": "sous-catégorie(s) sélectionnée(s)",
     "service_areas_label": "Zones de Service *",
     "choose_service_areas": "Choisir les Zones de Service",
     "search_service_areas": "Rechercher des zones de service...",
@@ -687,28 +686,15 @@
     "weeks": "semaines"
   },
   "buyer_dashboard": {
-    "active_projects": "Projets Actifs",
+    "title": "Tableau de bord acheteur",
+    "subtitle": "Aperçu de vos projets et paiements",
     "in_progress": "En cours",
-    "completed": "Terminé",
-    "successfully_finished": "Terminé avec succès",
-    "pending_payment": "Paiement en Attente",
-    "awaiting_payment": "En attente de paiement",
-    "current_projects": "Projets en Cours",
-    "no_in_progress_projects": "Aucun projet en cours trouvé",
-    "pending_projects": "Projets en Attente",
-    "no_pending_projects": "Aucun projet en attente à examiner",
-    "search_projects": "Rechercher des projets...",
-    "search_results": "Affichage de {found} sur {total} projets",
-    "no_search_results": "Aucun projet trouvé correspondant à votre recherche",
-    "clear_search": "Effacer la recherche",
-    "title": "Tableau de Bord Acheteur",
-    "subtitle": "Gérez vos projets et suivez les progrès",
-    "view_all_disputes": "Voir Tous les Litiges",
-    "failed_load_dashboard": "Échec du chargement du tableau de bord",
-    "unexpected_error": "Une erreur inattendue s'est produite",
-    "try_again": "Réessayer",
-    "contact_support": "Contacter le Support",
-    "accept_project_invite": "Accepter l'Invitation de Projet"
+    "view_all_disputes": "Voir tous les litiges",
+    "accept_project_invite": "Accepter l'invitation du projet",
+    "contact_support": "Contacter le support",
+    "no_in_progress_projects": "Aucun projet en cours.",
+    "completed_projects": "Projets terminés",
+    "completed_on": "Terminé le"
   },
   "dispute_submit": {
     "back": "← Retour",
@@ -1447,6 +1433,8 @@
     "of": "sur",
     "prev": "Précédent",
     "next": "Suivant",
-    "name": "Nom"
+    "name": "Nom",
+    "seller_label": "Vendeur",
+    "buyer_label": "Acheteur"
   }
 }

@@ -400,6 +400,10 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     milestones = MilestoneSerializer(many=True, read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     completion_date = serializers.SerializerMethodField()
+    seller_username = serializers.CharField(source="user.username", read_only=True)
+    seller_email = serializers.EmailField(source="user.email", read_only=True)
+    buyer_username = serializers.CharField(source="client.username", read_only=True)
+    buyer_email = serializers.EmailField(source="client.email", read_only=True)
 
     class Meta:
         model = Project
@@ -417,6 +421,10 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "project_type",
             "vat_rate",
             "platform_fee_percentage",
+            "seller_username",
+            "seller_email",
+            "buyer_username",
+            "buyer_email",
         ]
 
     def get_reference_number(self, obj):

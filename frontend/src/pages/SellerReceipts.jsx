@@ -214,8 +214,11 @@ export default function SellerReceipts() {
                         {/* Project meta */}
                         <div className="mb-5">
                           <div className="text-lg font-semibold text-gray-900">{p.name}</div>
-                          <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
-                          <div className="text-xs text-gray-500">Start: {p.created_at} {p.completion_date ? `• Completed: ${p.completion_date}` : ''}</div>
+                          <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                          <div className="text-xs text-gray-500">{t('receipts.start')} {p.created_at} {p.completion_date ? `• ${t('receipts.completed')}: ${p.completion_date}` : ''}</div>
+                          <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {Number(p.vat_rate || 0).toFixed(1)}%</div>
+                          <div className="text-xs text-gray-500 mt-1">{t('receipts.seller_label')}: {p.seller_username || '-'} ({p.seller_email || '-'})</div>
+                          <div className="text-xs text-gray-500">{t('receipts.buyer_label')}: {p.buyer_username || '-'} ({p.buyer_email || '-'})</div>
                         </div>
 
                         {/* Summary grid */}

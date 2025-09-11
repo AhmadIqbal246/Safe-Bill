@@ -705,7 +705,9 @@
     "unexpected_error": "An unexpected error occurred",
     "try_again": "Try Again",
     "contact_support": "Contact Support",
-    "accept_project_invite": "Accept Project Invite"
+    "accept_project_invite": "Accept Project Invite",
+    "completed_projects": "Completed Projects",
+    "completed_on": "Completed on"
   },
   "dispute_submit": {
     "back": "← Back",
@@ -1444,6 +1446,8 @@
     "of": "of",
     "prev": "Prev",
     "next": "Next",
-    "name": "Name"
+    "name": "Name",
+    "seller_label": "Seller",
+    "buyer_label": "Buyer"
   }
 }

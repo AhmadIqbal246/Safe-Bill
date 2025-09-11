@@ -11,6 +11,7 @@ import MilestoneApproval from '../components/BuyerDashboard/MilestoneApproval';
 import PaymentTracking from '../components/BuyerDashboard/PaymentTracking';
 import DocumentsSection from '../components/BuyerDashboard/DocumentsSection';
 import ReceiptsSection from '../components/BuyerDashboard/ReceiptsSection';
+import CompletedProjectsSection from '../components/BuyerDashboard/CompletedProjectsSection';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Chat from '../components/mutualComponents/Chat/Chat';
 import { useTranslation } from 'react-i18next';
@@ -240,7 +241,10 @@ export default function BuyerDashboardPage() {
           <PendingProjects projects={clientProjects} />
           <ApprovedProjects projects={clientProjects} />
         </div>
-        
+                {/* Completed Projects Section */}
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <CompletedProjectsSection />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <PaymentTracking 
             billings={billings} 
@@ -252,6 +256,8 @@ export default function BuyerDashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <ReceiptsSection />
         </div>
+
+
         
         <div className="flex justify-center mt-8 sm:mt-10">
           <button className="bg-[#153A7D] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#1a4086] transition-colors" onClick={() => navigate('/contact-us')}>
