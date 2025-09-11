@@ -409,7 +409,8 @@
     "my_profile": "Mon profil",
     "billings": "Facturation",
     "documents": "Documents",
-    "support": "Support"
+    "support": "Support",
+    "receipts": "Reçus"
   },
   "dashboard": {
     "title": "Tableau de Bord",

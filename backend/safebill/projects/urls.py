@@ -14,6 +14,8 @@ from .views import (
     ProjectCompletionAPIView,
     get_completed_projects,
     list_expired_project_invites,
+    seller_receipts,
+    buyer_receipts,
 )
 
 urlpatterns = [
@@ -53,6 +55,9 @@ urlpatterns = [
         list_expired_project_invites,
         name="expired-project-invites",
     ),
+    # Receipts endpoints
+    path("receipts/seller/", seller_receipts, name="seller-receipts"),
+    path("receipts/buyer/", buyer_receipts, name="buyer-receipts"),
     # Milestone endpoints
     path(
         "projects/<int:project_id>/milestones/",
