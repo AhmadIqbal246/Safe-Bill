@@ -8,12 +8,23 @@ export default function CurrentProjects({ projects = [] }) {
   const navigate = useNavigate();
 
   const getProgressPercentage = (project) => {
-    // For now, use a simple calculation based on installments
+    // Prefer backend-provided progress percentage if available
+    const pctFromBackend = project?.progress_pct;
+    if (typeof pctFromBackend === 'number' && !isNaN(pctFromBackend)) {
+      return Math.min(Math.max(Math.round(pctFromBackend), 0), 100);
+    }
+
+    // Fallback 1: use approved vs total milestones if present
+    const approved = typeof project?.approved_milestones === 'number' ? project.approved_milestones : null;
+    const total = typeof project?.total_milestones === 'number' ? project.total_milestones : null;
+    if (total && total > 0 && approved !== null) {
+      return Math.min(Math.max(Math.round((approved / total) * 100), 0), 100);
+    }
+
+    // Fallback 2: simple heuristic by installments
     const totalInstallments = project.installments?.length || 1;
-    const completedInstallments = project.installments?.filter(inst => 
-      inst.step === 'Project Completion'
-    ).length || 0;
-    return Math.round((completedInstallments / totalInstallments) * 100);
+    const completedInstallments = project.installments?.filter(inst => inst.step === 'Project Completion').length || 0;
+    return Math.min(Math.max(Math.round((completedInstallments / totalInstallments) * 100), 0), 100);
   };
 
 
@@ -43,7 +54,7 @@ export default function CurrentProjects({ projects = [] }) {
                     <ProjectStatusBadge status={project.status} size="small" />
                   </div>
                   <div className="text-sm font-semibold text-gray-800">
-                    ${project.total_amount?.toFixed(2) || '0.00'}
+                    €{project.total_amount?.toFixed(2) || '0.00'}
                   </div>
                 </div>
                 
