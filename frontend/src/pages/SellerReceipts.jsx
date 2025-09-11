@@ -14,7 +14,7 @@ export default function SellerReceipts() {
   const [expands, setExpands] = React.useState({});
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const pageSize = 10;
+  const pageSize = 5;
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
@@ -28,7 +28,12 @@ export default function SellerReceipts() {
         },
         withCredentials: true,
       });
-      setProjects(res.data.projects || []);
+      const items = res.data.projects || [];
+      setProjects(items);
+      // Default expanded for each project
+      const map = {};
+      items.forEach((it) => { if (it && it.id != null) map[it.id] = true; });
+      setExpands(map);
     } catch (e) {
       setError(e?.response?.data?.detail || e.message);
     } finally {
@@ -195,47 +200,73 @@ export default function SellerReceipts() {
                       </div>
                     )}
 
-                    {/* Hidden printable area for PDF */}
-                    <div id={`receipt-${p.id}`} className="p-6" style={{ background: '#ffffff' }}>
-                      <div className="text-2xl font-bold mb-2">Receipt</div>
-                      <div className="text-sm text-gray-600 mb-4">Seller copy</div>
-                      <div className="mb-4">
-                        <div className="font-semibold">{p.name}</div>
-                        <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
-                        <div className="text-xs text-gray-500">Start: {p.created_at} {p.completion_date ? `• Completed: ${p.completion_date}` : ''}</div>
+                    {/* Printable area for PDF (hide/show with Details toggle) */}
+                    {expands[p.id] && (
+                      <div id={`receipt-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4" style={{ background: '#ffffff' }}>
+                        {/* Brand header */}
+                        <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+                          <div className="text-xl font-bold" style={{ color: '#01257D' }}>SafeBill</div>
+                          <div className="text-xs text-gray-500">Seller Receipt</div>
+                        </div>
+
+                        {/* Project meta */}
+                        <div className="mb-5">
+                          <div className="text-lg font-semibold text-gray-900">{p.name}</div>
+                          <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
+                          <div className="text-xs text-gray-500">Start: {p.created_at} {p.completion_date ? `• Completed: ${p.completion_date}` : ''}</div>
+                        </div>
+
+                        {/* Summary grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-6">
+                          <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                            <div className="text-gray-500">Total</div>
+                            <div className="text-base font-semibold">€{total.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                            <div className="text-gray-500">Platform fee</div>
+                            <div className="text-base font-semibold">{pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                            <div className="text-gray-500">Seller receives</div>
+                            <div className="text-base font-semibold text-green-700">€{sellerNet.toLocaleString()}</div>
+                          </div>
+                        </div>
+
+                        {/* Milestones */}
+                        <div className="text-sm">
+                          <div className="font-semibold mb-2">Milestones</div>
+                          <table className="w-full text-xs border border-gray-200 rounded-md overflow-hidden">
+                            <thead>
+                              <tr className="bg-gray-50 text-gray-600">
+                                <th className="py-2 px-2 text-left">Name</th>
+                                <th className="py-2 px-2 text-left">Completed at</th>
+                                <th className="py-2 px-2 text-right">Amount</th>
+                                <th className="py-2 px-2 text-right">After fee</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(p.milestones || []).filter(m => m.status === 'approved').map((m, idx) => {
+                                const { net } = calcMilestoneNet(m.relative_payment, pct);
+                                return (
+                                  <tr key={m.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                    <td className="py-2 px-2">{m.name}</td>
+                                    <td className="py-2 px-2">{m.completion_date || '-'}</td>
+                                    <td className="py-2 px-2 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
+                                    <td className="py-2 px-2 text-right">€{net.toLocaleString()}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
+                          <div>Generated by SafeBill</div>
+                          <div>www.safebill.app</div>
+                        </div>
                       </div>
-                      <div className="text-sm mb-4">
-                        <div>Total: €{total.toLocaleString()}</div>
-                        <div>Platform fee: {pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div>
-                        <div>Seller receives: €{sellerNet.toLocaleString()}</div>
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-semibold mb-2">Milestones</div>
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-left">
-                              <th className="py-1 pr-2">Name</th>
-                              <th className="py-1 pr-2">Completed at</th>
-                              <th className="py-1 pr-2 text-right">Amount</th>
-                              <th className="py-1 pr-0 text-right">After fee</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(p.milestones || []).filter(m => m.status === 'approved').map((m) => {
-                              const { net } = calcMilestoneNet(m.relative_payment, pct);
-                              return (
-                                <tr key={m.id}>
-                                  <td className="py-1 pr-2">{m.name}</td>
-                                  <td className="py-1 pr-2">{m.completion_date || '-'}</td>
-                                  <td className="py-1 pr-2 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
-                                  <td className="py-1 pr-0 text-right">€{net.toLocaleString()}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}

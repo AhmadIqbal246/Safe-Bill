@@ -10,6 +10,7 @@ import ApprovedProjects from '../components/BuyerDashboard/ApprovedProjects';
 import MilestoneApproval from '../components/BuyerDashboard/MilestoneApproval';
 import PaymentTracking from '../components/BuyerDashboard/PaymentTracking';
 import DocumentsSection from '../components/BuyerDashboard/DocumentsSection';
+import ReceiptsSection from '../components/BuyerDashboard/ReceiptsSection';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Chat from '../components/mutualComponents/Chat/Chat';
 import { useTranslation } from 'react-i18next';
@@ -245,6 +246,11 @@ export default function BuyerDashboardPage() {
             billings={billings} 
           />
           <DocumentsSection projects={clientProjects} />
+        </div>
+
+        {/* Receipts Section */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <ReceiptsSection />
         </div>
         
         <div className="flex justify-center mt-8 sm:mt-10">
