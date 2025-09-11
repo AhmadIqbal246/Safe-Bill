@@ -211,9 +211,14 @@ export const updateMilestone = createAsyncThunk(
       );
       return response.data;
     } catch (err) {
-      return rejectWithValue(
-        err.response && err.response.data ? err.response.data : err.message
-      );
+      // Handle different error response formats
+      let errorData = err.message || 'Network error';
+      
+      if (err.response && err.response.data) {
+        errorData = err.response.data;
+      }
+      
+      return rejectWithValue(errorData);
     }
   }
 );

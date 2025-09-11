@@ -26,11 +26,10 @@ TRANSFER_STATUS = [
 # Create your models here.
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2) # #original amount at the moment of buyer payment
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     platform_fee_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
-    stripe_fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     buyer_total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     seller_net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
@@ -42,46 +41,6 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.amount} - {self.status}"
-
-
-class PlatformFeeConfig(models.Model):
-    """
-    Dynamic platform fee configuration.
-    buyer_fee_pct: percentage (0.00 - 1.00) charged to buyer on top of base amount
-    seller_fee_pct: percentage (0.00 - 1.00) deducted from seller's base amount
-    Only one active config should be used at a time; latest created is used if multiple are active.
-    """
-
-    buyer_fee_pct = models.DecimalField(
-        max_digits=5,
-        decimal_places=4,
-        validators=[MinValueValidator(0), MaxValueValidator(1)],
-        default=0.05,
-    )
-    seller_fee_pct = models.DecimalField(
-        max_digits=5,
-        decimal_places=4,
-        validators=[MinValueValidator(0), MaxValueValidator(1)],
-        default=0.05,
-    )
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ["-created_at"]
-        verbose_name = "Platform Fee Configuration"
-        verbose_name_plural = "Platform Fee Configurations"
-
-    def __str__(self):
-        return f"PlatformFeeConfig(buyer={self.buyer_fee_pct}, seller={self.seller_fee_pct}, active={self.is_active})"
-
-    @classmethod
-    def current(cls):
-        cfg = cls.objects.filter(is_active=True).order_by("-created_at").first()
-        if cfg:
-            return cfg
-        # Fallback default
-        return cls(buyer_fee_pct=0, seller_fee_pct=0.05, is_active=True)
 
 
 class Balance(models.Model):
@@ -217,9 +176,22 @@ class PayoutHold(models.Model):
         return f"PayoutHold({self.user.email}) {self.amount} {self.currency} - {status} until {self.hold_until}"
 
 
-#1000 = payment amount (from buyer)
+class Refund(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    stripe_refund_id = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Refund({self.user.email}) {self.amount} - {self.status}"
+
+
+# 1000 = payment amount (from buyer)
 # 2 miletonses : 1st = 600 , 2nd = 400, total ammount = 1st + 2nd
 
-# Refundable amount = 1st milestone = 500, 
+# Refundable amount = 1st milestone = 500,
 #  paymenmt ammount - paid (milestones that are approved) = new total amount
-# new total amount - miletones that are not approved = refundable amount 
+# new total amount - miletones that are not approved = refundable amount

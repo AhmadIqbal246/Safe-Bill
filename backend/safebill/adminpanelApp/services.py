@@ -2,8 +2,9 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 from .models import PlatformRevenue
-from payments.models import PlatformFeeConfig
+from payments.models import Payment
 from payments.services import FeeCalculationService
+from projects.models import Milestone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,35 +16,7 @@ class RevenueService:
     """
 
     @staticmethod
-    def add_buyer_revenue(payment_amount, platform_fee_amount):
-        """
-        Add buyer revenue when a payment is completed.
-        This is called from the checkout.session.completed webhook.
-
-        Args:
-            payment_amount: Base payment amount
-            platform_fee_amount: Platform fee charged to buyer
-        """
-        try:
-            with transaction.atomic():
-                revenue_record, created = PlatformRevenue.get_or_create_current_month()
-
-                # Add buyer revenue (platform fee from buyer)
-                revenue_record.buyer_revenue += platform_fee_amount
-                revenue_record.total_payments += 1
-                revenue_record.save()
-
-                logger.info(
-                    f"Added buyer revenue: {platform_fee_amount} EUR to {revenue_record.year}-{revenue_record.month:02d}"
-                )
-                return revenue_record
-
-        except Exception as e:
-            logger.error(f"Error adding buyer revenue: {e}")
-            raise
-
-    @staticmethod
-    def add_seller_revenue(milestone_amount):
+    def add_seller_revenue(milestone_amount, platform_fee_percentage, vat_rate):
         """
         Add seller revenue when a milestone is approved.
         This is called when a milestone is approved by the buyer.
@@ -54,8 +27,10 @@ class RevenueService:
         try:
             with transaction.atomic():
                 # Calculate seller fee using centralized service
-                fees = FeeCalculationService.calculate_fees(milestone_amount)
-                seller_fee_amount = fees["seller_fee_amount"]
+                fees = FeeCalculationService.calculate_fees(
+                    milestone_amount, platform_fee_percentage, vat_rate
+                )
+                seller_fee_amount = fees["platform_fee"]
 
                 revenue_record, created = PlatformRevenue.get_or_create_current_month()
 
@@ -64,10 +39,7 @@ class RevenueService:
                 revenue_record.total_milestones_approved += 1
                 revenue_record.save()
 
-                logger.info(
-                    f"Added seller revenue: {seller_fee_amount} EUR to {revenue_record.year}-{revenue_record.month:02d} "
-                    f"(milestone_amount={milestone_amount}, fee_pct={fees['seller_fee_pct']})"
-                )
+                logger.info(f"Added seller revenue: {seller_fee_amount} EUR")
                 return revenue_record
 
         except Exception as e:
@@ -107,7 +79,7 @@ class RevenueService:
             "current_month": {
                 "year": current_month.year,
                 "month": current_month.month,
-                "buyer_revenue": current_month.buyer_revenue,
+                "vat_collected": current_month.vat_collected,
                 "seller_revenue": current_month.seller_revenue,
                 "total_revenue": current_month.total_revenue,
                 "total_payments": current_month.total_payments,
@@ -123,8 +95,6 @@ class RevenueService:
         Recalculate revenue for a specific month from actual payment data.
         This can be used for data integrity checks.
         """
-        from payments.models import Payment
-        from projects.models import Milestone
 
         try:
             with transaction.atomic():
@@ -139,8 +109,8 @@ class RevenueService:
                     status="paid", created_at__gte=start_date, created_at__lt=end_date
                 )
 
-                # Calculate buyer revenue
-                buyer_revenue = sum(p.platform_fee_amount for p in payments)
+                # Calculate vat collected
+                vat_collected = sum(p.buyer_total_amount - p.amount for p in payments)
 
                 # Calculate seller revenue from approved milestones
                 milestones = Milestone.objects.filter(
@@ -154,7 +124,9 @@ class RevenueService:
                 for milestone in milestones:
                     # Calculate seller fee for this milestone using centralized service
                     fees = FeeCalculationService.calculate_fees(
-                        milestone.relative_payment
+                        milestone.relative_payment,
+                        milestone.project.platform_fee_percentage,
+                        milestone.project.vat_rate,
                     )
                     seller_fee_amount = fees["seller_fee_amount"]
                     seller_revenue += seller_fee_amount
@@ -164,7 +136,7 @@ class RevenueService:
                     year=year,
                     month=month,
                     defaults={
-                        "buyer_revenue": buyer_revenue,
+                        "vat_collected": vat_collected,
                         "seller_revenue": seller_revenue,
                         "total_payments": payments.count(),
                         "total_milestones_approved": milestones.count(),
@@ -172,7 +144,7 @@ class RevenueService:
                 )
 
                 if not created:
-                    revenue_record.buyer_revenue = buyer_revenue
+                    revenue_record.vat_collected = vat_collected
                     revenue_record.seller_revenue = seller_revenue
                     revenue_record.total_payments = payments.count()
                     revenue_record.total_milestones_approved = milestones.count()

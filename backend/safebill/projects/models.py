@@ -102,6 +102,7 @@ class Milestone(models.Model):
         ("pending", "Pending"),
         ("not_approved", "Not Approved"),
         ("not_submitted", "Not Submitted"),
+        ("payment_withdrawal", "Payment Withdrawal"),
     ]
 
     project = models.ForeignKey(

@@ -138,7 +138,7 @@ export default function ProjectCreation() {
       quote: { file: quoteFile },
       installments: selectedConfig,
       vat_rate: vatRate,
-      platform_fee_percentage: platformPctForProject * 100, // Convert to percentage (e.g., 0.10 -> 10.0)
+      platform_fee_percentage: platformPctForProject,
     }));
   };
 
@@ -390,7 +390,7 @@ export default function ProjectCreation() {
             <div className="flex items-center gap-4 justify-between">
               <span className="text-lg font-semibold text-gray-900">{t('project_creation.final_total') || 'Total Net Earnings'}: </span>
               <span className="text-xl font-bold text-[#01257D]">€{totalSellerNet.toLocaleString()}</span>
-              <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">{t('project_creation.platform_fee_label')}: {(platformPctForProject*100).toFixed(1)}% (≈ €{platformFeeForProject.toLocaleString()})</span>
+              <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">{t('project_creation.platform_fee_label')}: {(platformPctForProject).toFixed(1)}% (≈ €{platformFeeForProject.toLocaleString()})</span>
             </div>
           </div>
         </div>

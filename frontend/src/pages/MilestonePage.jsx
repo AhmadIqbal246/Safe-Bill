@@ -22,7 +22,7 @@ export default function MilestonePage() {
     milestonesError,
     milestoneUpdateLoading,
     milestoneUpdateError,
-    approveMilestoneLoading
+    // approveMilestoneLoading
   } = useSelector(state => state.project);
 
   const { projectPlatformFee, projectPlatformFeeLoading } = useSelector(state => state.payment);
@@ -59,14 +59,14 @@ export default function MilestonePage() {
   const projectMilestones = milestones[project?.id] || [];
 
   // Function to fetch platform fee for a specific milestone amount
-  const fetchMilestonePlatformFee = (milestoneAmount) => {
-    if (project?.id) {
-      dispatch(fetchProjectPlatformFee({ 
-        projectId: project.id, 
-        milestoneAmount: milestoneAmount 
-      }));
-    }
-  };
+  // const fetchMilestonePlatformFee = (milestoneAmount) => {
+  //   if (project?.id) {
+  //     dispatch(fetchProjectPlatformFee({ 
+  //       projectId: project.id, 
+  //       milestoneAmount: milestoneAmount 
+  //     }));
+  //   }
+  // };
 
   // Calculate net amount after platform fee (simplified - no Stripe fees)
   const calculateNetAmount = (amount) => {
@@ -197,11 +197,23 @@ export default function MilestonePage() {
       dispatch(fetchMilestones(project.id));
       handleEditCancel();
     } catch (err) {
-      toast.error(
-        typeof err === 'string'
-          ? err
-          : 'Failed to update milestone. Please try again.'
-      );
+      // Handle different error formats
+      let errorMessage = 'Failed to update milestone. Please try again.';
+      
+      if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object') {
+        // Handle validation errors from backend
+        if (err.relative_payment && Array.isArray(err.relative_payment)) {
+          errorMessage = err.relative_payment[0];
+        } else if (err.message) {
+          errorMessage = err.message;
+        } else if (err.error) {
+          errorMessage = err.error;
+        }
+      }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -294,11 +306,11 @@ export default function MilestonePage() {
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="text-lg font-semibold text-gray-800">
-                      ${parseFloat(milestone.relative_payment).toLocaleString()}
+                      ${parseFloat(milestone.relative_payment || 0).toLocaleString()}
                     </div>
                     {projectPlatformFee && !projectPlatformFeeLoading && (
                       <div className="text-sm text-green-600 font-medium">
-                        You receive: ${calculateNetAmount(milestone.relative_payment).netAmount.toLocaleString()}
+                        You receive: €{calculateNetAmount(milestone.relative_payment || 0).netAmount.toLocaleString()}
                       </div>
                     )}
                   </div>
@@ -360,7 +372,7 @@ export default function MilestonePage() {
               {/* Simple Fee Info */}
               {projectPlatformFee && !projectPlatformFeeLoading && (
                 <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  <span className="font-medium">Platform Fee:</span> {calculateNetAmount(milestone.relative_payment).platformFeePct}% (${calculateNetAmount(milestone.relative_payment).platformFee.toLocaleString()})
+                  <span className="font-medium">Platform Fee:</span> {calculateNetAmount(milestone.relative_payment || 0).platformFeePct}% (${calculateNetAmount(milestone.relative_payment || 0).platformFee.toLocaleString()})
                 </div>
               )}
               {milestone.review_comment && (
@@ -521,9 +533,6 @@ export default function MilestonePage() {
                   )}
                 </div>
 
-                {milestoneUpdateError && (
-                  <div className="text-red-600 text-sm mt-2">{milestoneUpdateError}</div>
-                )}
 
                 <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
                   <button
