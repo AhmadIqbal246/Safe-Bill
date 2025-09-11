@@ -2,10 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
+import { Search } from 'lucide-react';
 
 export default function CurrentProjects({ projects = [] }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [search, setSearch] = React.useState("");
 
   const getProgressPercentage = (project) => {
     // Prefer backend-provided progress percentage if available
@@ -33,13 +35,34 @@ export default function CurrentProjects({ projects = [] }) {
     navigate(`/project/${project.id}`);
   };
 
+  // filter by name for in-progress projects
+  const filtered = React.useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const inProgress = (projects || []).filter(p => p.status === 'in_progress');
+    if (!term) return inProgress;
+    return inProgress.filter(p => (p.name || "").toLowerCase().includes(term));
+  }, [projects, search]);
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px] h-[500px] flex flex-col">
-      <div className="font-semibold text-lg mb-4">{t('buyer_dashboard.current_projects')}</div>
-      
-      {projects.filter(project => project.status === 'in_progress').length > 0 ? (
+      <div className="font-semibold text-lg mb-3">{t('buyer_dashboard.current_projects')}</div>
+      <div className="mb-3">
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('buyer_dashboard.search_projects')}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#01257D] focus:border-[#01257D] text-sm"
+          />
+        </div>
+      </div>
+      {filtered.length > 0 ? (
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-          {projects.filter(project => project.status === 'in_progress').map((project, index) => {
+          {filtered.map((project, index) => {
             const progress = getProgressPercentage(project);
             
             return (
