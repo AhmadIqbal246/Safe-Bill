@@ -413,6 +413,13 @@ class ProjectInviteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Only allow resending for projects that are still pending
+        if project.status != "pending":
+            return Response(
+                {"detail": "Invitation can only be resent for projects with status 'pending'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Only allow resend if previous token is expired
         if project.invite_token_expiry and project.invite_token_expiry > timezone.now():
             return Response(
@@ -838,6 +845,7 @@ def list_expired_project_invites(request):
         invite_token_expiry__isnull=False,
         invite_token_expiry__lt=timezone.now(),
         invite_token_used=False,
+        status="pending",
     ).order_by("-created_at")
 
     serializer = ProjectListSerializer(expired, many=True)
