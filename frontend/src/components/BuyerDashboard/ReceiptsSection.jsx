@@ -11,6 +11,7 @@ export default function ReceiptsSection() {
   const [page, setPage] = React.useState(1);
   const pageSize = 2;
   const [expands, setExpands] = React.useState({});
+  const [search, setSearch] = React.useState("");
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
@@ -83,18 +84,36 @@ export default function ReceiptsSection() {
     }
   };
 
+  // Reset page when search or dataset changes
+  React.useEffect(() => { setPage(1); }, [search, projects]);
+
+  // Filter by project name
+  const filtered = React.useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return projects;
+    return projects.filter(p => (p.name || "").toLowerCase().includes(term));
+  }, [projects, search]);
+
   // Pagination
-  const total = projects.length;
+  const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const startIdx = (page - 1) * pageSize;
   const endIdx = Math.min(startIdx + pageSize, total);
-  const paged = projects.slice(startIdx, endIdx);
+  const paged = filtered.slice(startIdx, endIdx);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Receipts</h3>
-        <div className="text-xs text-gray-500">Completed projects receipts</div>
+        <div className="flex items-center gap-2 w-full sm:w-80">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by project name"
+            className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+          />
+        </div>
       </div>
 
       {loading ? (
