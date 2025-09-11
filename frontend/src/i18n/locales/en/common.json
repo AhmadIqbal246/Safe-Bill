@@ -405,7 +405,8 @@
     "my_profile": "My profile",
     "billings": "Billings",
     "documents": "Documents",
-    "support": "Support"
+    "support": "Support",
+    "receipts": "Receipts"
   },
   "dashboard": {
     "title": "Dashboard",
