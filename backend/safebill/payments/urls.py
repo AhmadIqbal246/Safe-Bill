@@ -9,9 +9,10 @@ from .views import (
     list_transfers,
     generate_stripe_login_link,
     list_payout_holds,
-    get_platform_fees,
     get_project_platform_fee,
     revenue_comparison,
+    payment_refund,
+    update_refund_balance,
 )
 
 urlpatterns = [
@@ -61,11 +62,6 @@ urlpatterns = [
         name="list_payout_holds",
     ),
     path(
-        "fees/",
-        get_platform_fees,
-        name="get_platform_fees",
-    ),
-    path(
         "project-fees/<int:project_id>/",
         get_project_platform_fee,
         name="get_project_platform_fee",
@@ -74,5 +70,15 @@ urlpatterns = [
         "revenue-comparison/",
         revenue_comparison,
         name="revenue_comparison",
+    ),
+    path(
+        "payment-refund/<int:project_id>/",
+        payment_refund,
+        name="payment_refund",
+    ),
+    path(
+        "update-refund-balance/<int:milestone_id>/",
+        update_refund_balance,
+        name="update_refund_balance",
     ),
 ]

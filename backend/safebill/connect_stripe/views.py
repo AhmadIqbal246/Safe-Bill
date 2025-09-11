@@ -10,14 +10,14 @@ from django.db import transaction
 from django.utils import timezone
 from .models import StripeAccount, StripeIdentity
 from projects.models import Project
-from payments.models import Payment
+from payments.models import Payment, Refund, Balance
 from payments.utils import send_payment_websocket_update
 from utils.email_service import EmailService
 from notifications.services import NotificationService
 from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
-
+from adminpanelApp.models import PlatformRevenue
 
 User = get_user_model()
 
@@ -591,6 +591,12 @@ def stripe_identity_webhook(request):
         project.status = "approved"
         project.save()
         payment = Payment.objects.get(stripe_payment_id=payment_id)
+        if payment.status != "paid":
+            platform_revenue = PlatformRevenue.objects.all().first()
+            platform_revenue.vat_collected += (
+                payment.buyer_total_amount - payment.amount
+            )
+            platform_revenue.save()
         payment.status = "paid"
         payment.webhook_response = event
         payment.save()
@@ -605,15 +611,7 @@ def stripe_identity_webhook(request):
             logger.error(f"Error updating buyer balance: {e}")
             # Don't break the webhook flow if balance update fails
 
-        # Track buyer revenue (platform fee from buyer)
-        try:
-            RevenueService.add_buyer_revenue(
-                payment_amount=payment.amount,
-                platform_fee_amount=payment.platform_fee_amount,
-            )
-        except Exception as e:
-            logger.error(f"Error tracking buyer revenue: {e}")
-            # Don't break the webhook flow if revenue tracking fails
+        # Buyer revenue tracking removed: buyers are only charged VAT
 
         # Email: notify client of successful payment
         try:
@@ -633,7 +631,7 @@ def stripe_identity_webhook(request):
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
-                    language="en"  # Default to English for webhook emails
+                    language="en",  # Default to English for webhook emails
                 )
         except Exception:
             # Avoid breaking webhook flow if email fails
@@ -717,7 +715,7 @@ def stripe_identity_webhook(request):
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
-                    language="en"  # Default to English for webhook emails
+                    language="en",  # Default to English for webhook emails
                 )
         except Exception:
             # Avoid breaking webhook flow if email fails
@@ -757,6 +755,37 @@ def stripe_identity_webhook(request):
         reason = "Transfer failed"
         TransferService.handle_transfer_reversal(transfer_id, reason)
 
+    elif event["type"] == "refund.created":
+        refund = event["data"]["object"]
+        refund_id = refund["metadata"]["refund_id"]
+        refund = Refund.objects.get(id=refund_id)
+        # client = refund.project.client
+        # balance = Balance.objects.get(user=client)
+        # balance.total_spent -= refund.amount
+        # balance.save()
+
+        refund.status = "paid"
+        refund.save()
+
+    elif event["type"] == "refund.updated":
+        refund = event["data"]["object"]
+        refund_id = refund["metadata"]["refund_id"]
+        refund = Refund.objects.get(id=refund_id)
+        refund.status = "paid"
+        refund.save()
+        # client = refund.project.client
+        # balance = Balance.objects.get(user=client)
+        # balance.total_spent -= refund.amount
+        # balance.save()
+
+    elif event["type"] == "refund.failed":
+        refund = event["data"]["object"]
+        refund_id = refund["metadata"]["refund_id"]
+        refund = Refund.objects.get(id=refund_id)
+        refund.status = "failed"
+        refund.save()
+
+    # Handle REFUND events
     else:
         logger.info(f"Unhandled Stripe Identity event type: {event['type']}")
 

@@ -19,6 +19,7 @@ from utils.email_service import EmailService
 from django.conf import settings
 import secrets
 from notifications.services import NotificationService
+from decimal import Decimal
 from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
@@ -94,7 +95,14 @@ class ProjectCreateAPIView(generics.CreateAPIView):
             try:
                 data["platform_fee_percentage"] = float(platform_fee_pct_val)
             except (TypeError, ValueError):
-                return Response({"platform_fee_percentage": ["Invalid platform fee percentage value"]}, status=400)
+                return Response(
+                    {
+                        "platform_fee_percentage": [
+                            "Invalid platform fee percentage value"
+                        ]
+                    },
+                    status=400,
+                )
 
         # Create serializer with processed data
         serializer = self.get_serializer(data=data)
@@ -417,14 +425,18 @@ class ProjectInviteAPIView(APIView):
         project.invite_token = new_token
         project.invite_token_expiry = new_expiry
         project.invite_token_used = False
-        project.save(update_fields=["invite_token", "invite_token_expiry", "invite_token_used"])
+        project.save(
+            update_fields=["invite_token", "invite_token_expiry", "invite_token_used"]
+        )
 
         # Send invite email to client
         frontend_url = settings.FRONTEND_URL.rstrip("/")
         invite_link = f"{frontend_url}/project-invite?token={new_token}"
         try:
             # Try to get preferred language from request header, default to 'en'
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get(
+                "HTTP_ACCEPT_LANGUAGE", "en"
+            )
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
             print(language)
             EmailService.send_project_invitation_email(
@@ -642,8 +654,6 @@ class MilestoneApprovalAPIView(APIView):
             # Get project reference
             project = milestone.project
 
-            print("DEBUGGER:: Milestone amount:", milestone.relative_payment)
-
             # Update balances when milestone is approved
             try:
                 if project.user and project.client:
@@ -663,6 +673,8 @@ class MilestoneApprovalAPIView(APIView):
             try:
                 RevenueService.add_seller_revenue(
                     milestone_amount=milestone.relative_payment,
+                    platform_fee_percentage=project.platform_fee_percentage,
+                    vat_rate=project.vat_rate,
                 )
             except Exception as e:
                 logger.error(

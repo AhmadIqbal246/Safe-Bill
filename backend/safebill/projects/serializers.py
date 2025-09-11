@@ -85,20 +85,22 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
         # Validate milestone amount within paid amount limit if changing
         if "relative_payment" in validated_data:
             try:
-                total_paid = (
-                    Payment.objects.filter(project=project, status="paid")
-                    .values_list("amount", flat=True)
+                total_paid = Payment.objects.filter(
+                    project=project, status="paid"
+                ).values_list("amount", flat=True)
+                total_paid_amount = sum(
+                    (Decimal(str(a)) for a in total_paid), Decimal("0")
                 )
-                total_paid_amount = sum((Decimal(str(a)) for a in total_paid), Decimal("0"))
             except Exception:
                 total_paid_amount = Decimal("0")
 
             # Sum of other milestones (excluding current one)
-            other_total = (
-                project.milestones.exclude(id=instance.id)
-                .values_list("relative_payment", flat=True)
+            other_total = project.milestones.exclude(id=instance.id).values_list(
+                "relative_payment", flat=True
             )
-            other_total_amount = sum((Decimal(str(a)) for a in other_total), Decimal("0"))
+            other_total_amount = sum(
+                (Decimal(str(a)) for a in other_total), Decimal("0")
+            )
 
             new_relative_payment = Decimal(str(validated_data.get("relative_payment")))
 
@@ -135,33 +137,26 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
         if "relative_payment" in validated_data:
             try:
                 # i) amount paid for the project by the buyer
-                total_paid_amount = (
-                    Payment.objects.filter(project=project, status="paid")
-                    .aggregate(total_amount=Sum("amount"))
-                    .get("total_amount")
-                    or Decimal("0")
+                total_paid_amount = Payment.objects.filter(
+                    project=project, status="paid"
+                ).aggregate(total_amount=Sum("amount")).get("total_amount") or Decimal(
+                    "0"
                 )
                 total_paid_amount = Decimal(str(total_paid_amount))
 
                 # ii) paid_amount: cumulative of approved milestones
-                approved_sum = (
-                    project.milestones.filter(status="approved")
-                    .aggregate(total=Sum("relative_payment"))
-                    .get("total")
-                    or Decimal("0")
-                )
+                approved_sum = project.milestones.filter(status="approved").aggregate(
+                    total=Sum("relative_payment")
+                ).get("total") or Decimal("0")
                 approved_sum = Decimal(str(approved_sum))
 
                 # iii) new_amount = amount - paid_amount
                 new_amount = total_paid_amount - approved_sum
 
                 # iv) un_paid_amount: milestones status other than approved
-                unapproved_sum = (
-                    project.milestones.exclude(status="approved")
-                    .aggregate(total=Sum("relative_payment"))
-                    .get("total")
-                    or Decimal("0")
-                )
+                unapproved_sum = project.milestones.exclude(
+                    status="approved"
+                ).aggregate(total=Sum("relative_payment")).get("total") or Decimal("0")
                 unapproved_sum = Decimal(str(unapproved_sum))
 
                 # v) refundable_amount = new_amount - un_paid_amount
@@ -183,11 +178,20 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
     vat_rate = serializers.DecimalField(max_digits=4, decimal_places=1, required=False)
-    platform_fee_percentage = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
+    platform_fee_percentage = serializers.DecimalField(
+        max_digits=5, decimal_places=2, required=False
+    )
 
     class Meta:
         model = Project
-        fields = ["name", "client_email", "quote", "installments", "vat_rate", "platform_fee_percentage"]
+        fields = [
+            "name",
+            "client_email",
+            "quote",
+            "installments",
+            "vat_rate",
+            "platform_fee_percentage",
+        ]
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -231,7 +235,9 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             req = self.context.get("request")
             preferred_lang = None
             if req is not None:
-                preferred_lang = req.headers.get("X-User-Language") or req.META.get("HTTP_ACCEPT_LANGUAGE")
+                preferred_lang = req.headers.get("X-User-Language") or req.META.get(
+                    "HTTP_ACCEPT_LANGUAGE"
+                )
             EmailService.send_project_invitation_email(
                 client_email=project.client_email,
                 project_name=project.name,
@@ -357,6 +363,7 @@ class ClientProjectSerializer(serializers.ModelSerializer):
             "approved_milestones",
             "total_milestones",
             "progress_pct",
+            "refundable_amount",
         ]
 
     def get_reference_number(self, obj):

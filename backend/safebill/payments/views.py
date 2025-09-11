@@ -9,18 +9,19 @@ from decimal import Decimal, ROUND_HALF_UP, DecimalException
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Sum, Q
-from .models import Payment, Balance, Payout, PayoutHold, PlatformFeeConfig, PayoutHold
+from .models import Payment, Balance, Payout, PayoutHold, PayoutHold, Refund
 from .serializers import (
     PaymentSerializer,
     BalanceSerializer,
     PayoutSerializer,
     PayoutHoldSerializer,
-    PlatformFeeConfigSerializer,
+    RefundSerializer,
 )
 from .transfer_service import TransferService
 from .services import BalanceService, FeeCalculationService
 from connect_stripe.models import StripeAccount
-
+from notifications.models import Notification
+from notifications.services import NotificationService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -49,15 +50,19 @@ def create_stripe_payment(request, project_id):
         # Ensure Decimal math
         amount = Decimal(str(amount))
 
-        # Calculate all fees using the centralized service
-        fees = FeeCalculationService.calculate_fees(amount)
+        # Calculate amounts: buyer pays base + VAT only; platform fee reduces seller net
+        fees = FeeCalculationService.calculate_fees(
+            base_amount=amount,
+            platform_fee_percentage=project.platform_fee_percentage,
+            vat_rate=project.vat_rate,
+        )
         platform_fee = fees["platform_fee"]
-        stripe_fee = fees["stripe_fee"]
         buyer_total = fees["buyer_total"]
         seller_net = fees["seller_net"]
-        checkout_session = stripe.checkout.Session.create(
-            customer_email=user.email,
-            line_items=[
+        # Build checkout session params
+        checkout_params = {
+            "customer_email": user.email,
+            "line_items": [
                 {
                     "price_data": {
                         "currency": "eur",
@@ -67,21 +72,23 @@ def create_stripe_payment(request, project_id):
                     "quantity": 1,
                 }
             ],
-            mode="payment",
-            success_url=redirect_url,
-            metadata={
+            "mode": "payment",
+            "success_url": redirect_url,
+            "metadata": {
                 "project_id": project.id,
                 "base_amount": str(amount),
                 "platform_fee": str(platform_fee),
-                "stripe_fee": str(stripe_fee),
                 "buyer_total": str(buyer_total),
                 "seller_net": str(seller_net),
-                "buyer_fee_pct": str(fees["buyer_fee_pct"]),
-                "seller_fee_pct": str(fees["seller_fee_pct"]),
-                "buyer_fee_amount": str(fees["buyer_fee_amount"]),
-                "seller_fee_amount": str(fees["seller_fee_amount"]),
+                "vat_amount": str((buyer_total - amount)),
             },
-        )
+        }
+
+        # Restrict to card only when buyer_total > 1000
+        if buyer_total > Decimal("1000"):
+            checkout_params["payment_method_types"] = ["card"]
+
+        checkout_session = stripe.checkout.Session.create(**checkout_params)
         # Delete any existing payments for this project by this user
         Payment.objects.filter(project=project, user=user).delete()
 
@@ -90,7 +97,6 @@ def create_stripe_payment(request, project_id):
             user=user,
             amount=amount,
             platform_fee_amount=platform_fee,
-            stripe_fee_amount=stripe_fee,
             buyer_total_amount=buyer_total,
             seller_net_amount=seller_net,
             status="pending",
@@ -173,6 +179,7 @@ def balance_summary(request):
     user = request.user
     balance, _ = Balance.objects.get_or_create(user=user)
     payments = Payment.objects.filter(user=user, status="paid")
+
     if user.role != "seller":
         balance.total_spent = sum(payment.amount for payment in payments)
 
@@ -181,6 +188,7 @@ def balance_summary(request):
     return Response(serializer.data, status=200)
 
 
+# ======================================================================== Transfer to Stripe Account ======================================================================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def transfer_to_stripe_account(request):
@@ -235,6 +243,7 @@ def transfer_to_stripe_account(request):
         )
 
 
+# ======================================================================== Get Transfer Info ======================================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_transfer_info(request):
@@ -263,6 +272,7 @@ def get_transfer_info(request):
         )
 
 
+# ======================================================================== List Transfers ======================================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_transfers(request):
@@ -339,40 +349,7 @@ def list_payout_holds(request):
         return Response({"detail": "Failed to retrieve payout holds."}, status=500)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_platform_fees(request):
-    """
-    Return platform fee configuration based on user role.
-    - Sellers: see seller fee percentage
-    - Buyers: see buyer fee percentage
-    - Professional Buyers: see both buyer and seller fee percentages
-    """
-    user = request.user
-    cfg = PlatformFeeConfig.current()
-
-    # Prepare response data based on user role
-    if user.role == "seller":
-        response_data = {"seller_fee_pct": cfg.seller_fee_pct, "user_role": user.role}
-    elif user.role == "buyer":
-        response_data = {"buyer_fee_pct": cfg.buyer_fee_pct, "user_role": user.role}
-    elif user.role == "professional-buyer":
-        response_data = {
-            "buyer_fee_pct": cfg.buyer_fee_pct,
-            "seller_fee_pct": cfg.seller_fee_pct,
-            "user_role": user.role,
-        }
-    else:
-        # For admin/super-admin, return all fee information
-        response_data = {
-            "buyer_fee_pct": cfg.buyer_fee_pct,
-            "seller_fee_pct": cfg.seller_fee_pct,
-            "user_role": user.role,
-        }
-
-    return Response(response_data, status=200)
-
-
+# ======================================================================== Get Project Platform Fee ======================================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_project_platform_fee(request, project_id):
@@ -382,49 +359,45 @@ def get_project_platform_fee(request, project_id):
     """
     try:
         from projects.models import Project
-        
+
         # Get the project
         project = Project.objects.get(id=project_id)
-        
+
         # Get the platform fee percentage from the project
         platform_fee_percentage = project.platform_fee_percentage
-        
+
         # Calculate the fee amount for the milestone
-        milestone_amount = request.query_params.get('milestone_amount', 0)
+        milestone_amount = request.query_params.get("milestone_amount", 0)
         try:
             milestone_amount = float(milestone_amount)
         except (ValueError, TypeError):
             milestone_amount = 0.0
-            
+
         # Convert milestone_amount to Decimal for proper calculation
         from decimal import Decimal
+
         milestone_amount_decimal = Decimal(str(milestone_amount))
-        
+
         # Calculate platform fee amount using Decimal arithmetic
         platform_fee_amount = (milestone_amount_decimal * platform_fee_percentage) / 100
-        
+
         response_data = {
             "platform_fee_percentage": float(platform_fee_percentage),
             "platform_fee_amount": round(float(platform_fee_amount), 2),
             "milestone_amount": milestone_amount,
-            "project_id": project_id
+            "project_id": project_id,
         }
-        
+
         return Response(response_data, status=200)
-        
+
     except Project.DoesNotExist:
-        return Response(
-            {"error": "Project not found"}, 
-            status=404
-        )
+        return Response({"error": "Project not found"}, status=404)
     except Exception as e:
         logger.error(f"Error fetching project platform fee: {str(e)}")
-        return Response(
-            {"error": "Failed to fetch platform fee"}, 
-            status=500
-        )
+        return Response({"error": "Failed to fetch platform fee"}, status=500)
 
 
+# ======================================================================== Generate Stripe Login Link ======================================================================
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def generate_stripe_login_link(request):
@@ -469,6 +442,7 @@ def generate_stripe_login_link(request):
         )
 
 
+# ======================================================================== Revenue Comparison ======================================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def revenue_comparison(request):
@@ -588,3 +562,71 @@ def revenue_comparison(request):
             {"detail": "Failed to calculate revenue comparison."},
             status=500,
         )
+
+
+# ======================================================================== Payment Refund ======================================================================
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def payment_refund(request, project_id):
+    """
+    Refund a payment
+    """
+    try:
+        user = request.user
+        project = Project.objects.get(id=project_id)
+        amount = project.refundable_amount
+        status = request.data.get("status", "pending")
+        payment = Payment.objects.get(project=project)
+        stripe_payment_id = payment.stripe_payment_id
+        stripe.api_key = settings.STRIPE_API_KEY
+
+        refund = Refund.objects.create(
+            user=user,
+            project=project,
+            amount=amount,
+            status=status,
+        )
+
+        stripe_refund = stripe.Refund.create(
+            payment_intent=stripe_payment_id,
+            amount=int(amount * 100),
+            reason="requested_by_customer",
+            metadata={"refund_id": str(refund.id)},
+        )
+        refund.stripe_refund_id = stripe_refund.id
+        refund.save()
+
+        return Response({"detail": "Refund created successfully"}, status=201)
+    except Exception as e:
+        logger.error(f"Error creating refund: {e}")
+        return Response({"detail": "Failed to create refund."}, status=500)
+
+
+# ======================================================================== Update Refund balance ======================================================================
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def update_refund_balance(request, milestone_id):
+    """
+    Update the balance of a refund
+    """
+    try:
+        milestone = Milestone.objects.get(id=milestone_id)
+        milestone.status = "payment_withdrawal"
+        milestone.save()
+        project = milestone.project
+        project.refundable_amount += milestone.relative_payment
+        project.save()
+
+        balance = Balance.objects.get(user=project.client)
+        balance.held_in_escrow -= milestone.relative_payment
+        balance.save()
+
+        NotificationService.create_notification(
+            user=project.client,
+            message="Refund balance updated successfully",
+            notification_type="refund_balance_updated",
+        )
+        return Response({"detail": "Refund updated successfully"}, status=200)
+    except Exception as e:
+        logger.error(f"Error updating refund balance: {e}")
+        return Response({"detail": "Failed to update refund balance."}, status=500)

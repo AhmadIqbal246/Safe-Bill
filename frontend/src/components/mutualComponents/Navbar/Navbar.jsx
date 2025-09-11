@@ -70,7 +70,7 @@ export default function SafeBillHeader({
     : null;
   const userAvatar =
     computedProfilePic || (user && user.avatar ? user.avatar : null);
-  console.log(userAvatar);
+  // Remove console.log to avoid null logging
   const userEmail = user && user.email ? user.email : "";
 
   // Determine admin panel visibility from session/user

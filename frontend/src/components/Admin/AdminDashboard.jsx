@@ -354,9 +354,9 @@ export default function AdminDashboard() {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-semibold text-emerald-600">
-                  {revenue.summary.current_month?.buyer_revenue || 0} EUR
+                  {revenue.summary.current_month?.vat_collected || 0} EUR
                 </div>
-                <div className="text-sm text-gray-500">Buyer Revenue</div>
+                <div className="text-sm text-gray-500">VAT Collected</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-semibold text-blue-600">

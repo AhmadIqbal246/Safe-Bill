@@ -101,7 +101,7 @@ const PaymentManagement = () => {
                 <th className="text-left font-medium px-4 py-3 min-w-[150px]">Project</th>
                 <th className="text-left font-medium px-4 py-3 min-w-[120px]">Project Amount</th>
                 {/* <th className="text-left font-medium px-4 py-3">Platform Fee</th> */}
-                <th className="text-left font-medium px-4 py-3 min-w-[100px]">Stripe Fee</th>
+                {/* <th className="text-left font-medium px-4 py-3 min-w-[100px]">Stripe Fee</th> */}
                 <th className="text-left font-medium px-4 py-3 min-w-[120px]">Total Paid</th>
                 {/* <th className="text-left font-medium px-4 py-3">Seller Net</th> */}
                 <th className="text-left font-medium px-4 py-3 min-w-[100px]">Status</th>
@@ -124,7 +124,7 @@ const PaymentManagement = () => {
                   </td>
                   <td className="px-4 py-3 font-medium whitespace-nowrap">{formatCurrency(payment.amount)}</td>
                   {/* <td className="px-4 py-3 text-emerald-600">{formatCurrency(payment.platform_fee_amount)}</td> */}
-                  <td className="px-4 py-3 text-blue-600 whitespace-nowrap">{formatCurrency(payment.stripe_fee_amount)}</td>
+                  {/* <td className="px-4 py-3 text-blue-600 whitespace-nowrap">{formatCurrency(payment.stripe_fee_amount || 0)}</td> */}
                   <td className="px-4 py-3 font-medium whitespace-nowrap">{formatCurrency(payment.buyer_total_amount)}</td>
                   {/* <td className="px-4 py-3 font-medium">{formatCurrency(payment.seller_net_amount)}</td> */}
                   <td className="px-4 py-3 whitespace-nowrap">

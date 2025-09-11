@@ -475,7 +475,7 @@ def get_monthly_revenue(request, year, month):
             data = {
                 "year": revenue.year,
                 "month": revenue.month,
-                "buyer_revenue": revenue.buyer_revenue,
+                "vat_collected": revenue.vat_collected,
                 "seller_revenue": revenue.seller_revenue,
                 "total_revenue": revenue.total_revenue,
                 "total_payments": revenue.total_payments,
@@ -525,7 +525,7 @@ def recalculate_monthly_revenue(request, year, month):
         data = {
             "year": revenue.year,
             "month": revenue.month,
-            "buyer_revenue": revenue.buyer_revenue,
+            "vat_collected": revenue.vat_collected,
             "seller_revenue": revenue.seller_revenue,
             "total_revenue": revenue.total_revenue,
             "total_payments": revenue.total_payments,
@@ -555,7 +555,7 @@ def list_revenue_months(request):
                 {
                     "year": revenue.year,
                     "month": revenue.month,
-                    "buyer_revenue": revenue.buyer_revenue,
+                    "vat_collected": revenue.vat_collected,
                     "seller_revenue": revenue.seller_revenue,
                     "total_revenue": revenue.total_revenue,
                     "total_payments": revenue.total_payments,
@@ -606,7 +606,6 @@ def get_paid_payments(request):
                     ),
                     "amount": payment.amount,
                     "platform_fee_amount": payment.platform_fee_amount,
-                    "stripe_fee_amount": payment.stripe_fee_amount,
                     "buyer_total_amount": payment.buyer_total_amount,
                     "seller_net_amount": payment.seller_net_amount,
                     "status": payment.status,
