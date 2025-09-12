@@ -3,6 +3,7 @@ from .models import Dispute, DisputeDocument, DisputeEvent, DisputeComment
 from projects.serializers import ProjectListSerializer
 from notifications.models import Notification
 from utils.email_service import EmailService
+from .tasks import send_dispute_created_email_task
 
 
 class DisputeDocumentSerializer(serializers.ModelSerializer):
@@ -147,7 +148,7 @@ class DisputeCreateSerializer(serializers.ModelSerializer):
             message=f"Your dispute for project '{project.name}' has been created successfully. Dispute ID: {dispute.dispute_id}"
         )
 
-        # Email seller (project owner) with localization
+        # Email seller (project owner) with localization (asynchronously via Celery)
         try:
             preferred_lang = request.headers.get('X-User-Language') or request.META.get('HTTP_ACCEPT_LANGUAGE', 'en')
             language = preferred_lang.split(',')[0][:2] if preferred_lang else 'en'
@@ -157,7 +158,8 @@ class DisputeCreateSerializer(serializers.ModelSerializer):
                 seller.get_full_name() or getattr(seller, 'username', None) or seller.email.split('@')[0]
             )
 
-            EmailService.send_dispute_created_email(
+            # Send asynchronously
+            send_dispute_created_email_task.delay(
                 seller_email=seller.email,
                 seller_name=seller_name,
                 project_name=project.name,
