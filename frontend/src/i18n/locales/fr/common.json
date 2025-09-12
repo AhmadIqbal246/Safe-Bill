@@ -267,6 +267,7 @@
     "verifying": "Vérification...",
     "verified": "Vérifié",
     "siret_error": "Le SIRET doit contenir exactement 14 chiffres",
+    "siret_already_in_use": "Le SIRET est vérifié mais il est déjà utilisé.",
     "siret_success": "✓ Numéro SIRET vérifié avec succès",
     "company_name_label": "Nom de l'Entreprise *",
     "company_name_placeholder": "Nom de l'entreprise",
