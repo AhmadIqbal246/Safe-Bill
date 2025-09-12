@@ -17,13 +17,20 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
 from rest_framework.decorators import api_view, permission_classes
-from utils.email_service import EmailService
+
 import re
 import unicodedata
 from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from .models import SellerRating
 from projects.models import Project
+
+# Import Celery tasks
+from .tasks import (
+    send_verification_email_task,
+    send_welcome_email_task,
+    send_password_reset_email_task
+)
 
 # Region to departments mapping (duplicate of frontend; backend needs minimal map)
 REGION_TO_DEPARTMENTS = {
@@ -107,32 +114,26 @@ class SellerRegisterView(APIView):
         serializer = SellerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Send verification email using the new email service
+            
+            # Generate verification token and URL
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             front_base_url = settings.FRONTEND_URL
             verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
             
-            # Get user name for email
-            user_name = user.get_full_name() or user.username or \
-                user.email.split('@')[0]
-
-            # Determine user_type based on user's role
+            # Determine user type
             role = getattr(user, 'role', 'seller')
-            user_type = 'Professional Buyer' if role == 'professional-buyer' \
-                else 'Seller'
+            user_type = 'Professional Buyer' if role == 'professional-buyer' else 'Seller'
             
             # Extract language from request headers
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
             
-            # Send verification email
-            EmailService.send_verification_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Send verification email asynchronously
+            send_verification_email_task.delay(
+                user_id=user.id,
                 verification_url=verification_url,
                 user_type=user_type,
-                verification_code=token,
                 language=language
             )
             
@@ -161,13 +162,11 @@ class BuyerRegistrationView(APIView):
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
             
-            # Send verification email
-            EmailService.send_verification_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Send verification email asynchronously via Celery
+            send_verification_email_task.delay(
+                user_id=user.id,
                 verification_url=verification_url,
                 user_type="buyer",
-                verification_code=token,
                 language=language
             )
             
@@ -189,16 +188,13 @@ class VerifyEmailView(APIView):
             user.is_email_verified = True
             user.save()
             
-            # Send welcome email after successful verification
-            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
-            
             # Extract language from request headers
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
             
-            EmailService.send_welcome_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Send welcome email asynchronously
+            send_welcome_email_task.delay(
+                user_id=user.id,
                 user_type=user.role,
                 language=language
             )
@@ -257,16 +253,13 @@ class VerifyEmailView(APIView):
                 user.is_email_verified = True
                 user.save()
                 
-                # Send welcome email after successful verification
-                user_name = user.get_full_name() or user.username or user.email.split('@')[0]
-                
                 # Extract language from request headers
                 preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
                 language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
                 
-                EmailService.send_welcome_email(
-                    user_email=user.email,
-                    user_name=user_name,
+                # Send welcome email asynchronously via Celery
+                send_welcome_email_task.delay(
+                    user_id=user.id,
                     user_type=user.role,
                     language=language
                 )
@@ -330,20 +323,15 @@ class ResendVerificationView(APIView):
         front_base_url = settings.FRONTEND_URL
         verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
         
-        # Get user name for email
-        user_name = user.get_full_name() or user.username or user.email.split('@')[0]
-        
         # Extract language from request headers
         preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
         language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
         
-        # Send verification email
-        EmailService.send_verification_email(
-            user_email=user.email,
-            user_name=user_name,
+        # Send verification email asynchronously via Celery
+        send_verification_email_task.delay(
+            user_id=user.id,
             verification_url=verification_url,
             user_type=user.role,
-            verification_code=token,
             language=language
         )
         
@@ -398,24 +386,21 @@ class PasswordResetRequestView(APIView):
                     {'detail': 'If the email exists, a reset link will be sent.'},
                     status=200
                 )
+        
+            # Generate reset token and URL
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             front_base_url = settings.FRONTEND_URL
             reset_url = f"{front_base_url}password-reset/?uid={uid}&token={token}"
             
-            # Get user name for email
-            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
-            
             # Extract language from request headers
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
             
-            # Send password reset email using the new email service
-            EmailService.send_password_reset_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Send password reset email asynchronously
+            send_password_reset_email_task.delay(
+                user_id=user.id,
                 reset_url=reset_url,
-                reset_code=token,
                 language=language
             )
             

@@ -144,9 +144,9 @@ class ProjectChatConsumer(AsyncJsonWebsocketConsumer):
                     f"{message.content[:200]}{'...' if len(message.content) > 200 else ''}"
                 )
                 
-                # Send email using the new email service
-                # Use default language for WebSocket-triggered emails
-                EmailService.send_quote_chat_notification(
+                # Send email using Celery task asynchronously (moved to chat.tasks)
+                from chat.tasks import send_quote_chat_notification_task
+                send_quote_chat_notification_task.delay(
                     seller_email=seller.email,
                     seller_name=seller_name,
                     buyer_name=buyer_name,

@@ -10,6 +10,7 @@ from utils.email_service import EmailService
 from django.conf import settings
 from notifications.models import Notification
 from django.db.models import Sum
+from .tasks import send_project_invitation_email_task
 
 
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
@@ -226,7 +227,7 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
                 # Other fields will be empty and can be edited later
             )
 
-        # Send invite email to client using EmailService
+        # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
         invite_link = f"{frontend_url}/project-invite?token={invite_token}"
 
@@ -235,15 +236,15 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             req = self.context.get("request")
             preferred_lang = None
             if req is not None:
-                preferred_lang = req.headers.get("X-User-Language") or req.META.get(
-                    "HTTP_ACCEPT_LANGUAGE"
-                )
-            EmailService.send_project_invitation_email(
+                preferred_lang = req.headers.get("X-User-Language") or req.META.get("HTTP_ACCEPT_LANGUAGE")
+            language = (preferred_lang.split(",")[0] if preferred_lang else "en")
+            
+            send_project_invitation_email_task.delay(
                 client_email=project.client_email,
                 project_name=project.name,
                 invitation_url=invite_link,
                 invitation_token=invite_token,
-                language=(preferred_lang.split(",")[0] if preferred_lang else "en"),
+                language=language
             )
         except Exception as e:
             # Log the error but don't fail project creation

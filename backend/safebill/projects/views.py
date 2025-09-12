@@ -25,6 +25,7 @@ from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
 import logging
+from .tasks import send_project_invitation_email_task
 
 logger = logging.getLogger(__name__)
 
@@ -437,7 +438,7 @@ class ProjectInviteAPIView(APIView):
             update_fields=["invite_token", "invite_token_expiry", "invite_token_used"]
         )
 
-        # Send invite email to client
+        # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
         invite_link = f"{frontend_url}/project-invite?token={new_token}"
         try:
@@ -446,13 +447,13 @@ class ProjectInviteAPIView(APIView):
                 "HTTP_ACCEPT_LANGUAGE", "en"
             )
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
-            print(language)
-            EmailService.send_project_invitation_email(
+            
+            send_project_invitation_email_task.delay(
                 client_email=project.client_email,
                 project_name=project.name,
                 invitation_url=invite_link,
                 invitation_token=new_token,
-                language=language,
+                language=language
             )
         except Exception:
             # Don't fail resend if email sending fails
