@@ -809,6 +809,17 @@ def verify_siret_api(request):
     if not siret or not siret.isdigit() or len(siret) != 14:
         return Response({'detail': 'SIRET must be exactly 14 digits.'}, status=400)
     
+    # Check if SIRET already exists in our database
+    from .models import BusinessDetail
+    existing_siret = BusinessDetail.objects.filter(siret_number=siret).first()
+    if existing_siret:
+        return Response({
+            'valid': False, 
+            'detail': 'SIRET is verified but it is already in use.',
+            'already_in_use': True,
+            'error_key': 'siret_already_in_use'
+        }, status=409)  # 409 Conflict status code
+    
     import requests
     from django.conf import settings
     print(settings.SIRET_VALIDATION_ACCESS_TOKEN)
@@ -823,7 +834,6 @@ def verify_siret_api(request):
     resp = requests.get(url, headers=headers)
 
     print(resp.status_code)
-    print(resp.text)
     if resp.status_code == 200:
         data = resp.json()
         etab = data.get('etablissement', {})

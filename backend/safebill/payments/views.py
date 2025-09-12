@@ -5,12 +5,11 @@ from django.conf import settings
 import stripe
 from django.contrib.auth import get_user_model
 from projects.models import Project, PaymentInstallment, Milestone
-from decimal import Decimal, ROUND_HALF_UP, DecimalException
-from datetime import datetime, timedelta
+from decimal import Decimal, DecimalException
+from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Sum, Q
-from django.utils import timezone
-from .models import Payment, Balance, Payout, PayoutHold, PayoutHold, Refund
+from django.db.models import Sum
+from .models import Payment, Balance, Payout, PayoutHold, Refund
 from .serializers import (
     PaymentSerializer,
     BalanceSerializer,
@@ -20,9 +19,16 @@ from .serializers import (
 )
 from .transfer_service import TransferService
 from .services import BalanceService, FeeCalculationService
-from connect_stripe.models import StripeAccount
-from notifications.models import Notification
+# from connect_stripe.models import StripeAccount
+# from notifications.models import Notification
 from notifications.services import NotificationService
+from .tasks import (
+    send_payment_success_email_task,
+    send_payment_failed_email_task,
+    send_refund_created_email_task,
+    send_refund_paid_email_task,
+    send_refund_failed_email_task,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -136,6 +142,24 @@ def check_payment_status(request, project_id):
         )
 
         if payment:
+            # Opportunistically send emails for terminal states
+            try:
+                if payment.status == "paid":
+                    send_payment_success_email_task.delay(
+                        user.email,
+                        getattr(user, "first_name", None) or user.email,
+                        payment.project.name,
+                        float(payment.buyer_total_amount or payment.amount),
+                    )
+                elif payment.status == "failed":
+                    send_payment_failed_email_task.delay(
+                        user.email,
+                        getattr(user, "first_name", None) or user.email,
+                        payment.project.name,
+                        float(payment.buyer_total_amount or payment.amount),
+                    )
+            except Exception:
+                pass
             return Response({"status": payment.status}, status=200)
         else:
             return Response({"status": "pending"}, status=200)
@@ -646,6 +670,12 @@ def payment_refund(request, project_id):
             status="pending",
         )
 
+        # Email: refund requested
+        try:
+            send_refund_created_email_task.delay(user.email, project.name, float(amount))
+        except Exception:
+            pass
+
         # Create Stripe refund
         session = stripe.checkout.Session.retrieve(stripe_payment_id)
         payment_intent_id = session.payment_intent
@@ -664,6 +694,15 @@ def payment_refund(request, project_id):
         if mapped:
             refund.status = mapped
         refund.save()
+
+        # Email: if Stripe provided final status immediately
+        try:
+            if refund.status == "paid":
+                send_refund_paid_email_task.delay(user.email, project.name, float(amount))
+            elif refund.status == "failed":
+                send_refund_failed_email_task.delay(user.email, project.name, float(amount))
+        except Exception:
+            pass
 
         return Response(
             {

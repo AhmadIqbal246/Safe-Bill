@@ -264,6 +264,7 @@
     "verifying": "Verifying...",
     "verified": "Verified",
     "siret_error": "SIRET must be exactly 14 digits",
+    "siret_already_in_use": "SIRET is verified but it is already in use.",
     "siret_success": "✓ SIRET number verified successfully",
     "company_name_label": "Company Name *",
     "company_name_placeholder": "Company name",
