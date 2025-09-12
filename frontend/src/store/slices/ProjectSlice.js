@@ -18,6 +18,14 @@ export const createProject = createAsyncThunk(
       }
       // Installments as JSON string
       formData.append('installments', JSON.stringify(projectData.installments));
+      // VAT rate if provided
+      if (projectData.vat_rate !== undefined && projectData.vat_rate !== null && projectData.vat_rate !== '') {
+        formData.append('vat_rate', String(projectData.vat_rate));
+      }
+      // Platform fee percentage if provided
+      if (projectData.platform_fee_percentage !== undefined && projectData.platform_fee_percentage !== null && projectData.platform_fee_percentage !== '') {
+        formData.append('platform_fee_percentage', String(projectData.platform_fee_percentage));
+      }
       const response = await axios.post(
         `${BASE_URL}api/projects/create/`,
         formData,
@@ -203,9 +211,14 @@ export const updateMilestone = createAsyncThunk(
       );
       return response.data;
     } catch (err) {
-      return rejectWithValue(
-        err.response && err.response.data ? err.response.data : err.message
-      );
+      // Handle different error response formats
+      let errorData = err.message || 'Network error';
+      
+      if (err.response && err.response.data) {
+        errorData = err.response.data;
+      }
+      
+      return rejectWithValue(errorData);
     }
   }
 );

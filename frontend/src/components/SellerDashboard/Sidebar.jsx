@@ -8,6 +8,7 @@ const links = [
   { labelKey: 'sidebar.my_quotes', to: '/my-quotes' },
   { labelKey: 'sidebar.current_projects', to: '/current-projects' },
   { labelKey: 'sidebar.completed_projects', to: '/completed-projects' },
+  { labelKey: 'sidebar.receipts', to: '/seller-dashboard/receipts' },
   { labelKey: 'sidebar.expired_tokens', to: '/seller-dashboard/expired-invites' },
   { labelKey: 'sidebar.disputes', to: '/seller-disputes' },
   { labelKey: 'sidebar.my_profile', to: '/profile' },

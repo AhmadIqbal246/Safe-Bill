@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchClientProjectDetail } from "../store/slices/ProjectSlice";
+import { RefundPayment } from "../store/slices/PaymentSlice";
 import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
 import {
   Download,
@@ -11,8 +12,10 @@ import {
   Shield,
   MessageCircle,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 
 export default function ProjectDetailPage() {
   const { t } = useTranslation();
@@ -25,6 +28,10 @@ export default function ProjectDetailPage() {
     clientProjectDetailLoading,
     clientProjectDetailError,
   } = useSelector((state) => state.project);
+
+  const {
+    refundPaymentLoading,
+  } = useSelector((state) => state.payment);
 
   useEffect(() => {
     if (projectId) {
@@ -57,13 +64,6 @@ export default function ProjectDetailPage() {
     return `${months} ${months === 1 ? 'month' : 'months'}`;
   };
 
-  const getProgressPercentage = (project) => {
-    if (!project?.milestones?.length) return 0;
-    const completedMilestones = project.milestones.filter(
-      (m) => m.status === "approved"
-    ).length;
-    return Math.round((completedMilestones / project.milestones.length) * 100);
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -98,6 +98,25 @@ export default function ProjectDetailPage() {
         return t("project_detail.completed");
       default:
         return t("project_detail.not_submitted");
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!projectId) return;
+    
+    try {
+      await dispatch(RefundPayment({ projectId })).unwrap();
+      toast.success('Refund request submitted successfully!');
+      // Refetch project details once after 10 seconds to allow backend/Stripe to settle
+      setTimeout(() => {
+        dispatch(fetchClientProjectDetail(projectId));
+      }, 3000);
+    } catch (err) {
+      toast.error(
+        typeof err === 'string' 
+          ? err 
+          : 'Failed to submit refund request. Please try again.'
+      );
     }
   };
 
@@ -209,6 +228,9 @@ export default function ProjectDetailPage() {
                   )} text-white`}
                 >
                   {getStatusText(project.status)}
+                </span>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                  VAT: {Number(project.vat_rate || 0).toFixed(1)}%
                 </span>
                 <button
                   onClick={() =>
@@ -509,6 +531,42 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Refundable Amount Section */}
+              {project.refundable_amount && parseFloat(project.refundable_amount) > 0 && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    Refund Information
+                  </h2>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        Refundable Amount
+                      </span>
+                      <span className="font-semibold text-green-600">
+                        ${parseFloat(project.refundable_amount).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-4">
+                      This amount is available for refund based on milestone adjustments and payments.
+                    </div>
+                    {project.status === "completed" && (
+                      <button
+                        onClick={handleRefund}
+                        disabled={refundPaymentLoading}
+                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {refundPaymentLoading ? 'Processing...' : 'Request Refund'}
+                      </button>
+                    )}
+                    {project.status !== "completed" && (
+                      <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+                        Refund is only available when the project status is "Completed".
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Quote Details */}
               <div className="bg-white rounded-lg shadow-sm p-6">

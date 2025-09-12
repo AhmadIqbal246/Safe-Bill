@@ -13,12 +13,14 @@ from .serializers import (
     ClientProjectSerializer,
     MilestoneSerializer,
     MilestoneUpdateSerializer,
+    SellerReceiptProjectSerializer,
 )
 from notifications.models import Notification
 from utils.email_service import EmailService
 from django.conf import settings
 import secrets
 from notifications.services import NotificationService
+from decimal import Decimal
 from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
@@ -80,6 +82,29 @@ class ProjectCreateAPIView(generics.CreateAPIView):
             data["quote"] = {"file": file_obj}
         else:
             data["quote"] = {}
+
+        # Handle VAT rate (optional, defaults server-side)
+        vat_rate_val = request.data.get("vat_rate")
+        if vat_rate_val is not None and vat_rate_val != "":
+            try:
+                data["vat_rate"] = float(vat_rate_val)
+            except (TypeError, ValueError):
+                return Response({"vat_rate": ["Invalid VAT rate value"]}, status=400)
+
+        # Handle platform fee percentage (optional, defaults server-side)
+        platform_fee_pct_val = request.data.get("platform_fee_percentage")
+        if platform_fee_pct_val is not None and platform_fee_pct_val != "":
+            try:
+                data["platform_fee_percentage"] = float(platform_fee_pct_val)
+            except (TypeError, ValueError):
+                return Response(
+                    {
+                        "platform_fee_percentage": [
+                            "Invalid platform fee percentage value"
+                        ]
+                    },
+                    status=400,
+                )
 
         # Create serializer with processed data
         serializer = self.get_serializer(data=data)
@@ -389,6 +414,13 @@ class ProjectInviteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Only allow resending for projects that are still pending
+        if project.status != "pending":
+            return Response(
+                {"detail": "Invitation can only be resent for projects with status 'pending'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Only allow resend if previous token is expired
         if project.invite_token_expiry and project.invite_token_expiry > timezone.now():
             return Response(
@@ -402,14 +434,18 @@ class ProjectInviteAPIView(APIView):
         project.invite_token = new_token
         project.invite_token_expiry = new_expiry
         project.invite_token_used = False
-        project.save(update_fields=["invite_token", "invite_token_expiry", "invite_token_used"])
+        project.save(
+            update_fields=["invite_token", "invite_token_expiry", "invite_token_used"]
+        )
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
         invite_link = f"{frontend_url}/project-invite?token={new_token}"
         try:
             # Try to get preferred language from request header, default to 'en'
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get(
+                "HTTP_ACCEPT_LANGUAGE", "en"
+            )
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
             
             send_project_invitation_email_task.delay(
@@ -646,6 +682,8 @@ class MilestoneApprovalAPIView(APIView):
             try:
                 RevenueService.add_seller_revenue(
                     milestone_amount=milestone.relative_payment,
+                    platform_fee_percentage=project.platform_fee_percentage,
+                    vat_rate=project.vat_rate,
                 )
             except Exception as e:
                 logger.error(
@@ -751,6 +789,46 @@ def get_completed_projects(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+def seller_receipts(request):
+    """
+    Return completed projects for the authenticated seller with milestone details
+    for receipts.
+    """
+    user = request.user
+    if getattr(user, "role", None) != "seller":
+        return Response({"detail": "Only sellers can access this endpoint."}, status=403)
+
+    projects = (
+        Project.objects.filter(user=user, status="completed")
+        .prefetch_related("milestones", "installments", "quote")
+        .order_by("-created_at")
+    )
+    serializer = SellerReceiptProjectSerializer(projects, many=True)
+    return Response({"projects": serializer.data, "count": projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def buyer_receipts(request):
+    """
+    Return completed projects for the authenticated buyer with milestone details
+    for receipts.
+    """
+    user = request.user
+    if getattr(user, "role", None) not in ["buyer", "professional-buyer"]:
+        return Response({"detail": "Only buyers can access this endpoint."}, status=403)
+
+    projects = (
+        Project.objects.filter(client=user, status="completed")
+        .prefetch_related("milestones", "installments", "quote")
+        .order_by("-created_at")
+    )
+    serializer = SellerReceiptProjectSerializer(projects, many=True)
+    return Response({"projects": serializer.data, "count": projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def list_expired_project_invites(request):
     """
     List projects for the authenticated seller that have expired invite tokens.
@@ -768,6 +846,7 @@ def list_expired_project_invites(request):
         invite_token_expiry__isnull=False,
         invite_token_expiry__lt=timezone.now(),
         invite_token_used=False,
+        status="pending",
     ).order_by("-created_at")
 
     serializer = ProjectListSerializer(expired, many=True)

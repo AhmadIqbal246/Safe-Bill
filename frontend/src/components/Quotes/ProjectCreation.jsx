@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPlatformFees } from '../../store/slices/PaymentSlice';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
@@ -10,16 +9,16 @@ import { useTranslation } from 'react-i18next';
 
 const paymentConfigs = [
   [
-    { amount: '$1000', step: 'Quote Acceptance', desc: 'Full payment upon quote acceptance.' },
+    { amount: '€1000', step: 'Quote Acceptance', desc: 'Full payment upon quote acceptance.' },
   ],
   [
-    { amount: '$600', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '$400', step: 'Project Completion', desc: 'Final payment upon project completion.' },
+    { amount: '€600', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€400', step: 'Project Completion', desc: 'Final payment upon project completion.' },
   ],
   [
-    { amount: '$500', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '$300', step: 'Project Start', desc: 'Payment due at the start of the project.' },
-    { amount: '$200', step: 'Project Completion', desc: 'Final payment upon project completion.' },
+    { amount: '€500', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€300', step: 'Project Start', desc: 'Payment due at the start of the project.' },
+    { amount: '€200', step: 'Project Completion', desc: 'Final payment upon project completion.' },
   ],
 ];
 
@@ -28,11 +27,10 @@ export default function ProjectCreation() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.project);
-  const [buyerFeePct, setBuyerFeePct] = useState(0); // 0.00 - 1.00
-  const [sellerFeePct, setSellerFeePct] = useState(0.05); // default 5%
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
+  const [vatRate, setVatRate] = useState('20.0');
   const [quoteFile, setQuoteFile] = useState(null);
   const [fileError, setFileError] = useState('');
   const fileInputRef = useRef(null);
@@ -42,46 +40,48 @@ export default function ProjectCreation() {
     paymentConfigs[installments - 1].map(row => ({ ...row }))
   );
 
-  // Fetch dynamic platform fees via Redux (shared API)
-  const { platformFees } = useSelector((state) => state.payment || {});
-  useEffect(() => {
-    dispatch(fetchPlatformFees());
-  }, [dispatch]);
-  useEffect(() => {
-    if (platformFees) {
-      const buyer = Number(platformFees?.buyer_fee_pct) || 0;
-      const seller = Number(platformFees?.seller_fee_pct) || 0.05;
-      setBuyerFeePct(buyer);
-      setSellerFeePct(seller);
-    }
-  }, [platformFees]);
+  // Calculate platform fee percentage based on total project amount (tiered system)
+  const getPlatformFeePct = (totalAmount) => {
+    if (totalAmount >= 500001) return 1.5;
+    if (totalAmount >= 400001) return 2.0;
+    if (totalAmount >= 300001) return 2.5;
+    if (totalAmount >= 200001) return 3.0;
+    if (totalAmount >= 100001) return 5.0;
+    if (totalAmount >= 1001) return 7.0;
+    return 10.0; // Default for amounts 500-1000
+  };
 
-  // Calculate fees per milestone
-  const calculateMilestoneFees = (amount) => {
-    const numericAmount = Number(amount);
-    const platformFee = numericAmount * (buyerFeePct + sellerFeePct);
-    const stripeFee = (numericAmount + platformFee) * 0.029 + 0.30;
-    const sellerNet = numericAmount - (numericAmount * sellerFeePct) - stripeFee;
-    
+  // Helper to compute per-row fees; simplified platform fee only
+  const computeRowFees = (amount, platformPct) => {
+    const numericAmount = Number(amount) || 0;
+    const platformFee = +(numericAmount * platformPct / 100).toFixed(2);
+    const sellerNet = numericAmount - platformFee;
     return {
       amount: numericAmount,
-      platformFee: +platformFee.toFixed(2),
-      stripeFee: +stripeFee.toFixed(2),
-      sellerNet: +sellerNet.toFixed(2)
+      platformFee,
+      netAmount: +Math.max(sellerNet, 0).toFixed(2),
     };
   };
 
-  // Calculate fees for each milestone
+  // Frontend platform fee calculation based on total project amount
+  const totalProjectAmount = installmentRows.reduce((sum, row) => {
+    const amount = Number(String(row.amount).replace(/[^0-9.]/g, '')) || 0;
+    return sum + amount;
+  }, 0);
+  const platformPctForProject = getPlatformFeePct(totalProjectAmount);
+  const platformFeeForProject = +(totalProjectAmount * platformPctForProject / 100).toFixed(2);
+
+  // Calculate fees for each milestone using platformPctForProject
   const milestoneFees = installmentRows.map(row => {
     const amount = Number(String(row.amount).replace(/[^0-9.]/g, '')) || 0;
     return {
       ...row,
-      ...calculateMilestoneFees(amount)
+      ...computeRowFees(amount, platformPctForProject),
     };
   });
 
   // Calculate total net earnings
-  const totalSellerNet = milestoneFees.reduce((sum, milestone) => sum + milestone.sellerNet, 0);
+  const totalSellerNet = milestoneFees.reduce((sum, milestone) => sum + milestone.netAmount, 0);
 
   // Update rows when installments count changes
   React.useEffect(() => {
@@ -137,6 +137,8 @@ export default function ProjectCreation() {
       client_email: clientEmail,
       quote: { file: quoteFile },
       installments: selectedConfig,
+      vat_rate: vatRate,
+      platform_fee_percentage: platformPctForProject,
     }));
   };
 
@@ -303,12 +305,9 @@ export default function ProjectCreation() {
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.trigger_step')}</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.description')}</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold">
-                  Total Fees
-                  <div className="text-xs font-normal text-gray-500 mt-1">
-                    (Platform: {(buyerFeePct + sellerFeePct) * 100}% + Stripe: 2.9% + $0.30)
-                  </div>
+                  {t('project_creation.platform_fees')}
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold">Net Amount</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold">{t('project_creation.net_amount')}</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold">{t('project_creation.edit')}</th>
               </tr>
             </thead>
@@ -363,11 +362,11 @@ export default function ProjectCreation() {
                     </>
                   ) : (
                     <>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium">${milestone.amount.toLocaleString()}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium">€{milestone.amount.toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{milestone.step}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{milestone.desc}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-${(milestone.platformFee + milestone.stripeFee).toLocaleString()}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">${milestone.sellerNet.toLocaleString()}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-€{(milestone.platformFee).toLocaleString()}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">€{milestone.netAmount.toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <button
                           className="p-1 hover:bg-gray-100 rounded cursor-pointer"
@@ -388,11 +387,30 @@ export default function ProjectCreation() {
         {/* Final Total Only */}
         <div className="mt-6 flex justify-end">
           <div className=" border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-4 justify-between">
               <span className="text-lg font-semibold text-gray-900">{t('project_creation.final_total') || 'Total Net Earnings'}: </span>
-              <span className="text-xl font-bold text-[#01257D]">${totalSellerNet.toLocaleString()}</span>
+              <span className="text-xl font-bold text-[#01257D]">€{totalSellerNet.toLocaleString()}</span>
+              <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">{t('project_creation.platform_fee_label')}: {(platformPctForProject).toFixed(1)}% (≈ €{platformFeeForProject.toLocaleString()})</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* VAT Selection */}
+      <div className="mb-6 sm:mb-10">
+        <h2 className="text-base sm:text-xl font-semibold mb-2 sm:mb-3">{t('project_creation.vat_section') || 'VAT Rate'}</h2>
+        <div className="relative inline-block">
+          <select
+            value={vatRate}
+            onChange={(e) => setVatRate(e.target.value)}
+            className="w-48 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white text-gray-700"
+          >
+            <option value="20.0">20%</option>
+            <option value="10.0">10%</option>
+            <option value="5.5">5.5%</option>
+            <option value="2.1">2.1%</option>
+            <option value="0.0">0%</option>
+          </select>
         </div>
       </div>
 
