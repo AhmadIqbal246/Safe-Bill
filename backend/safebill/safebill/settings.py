@@ -26,14 +26,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "72.60.195.18",
+    "safebill.fr",
+    "www.safebill.fr",
+    "localhost",
+    "127.0.0.1"
+]
 
 # to allow all credentials (cookies, authorization headers, etc.) to be included in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://safebill.fr",
+    "https://www.safebill.fr",
+    "http://localhost:3000",  # For development
+    "http://127.0.0.1:3000",  # For development
+]
+
+# For production, disable this
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 
 # Allow custom headers for language detection
 CORS_ALLOW_HEADERS = [
@@ -118,7 +132,10 @@ ASGI_APPLICATION = "safebill.asgi.application"
 # Django Channels Configuration
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env('REDIS_URL', default='redis://127.0.0.1:6379/1')],
+        },
     },
 }
 
@@ -194,6 +211,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Site URL for email templates
+SITE_URL = env('SITE_URL', default='https://safebill.fr')
+SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Logo_Bleu.png')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
