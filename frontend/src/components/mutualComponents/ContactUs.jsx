@@ -7,6 +7,9 @@ import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { submitContactMessage, resetFeedbackState } from '../../store/slices/FeedbackSlices';
 
+const Email = import.meta.env.VITE_SAFE_BILL_EMAIL;
+const PhoneNumber = import.meta.env.VITE_SAFE_BILL_PHONE_NUMBER;
+const AddressLine = import.meta.env.VITE_SAFE_BILL_ADDRESS;
 export default function ContactUs() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -89,22 +92,21 @@ export default function ContactUs() {
                   <Mail className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
                   <div className="text-sm sm:text-base text-gray-700">
                     <p className="font-medium">{t('contact_us.email_label')}</p>
-                    <p>Dummyemail@gmail.com</p>
+                    <p>{Email}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <Phone className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
                   <div className="text-sm sm:text-base text-gray-700">
                     <p className="font-medium">{t('contact_us.phone_label')}</p>
-                    <p>+1 234 567 890</p>
+                    <p>{PhoneNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
                   <MapPin className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
                   <div className="text-sm sm:text-base text-gray-700">
                     <p className="font-medium">{t('contact_us.address_label')}</p>
-                    <p>{t('contact_us.address_line_1')}</p>
-                    <p>{t('contact_us.address_line_2')}</p>
+                    <p>{AddressLine}</p>
                   </div>
                 </div>
               </div>

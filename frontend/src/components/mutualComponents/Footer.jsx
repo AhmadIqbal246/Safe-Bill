@@ -2,37 +2,44 @@ import React from 'react';
 import { Mail, Phone, Facebook, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import Logo from '../../assets/Safe_Bill_Logo_Bleu.svg';
 
+const Email = import.meta.env.VITE_SAFE_BILL_EMAIL;
+const PhoneNumber = import.meta.env.VITE_SAFE_BILL_PHONE_NUMBER;
 export default function Footer() {
   const { t } = useTranslation();
+
+  
   
   return (
     <footer className="w-full bg-[#01257D] text-[#96C2DB] pt-12 pb-6 px-4 border-t border-[#01257D]">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-10 md:gap-4">
         {/* Columns */}
         <div className="flex-1 min-w-[180px] mb-8 md:mb-0">
-          <Link to="/" className="text-white font-semibold text-lg mb-2">Safe Bill</Link>
+          <Link to="/" className="inline-flex items-center mb-2">
+            <img src={Logo} alt="Safe Bill" className="h-28 w-auto object-contain" />
+          </Link>
           <div className="text-[#96C2DB] text-sm mb-4">{t('footer.tagline')}</div>
         </div>
-        <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
+        <div className="flex-1 min-w-[140px] mb-8 md:mb-0 md:mt-4">
           <div className="text-[#00FFFF] font-semibold mb-2">{t('footer.for_clients')}</div>
           <ul className="space-y-1">
             <li><Link to="/find-professionals" className="hover:underline text-[#96C2DB]">{t('footer.find_professionals')}</Link></li>
           </ul>
         </div>
-        <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
+        <div className="flex-1 min-w-[140px] mb-8 md:mb-0 md:mt-4">
           <div className="text-[#00FFFF] font-semibold mb-2">{t('footer.for_professionals')}</div>
           <ul className="space-y-1">
             <li><Link to="/seller-register" className="hover:underline text-[#96C2DB]">{t('footer.join_as_professional')}</Link></li>
           </ul>
         </div>
-        <div className="flex-1 min-w-[140px] mb-8 md:mb-0">
+        <div className="flex-1 min-w-[140px] mb-8 md:mb-0 md:mt-4">
           <div className="text-[#00FFFF] font-semibold mb-2">{t('footer.support')}</div>
           <ul className="space-y-1">
             <li><Link to="/contact-us" className="hover:underline text-[#96C2DB]">{t('footer.contact_us')}</Link></li>
           </ul>
         </div>
-        <div className="flex-1 min-w-[140px]">
+        <div className="flex-1 min-w-[140px] md:mt-4">
           <div className="text-[#00FFFF] font-semibold mb-2">{t('footer.legal_links')}</div>
           <ul className="space-y-1">
             <li><Link to="/terms-of-service" className="hover:underline text-[#96C2DB]">{t('footer.terms')}</Link></li>
@@ -43,8 +50,8 @@ export default function Footer() {
       {/* Contact and Socials */}
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between items-center mt-8 gap-4 md:gap-0 border-t border-[#1a357d] pt-6">
         <div className="flex items-center gap-6 mb-2 md:mb-0">
-          <span className="flex items-center gap-2 text-white"><Mail className="w-5 h-5" /> Dummyemail@gmail.com</span>
-          <span className="flex items-center gap-2 text-white"><Phone className="w-5 h-5" /> +1 234 567 890</span>
+          <span className="flex items-center gap-2 text-white"><Mail className="w-5 h-5" />{Email}</span>
+          <span className="flex items-center gap-2 text-white"><Phone className="w-5 h-5" /> {PhoneNumber}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-white mr-2">{t('footer.socials')}</span>
