@@ -834,6 +834,7 @@ def verify_siret_api(request):
     resp = requests.get(url, headers=headers)
 
     print(resp.status_code)
+    print(resp.text)
     if resp.status_code == 200:
         data = resp.json()
         etab = data.get('etablissement', {})

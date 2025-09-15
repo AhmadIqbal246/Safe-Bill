@@ -90,8 +90,8 @@ export default function SellerDisputesPage() {
 
   if (disputesLoading) {
     return (
-      <>
-        <SafeBillHeader />
+      <MainLayout>
+        <MainLayout />
         <div className="flex">
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
           <div className="flex-1 min-h-screen bg-gray-50 p-4">
@@ -102,14 +102,13 @@ export default function SellerDisputesPage() {
             </div>
           </div>
         </div>
-      </>
+      </MainLayout>
     );
   }
 
   if (disputesError) {
     return (
-      <>
-        <SafeBillHeader />
+      <MainLayout>
         <div className="flex">
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
           <div className="flex-1 min-h-screen bg-gray-50 p-4">
@@ -122,7 +121,7 @@ export default function SellerDisputesPage() {
             </div>
           </div>
         </div>
-      </>
+      </MainLayout>
     );
   }
 

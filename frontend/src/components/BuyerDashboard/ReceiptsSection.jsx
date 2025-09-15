@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import Logo from '../../assets/Safe_Bill_Logo_Bleu.png';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -189,7 +190,9 @@ export default function ReceiptsSection() {
                   <div id={`buyer-receipt-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4" style={{ background: '#ffffff' }}>
                     {/* Brand header */}
                     <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
-                      <div className="text-xl font-bold" style={{ color: '#01257D' }}>{t('receipts.brand')}</div>
+                      <div className="flex items-center gap-3">
+                        <img src={Logo} alt="Safe Bill" style={{ height: 80, width: 'auto' }} />
+                      </div>
                       <div className="text-xs text-gray-500">{t('receipts.buyer_copy')}</div>
                     </div>
 
