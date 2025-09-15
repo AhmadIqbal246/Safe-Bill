@@ -10,11 +10,47 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils.html import strip_tags
 from django.utils import translation
+from django.contrib.staticfiles.storage import staticfiles_storage
+from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
 
 class EmailService:
+    @staticmethod
+    def _get_logo_url() -> str:
+        """Return absolute URL for logo used in emails.
+
+        Resolution order:
+        1) settings.SITE_LOGO_URL (absolute URL you can set in .env)
+        2) Project static files: 'images/Safe_Bill_Logo_Bleu.png' (preferred for emails)
+           If missing, fallback to 'images/Safe_Bill_Logo_Bleu.svg'
+
+        Builds an absolute URL using SITE_URL (or FRONTEND_URL) + static path.
+        """
+        # If explicit absolute URL configured, use it
+        configured = getattr(settings, "SITE_LOGO_URL", None)
+        if configured:
+            return configured
+
+        # Try PNG first for email client compatibility, else SVG
+        candidate_paths = [
+            "images/Safe_Bill_Logo_Bleu.png",
+            "images/Safe_Bill_Logo_Bleu.svg",
+        ]
+        for path in candidate_paths:
+            try:
+                static_path = staticfiles_storage.url(path)
+                base = getattr(settings, "SITE_URL", None) or getattr(
+                    settings, "FRONTEND_URL", ""
+                )
+                if not base:
+                    # Cannot build absolute URL; return static path (best effort)
+                    return static_path
+                return urljoin(base.rstrip("/") + "/", static_path.lstrip("/"))
+            except Exception:
+                continue
+        return ""
     """
     Centralized email service for sending various types of emails.
     """
@@ -134,6 +170,7 @@ class EmailService:
             "frontend_verification_url": (f"{settings.FRONTEND_URL}email-verification"),
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -171,6 +208,7 @@ class EmailService:
             "frontend_reset_url": (f"{settings.FRONTEND_URL}reset-password"),
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -206,6 +244,7 @@ class EmailService:
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -248,6 +287,7 @@ class EmailService:
             "action_url": action_url,
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
         }
 
         subject = f"{notification_title} - SafeBill"
@@ -297,6 +337,7 @@ class EmailService:
                 "action_url": dashboard_url,
                 "site_name": "SafeBill",
                 "support_email": settings.DEFAULT_FROM_EMAIL,
+                "logo_url": EmailService._get_logo_url(),
             }
 
             return EmailService.send_email(
@@ -340,6 +381,7 @@ class EmailService:
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -384,6 +426,7 @@ class EmailService:
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "logo_url": EmailService._get_logo_url(),
         }
 
         return EmailService.send_email(
@@ -417,6 +460,7 @@ class EmailService:
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -461,6 +505,7 @@ class EmailService:
             "frontend_url": frontend_url,
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -498,6 +543,7 @@ class EmailService:
             "dashboard_url": dashboard_url,
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
@@ -534,6 +580,7 @@ class EmailService:
             "retry_url": retry_url,
             "site_name": "SafeBill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
