@@ -251,7 +251,7 @@ export default function PrivacyPolicyPage() {
           {/* Footer */}
           <div className="text-center mt-8">
             <p className="text-gray-500 text-sm">
-              {t('privacy_policy.copyright', { year: new Date().getFullYear() })}
+              {t('privacy_policy.copyright')}
             </p>
           </div>
         </div>
