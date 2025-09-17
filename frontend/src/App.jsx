@@ -41,6 +41,7 @@ import BillingsPage from "./pages/BillingsPage";
 import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
 import SellerReceipts from "./pages/SellerReceipts";
 import BuyerReceipts from "./pages/BuyerReceipts";
+import NotFound from "./pages/NotFound";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -100,6 +101,8 @@ function App() {
           <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
           <Route path='/billings' element={<BillingsPage/>}/>
           {/* Add more routes as needed */}
+          <Route path='/not-found' element={<NotFound/>}/>
+          <Route path='*' element={<NotFound/>}/>
         </Routes>
       </Router>
     </>

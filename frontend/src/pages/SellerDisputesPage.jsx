@@ -91,9 +91,7 @@ export default function SellerDisputesPage() {
   if (disputesLoading) {
     return (
       <MainLayout>
-        <MainLayout />
         <div className="flex">
-          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
           <div className="flex-1 min-h-screen bg-gray-50 p-4">
             <div className="max-w-7xl mx-auto">
               <div className="text-center py-12">
@@ -110,7 +108,6 @@ export default function SellerDisputesPage() {
     return (
       <MainLayout>
         <div className="flex">
-          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
           <div className="flex-1 min-h-screen bg-gray-50 p-4">
             <div className="max-w-7xl mx-auto">
               <div className="text-center py-12">

@@ -22,18 +22,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', default=False)
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = [
-    "72.60.195.18",
-    "safebill.fr",
-    "www.safebill.fr",
-    "localhost",
-    "127.0.0.1"
+    'localhost',
+    '127.0.0.1',
+    '72.60.195.18',  # Your server IP
+    'api.safebill.fr',
+    'safebill.fr',
+    '.safebill.fr',  # This allows all subdomains
 ]
 
 # to allow all credentials (cookies, authorization headers, etc.) to be included in cross-origin requests
@@ -63,9 +68,7 @@ CORS_ALLOW_HEADERS = [
     'x-user-language',  # Custom header for language detection
 ]
 
-# Initialise environment variables
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
 
 # Application definition
 
