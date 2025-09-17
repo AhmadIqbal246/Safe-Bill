@@ -4,6 +4,7 @@ from projects.serializers import ProjectListSerializer
 from notifications.models import Notification
 from utils.email_service import EmailService
 from .tasks import send_dispute_created_email_task
+from hubspot.tasks import create_dispute_ticket_task, update_dispute_ticket_task
 
 
 class DisputeDocumentSerializer(serializers.ModelSerializer):
@@ -166,6 +167,8 @@ class DisputeCreateSerializer(serializers.ModelSerializer):
                 dispute_id=dispute.dispute_id,
                 language=language,
             )
+            # Create HubSpot ticket asynchronously
+            create_dispute_ticket_task.delay(dispute.id)
         except Exception:
             # Do not fail dispute creation if email sending fails
             pass
@@ -195,6 +198,11 @@ class DisputeUpdateSerializer(serializers.ModelSerializer):
             
             # Send notification for status change
             self._send_status_change_notification(instance, old_status, validated_data['status'])
+            # Update HubSpot ticket to reflect new stage/status
+            try:
+                update_dispute_ticket_task.delay(instance.id)
+            except Exception:
+                pass
         
         # Create event for mediator assignment
         if 'assigned_mediator' in validated_data and validated_data['assigned_mediator'] != old_mediator:
@@ -208,6 +216,11 @@ class DisputeUpdateSerializer(serializers.ModelSerializer):
             
             # Send notification for mediator assignment
             self._send_mediator_assignment_notification(instance, new_mediator)
+            # Update HubSpot ticket with mediator
+            try:
+                update_dispute_ticket_task.delay(instance.id)
+            except Exception:
+                pass
         
         return instance
     

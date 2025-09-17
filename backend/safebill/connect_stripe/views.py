@@ -18,8 +18,10 @@ from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
 from adminpanelApp.models import PlatformRevenue
+from hubspot.tasks import sync_contact_task
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -131,6 +133,11 @@ def stripe_connect_webhook(request):
                 user.onboarding_complete = True
                 user.save()
                 stripe_account.onboarding_complete = True
+
+                # Sync with HubSpot after Stripe onboarding completion
+                def _on_transaction_commit():
+                    sync_contact_task.delay(user.id)
+                transaction.on_commit(_on_transaction_commit)
 
                 # Send notification for successful Stripe onboarding
                 NotificationService.create_notification(
@@ -270,6 +277,11 @@ def check_stripe_status(request):
                 stripe_account.onboarding_complete = True
                 user.onboarding_complete = True
                 user.save()
+                
+                # Sync with HubSpot after Stripe onboarding completion
+                def _on_transaction_commit():
+                    sync_contact_task.delay(user.id)
+                transaction.on_commit(_on_transaction_commit)
             else:
                 # Only change to "pending" if user has started onboarding (details_submitted is True)
                 # Otherwise keep the current status (likely "onboarding")
@@ -494,6 +506,11 @@ def stripe_identity_webhook(request):
             user.save()
             stripe_identity.verified_at = timezone.now()
             stripe_identity.save()
+
+            # Sync with HubSpot after identity verification completion
+            def _on_transaction_commit():
+                sync_contact_task.delay(user.id)
+            transaction.on_commit(_on_transaction_commit)
 
             # Send notification for successful identity verification
             NotificationService.create_notification(

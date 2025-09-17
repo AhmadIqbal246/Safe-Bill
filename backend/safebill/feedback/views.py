@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from utils.email_service import EmailService
 from .models import Feedback, QuoteRequest, ContactMessage
+from hubspot.tasks import create_contact_us_ticket_task
 from .serializers import FeedbackSerializer, QuoteRequestSerializer, ContactMessageSerializer
 
 
@@ -83,6 +84,17 @@ class ContactMessageCreateAPIView(generics.CreateAPIView):
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[settings.EMAIL_HOST_USER],
                     fail_silently=True,
+                )
+            except Exception:
+                pass
+
+            # Create a HubSpot ticket asynchronously
+            try:
+                create_contact_us_ticket_task.delay(
+                    subject=instance.subject or "",
+                    message=instance.message or "",
+                    user_email=instance.email or "",
+                    metadata=None,
                 )
             except Exception:
                 pass
