@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
@@ -6,6 +6,7 @@ from .models import Balance, Payment, PayoutHold
 from django.contrib.auth import get_user_model
 from projects.models import Project, Milestone
 from notifications.services import NotificationService
+from .tasks import send_hold_released_email_task
 import logging
 
 User = get_user_model()
@@ -209,6 +210,12 @@ class BalanceService:
                     )
                 except Exception as e:
                     logger.error(f"Failed to send notification to {user.email}: {e}")
+
+                # Send email asynchronously
+                try:
+                    send_hold_released_email_task.delay(user.email, float(total_released))
+                except Exception:
+                    pass
 
             return total_released
 

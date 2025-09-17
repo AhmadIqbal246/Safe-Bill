@@ -125,7 +125,8 @@
     "terms": "Conditions",
     "privacy": "Confidentialité",
     "socials": "Réseaux sociaux",
-    "copyright": "© 2025 Safe Bill. Tous droits réservés."
+    "copyright": "© 2025 Safe Bill. Tous droits réservés.",
+    "socials": "Réseaux sociaux"
   },
   "homepage": {
     "hero_title": "Plateforme de confiance pour vos projets",
@@ -267,6 +268,7 @@
     "verifying": "Vérification...",
     "verified": "Vérifié",
     "siret_error": "Le SIRET doit contenir exactement 14 chiffres",
+    "siret_already_in_use": "Le SIRET est vérifié mais il est déjà utilisé.",
     "siret_success": "✓ Numéro SIRET vérifié avec succès",
     "company_name_label": "Nom de l'Entreprise *",
     "company_name_placeholder": "Nom de l'entreprise",
@@ -1159,7 +1161,7 @@
       "title": "Mises à Jour de la Politique",
       "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de SafeBill après toute modification constitue une acceptation de la politique mise à jour."
     },
-    "copyright": "© {year} SafeBill. Tous droits réservés."
+    "copyright": "©  2025 SafeBill. Tous droits réservés."
   },
   "terms_of_service": {
     "title": "Conditions d'Utilisation",
@@ -1303,7 +1305,7 @@
       "title": "Mises à Jour des Conditions",
       "content": "Nous pouvons mettre à jour ces Conditions d'Utilisation de temps à autre. Nous informerons les utilisateurs de tout changement important par e-mail ou via notre plateforme. Votre utilisation continue de SafeBill après toute modification constitue une acceptation des Conditions mises à jour."
     },
-    "copyright": "© {year} SafeBill. Tous droits réservés."
+    "copyright": "©  2025 SafeBill. Tous droits réservés."
   },
   "billings": {
     "title": "Facturation et Paiements",
@@ -1436,5 +1438,9 @@
     "name": "Nom",
     "seller_label": "Vendeur",
     "buyer_label": "Acheteur"
+  },
+  "not_found": {
+    "page_not_found": "La page que vous recherchez n'existe pas.",
+    "go_back_home": "Retour à l'accueil"
   }
 }

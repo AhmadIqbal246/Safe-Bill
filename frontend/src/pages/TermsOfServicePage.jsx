@@ -312,7 +312,7 @@ export default function TermsOfServicePage() {
           {/* Footer */}
           <div className="text-center mt-8">
             <p className="text-gray-500 text-sm">
-              {t('terms_of_service.copyright', { year: new Date().getFullYear() })}
+              {t('terms_of_service.copyright')}
             </p>
           </div>
         </div>

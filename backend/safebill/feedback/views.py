@@ -1,11 +1,18 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from django.core.mail import send_mail
-from django.conf import settings
-from utils.email_service import EmailService
 from .models import Feedback, QuoteRequest, ContactMessage
 from hubspot.tasks import create_contact_us_ticket_task
-from .serializers import FeedbackSerializer, QuoteRequestSerializer, ContactMessageSerializer
+from .serializers import (
+    FeedbackSerializer,
+    QuoteRequestSerializer,
+    ContactMessageSerializer
+)
+from .tasks import (
+    send_feedback_admin_notification_task,
+    send_contact_admin_notification_task,
+    send_quote_request_email_task,
+    send_quote_request_confirmation_email_task,
+)
 
 
 class FeedbackCreateAPIView(generics.CreateAPIView):
@@ -14,7 +21,7 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response(
                 {
@@ -23,20 +30,16 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             instance = serializer.save()
-            
-            # Send feedback to admin email
-            send_mail(
-                subject=f"New Feedback from {instance.email}",
-                message=f"Email: {instance.email}\n\nFeedback:\n"
-                        f"{instance.feedback}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.EMAIL_HOST_USER],
-                fail_silently=True,
+
+            # Send feedback to admin email asynchronously
+            send_feedback_admin_notification_task.delay(
+                user_email=instance.email,
+                feedback_text=instance.feedback,
             )
-            
+
             return Response(
                 {
                     'detail': 'Feedback submitted successfully',
@@ -44,7 +47,7 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
                 },
                 status=status.HTTP_201_CREATED
             )
-            
+
         except Exception:
             return Response(
                 {
@@ -73,20 +76,13 @@ class ContactMessageCreateAPIView(generics.CreateAPIView):
         try:
             instance = serializer.save()
 
-            # Notify admin via email (optional)
-            try:
-                send_mail(
-                    subject=f"New Contact Message: {instance.subject}",
-                    message=(
-                        f"From: {instance.name} <{instance.email}>\n\n"
-                        f"{instance.message}"
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[settings.EMAIL_HOST_USER],
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
+            # Notify admin via email asynchronously
+            send_contact_admin_notification_task.delay(
+                name=instance.name,
+                email=instance.email,
+                subject=instance.subject,
+                message=instance.message,
+            )
 
             # Create a HubSpot ticket asynchronously
             try:
@@ -106,11 +102,13 @@ class ContactMessageCreateAPIView(generics.CreateAPIView):
                 },
                 status=status.HTTP_201_CREATED
             )
+
         except Exception:
             return Response(
                 {'detail': 'Failed to send message. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 class QuoteRequestCreateAPIView(generics.CreateAPIView):
     queryset = QuoteRequest.objects.all()
@@ -118,7 +116,7 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response(
                 {
@@ -127,16 +125,21 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             instance = serializer.save()
-            
+
             # Extract language from request headers
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
-            
-            # Send quote request email to the professional using new email service
-            EmailService.send_quote_request_email(
+            preferred_lang = (
+                request.headers.get("X-User-Language") or
+                request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
+            )
+            language = (
+                preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            )
+
+            # Send quote request email to the professional asynchronously
+            send_quote_request_email_task.delay(
                 professional_email=instance.to_email,
                 from_email=instance.from_email,
                 subject=instance.subject,
@@ -144,16 +147,16 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
                 professional_id=instance.professional_id,
                 language=language
             )
-            
-            # Send confirmation email to the sender using new email service
-            EmailService.send_quote_request_confirmation(
+
+            # Send confirmation email to the sender asynchronously
+            send_quote_request_confirmation_email_task.delay(
                 sender_email=instance.from_email,
                 subject=instance.subject,
                 professional_id=instance.professional_id,
                 to_email=instance.to_email,
                 language=language
             )
-            
+
             return Response(
                 {
                     'detail': 'Quote request sent successfully',
@@ -161,7 +164,7 @@ class QuoteRequestCreateAPIView(generics.CreateAPIView):
                 },
                 status=status.HTTP_201_CREATED
             )
-            
+
         except Exception:
             return Response(
                 {

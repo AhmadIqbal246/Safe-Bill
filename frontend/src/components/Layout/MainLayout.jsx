@@ -28,7 +28,7 @@ export default function MainLayout({ children, hideSafeBillHeader }) {
       )}
       <div className="flex-1 flex flex-col">
         {/* Navbar with hamburger for mobile */}
-        <div className="flex items-center">
+        <div className="flex items-center border-b border-gray-200">
           <button
             className="md:hidden p-2 text-gray-600"
             onClick={() => setSidebarOpen(true)}

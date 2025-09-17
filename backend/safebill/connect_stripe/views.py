@@ -12,8 +12,11 @@ from .models import StripeAccount, StripeIdentity
 from projects.models import Project
 from payments.models import Payment, Refund, Balance
 from payments.utils import send_payment_websocket_update
-from utils.email_service import EmailService
 from notifications.services import NotificationService
+from .tasks import (
+    send_payment_success_email_task,
+    send_payment_failed_email_task,
+)
 from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
@@ -643,7 +646,7 @@ def stripe_identity_webhook(request):
                         else "User"
                     )
                 )
-                EmailService.send_client_payment_success_email(
+                send_payment_success_email_task.delay(
                     user_email=client.email,
                     user_name=client_name,
                     project_name=project.name,
@@ -727,7 +730,7 @@ def stripe_identity_webhook(request):
                         else "User"
                     )
                 )
-                EmailService.send_client_payment_failed_email(
+                send_payment_failed_email_task.delay(
                     user_email=client.email,
                     user_name=client_name,
                     project_name=project.name,

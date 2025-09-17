@@ -124,7 +124,8 @@
     "legal_links": "Legal links",
     "terms": "Terms",
     "privacy": "Privacy",
-    "copyright": "© 2025 Safe Bill. All rights reserved."
+    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "socials": "Socials"
   },
   "homepage": {
     "hero_title": "Trusted platform for your projects",
@@ -264,6 +265,7 @@
     "verifying": "Verifying...",
     "verified": "Verified",
     "siret_error": "SIRET must be exactly 14 digits",
+    "siret_already_in_use": "SIRET is verified but it is already in use.",
     "siret_success": "✓ SIRET number verified successfully",
     "company_name_label": "Company Name *",
     "company_name_placeholder": "Company name",
@@ -1172,7 +1174,7 @@
       "title": "Policy Updates",
       "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last updated\" date. Your continued use of SafeBill after any modifications constitutes acceptance of the updated policy."
     },
-    "copyright": "© {year} SafeBill. All rights reserved."
+    "copyright": "© 2025 SafeBill. All rights reserved."
   },
   "terms_of_service": {
     "title": "Terms of Service",
@@ -1316,7 +1318,7 @@
       "title": "Terms Updates",
       "content": "We may update these Terms of Service from time to time. We will notify users of any material changes by email or through our platform. Your continued use of SafeBill after any modifications constitutes acceptance of the updated Terms."
     },
-    "copyright": "© {year} SafeBill. All rights reserved."
+    "copyright": "© 2025 SafeBill. All rights reserved."
   },
   "billings": {
     "title": "Billings & Payments",
@@ -1449,5 +1451,9 @@
     "name": "Name",
     "seller_label": "Seller",
     "buyer_label": "Buyer"
+  },
+  "not_found": {
+    "page_not_found": "The page you are looking for does not exist.",
+    "go_back_home": "Go back home"
   }
 }
