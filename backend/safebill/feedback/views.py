@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import Feedback, QuoteRequest, ContactMessage
-from hubspot.tasks import create_contact_us_ticket_task
+from hubspot.tasks import create_contact_us_ticket_task, create_feedback_ticket_task
 from .serializers import (
     FeedbackSerializer,
     QuoteRequestSerializer,
@@ -39,6 +39,15 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
                 user_email=instance.email,
                 feedback_text=instance.feedback,
             )
+
+            # Create a HubSpot ticket asynchronously
+            try:
+                create_feedback_ticket_task.delay(
+                    user_email=instance.email,
+                    feedback_message=instance.feedback,
+                )
+            except Exception:
+                pass
 
             return Response(
                 {

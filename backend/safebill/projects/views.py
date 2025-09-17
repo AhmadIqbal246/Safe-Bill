@@ -26,6 +26,8 @@ from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
 import logging
 from .tasks import send_project_invitation_email_task
+from django.db import transaction
+from hubspot.tasks import sync_deal_task
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +117,8 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         return Response(serializer.data, status=201, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save()
+        project = serializer.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
 
 class ProjectListAPIView(generics.ListAPIView):
@@ -188,6 +191,7 @@ class ProjectStatusUpdateAPIView(APIView):
         # Update status to in_progress
         project.status = "in_progress"
         project.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
         # Create notification for the client
         if project.client:
@@ -279,6 +283,7 @@ class ProjectCompletionAPIView(APIView):
         # Update status to completed
         project.status = "completed"
         project.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
         # Create notification for the client
         if project.client:
@@ -546,6 +551,7 @@ class ProjectInviteAPIView(APIView):
             project.status = "approved"
             project.client = request.user
             project.save()
+            transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
@@ -572,6 +578,7 @@ class ProjectInviteAPIView(APIView):
             if project.client == request.user:
                 project.client = None
             project.save()
+            transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
             # Create notification for the seller
             NotificationService.create_notification(

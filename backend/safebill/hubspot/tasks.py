@@ -15,6 +15,11 @@ from .services.CompaniesService import (
 )
 from .models import HubSpotCompanyLink
 from accounts.models import BusinessDetail
+from projects.models import Project
+from .services.DealsService import (
+    HubSpotClient as HubSpotDealsClient,
+    build_deal_properties,
+)
 from disputes.models import Dispute
 from .models import HubSpotTicketLink
 from .services.TicketsService import HubSpotTicketsClient
@@ -23,6 +28,8 @@ from .services.TicketsService import HubSpotTicketsClient
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+# Deal pipeline id (Sales pipeline is "default")
+DEALS_PIPELINE_ID = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
 def sync_contact_task(self, user_id: int) -> Optional[str]:
@@ -170,6 +177,36 @@ def sync_company_task(self, business_detail_id: int) -> Optional[str]:
             link.save(update_fields=["status", "last_error", "last_synced_at"])
         raise
 
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def sync_deal_task(self, project_id: int) -> Optional[str]:
+    logger.info("HubSpot: sync_deal_task started for project_id=%s", project_id)
+    project = Project.objects.filter(id=project_id).select_related("user").first()
+    if not project:
+        logger.warning("HubSpot: sync_deal_task abort - project %s not found", project_id)
+        return None
+
+    client = HubSpotDealsClient()
+    # Resolve stage id dynamically from pipeline labels (no env map needed)
+    deal_client = client  # same auth
+    dealstage_id = deal_client.resolve_stage_id(DEALS_PIPELINE_ID, project.status)
+    props = build_deal_properties(project, DEALS_PIPELINE_ID, dealstage_id)
+    logger.info("HubSpot: built deal props for project %s -> name=%s, stage_id=%s", project.id, props.get("dealname"), props.get("dealstage"))
+
+    try:
+        existing = client.search_deal_by_project_id(str(project.id))
+        if existing:
+            deal_id = existing.get("id")
+            logger.info("HubSpot: updating existing deal id=%s for project_id=%s", deal_id, project_id)
+            client.update_deal(deal_id, props)
+            return deal_id
+        created = client.create_deal(props)
+        deal_id = created.get("id")
+        logger.info("HubSpot: created new deal id=%s for project_id=%s", deal_id, project_id)
+        return deal_id
+    except Exception as exc:
+        logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
+        raise
 
 # Removed: sync_contact_company_and_associate (association disabled)
 
@@ -339,4 +376,37 @@ def create_contact_us_ticket_task(self, subject: str, message: str, user_email: 
     created = client.create_ticket(properties)
     ticket_id = created.get("id", "")
     logger.info("HubSpot: created Contact Us ticket id=%s", ticket_id)
+    return ticket_id
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def create_feedback_ticket_task(self, user_email: str, feedback_message: str) -> str:
+    """Create a HubSpot ticket for a Feedback submission.
+
+    - Ticket name (subject): "Feedback"
+    - Initiator email -> safebill_initiator_email (custom)
+    - Description/message -> description (built-in)
+    - Pipeline -> HUBSPOT_TICKETS_PIPELINE; first stage auto-selected
+    """
+    logger.info("HubSpot: create_feedback_ticket_task email=%s", user_email)
+
+    client = HubSpotTicketsClient()
+    pipeline = getattr(settings, "HUBSPOT_TICKETS_PIPELINE", "0")
+    stage = client.get_first_stage_id(str(pipeline))
+
+    properties = {
+        "hs_pipeline": str(pipeline),
+        "hs_pipeline_stage": str(stage or "0"),
+        "subject": "Feedback",
+        "description": (feedback_message or "")[:65000],
+        "safebill_initiator_email": (user_email or "").strip(),
+    }
+
+    # Optional categorization: only include if you've created the property in HubSpot
+    if getattr(settings, "HUBSPOT_ENABLE_RECORD_TYPE", False):
+        properties["safebill_record_type"] = "feedback"
+
+    created = client.create_ticket(properties)
+    ticket_id = created.get("id", "")
+    logger.info("HubSpot: created Feedback ticket id=%s", ticket_id)
     return ticket_id
