@@ -281,3 +281,4 @@ HUBSPOT_PRIVATE_APP_TOKEN = env("HUBSPOT_PRIVATE_APP_TOKEN", default="")
 HUBSPOT_API_BASE = env("HUBSPOT_API_BASE", default="https://api.hubapi.com")
 # Tickets pipeline to use for disputes (string ID shown in HubSpot UI, often "0")
 HUBSPOT_TICKETS_PIPELINE = env("HUBSPOT_TICKETS_PIPELINE", default="0")
+HUBSPOT_MILESTONE_OBJECT = "p243761680_milestones"

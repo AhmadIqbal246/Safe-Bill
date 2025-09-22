@@ -27,7 +27,7 @@ from adminpanelApp.services import RevenueService
 import logging
 from .tasks import send_project_invitation_email_task
 from django.db import transaction
-from hubspot.tasks import sync_deal_task
+from hubspot.tasks import sync_deal_task, update_milestone_task, sync_milestone_task
 
 logger = logging.getLogger(__name__)
 
@@ -552,6 +552,12 @@ class ProjectInviteAPIView(APIView):
             project.client = request.user
             project.save()
             transaction.on_commit(lambda: sync_deal_task.delay(project.id))
+            # Also refresh the milestones summary so client_name appears
+            try:
+                for m in project.milestones.all()[:1]:
+                    transaction.on_commit(lambda mid=m.id: sync_milestone_task.delay(mid))
+            except Exception:
+                pass
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
@@ -711,6 +717,8 @@ class MilestoneApprovalAPIView(APIView):
             milestone.status = "pending"
             milestone.completion_date = None
         milestone.save()
+        # Enqueue HubSpot milestone update after commit
+        transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))
 
         project = milestone.project
         status_msg = {

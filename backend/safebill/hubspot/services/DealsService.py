@@ -100,11 +100,18 @@ class HubSpotClient:
 def build_deal_properties(project, pipeline_id: str, dealstage_id: Optional[str]) -> Dict[str, Any]:
     seller_name = getattr(project.user, "username", "")
     dealname = project.name or f"Project {project.id}"
+    # Compute total project amount from installments (fallback to 0 if none)
+    try:
+        total_amount = sum(float(inst.amount) for inst in getattr(project, "installments", []).all())
+    except Exception:
+        total_amount = 0.0
     return {
         # built-ins
         "dealname": dealname,
         "pipeline": pipeline_id,
         "dealstage": str(dealstage_id) if dealstage_id else None,
+        # HubSpot built-in amount field (numeric)
+        "amount": total_amount,
         # customs
         "project_id": str(project.id),
         "project_type": project.project_type,

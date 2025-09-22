@@ -11,6 +11,8 @@ from django.conf import settings
 from notifications.models import Notification
 from django.db.models import Sum
 from .tasks import send_project_invitation_email_task
+from django.db import transaction
+from hubspot.tasks import sync_milestone_task, update_milestone_task
 
 
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
@@ -212,12 +214,13 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         Quote.objects.create(project=project, reference_number=ref_number, **quote_data)
 
         # Create installments and corresponding milestones
+        created_milestones = []
         for inst in installments_data:
             # Create the payment installment
             installment = PaymentInstallment.objects.create(project=project, **inst)
 
             # Create milestone based on the installment
-            Milestone.objects.create(
+            ms = Milestone.objects.create(
                 project=project,
                 related_installment=installment,  # Link to the installment
                 name=inst["step"],  # Use step as milestone name
@@ -226,6 +229,15 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
                 status="not_submitted",  # Default status
                 # Other fields will be empty and can be edited later
             )
+            created_milestones.append(ms.id)
+
+        # Enqueue ONLY one summary sync after all milestones have been created
+        if created_milestones:
+            first_ms_id = created_milestones[0]
+            try:
+                transaction.on_commit(lambda ms_id=first_ms_id: sync_milestone_task.delay(ms_id))
+            except Exception:
+                pass
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")

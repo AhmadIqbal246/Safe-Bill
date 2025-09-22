@@ -2,6 +2,7 @@ from django.db import models
 from accounts.models import User
 from accounts.models import BusinessDetail
 from disputes.models import Dispute
+from projects.models import Milestone
 
 
 class HubSpotContactLink(models.Model):
@@ -59,3 +60,22 @@ class HubSpotTicketLink(models.Model):
         ]
         verbose_name = "HubSpot Ticket Link"
         verbose_name_plural = "HubSpot Ticket Links"
+
+
+class HubSpotMilestoneLink(models.Model):
+    milestone = models.OneToOneField(
+        Milestone,
+        on_delete=models.CASCADE,
+        related_name="hubspot_milestone_link",
+    )
+    hubspot_id = models.CharField(max_length=64, db_index=True)
+    last_synced_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, default="success")  # success|failed|pending
+    last_error = models.TextField(blank=True, default="")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["hubspot_id"]),
+        ]
+        verbose_name = "HubSpot Milestone Link"
+        verbose_name_plural = "HubSpot Milestone Links"

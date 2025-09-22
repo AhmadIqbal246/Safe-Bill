@@ -22,6 +22,9 @@ from .services.DealsService import (
 )
 from disputes.models import Dispute
 from .models import HubSpotTicketLink
+from .models import HubSpotMilestoneLink
+from .services.MilestonesService import HubSpotMilestonesClient, build_milestone_properties
+from projects.models import Milestone as ProjectMilestone
 from .services.TicketsService import HubSpotTicketsClient
 
 
@@ -410,3 +413,94 @@ def create_feedback_ticket_task(self, user_email: str, feedback_message: str) ->
     ticket_id = created.get("id", "")
     logger.info("HubSpot: created Feedback ticket id=%s", ticket_id)
     return ticket_id
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def sync_milestone_task(self, milestone_id: int) -> Optional[str]:
+    """Create or update a HubSpot custom object for a milestone and persist mapping."""
+    logger.info("HubSpot: sync_milestone_task start milestone_id=%s", milestone_id)
+    m = ProjectMilestone.objects.filter(id=milestone_id).select_related("project", "project__user", "project__client").first()
+    if not m:
+        logger.warning("HubSpot: milestone not found id=%s", milestone_id)
+        return None
+
+    client = HubSpotMilestonesClient()
+    props = build_milestone_properties(m)
+    logger.info("HubSpot: built milestone summary props for project=%s total=%s", props.get("project_name"), props.get("total_milestones"))
+
+    link = HubSpotMilestoneLink.objects.filter(milestone=m).first()
+    hubspot_id = link.hubspot_id if link else None
+
+    try:
+        if hubspot_id:
+            logger.info("HubSpot: updating existing milestone id=%s", hubspot_id)
+            data = client.update(hubspot_id, props)
+            if link:
+                link.status = "success"
+                link.last_error = ""
+                link.save(update_fields=["status", "last_error", "last_synced_at"])
+            return data.get("id")
+
+        # Upsert summary record by unique SafeBill project id
+        existing = client.search_by_project_id(props.get("safebill_project_id", ""))
+        if existing:
+            hubspot_id = existing.get("id")
+            logger.info("HubSpot: found existing milestone summary id=%s", hubspot_id)
+            client.update(hubspot_id, props)
+        else:
+            created = client.create(props)
+            hubspot_id = created.get("id")
+            logger.info("HubSpot: created milestone summary id=%s for project=%s", hubspot_id, props.get("project_name"))
+
+        if hubspot_id:
+            if link:
+                link.hubspot_id = hubspot_id
+                link.status = "success"
+                link.last_error = ""
+                link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
+            else:
+                HubSpotMilestoneLink.objects.create(
+                    milestone=m,
+                    hubspot_id=hubspot_id,
+                    status="success",
+                    last_error="",
+                )
+
+        return hubspot_id
+
+    except Exception as exc:
+        logger.exception("HubSpot: sync_milestone_task failed for milestone %s: %s", milestone_id, exc)
+        if link:
+            link.status = "failed"
+            link.last_error = str(exc)
+            link.save(update_fields=["status", "last_error", "last_synced_at"])
+        raise
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def update_milestone_task(self, milestone_id: int) -> Optional[str]:
+    """Update an existing HubSpot milestone custom object when status/amount/etc. changes."""
+    logger.info("HubSpot: update_milestone_task start milestone_id=%s", milestone_id)
+    m = ProjectMilestone.objects.filter(id=milestone_id).select_related("project", "project__user", "project__client").first()
+    if not m:
+        logger.warning("HubSpot: milestone not found id=%s", milestone_id)
+        return None
+
+    link = HubSpotMilestoneLink.objects.filter(milestone=m).first()
+    if not link or not link.hubspot_id:
+        logger.info("HubSpot: no milestone link found for %s; creating now", milestone_id)
+        return sync_milestone_task.delay(milestone_id)
+
+    client = HubSpotMilestonesClient()
+    props = build_milestone_properties(m)
+    try:
+        client.update(link.hubspot_id, props)
+        link.status = "success"
+        link.last_error = ""
+        link.save(update_fields=["status", "last_error", "last_synced_at"])
+        return link.hubspot_id
+    except Exception as exc:
+        link.status = "failed"
+        link.last_error = str(exc)
+        link.save(update_fields=["status", "last_error", "last_synced_at"])
+        raise
