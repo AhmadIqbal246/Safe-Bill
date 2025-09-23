@@ -22,7 +22,8 @@ class HubSpotRevenueClient:
             "Content-Type": "application/json",
         }
         self.object_type = getattr(settings, "HUBSPOT_REVENUE_OBJECT", "p243761680_revenue")
-        self.period_key_property = getattr(settings, "HUBSPOT_REVENUE_PERIOD_KEY_PROP", "period_key")
+        # Default to 'period' without requiring settings.py
+        self.period_key_property = getattr(settings, "HUBSPOT_REVENUE_PERIOD_KEY_PROP", "period")
 
     def search_by_period(self, period_key: str) -> Optional[Dict[str, Any]]:
         url = f"{self.base_url}/crm/v3/objects/{self.object_type}/search"

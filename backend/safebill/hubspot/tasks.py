@@ -26,11 +26,13 @@ from .models import HubSpotMilestoneLink
 from .services.MilestonesService import HubSpotMilestonesClient, build_milestone_properties
 from projects.models import Milestone as ProjectMilestone
 from .services.TicketsService import HubSpotTicketsClient
+from .services.FeedbackService import HubSpotFeedbackClient
 from .services.RevenueService import HubSpotRevenueClient
 from adminpanelApp.models import PlatformRevenue
 from payments.models import Payment
 from django.db.models import Sum
 from datetime import datetime
+from .services.ContactMessageService import HubSpotContactMessageClient
 
 
 logger = logging.getLogger(__name__)
@@ -234,7 +236,7 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
     # Determine a valid stage id for creation (HubSpot requires it).
     stage = client.get_first_stage_id(str(pipeline))
 
-    subject = f"Dispute {dispute.dispute_id} - {dispute.title}"
+    subject = f"Dispute {dispute.dispute_id}"
     content = "\n".join([
         f"Project: {getattr(dispute.project, 'name', '')}",
         f"Type: {dispute.get_dispute_type_display()}",
@@ -253,6 +255,7 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
         # Custom properties (must exist in HubSpot)
         "dispute_id": dispute.dispute_id,
         "safebill_project_name": getattr(dispute.project, "name", ""),
+        "safebill_dispute_title": (dispute.title or "")[:255],
         "safebill_dispute_type": dispute.dispute_type,
         "safebill_dispute_status": dispute.status,
         "description": (dispute.description or "")[:65000],
@@ -325,8 +328,9 @@ def update_dispute_ticket_task(self, dispute_id: int) -> None:
 
     properties = {
         "hs_pipeline": str(pipeline),
-        "subject": (f"Dispute {dispute.dispute_id} - {dispute.title}")[:255],
+        "subject": (f"Dispute {dispute.dispute_id}")[:255],
         # Keep content shorter on updates; optionally include latest notes/status
+        "safebill_dispute_title": (dispute.title or "")[:255],
         "safebill_dispute_status": dispute.status,
         "description": (dispute.description or "")[:65000],
         "safebill_assigned_mediator_email": getattr(getattr(dispute, "assigned_mediator", None), "email", ""),
@@ -388,6 +392,32 @@ def create_contact_us_ticket_task(self, subject: str, message: str, user_email: 
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def create_contact_message_object_task(self, name: str, initiator_email: str, subject: str, description: str) -> str:
+    """Create a record in HubSpot custom object "ContactMessage" with required properties.
+
+    Expected HubSpot properties:
+    - name (text) [primary display]
+    - initiator_email (text)
+    - subject (text)
+    - description (long text)
+    """
+    logger.info("HubSpot: create_contact_message_object_task name=%s email=%s", name, initiator_email)
+
+    client = HubSpotContactMessageClient()
+    properties = {
+        "name": (name or "").strip(),
+        "initiator_email": (initiator_email or "").strip(),
+        "subject": (subject or "")[:255],
+        "description": (description or "")[:65000],
+    }
+
+    created = client.create(properties)
+    object_id = created.get("id", "")
+    logger.info("HubSpot: created ContactMessage object id=%s", object_id)
+    return object_id
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
 def create_feedback_ticket_task(self, user_email: str, feedback_message: str) -> str:
     """Create a HubSpot ticket for a Feedback submission.
 
@@ -418,6 +448,44 @@ def create_feedback_ticket_task(self, user_email: str, feedback_message: str) ->
     ticket_id = created.get("id", "")
     logger.info("HubSpot: created Feedback ticket id=%s", ticket_id)
     return ticket_id
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def create_feedback_object_task(self, username: str, initiator_email: str, description: str, metadata: Optional[dict] = None) -> str:
+    """Create a record in HubSpot custom object "Feedback" with required properties.
+
+    Expected HubSpot properties on the custom object (configure in HubSpot):
+    - username (text) [required, primary display]
+    - initiator_email (text) [required]
+    - description (long text) [required]
+    Optional:
+    - source (text)
+    - page_url (text)
+    - severity (text or enumeration)
+    - submitted_at (datetime, ISO8601)
+    """
+    logger.info("HubSpot: create_feedback_object_task username=%s email=%s", username, initiator_email)
+
+    client = HubSpotFeedbackClient()
+
+    properties = {
+        "username": (username or "").strip(),
+        "initiator_email": (initiator_email or "").strip(),
+        "description": (description or "")[:65000],
+    }
+
+    if metadata and isinstance(metadata, dict):
+        if metadata.get("page_url"):
+            properties["page_url"] = str(metadata["page_url"])[:2048]
+        if metadata.get("severity"):
+            properties["severity"] = str(metadata["severity"])[:255]
+        if metadata.get("submitted_at"):
+            properties["submitted_at"] = str(metadata["submitted_at"])  # ISO8601 if provided
+
+    created = client.create(properties)
+    feedback_id = created.get("id", "")
+    logger.info("HubSpot: created Feedback object id=%s", feedback_id)
+    return feedback_id
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
@@ -513,7 +581,8 @@ def sync_revenue_month_task(self, year: int, month: int) -> Optional[str]:
         props = {
             client.period_key_property: period_key,
             "year": year,
-            "month": month,
+            # Save month as zero-padded string ("01".."12")
+            "month": f"{month:02d}",
             "period_start_date": period_start_date,
             "total_payments_amount": float(total_payments_amount),
             "vat_collected": float(vat_collected),

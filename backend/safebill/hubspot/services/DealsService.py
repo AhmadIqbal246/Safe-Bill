@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import Optional, Dict, Any
+from datetime import datetime
 
 import requests
 from django.conf import settings
@@ -42,6 +43,15 @@ class HubSpotClient:
                 return labels_to_id[key]
             # fallbacks for terminal stages
             fallback_map = {
+                "approved": [
+                    "approved",
+                    "qualification",
+                    "qualified",
+                    "qualified to buy",
+                    "accepted",
+                    "open",
+                    "in progress",
+                ],
                 "completed": ["completed", "closed won", "closedwon", "won"],
                 "not_approved": ["not_approved", "closed lost", "closedlost", "lost"],
             }
@@ -105,6 +115,12 @@ def build_deal_properties(project, pipeline_id: str, dealstage_id: Optional[str]
         total_amount = sum(float(inst.amount) for inst in getattr(project, "installments", []).all())
     except Exception:
         total_amount = 0.0
+    # Derive project creation month/year
+    created_at = getattr(project, "created_at", None) or getattr(project, "created_date", None)
+    if not created_at:
+        created_at = datetime.utcnow()
+    month_str = created_at.strftime("%m")
+    year_num = created_at.year
     return {
         # built-ins
         "dealname": dealname,
@@ -116,9 +132,14 @@ def build_deal_properties(project, pipeline_id: str, dealstage_id: Optional[str]
         "project_id": str(project.id),
         "project_type": project.project_type,
         "project_status": project.status,
+        # Mirror status into additional text field "projects" as requested
+        "projects": project.status,
         "vat_rate": float(project.vat_rate) if project.vat_rate is not None else None,
         "client_email": project.client_email or "",
         "seller_name": seller_name,
+        # Project creation period for reporting
+        "month": month_str,  # e.g., "09"
+        "year": year_num,    # e.g., 2025
         # helpful text if not associating yet
         "description": f"Seller: {seller_name} | Client: {project.client_email}",
     }

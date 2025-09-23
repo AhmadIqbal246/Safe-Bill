@@ -336,6 +336,15 @@ class MilestoneDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             return MilestoneUpdateSerializer
         return MilestoneSerializer
 
+    def perform_update(self, serializer):
+        """After a milestone is updated, enqueue HubSpot sync."""
+        from django.db import transaction
+        from hubspot.tasks import update_milestone_task
+
+        milestone = serializer.save()
+        # Ensure HubSpot gets updated with latest milestone info
+        transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))
+
 
 class ProjectInviteAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
