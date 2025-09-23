@@ -27,7 +27,7 @@ from adminpanelApp.services import RevenueService
 import logging
 from .tasks import send_project_invitation_email_task
 from django.db import transaction
-from hubspot.tasks import sync_deal_task, update_milestone_task, sync_milestone_task
+from hubspot.tasks import sync_deal_task, update_milestone_task, sync_milestone_task, sync_revenue_month_task
 
 logger = logging.getLogger(__name__)
 
@@ -719,6 +719,10 @@ class MilestoneApprovalAPIView(APIView):
         milestone.save()
         # Enqueue HubSpot milestone update after commit
         transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))
+        # Enqueue HubSpot Revenue monthly sync on approval events
+        if action_type == "approve":
+            now = timezone.now()
+            transaction.on_commit(lambda: sync_revenue_month_task.delay(now.year, now.month))
 
         project = milestone.project
         status_msg = {

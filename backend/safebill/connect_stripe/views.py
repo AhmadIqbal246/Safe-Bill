@@ -21,7 +21,7 @@ from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
 from adminpanelApp.models import PlatformRevenue
-from hubspot.tasks import sync_contact_task
+from hubspot.tasks import sync_contact_task, sync_revenue_month_task
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -620,6 +620,10 @@ def stripe_identity_webhook(request):
         payment.status = "paid"
         payment.webhook_response = event
         payment.save()
+
+        # Enqueue HubSpot Revenue monthly sync
+        now = timezone.now()
+        transaction.on_commit(lambda: sync_revenue_month_task.delay(now.year, now.month))
 
         try:
             # The payment is held in escrow until milestones are approved

@@ -26,6 +26,11 @@ from .models import HubSpotMilestoneLink
 from .services.MilestonesService import HubSpotMilestonesClient, build_milestone_properties
 from projects.models import Milestone as ProjectMilestone
 from .services.TicketsService import HubSpotTicketsClient
+from .services.RevenueService import HubSpotRevenueClient
+from adminpanelApp.models import PlatformRevenue
+from payments.models import Payment
+from django.db.models import Sum
+from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -474,6 +479,60 @@ def sync_milestone_task(self, milestone_id: int) -> Optional[str]:
             link.status = "failed"
             link.last_error = str(exc)
             link.save(update_fields=["status", "last_error", "last_synced_at"])
+        raise
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+def sync_revenue_month_task(self, year: int, month: int) -> Optional[str]:
+    """Upsert monthly revenue summary into HubSpot Revenue custom object."""
+    logger.info("HubSpot: sync_revenue_month_task start year=%s month=%s", year, month)
+    try:
+        # Load PlatformRevenue for the month (auto creates on access patterns in services)
+        revenue = PlatformRevenue.objects.filter(year=year, month=month).first()
+
+        # Compute totals if record missing or fields needed
+        total_payments_amount = (
+            Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
+            .aggregate(total=Sum("amount"))
+            .get("total")
+            or 0
+        )
+
+        seller_revenue = getattr(revenue, "seller_revenue", 0) if revenue else 0
+        vat_collected = getattr(revenue, "vat_collected", 0) if revenue else 0
+        total_revenue = getattr(revenue, "total_revenue", 0) if revenue else (seller_revenue)
+        total_milestones_approved = getattr(revenue, "total_milestones_approved", 0) if revenue else 0
+
+        period_key = f"{year}-{month:02d}"
+
+        client = HubSpotRevenueClient()
+        existing = client.search_by_period(period_key)
+        # Create period start date (first day of month at midnight UTC)
+        period_start_date = f"{year}-{month:02d}-01T00:00:00Z"
+        
+        props = {
+            client.period_key_property: period_key,
+            "year": year,
+            "month": month,
+            "period_start_date": period_start_date,
+            "total_payments_amount": float(total_payments_amount),
+            "vat_collected": float(vat_collected),
+            "seller_revenue": float(seller_revenue),
+            "total_revenue": float(total_revenue),
+            "total_milestones_approved": int(total_milestones_approved),
+        }
+
+        if existing:
+            hs_id = existing.get("id")
+            logger.info("HubSpot: updating Revenue %s", period_key)
+            client.update(hs_id, props)
+            return hs_id
+        created = client.create(props)
+        hs_id = created.get("id")
+        logger.info("HubSpot: created Revenue %s id=%s", period_key, hs_id)
+        return hs_id
+    except Exception as exc:
+        logger.exception("HubSpot: sync_revenue_month_task failed for %s-%s: %s", year, month, exc)
         raise
 
 
