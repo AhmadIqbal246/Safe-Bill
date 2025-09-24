@@ -700,6 +700,9 @@
   "buyer_dashboard": {
     "title": "Tableau de bord acheteur",
     "subtitle": "Aperçu de vos projets et paiements",
+    "active_projects": "Projets actifs",
+    "completed": "Terminés",
+    "successfully_finished": "Terminés avec succès",
     "in_progress": "En cours",
     "current_projects": "Projets en cours",
     "view_all_disputes": "Voir tous les litiges",
