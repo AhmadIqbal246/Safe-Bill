@@ -12,7 +12,7 @@ i18n
       en: { common: en },
       fr: { common: fr },
     },
-    fallbackLng: 'en',
+    fallbackLng: 'fr',
     // Do not force a language here; rely on detection
     ns: ['common'],
     defaultNS: 'common',
