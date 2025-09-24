@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { fetchUserProfile } from './UserProfileSlice';
+import i18n from '../../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,7 +31,13 @@ export const registerSellerWithBasicAndBussiness = createAsyncThunk(
     try {
       const response = await axios.post(
         `${BASE_URL}api/accounts/seller-register/`,
-        payload
+        payload,
+        {
+          headers: {
+            'X-User-Language': (i18n.language || 'en'),
+            'Accept-Language': (i18n.language || 'en'),
+          },
+        }
       );
       return response.data; 
     } catch (err) {
@@ -145,7 +152,13 @@ export const registerBuyer = createAsyncThunk(
     try {
       const response = await axios.post(
         `${BASE_URL}api/accounts/buyer-register/`,
-        payload
+        payload,
+        {
+          headers: {
+            'X-User-Language': (i18n.language || 'en'),
+            'Accept-Language': (i18n.language || 'en'),
+          },
+        }
       );
       return response.data;
     } catch (err) {
