@@ -1241,6 +1241,7 @@ export const countryCodeOptions = [
 // Service areas (Departments) – updated list per provided screenshots
 export const serviceAreaOptions = [
   // Auvergne-Rhône-Alpes
+  { value: "ENTIRE_FRANCE", label: "Entire France" },
   { value: "ain_01", label: "Ain (01)" },
   { value: "allier_03", label: "Allier (03)" },
   { value: "ardeche_07", label: "Ardèche (07)" },

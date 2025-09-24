@@ -151,7 +151,7 @@ export default function LogInComp() {
           </div>
           <div className="text-center">
             <Link to="/forgot-password" className="text-sm text-[#0A1128] hover:underline">
-              Forgot password?
+              {t("login.forgot_password")}
             </Link>
           </div>
           <button
