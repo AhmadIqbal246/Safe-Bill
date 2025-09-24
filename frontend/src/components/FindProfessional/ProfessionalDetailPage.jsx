@@ -86,11 +86,11 @@ export default function ProfessionalDetailPage() {
   const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [ratingValue, setRatingValue] = useState(0);
-  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
-  const [projectSearchTerm, setProjectSearchTerm] = useState('');
-  const { eligibleProjectsBySeller, eligibleProjectsLoading, eligibleProjectsError, ratingSubmitting, ratingError } = useSelector(state => state.project);
+  // const [selectedProjectId, setSelectedProjectId] = useState('');
+  // const [ratingValue, setRatingValue] = useState(0);
+  // const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  // const [projectSearchTerm, setProjectSearchTerm] = useState('');
+  // const { eligibleProjectsBySeller, eligibleProjectsLoading, eligibleProjectsError, ratingSubmitting, ratingError } = useSelector(state => state.project);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -120,11 +120,11 @@ export default function ProfessionalDetailPage() {
     };
 
     fetchProfessionalDetails();
-    dispatch(fetchEligibleProjectsForRating(professionalId))
-      .unwrap()
-      .catch((err) => {
-        toast.error(err?.detail || 'Failed to load eligible projects');
-      });
+    // dispatch(fetchEligibleProjectsForRating(professionalId))
+    //   .unwrap()
+    //   .catch((err) => {
+    //     toast.error(err?.detail || 'Failed to load eligible projects');
+    //   });
   }, [professionalId]);
 
   if (loading) {
@@ -152,22 +152,23 @@ export default function ProfessionalDetailPage() {
       </div>
     );
   }
-  const submitRating = async () => {
-    if (!selectedProjectId || !ratingValue) {
-      toast.info('Select a project and rating');
-      return;
-    }
-    dispatch(submitSellerRating({ sellerId: professionalId, projectId: selectedProjectId, rating: ratingValue, comment: '' }))
-      .unwrap()
-      .then(() => {
-        toast.success('Thanks for your rating!');
-        setRatingValue(0);
-        setSelectedProjectId('');
-      })
-      .catch((err) => {
-        toast.error(err?.detail || 'Failed to submit rating');
-      });
-  };
+
+  // const submitRating = async () => {
+  //   if (!selectedProjectId || !ratingValue) {
+  //     toast.info('Select a project and rating');
+  //     return;
+  //   }
+  //   dispatch(submitSellerRating({ sellerId: professionalId, projectId: selectedProjectId, rating: ratingValue, comment: '' }))
+  //     .unwrap()
+  //     .then(() => {
+  //       toast.success('Thanks for your rating!');
+  //       setRatingValue(0);
+  //       setSelectedProjectId('');
+  //     })
+  //     .catch((err) => {
+  //       toast.error(err?.detail || 'Failed to submit rating');
+  //     });
+  // };
 
   // Ensure professional has required fields with safe defaults
   const safeProfessional = {
@@ -266,15 +267,12 @@ export default function ProfessionalDetailPage() {
                   ? t('professional_detail.serving_areas', { count: safeProfessional.selected_service_areas.length })
                   : t('professional_detail.service_areas_not_specified')}
               </span>
-                          <div className="flex items-center">
+              {/* <div className="flex items-center">
               <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
               <span className="font-semibold text-[#111827]">
                 {professional.average_rating > 0 ? professional.average_rating.toFixed(1) : t('professional_detail.no_ratings')}
               </span>
-              {/* <span className="text-gray-500 ml-1">
-                ({professional.rating_count} {professional.rating_count === 1 ? t('professional_detail.review') : t('professional_detail.reviews')})
-              </span> */}
-            </div>
+            </div> */}
             </div>
 
             <button
@@ -297,10 +295,10 @@ export default function ProfessionalDetailPage() {
         </div>
 
         {/* Rate Seller Section */}
-        <div className="p-8 mb-8">
+        {/* <div className="p-8 mb-8">
           <h2 className="text-2xl font-bold text-[#111827] mb-4">{t('professional_detail.rating_section')}</h2>
           <div className="flex flex-col gap-6">
-            {/* Star Rating */}
+
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-gray-700 mr-3">{t('professional_detail.rating_label')}</span>
               {[1,2,3,4,5].map((star) => (
@@ -314,7 +312,6 @@ export default function ProfessionalDetailPage() {
               ))}
             </div>
 
-            {/* Project Selection Dropdown */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {t('professional_detail.select_project_to_rate')}
@@ -394,7 +391,6 @@ export default function ProfessionalDetailPage() {
               )}
             </div>
 
-            {/* Submit Button */}
             <button
               onClick={submitRating}
               disabled={!ratingValue || !selectedProjectId || ratingSubmitting}
@@ -404,7 +400,7 @@ export default function ProfessionalDetailPage() {
             </button>
           </div>
           <p className="text-sm text-gray-500 mt-4">{t('professional_detail.rating_instructions')}</p>
-        </div>
+        </div> */}
 
         {/* Skills Section */}
         {/* <div className="p-8 mb-8">

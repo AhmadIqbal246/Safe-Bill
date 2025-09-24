@@ -399,6 +399,44 @@ class EmailService:
         )
 
     @staticmethod
+    def send_milestone_approval_request_email(
+        user_email: str,
+        user_name: str,
+        project_name: str,
+        milestone_name: str,
+        amount: str,
+        dashboard_url: Optional[str] = None,
+        language: str = 'fr',
+    ) -> bool:
+        """
+        Notify the buyer that the seller has requested approval for a milestone.
+        """
+        if not dashboard_url:
+            dashboard_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+
+        context = {
+            "user_name": user_name,
+            "project_name": project_name,
+            "milestone_name": milestone_name,
+            "amount": amount,
+            "dashboard_url": dashboard_url,
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            subject = translation.gettext("Milestone Approval Requested - {project_name}").format(project_name=project_name)
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="milestone_approval_request",
+            context=context,
+            language=language,
+        )
+
+    @staticmethod
     def send_quote_request_email(
         professional_email: str,
         from_email: str,
