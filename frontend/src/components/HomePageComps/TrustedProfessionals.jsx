@@ -101,7 +101,7 @@ export default function TrustedProfessionals() {
               <img src={avatar} alt={pro.name} className="w-16 h-16 rounded-full mb-4 object-cover" />
               <div className="font-semibold text-[#111827] text-lg mb-1">{pro.name}</div>
               <div className="text-[#96C2DB] text-sm mb-2">{serviceType}</div>
-              <StarRating value={pro.average_rating} />
+              {/* <StarRating value={pro.average_rating} /> */}
               <div className="flex items-center justify-center mb-3">
                 <span className="flex items-center gap-1 bg-[#178582] text-white text-xs font-semibold px-3 py-1 rounded-full">
                   <CheckCircle className="w-4 h-4" /> {t('homepage.kyc_verified')}
