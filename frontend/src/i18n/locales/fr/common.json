@@ -833,7 +833,8 @@
     "login_successful": "Connexion réussie !",
     "invalid_redirect_url": "URL de redirection invalide :",
     "no_active_account": "Aucun compte actif trouvé avec les identifiants fournis",
-    "invalid_credentials": "Identifiants invalides"
+    "invalid_credentials": "Identifiants invalides",
+    "email_verification": "Vérification de l'Email"
   },
   "contact_us": {
     "title": "Nous contacter",

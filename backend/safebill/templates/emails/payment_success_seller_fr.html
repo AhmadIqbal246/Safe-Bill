@@ -1,0 +1,23 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Paiement Client Reçu - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Paiement Crédité{% endblock %}
+
+{% block content %}
+<h2>Paiement Client Reçu</h2>
+
+<p>Bonjour {{ user_name }},</p>
+
+<div class="success">
+  <p>Le client a crédité un paiement de <strong>{{ amount }}</strong> pour le projet <strong>{{ project_name }}</strong>.</p>
+  <p>Vous pouvez maintenant démarrer le projet comme convenu.</p>
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="{{ dashboard_url }}" class="btn">Ouvrir Mon Tableau de Bord</a>
+  </div>
+  <p style="margin: 0;">Si vous avez des questions, veuillez nous contacter à <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+  <div class="divider"></div>
+  <p style="margin: 0; color:#6b7280; font-size: 14px;">Ce message a été envoyé par {{ site_name }}.</p>
+{% endblock %}
+
+

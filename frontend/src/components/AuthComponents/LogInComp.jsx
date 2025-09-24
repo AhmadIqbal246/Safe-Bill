@@ -179,10 +179,15 @@ export default function LogInComp() {
               </span>
             </div>
           </div>
-          <div className="text-center">
+          <div className="text-center space-y-1">
             <Link to="/forgot-password" className="text-sm text-[#0A1128] hover:underline">
               {t("login.forgot_password")}
             </Link>
+            <div>
+              <Link to="/email-verification" className="text-sm text-[#0A1128] hover:underline">
+                {t("login.email_verification")}
+              </Link>
+            </div>
           </div>
           <button
             type="submit"
@@ -201,11 +206,6 @@ export default function LogInComp() {
               t("login.sign_in")
             )}
           </button>
-          {/* <div className="text-center">
-            <a href="/forgot-password" className="text-sm text-[#0A1128] hover:underline">
-              Forgot password?
-            </a>
-          </div> */}
         </form>
       </div>
     </div>

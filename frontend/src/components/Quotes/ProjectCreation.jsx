@@ -390,7 +390,7 @@ export default function ProjectCreation() {
             <div className="flex items-center gap-4 justify-between">
               <span className="text-lg font-semibold text-gray-900">{t('project_creation.final_total') || 'Total Net Earnings'}: </span>
               <span className="text-xl font-bold text-[#01257D]">€{totalSellerNet.toLocaleString()}</span>
-              <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">{t('project_creation.platform_fee_label')}: {(platformPctForProject).toFixed(1)}% (≈ €{platformFeeForProject.toLocaleString()})</span>
+              <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">{t('project_creation.platform_fee_label')}: {(platformPctForProject).toFixed(1)}% (€{platformFeeForProject.toLocaleString()})</span>
             </div>
           </div>
         </div>
@@ -407,6 +407,7 @@ export default function ProjectCreation() {
           >
             <option value="20.0">20%</option>
             <option value="10.0">10%</option>
+            <option value="7.0">8.5%</option>
             <option value="5.5">5.5%</option>
             <option value="2.1">2.1%</option>
             <option value="0.0">0%</option>
