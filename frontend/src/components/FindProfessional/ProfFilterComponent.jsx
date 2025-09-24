@@ -55,10 +55,7 @@ function getProfilePicture(professional) {
 
 const filters = [
   'Service type',
-  'Area',
-  'Radius',
-  'Rating',
-  'Availability',
+  'Area'
 ];
 
 const RESULTS_PER_PAGE = 5;
