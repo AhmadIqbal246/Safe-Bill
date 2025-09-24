@@ -1443,7 +1443,22 @@
     "paid_amount": "Paid Amount",
     "date": "Date",
     "status": "Status",
+    "search_placeholder": "Search by Project name",
     "no_payments": "No payments found"
+  },
+  "geo_filter": {
+    "search_placeholder": "Search city or postal (limited to supported areas)",
+    "map_instruction": "Click anywhere on the map to get the address and filter professionals for that area",
+    "selected_location": "Selected Location:",
+    "click_to_select": "Click on the map to select a location"
+  },
+  "find_professional": {
+    "find_local": "Find local professionals",
+    "service_type": "Service type",
+    "area": "Area",
+    "apply_filters": "Apply Filters",
+    "clear_all": "Clear All",
+    "results": "Results"
   },
   "common": {
     "error": "Error",
@@ -1578,5 +1593,11 @@
   "not_found": {
     "page_not_found": "The page you are looking for does not exist.",
     "go_back_home": "Go back home"
+  },
+  "support": {
+    "title": "Support",
+    "contact_us": "Contact Us",
+    "contact_help": "We’re here to help. Submit a request and our team will get back to you.",
+    "submit_request": "Submit a request"
   }
 }

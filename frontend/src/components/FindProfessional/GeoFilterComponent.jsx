@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { serviceAreaOptions, regionToDepartments } from '../../constants/registerationTypes';
 import { filterSellersByServiceArea, filterSellersByLocation } from '../../store/slices/FilterSlice';
 import { filterSellersByRegion } from '../../store/slices/FilterSlice';
@@ -76,6 +77,7 @@ function mapComponentsToRegionKey(components = []) {
 }
 
 export default function GeoFilterComponent() {
+  const { t } = useTranslation();
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ['places'],
@@ -86,7 +88,7 @@ export default function GeoFilterComponent() {
   const location = useLocation();
 
   const [marker, setMarker] = useState(center);
-  const [address, setAddress] = useState('Click on the map to select a location');
+  const [address, setAddress] = useState(t('geo_filter.click_to_select'));
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [matchedAreaLabel, setMatchedAreaLabel] = useState('');
   const [query, setQuery] = useState('');
@@ -187,7 +189,7 @@ export default function GeoFilterComponent() {
             value={query}
             onChange={(e) => { setQuery(e.target.value); setShowDropdown(true); }}
             onFocus={() => setShowDropdown(true)}
-            placeholder="Search city or postal (limited to supported areas)"
+            placeholder={t('geo_filter.search_placeholder')}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01257D]"
           />
           {showDropdown && filteredAreas.length > 0 && (
@@ -230,7 +232,7 @@ export default function GeoFilterComponent() {
         )}
         
         <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full max-w-md">
-          <div className="text-sm text-gray-600 mb-1">Selected Location:</div>
+          <div className="text-sm text-gray-600 mb-1">{t('geo_filter.selected_location')}</div>
           <div className="text-center text-[#01257D] font-medium">
             {isGeocoding ? (
               <span className="text-gray-500">Finding address...</span>
@@ -246,7 +248,7 @@ export default function GeoFilterComponent() {
         </div>
         
         <div className="mt-2 text-xs text-gray-500 text-center">
-          Click anywhere on the map to get the address and filter professionals for that area
+          {t('geo_filter.map_instruction')}
         </div>
       </div>
     </section>

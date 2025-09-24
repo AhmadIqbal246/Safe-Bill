@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { Search, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   filterSellersByServiceType,
   filterSellersByServiceArea,
@@ -63,6 +64,7 @@ const RESULTS_PER_PAGE = 5;
 export default function ProfFilterComponent({ initialFilters = {} }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { sellers, loading, error } = useSelector((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
   const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
@@ -316,7 +318,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   return (
     <section className="w-full max-w-7xl mx-auto py-10 px-4">
       {renderDialog()}
-      <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">Find local professionals</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">{t('find_professional.find_local')}</h2>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => {
@@ -329,6 +331,11 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           if (f === 'Area' && selectedArea) {
             isActive = true;
             display = selectedAreaLabel;
+          }
+          // Localize default labels when not active
+          if (!isActive) {
+            if (f === 'Service type') display = t('find_professional.service_type');
+            if (f === 'Area') display = t('find_professional.area');
           }
           if (f === 'Rating' && selectedRating) {
             isActive = true;
@@ -362,8 +369,8 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             setAppliedArea(selectedArea);
             setAppliedRating(selectedRating);
           }}
-        >
-          Apply Filters
+>
+          {t('find_professional.apply_filters')}
         </button>
         <button
           className="px-5 py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold text-sm cursor-pointer"
@@ -379,11 +386,11 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             dispatch(resetFilterState());
             dispatch(fetchAllSellersComplete());
           }}
-        >
-          Clear All
+>
+          {t('find_professional.clear_all')}
         </button>
       </div>
-      <h3 className="text-lg font-bold text-[#111827] mb-4">Results</h3>
+      <h3 className="text-lg font-bold text-[#111827] mb-4">{t('find_professional.results')}</h3>
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />

@@ -1437,7 +1437,22 @@
     "paid_amount": "Montant payé",
     "date": "Date",
     "status": "Statut",
+    "search_placeholder": "Rechercher par nom de projet",
     "no_payments": "Aucun paiement trouvé"
+  },
+  "geo_filter": {
+    "search_placeholder": "Rechercher une ville ou un code postal (limité aux zones prises en charge)",
+    "map_instruction": "Cliquez n'importe où sur la carte pour obtenir l'adresse et filtrer les professionnels pour cette zone",
+    "selected_location": "Emplacement sélectionné :",
+    "click_to_select": "Cliquez sur la carte pour sélectionner un emplacement"
+  },
+  "find_professional": {
+    "find_local": "Trouver des professionnels locaux",
+    "service_type": "Type de service",
+    "area": "Zone",
+    "apply_filters": "Appliquer les filtres",
+    "clear_all": "Tout effacer",
+    "results": "Résultats"
   },
   "common": {
     "error": "Erreur",
@@ -1572,5 +1587,11 @@
   "not_found": {
     "page_not_found": "La page que vous recherchez n'existe pas.",
     "go_back_home": "Retour à l'accueil"
+  },
+  "support": {
+    "title": "Support",
+    "contact_us": "Nous contacter",
+    "contact_help": "Nous sommes là pour vous aider. Soumettez une demande et notre équipe vous répondra.",
+    "submit_request": "Soumettre une demande"
   }
 }
