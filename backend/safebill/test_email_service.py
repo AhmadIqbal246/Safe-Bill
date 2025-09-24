@@ -107,13 +107,13 @@ def test_email_rendering():
             'user_name': 'Test User',
             'verification_url': 'https://example.com/verify?token=test123',
             'user_type': 'seller',
-            'site_name': 'SafeBill',
+            'site_name': 'Safe Bill',
             'support_email': settings.DEFAULT_FROM_EMAIL,
         }
         
         html_content = render_to_string('emails/email_verification.html', context)
         
-        if html_content and 'SafeBill' in html_content:
+        if html_content and 'Safe Bill' in html_content:
             print("✅ Email template rendering test passed")
             return True
         else:

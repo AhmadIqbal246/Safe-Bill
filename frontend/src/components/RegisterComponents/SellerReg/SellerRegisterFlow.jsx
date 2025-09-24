@@ -264,7 +264,14 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setFieldsDisabled(false);
       setSiretVerified(true);
     } else if (siretVerification.error) {
-      setSiretError(siretVerification.error);
+      const rawError = String(siretVerification.error || '').toLowerCase();
+      if (rawError.includes('already in use')) {
+        setSiretError(t('seller_registration.siret_already_in_use'));
+      } else if (rawError.includes('must contain exactly 14') || rawError.includes('must be exactly 14')) {
+        setSiretError(t('seller_registration.siret_error'));
+      } else {
+        setSiretError(siretVerification.error);
+      }
       setFieldsDisabled(true);
       setSiretVerified(false);
     }

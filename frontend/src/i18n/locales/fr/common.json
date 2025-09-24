@@ -1002,7 +1002,7 @@
   },
   "how_to_accept_project_invite": {
     "title": "Comment Accepter une Invitation de Projet",
-    "subtitle": "Suivez ces étapes simples pour accepter et gérer vos invitations de projet sur SafeBill",
+    "subtitle": "Suivez ces étapes simples pour accepter et gérer vos invitations de projet sur Safe Bill",
     "quick_actions": "Actions Rapides",
     "accept_invite_button": "Accepter l'Invitation de Projet",
     "go_to_dashboard_button": "Aller au Tableau de Bord",
@@ -1013,7 +1013,7 @@
     "email_preview_code": "Votre code d'invitation apparaîtra ici dans une boîte bleue mise en évidence",
     "email_preview_note": "L'email contiendra les détails du projet, les informations de devis et votre code d'invitation unique",
     "step2_title": "Accéder à Votre Tableau de Bord Acheteur",
-    "step2_description": "Connectez-vous à votre compte SafeBill et naviguez vers votre tableau de bord acheteur où vous trouverez le bouton 'Accepter l'Invitation de Projet'.",
+    "step2_description": "Connectez-vous à votre compte Safe Bill et naviguez vers votre tableau de bord acheteur où vous trouverez le bouton 'Accepter l'Invitation de Projet'.",
     "dashboard_button_preview_title": "Bouton du Tableau de Bord",
     "accept_project_invite": "Accepter l'Invitation de Projet",
     "dashboard_button_note": "Cela vous redirigera vers votre tableau de bord acheteur",
@@ -1051,12 +1051,12 @@
   },
   "privacy_policy": {
     "title": "Politique de Confidentialité",
-    "subtitle": "Votre confidentialité est importante pour nous. Cette politique explique comment SafeBill collecte, utilise et protège vos informations.",
+    "subtitle": "Votre confidentialité est importante pour nous. Cette politique explique comment Safe Bill collecte, utilise et protège vos informations.",
     "last_updated": "Dernière mise à jour :",
     "introduction": {
       "title": "Introduction",
-      "content1": "SafeBill (\"nous\", \"notre\" ou \"nos\") s'engage à protéger votre confidentialité. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme pour la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
-      "content2": "En utilisant SafeBill, vous acceptez la collecte et l'utilisation d'informations conformément à cette politique."
+      "content1": "Safe Bill (\"nous\", \"notre\" ou \"nos\") s'engage à protéger votre confidentialité. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme pour la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
+      "content2": "En utilisant Safe Bill, vous acceptez la collecte et l'utilisation d'informations conformément à cette politique."
     },
     "information_collection": {
       "title": "Informations que Nous Collectons",
@@ -1159,27 +1159,27 @@
     },
     "updates": {
       "title": "Mises à Jour de la Politique",
-      "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de SafeBill après toute modification constitue une acceptation de la politique mise à jour."
+      "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de Safe Bill après toute modification constitue une acceptation de la politique mise à jour."
     },
-    "copyright": "©  2025 SafeBill. Tous droits réservés."
+    "copyright": "©  2025 Safe Bill. Tous droits réservés."
   },
   "terms_of_service": {
     "title": "Conditions d'Utilisation",
-    "subtitle": "Veuillez lire attentivement ces conditions avant d'utiliser SafeBill. Ces conditions régissent votre utilisation de notre plateforme et de nos services.",
+    "subtitle": "Veuillez lire attentivement ces conditions avant d'utiliser Safe Bill. Ces conditions régissent votre utilisation de notre plateforme et de nos services.",
     "last_updated": "Dernière mise à jour :",
     "introduction": {
       "title": "Introduction",
-      "content1": "Bienvenue sur SafeBill (\"nous\", \"notre\" ou \"nos\"). Ces Conditions d'Utilisation (\"Conditions\") régissent votre utilisation de notre plateforme qui facilite la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
-      "content2": "En accédant ou en utilisant SafeBill, vous acceptez d'être lié par ces Conditions. Si vous n'acceptez pas ces Conditions, veuillez ne pas utiliser nos services."
+      "content1": "Bienvenue sur Safe Bill (\"nous\", \"notre\" ou \"nos\"). Ces Conditions d'Utilisation (\"Conditions\") régissent votre utilisation de notre plateforme qui facilite la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
+      "content2": "En accédant ou en utilisant Safe Bill, vous acceptez d'être lié par ces Conditions. Si vous n'acceptez pas ces Conditions, veuillez ne pas utiliser nos services."
     },
     "acceptance": {
       "title": "Acceptation des Conditions",
       "content": "En créant un compte, en accédant à notre plateforme ou en utilisant l'un de nos services, vous reconnaissez avoir lu, compris et accepté d'être lié par ces Conditions d'Utilisation et notre Politique de Confidentialité.",
-      "agreement": "Votre utilisation continue de SafeBill constitue votre acceptation de toute mise à jour ou modification de ces Conditions."
+      "agreement": "Votre utilisation continue de Safe Bill constitue votre acceptation de toute mise à jour ou modification de ces Conditions."
     },
     "service_description": {
       "title": "Description du Service",
-      "content": "SafeBill fournit une plateforme complète pour la gestion de projets et les transactions sécurisées entre acheteurs et vendeurs. Nos services incluent :",
+      "content": "Safe Bill fournit une plateforme complète pour la gestion de projets et les transactions sécurisées entre acheteurs et vendeurs. Nos services incluent :",
       "features": {
         "project_management": "Gestion de Projets",
         "project_management_desc": "Créer, gérer et suivre des projets avec des exigences et spécifications détaillées",
@@ -1214,7 +1214,7 @@
     },
     "payment_terms": {
       "title": "Conditions de Paiement",
-      "content": "SafeBill facilite les paiements sécurisés entre acheteurs et vendeurs. Tout le traitement des paiements est géré par nos partenaires de paiement intégrés.",
+      "content": "Safe Bill facilite les paiements sécurisés entre acheteurs et vendeurs. Tout le traitement des paiements est géré par nos partenaires de paiement intégrés.",
       "payment_processing": {
         "title": "Traitement des Paiements",
         "items": [
@@ -1228,7 +1228,7 @@
     },
     "prohibited_uses": {
       "title": "Utilisations Interdites",
-      "content": "Vous acceptez de ne pas utiliser SafeBill pour des activités illégales ou interdites. Les activités suivantes sont strictement interdites :",
+      "content": "Vous acceptez de ne pas utiliser Safe Bill pour des activités illégales ou interdites. Les activités suivantes sont strictement interdites :",
       "illegal_activities": {
         "title": "Activités Illégales",
         "items": [
@@ -1251,19 +1251,19 @@
     "intellectual_property": {
       "title": "Propriété Intellectuelle",
       "safebill_content": {
-        "title": "Contenu SafeBill",
-        "content": "Tout le contenu, les fonctionnalités et la fonctionnalité de SafeBill, y compris mais sans s'y limiter le texte, les graphiques, les logos et les logiciels, sont la propriété de SafeBill et sont protégés par les lois internationales de droit d'auteur, de marque de commerce et autres lois de propriété intellectuelle."
+        "title": "Contenu Safe Bill",
+        "content": "Tout le contenu, les fonctionnalités et la fonctionnalité de Safe Bill, y compris mais sans s'y limiter le texte, les graphiques, les logos et les logiciels, sont la propriété de Safe Bill et sont protégés par les lois internationales de droit d'auteur, de marque de commerce et autres lois de propriété intellectuelle."
       },
       "user_content": {
         "title": "Contenu Utilisateur",
-        "content": "Vous conservez la propriété du contenu que vous téléchargez sur SafeBill. En téléchargeant du contenu, vous accordez à SafeBill une licence non exclusive et sans redevance d'utiliser, d'afficher et de distribuer votre contenu selon les besoins pour fournir nos services."
+        "content": "Vous conservez la propriété du contenu que vous téléchargez sur Safe Bill. En téléchargeant du contenu, vous accordez à Safe Bill une licence non exclusive et sans redevance d'utiliser, d'afficher et de distribuer votre contenu selon les besoins pour fournir nos services."
       }
     },
     "disclaimers": {
       "title": "Avertissements",
       "service_availability": {
         "title": "Disponibilité du Service",
-        "content": "SafeBill est fourni \"tel quel\" et \"tel que disponible\". Nous ne garantissons pas que nos services seront ininterrompus, sans erreur ou complètement sécurisés. Nous nous réservons le droit de modifier ou d'interrompre les services à tout moment."
+        "content": "Safe Bill est fourni \"tel quel\" et \"tel que disponible\". Nous ne garantissons pas que nos services seront ininterrompus, sans erreur ou complètement sécurisés. Nous nous réservons le droit de modifier ou d'interrompre les services à tout moment."
       },
       "third_party_services": {
         "title": "Services Tiers",
@@ -1272,7 +1272,7 @@
     },
     "limitation_liability": {
       "title": "Limitation de Responsabilité",
-      "content": "Dans la mesure maximale permise par la loi, SafeBill ne sera pas responsable de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris mais sans s'y limiter :",
+      "content": "Dans la mesure maximale permise par la loi, Safe Bill ne sera pas responsable de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris mais sans s'y limiter :",
       "direct_damages": "Perte de profits ou de revenus",
       "indirect_damages": "Perte de données ou d'informations",
       "consequential_damages": "Interruption d'activité ou perte d'opportunités commerciales",
@@ -1280,7 +1280,7 @@
     },
     "termination": {
       "title": "Résiliation",
-      "content": "Chaque partie peut résilier ces Conditions à tout moment. Lors de la résiliation, votre droit d'utiliser SafeBill cessera immédiatement.",
+      "content": "Chaque partie peut résilier ces Conditions à tout moment. Lors de la résiliation, votre droit d'utiliser Safe Bill cessera immédiatement.",
       "user_termination": {
         "title": "Résiliation par l'Utilisateur",
         "content": "Vous pouvez résilier votre compte à tout moment en contactant notre équipe de support ou en utilisant la fonctionnalité de suppression de compte dans vos paramètres."
@@ -1303,9 +1303,9 @@
     },
     "updates": {
       "title": "Mises à Jour des Conditions",
-      "content": "Nous pouvons mettre à jour ces Conditions d'Utilisation de temps à autre. Nous informerons les utilisateurs de tout changement important par e-mail ou via notre plateforme. Votre utilisation continue de SafeBill après toute modification constitue une acceptation des Conditions mises à jour."
+      "content": "Nous pouvons mettre à jour ces Conditions d'Utilisation de temps à autre. Nous informerons les utilisateurs de tout changement important par e-mail ou via notre plateforme. Votre utilisation continue de Safe Bill après toute modification constitue une acceptation des Conditions mises à jour."
     },
-    "copyright": "©  2025 SafeBill. Tous droits réservés."
+    "copyright": "©  2025 Safe Bill. Tous droits réservés."
   },
   "billings": {
     "title": "Facturation et Paiements",
@@ -1423,14 +1423,14 @@
     "completed_at": "Terminé le",
     "amount": "Montant",
     "after_fee": "Après frais",
-    "brand": "SafeBill",
+    "brand": "Safe Bill",
     "seller_copy": "Reçu vendeur",
     "buyer_copy": "Reçu acheteur",
     "total": "Total",
     "vat": "TVA",
     "paid": "Payé",
     "milestones": "Étapes",
-    "generated_by": "Généré par SafeBill",
+    "generated_by": "Généré par Safe Bill",
     "showing": "Affichage",
     "of": "sur",
     "prev": "Précédent",

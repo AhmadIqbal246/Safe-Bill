@@ -286,7 +286,7 @@ class VerifyEmailView(APIView):
                 )
                 
                 return Response(
-                    {'detail': 'Email verified successfully. Welcome to SafeBill!'},
+                    {'detail': 'Email verified successfully. Welcome to Safe Bill!'},
                     status=status.HTTP_200_OK
                 )
             elif user and user.is_email_verified:
