@@ -413,10 +413,10 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                   />
                   <div className="font-semibold text-[#111827] text-base">{pro.name}</div>
                   <div className="text-[#6B7280] text-sm mb-1">{getBusinessActivityLabel(pro.business_type)}</div>
-                  <div className="text-[#178582] text-sm font-semibold flex items-center gap-1">
+                  {/* <div className="text-[#178582] text-sm font-semibold flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
                     {rating > 0 ? rating.toFixed(1) : 'No ratings'} 
-                  </div>
+                  </div> */}
                 </div>
               );
             })}
