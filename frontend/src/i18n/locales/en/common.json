@@ -818,7 +818,8 @@
     "login_successful": "Login successful!",
     "invalid_redirect_url": "Invalid redirect URL:",
     "no_active_account": "No active account found with the given credentials",
-    "invalid_credentials": "Invalid credentials"
+    "invalid_credentials": "Invalid credentials",
+    "email_verification": "Email Verification"
   },
   "contact_us": {
     "title": "Contact Us",

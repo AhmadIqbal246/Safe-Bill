@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from '../SellerDashboard/Sidebar';
 import Navbar from '../mutualComponents/Navbar/Navbar';
+import Chat from '../mutualComponents/Chat/Chat';
 import { Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { signedInNavItems, signedOutNavItems } from '../mutualComponents/Navbar/Navbar';
@@ -46,6 +47,8 @@ export default function MainLayout({ children, hideSafeBillHeader }) {
           </div>
         </div>
         <main className="flex-1 bg-gray-50 p-6">{children}</main>
+        {/* Render seller chat globally across pages, safely gated by role */}
+        {user?.role === 'seller' && <Chat />}
       </div>
     </div>
   );
