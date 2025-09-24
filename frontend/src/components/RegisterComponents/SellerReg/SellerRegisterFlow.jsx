@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Eye, EyeOff, Info, Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -74,6 +74,72 @@ export default function SellerRegisterFlow({role = "seller"}) {
   const [siretError, setSiretError] = useState("");
   const [fieldsDisabled, setFieldsDisabled] = useState(true);
   const [siretVerified, setSiretVerified] = useState(false);
+  // Rehydrate SIRET from Redux on mount if available; also clear any legacy session key
+  useEffect(() => {
+    const reduxLast = siretVerification?.lastSiret;
+    // Cleanup legacy persisted key if present so refresh clears the field
+    try { sessionStorage.removeItem('lastSiret'); } catch (e) {}
+    const lastSiret = reduxLast;
+    if (lastSiret && lastSiret.length === 14) {
+      setFormData((prev) => ({ ...prev, businessNumber: lastSiret }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refs for click-outside handling on dropdowns
+  const businessActivityRef = useRef(null);
+  const categoriesRef = useRef(null);
+  const subcategoriesRef = useRef(null);
+  const serviceAreasRef = useRef(null);
+
+  // Close open dropdowns when clicking outside
+  useEffect(() => {
+    const handleDocumentClick = (event) => {
+      // Business Activity
+      if (
+        showBusinessActivityDropdown &&
+        businessActivityRef.current &&
+        !businessActivityRef.current.contains(event.target)
+      ) {
+        setShowBusinessActivityDropdown(false);
+      }
+
+      // Categories
+      if (
+        showCategoriesDropdown &&
+        categoriesRef.current &&
+        !categoriesRef.current.contains(event.target)
+      ) {
+        setShowCategoriesDropdown(false);
+      }
+
+      // Subcategories
+      if (
+        showSubcategoriesDropdown &&
+        subcategoriesRef.current &&
+        !subcategoriesRef.current.contains(event.target)
+      ) {
+        setShowSubcategoriesDropdown(false);
+      }
+
+      // Service Areas
+      if (
+        showServiceAreasDropdown &&
+        serviceAreasRef.current &&
+        !serviceAreasRef.current.contains(event.target)
+      ) {
+        setShowServiceAreasDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [
+    showBusinessActivityDropdown,
+    showCategoriesDropdown,
+    showSubcategoriesDropdown,
+    showServiceAreasDropdown,
+  ]);
 
   // Password validation regex: at least 8 chars, one uppercase, one lowercase, one number, one special char
   const strongPasswordRegex =
@@ -738,7 +804,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('seller_registration.business_activity_label')}
                 </label>
-                <div className="relative">
+                <div className="relative" ref={businessActivityRef}>
                   <button
                     type="button"
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
@@ -811,7 +877,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('seller_registration.categories_optional_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative" ref={categoriesRef}>
                     <button
                       type="button"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -915,7 +981,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('seller_registration.subcategories_optional_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative" ref={subcategoriesRef}>
                     <button
                       type="button"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -1019,7 +1085,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('seller_registration.service_areas_label')}
                 </label>
-                <div className="relative">
+                <div className="relative" ref={serviceAreasRef}>
                   <button
                     type="button"
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${

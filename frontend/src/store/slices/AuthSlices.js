@@ -21,6 +21,7 @@ const initialState = {
     loading: false,
     error: null,
     result: null,
+    lastSiret: null,
   },
 };
 
@@ -251,6 +252,9 @@ const authSlice = createSlice({
       .addCase(verifySiret.fulfilled, (state, action) => {
         state.siretVerification.loading = false;
         state.siretVerification.result = action.payload;
+        if (action.payload?.valid && action.meta?.arg) {
+          state.siretVerification.lastSiret = action.meta.arg;
+        }
       })
       .addCase(verifySiret.rejected, (state, action) => {
         state.siretVerification.loading = false;
