@@ -4,14 +4,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: en\n"
 
-msgid "Verify Your Email - SafeBill"
-msgstr "Verify Your Email - SafeBill"
+msgid "Verify Your Email - Safe Bill"
+msgstr "Verify Your Email - Safe Bill"
 
-msgid "Reset Your Password - SafeBill"
-msgstr "Reset Your Password - SafeBill"
+msgid "Reset Your Password - Safe Bill"
+msgstr "Reset Your Password - Safe Bill"
 
-msgid "Welcome to SafeBill!"
-msgstr "Welcome to SafeBill!"
+msgid "Welcome to Safe Bill!"
+msgstr "Welcome to Safe Bill!"
 
 msgid "Payment Successful - {project_name}"
 msgstr "Payment Successful - {project_name}"
@@ -25,8 +25,8 @@ msgstr "Quote Request Sent Successfully"
 msgid "New Business Opportunity - Message from {buyer_name}"
 msgstr "New Business Opportunity - Message from {buyer_name}"
 
-msgid "You've been invited to join the '{project_name}' project on SafeBill"
-msgstr "You've been invited to join the '{project_name}' project on SafeBill"
+msgid "You've been invited to join the '{project_name}' project on Safe Bill"
+msgstr "You've been invited to join the '{project_name}' project on Safe Bill"
 
 msgid "New dispute opened - {project_name}"
 msgstr "New dispute opened - {project_name}"

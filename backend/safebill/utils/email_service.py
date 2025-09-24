@@ -1,5 +1,5 @@
 """
-Centralized email service utility for SafeBill application.
+Centralized email service utility for Safe Bill application.
 Provides consistent email sending functionality with HTML templates.
 """
 
@@ -120,7 +120,7 @@ class EmailService:
 
             # Set additional headers for better email client compatibility
             msg.extra_headers = {
-                "X-Mailer": "SafeBill Email Service",
+                "X-Mailer": "Safe Bill Email Service",
                 "X-Priority": "3",
                 "X-MSMail-Priority": "Normal",
             }
@@ -168,14 +168,14 @@ class EmailService:
             "user_type": user_type,
             "verification_code": verification_code,
             "frontend_verification_url": (f"{settings.FRONTEND_URL}email-verification"),
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
         with translation.override(language):
-            subject = translation.gettext("Verify Your Email - SafeBill")
+            subject = translation.gettext("Verify Your Email - Safe Bill")
 
         return EmailService.send_email(
             subject=subject,
@@ -206,14 +206,14 @@ class EmailService:
             "reset_url": reset_url,
             "reset_code": reset_code,
             "frontend_reset_url": (f"{settings.FRONTEND_URL}reset-password"),
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
         with translation.override(language):
-            subject = translation.gettext("Reset Your Password - SafeBill")
+            subject = translation.gettext("Reset Your Password - Safe Bill")
 
         return EmailService.send_email(
             subject=subject,
@@ -241,7 +241,7 @@ class EmailService:
         context = {
             "user_name": user_name,
             "user_type": user_type,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
             "logo_url": EmailService._get_logo_url(),
@@ -249,7 +249,7 @@ class EmailService:
 
         # Use Django's translation system
         with translation.override(language):
-            subject = translation.gettext("Welcome to SafeBill!")
+            subject = translation.gettext("Welcome to Safe Bill!")
 
         return EmailService.send_email(
             subject=subject,
@@ -285,12 +285,12 @@ class EmailService:
             "notification_title": notification_title,
             "notification_message": notification_message,
             "action_url": action_url,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
         }
 
-        subject = f"{notification_title} - SafeBill"
+        subject = f"{notification_title} - Safe Bill"
 
         return EmailService.send_email(
             subject=subject,
@@ -335,7 +335,7 @@ class EmailService:
                 "notification_title": notification_title,
                 "notification_message": notification_message,
                 "action_url": dashboard_url,
-                "site_name": "SafeBill",
+                "site_name": "Safe Bill",
                 "support_email": settings.DEFAULT_FROM_EMAIL,
                 "logo_url": EmailService._get_logo_url(),
             }
@@ -378,7 +378,7 @@ class EmailService:
             "buyer_email": buyer_email,
             "project_name": project_name,
             "message_preview": message_preview,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
             "logo_url": EmailService._get_logo_url(),
@@ -423,7 +423,7 @@ class EmailService:
             "subject": subject,
             "body": body,
             "professional_id": professional_id,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
             "logo_url": EmailService._get_logo_url(),
@@ -457,7 +457,7 @@ class EmailService:
             "subject": subject,
             "professional_id": professional_id,
             "to_email": to_email,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
             "logo_url": EmailService._get_logo_url(),
@@ -503,14 +503,14 @@ class EmailService:
             "invitation_url": invitation_url,
             "invitation_token": invitation_token,
             "frontend_url": frontend_url,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
         }
 
         # Use Django's translation system
         with translation.override(language):
-            subject = translation.gettext("You've been invited to join the '{project_name}' project on SafeBill").format(project_name=project_name)
+            subject = translation.gettext("You've been invited to join the '{project_name}' project on Safe Bill").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,
@@ -541,7 +541,7 @@ class EmailService:
             "project_name": project_name,
             "amount": amount,
             "dashboard_url": dashboard_url,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
         }
@@ -578,7 +578,7 @@ class EmailService:
             "project_name": project_name,
             "amount": amount,
             "retry_url": retry_url,
-            "site_name": "SafeBill",
+            "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
         }
