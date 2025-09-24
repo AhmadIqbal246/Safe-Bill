@@ -12,7 +12,7 @@ logger.propagate = True
 User = get_user_model()
 
 @shared_task(bind=True, max_retries=3)
-def send_verification_email_task(self, user_id, verification_url, user_type, language='en'):
+def send_verification_email_task(self, user_id, verification_url, user_type, language='fr'):
 	"""
 	Celery task to send verification email asynchronously
 	"""
@@ -50,7 +50,7 @@ def send_verification_email_task(self, user_id, verification_url, user_type, lan
 		self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 @shared_task(bind=True, max_retries=3)
-def send_welcome_email_task(self, user_id, user_type, language='en'):
+def send_welcome_email_task(self, user_id, user_type, language='fr'):
 	"""
 	Celery task to send welcome email asynchronously
 	"""
@@ -87,7 +87,7 @@ def send_welcome_email_task(self, user_id, user_type, language='en'):
 		self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 @shared_task(bind=True, max_retries=3)
-def send_password_reset_email_task(self, user_id, reset_url, language='en'):
+def send_password_reset_email_task(self, user_id, reset_url, language='fr'):
 	"""
 	Celery task to send password reset email asynchronously
 	"""

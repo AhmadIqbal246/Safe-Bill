@@ -13,7 +13,7 @@ def send_payment_success_email_task(
     user_name,
     project_name,
     amount,
-    language="en",
+    language="fr",
 ):
     try:
         return EmailService.send_client_payment_success_email(
@@ -29,13 +29,35 @@ def send_payment_success_email_task(
 
 
 @shared_task(bind=True, max_retries=3)
+def send_payment_success_email_seller_task(
+    self,
+    user_email,
+    user_name,
+    project_name,
+    amount,
+    language="fr",
+):
+    try:
+        return EmailService.send_seller_payment_success_email(
+            user_email=user_email,
+            user_name=user_name,
+            project_name=project_name,
+            amount=str(amount),
+            language=language,
+        )
+    except Exception as exc:
+        logger.error(f"Error sending seller payment success email: {exc}")
+        self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3)
 def send_payment_failed_email_task(
     self,
     user_email,
     user_name,
     project_name,
     amount,
-    language="en",
+    language="fr",
 ):
     try:
         return EmailService.send_client_payment_failed_email(
@@ -52,7 +74,7 @@ def send_payment_failed_email_task(
 
 @shared_task(bind=True, max_retries=3)
 def send_transfer_initiated_email_task(
-    self, user_email, amount, currency="EUR", language="en"
+    self, user_email, amount, currency="EUR", language="fr"
 ):
     try:
         message = (
@@ -72,7 +94,7 @@ def send_transfer_initiated_email_task(
 
 @shared_task(bind=True, max_retries=3)
 def send_transfer_paid_email_task(
-    self, user_email, amount, currency="EUR", language="en"
+    self, user_email, amount, currency="EUR", language="fr"
 ):
     try:
         message = (
@@ -92,7 +114,7 @@ def send_transfer_paid_email_task(
 
 @shared_task(bind=True, max_retries=3)
 def send_transfer_reversed_email_task(
-    self, user_email, amount, currency="EUR", language="en"
+    self, user_email, amount, currency="EUR", language="fr"
 ):
     try:
         message = (
@@ -112,7 +134,7 @@ def send_transfer_reversed_email_task(
 
 @shared_task(bind=True, max_retries=3)
 def send_refund_created_email_task(
-    self, user_email, project_name, amount, language="en"
+    self, user_email, project_name, amount, language="fr"
 ):
     try:
         message = (
@@ -132,7 +154,7 @@ def send_refund_created_email_task(
 
 @shared_task(bind=True, max_retries=3)
 def send_refund_paid_email_task(
-    self, user_email, project_name, amount, language="en"
+    self, user_email, project_name, amount, language="fr"
 ):
     try:
         message = (
@@ -152,7 +174,7 @@ def send_refund_paid_email_task(
 
 @shared_task(bind=True, max_retries=3)
 def send_refund_failed_email_task(
-    self, user_email, project_name, amount, language="en"
+    self, user_email, project_name, amount, language="fr"
 ):
     try:
         message = (
@@ -170,7 +192,7 @@ def send_refund_failed_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 @shared_task(bind=True, max_retries=3)
-def send_hold_released_email_task(self, user_email, amount, language="en"):
+def send_hold_released_email_task(self, user_email, amount, language="fr"):
     try:
         message = (
             f"Good news! {amount} has been released from hold and is now "

@@ -133,8 +133,8 @@ class SellerRegisterView(APIView):
             user_type = 'Professional Buyer' if role == 'professional-buyer' else 'Seller'
             
             # Extract language from request headers
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
             
             # Send verification email asynchronously
             send_verification_email_task.delay(
@@ -168,8 +168,8 @@ class BuyerRegistrationView(APIView):
             user_name = user.get_full_name() or user.username or user.email.split('@')[0]
             
             # Extract language from request headers
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
             
             # Send verification email asynchronously via Celery
             send_verification_email_task.delay(
@@ -204,8 +204,8 @@ class VerifyEmailView(APIView):
             transaction.on_commit(_on_transaction_commit)
             
             # Extract language from request headers
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
             
             # Send welcome email asynchronously
             send_welcome_email_task.delay(
@@ -275,8 +275,8 @@ class VerifyEmailView(APIView):
                 transaction.on_commit(_on_transaction_commit)
                 
                 # Extract language from request headers
-                preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-                language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+                preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
                 
                 # Send welcome email asynchronously via Celery
                 send_welcome_email_task.delay(
@@ -345,8 +345,8 @@ class ResendVerificationView(APIView):
         verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
         
         # Extract language from request headers
-        preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-        language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+        preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+        language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
         
         # Send verification email asynchronously via Celery
         send_verification_email_task.delay(
@@ -421,8 +421,8 @@ class PasswordResetRequestView(APIView):
             reset_url = f"{front_base_url}password-reset/?uid={uid}&token={token}"
             
             # Extract language from request headers
-            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "en")
-            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
             
             # Send password reset email asynchronously
             send_password_reset_email_task.delay(

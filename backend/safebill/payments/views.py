@@ -25,6 +25,7 @@ from notifications.services import NotificationService
 from .tasks import (
     send_payment_success_email_task,
     send_payment_failed_email_task,
+    send_payment_success_email_seller_task,
     send_refund_created_email_task,
     send_refund_paid_email_task,
     send_refund_failed_email_task,
@@ -151,6 +152,18 @@ def check_payment_status(request, project_id):
                         payment.project.name,
                         float(payment.buyer_total_amount or payment.amount),
                     )
+                    # Also notify the seller
+                    try:
+                        seller = payment.project.user
+                        seller_name = getattr(seller, "first_name", None) or seller.email
+                        send_payment_success_email_seller_task.delay(
+                            seller.email,
+                            seller_name,
+                            payment.project.name,
+                            float(payment.buyer_total_amount or payment.amount),
+                        )
+                    except Exception:
+                        pass
                 elif payment.status == "failed":
                     send_payment_failed_email_task.delay(
                         user.email,
