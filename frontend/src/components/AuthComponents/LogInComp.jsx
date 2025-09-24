@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 export default function LogInComp() {
   const { t } = useTranslation();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [emailError, setEmailError] = useState(""); // store i18n key when error exists
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -20,11 +21,20 @@ export default function LogInComp() {
   const redirectUrl = searchParams.get('redirect');
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    // Do not show validation while typing; only clear any prior error
+    if (name === 'email' && emailError) setEmailError("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Validate email before submit
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!form.email || !emailRegex.test(form.email)) {
+      setEmailError('login.invalid_email');
+      return;
+    }
     dispatch(loginUser(form));
   };
 
@@ -94,11 +104,28 @@ export default function LogInComp() {
         navigate(targetUrl);
       }, 1500);
     } else if (error) {
-      toast.error(
-        typeof error === "string"
-          ? error
-          : error.detail || Object.values(error).flat().join(", ")
-      );
+      const errorMap = {
+        'No active account found with the given credentials': 'login.no_active_account',
+        'Invalid credentials': 'login.invalid_credentials',
+      };
+      const translateKnown = (msg) => {
+        const key = errorMap[msg];
+        return key ? t(key) : msg;
+      };
+      let message = '';
+      if (typeof error === 'string') {
+        message = translateKnown(error);
+      } else if (error?.detail) {
+        message = translateKnown(error.detail);
+      } else {
+        try {
+          const parts = Object.values(error).flat();
+          message = parts.map(translateKnown).join(', ');
+        } catch (e) {
+          message = t('common.error');
+        }
+      }
+      toast.error(message);
       dispatch(resetAuthState());
     }
   }, [success, error, user, dispatch, navigate, redirectUrl, t]);
@@ -121,9 +148,12 @@ export default function LogInComp() {
               value={form.email}
               onChange={handleChange}
               placeholder={t("login.enter_email")}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A1128] focus:border-transparent border-gray-300"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A1128] focus:border-transparent ${emailError ? 'border-red-500' : 'border-gray-300'}`}
               required
             />
+            {emailError && (
+              <p className="text-red-600 text-sm mt-1">{t(emailError)}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.password")}</label>
