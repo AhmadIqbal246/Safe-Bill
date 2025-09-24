@@ -25,7 +25,7 @@ from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
 import logging
-from .tasks import send_project_invitation_email_task
+from .tasks import send_project_invitation_email_task, send_milestone_approval_request_email_task
 from django.db import transaction
 from hubspot.tasks import sync_deal_task, update_milestone_task, sync_milestone_task, sync_revenue_month_task
 
@@ -725,6 +725,27 @@ class MilestoneApprovalAPIView(APIView):
         elif action_type == "pending":
             milestone.status = "pending"
             milestone.completion_date = None
+            # Notify buyer of approval request
+            try:
+                project = milestone.project
+                if project.client and project.client.email:
+                    preferred_lang = (
+                        self.request.headers.get("X-User-Language")
+                        or self.request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                    )
+                    language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+                    buyer_name = getattr(project.client, "username", None) or project.client.email.split("@")[0]
+                    send_milestone_approval_request_email_task.delay(
+                        user_email=project.client.email,
+                        user_name=buyer_name,
+                        project_name=project.name,
+                        milestone_name=milestone.name,
+                        amount=str(milestone.relative_payment),
+                        language=language,
+                    )
+            except Exception:
+                # Do not fail the flow if email cannot be sent
+                pass
         milestone.save()
         # Enqueue HubSpot milestone update after commit
         transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))

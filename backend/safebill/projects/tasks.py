@@ -33,3 +33,28 @@ def send_project_invitation_email_task(self, client_email, project_name, invitat
         
         # Retry with exponential backoff
         self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3)
+def send_milestone_approval_request_email_task(
+    self,
+    user_email,
+    user_name,
+    project_name,
+    milestone_name,
+    amount,
+    language='fr',
+):
+    """Send milestone approval request email to buyer asynchronously."""
+    try:
+        return EmailService.send_milestone_approval_request_email(
+            user_email=user_email,
+            user_name=user_name,
+            project_name=project_name,
+            milestone_name=milestone_name,
+            amount=str(amount),
+            language=language,
+        )
+    except Exception as exc:
+        logger.error(f"Error sending milestone approval request email: {str(exc)}")
+        self.retry(exc=exc, countdown=2 ** self.request.retries)

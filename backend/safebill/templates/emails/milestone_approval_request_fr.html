@@ -1,0 +1,34 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Demande d'Approbation de Jalon - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Approbation Demandée{% endblock %}
+
+{% block content %}
+<h2>Demande d'Approbation de Jalon</h2>
+
+<p>Bonjour {{ user_name }},</p>
+
+<div class="highlight">
+  <p>Le vendeur a demandé votre approbation pour un jalon du projet <strong>{{ project_name }}</strong>.</p>
+  <p><strong>Jalon :</strong> {{ milestone_name }}</p>
+  <p><strong>Montant :</strong> {{ amount }}</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+  <a href="{{ dashboard_url }}" class="btn">Examiner le Jalon</a>
+  </div>
+
+<p>Vous pouvez consulter les détails du jalon et approuver ou demander des modifications depuis votre tableau de bord.</p>
+
+<div class="warning">
+  <p><strong>Note :</strong> L'approbation d'un jalon déclenchera le paiement conformément aux conditions du projet.</p>
+  </div>
+
+<p>Si vous avez des questions, veuillez contacter notre équipe de support à <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Cordialement,<br>
+L'Équipe {{ site_name }}</p>
+{% endblock %}
+
+
