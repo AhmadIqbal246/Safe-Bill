@@ -285,7 +285,7 @@ export default function SellerReceipts() {
           {total > 0 && (
             <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="text-sm text-gray-600">
-                Showing {total === 0 ? 0 : startIdx + 1}–{endIdx} of {total}
+                {t('receipts.showing')} {total === 0 ? 0 : startIdx + 1}–{endIdx} {t('receipts.of')} {total}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -293,7 +293,7 @@ export default function SellerReceipts() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                 >
-                  Prev
+                  {t('receipts.prev')}
                 </button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }).map((_, i) => (
@@ -311,7 +311,7 @@ export default function SellerReceipts() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                 >
-                  Next
+                  {t('receipts.next')}
                 </button>
               </div>
             </div>

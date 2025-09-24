@@ -48,7 +48,7 @@ function ExpiredInvitesTable({ items, onResend, t, resendingToken }) {
   );
 }
 
-function Pagination({ page, total, pageSize, onPageChange }) {
+function Pagination({ page, total, pageSize, onPageChange, t }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <div className="flex items-center justify-between mt-4 gap-2">
@@ -57,7 +57,7 @@ function Pagination({ page, total, pageSize, onPageChange }) {
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page <= 1}
       >
-        Prev
+        {t('common.prev')}
       </button>
       <div className="text-sm text-gray-600">
         {page} / {totalPages}
@@ -67,7 +67,7 @@ function Pagination({ page, total, pageSize, onPageChange }) {
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
         disabled={page >= totalPages}
       >
-        Next
+        {t('common.next')}
       </button>
     </div>
   );
@@ -125,7 +125,7 @@ export default function SellerExpiredInvitesPage() {
           {!expiredInvitesLoading && total > 0 && (
             <>
               <ExpiredInvitesTable items={pagedItems} onResend={handleResend} t={t} resendingToken={resendingToken} />
-              <Pagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} />
+              <Pagination page={page} total={total} pageSize={pageSize} onPageChange={setPage} t={t} />
             </>
           )}
 

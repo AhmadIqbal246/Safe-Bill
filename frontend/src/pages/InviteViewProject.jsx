@@ -100,7 +100,7 @@ export default function InviteViewProject() {
   useEffect(() => {
     if (project?.status === "approved") {
       setTimeout(() => {
-        toast.success("Project approved successfully");
+        toast.success(t('invite_view.project_approved_toast'));
         navigate("/buyer-dashboard");
       }, 5000);
     }
@@ -158,7 +158,7 @@ export default function InviteViewProject() {
     if (action === "approve") {
       // Check if terms are accepted
       if (!termsAccepted) {
-        toast.error("Please accept the terms and conditions to proceed with payment.");
+        toast.error(t('invite_view.accept_terms_error'));
         setActionLoading(false);
         return;
       }

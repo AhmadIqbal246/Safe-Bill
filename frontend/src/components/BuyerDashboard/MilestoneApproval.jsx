@@ -4,9 +4,11 @@ import { fetchClientProjectsWithPendingMilestones, approveMilestone } from '../.
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
+import { useTranslation } from 'react-i18next';
 
 export default function MilestoneApproval({ onMilestoneAction }) {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMilestone, setSelectedMilestone] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -74,9 +76,9 @@ export default function MilestoneApproval({ onMilestoneAction }) {
       await dispatch(approveMilestone(payload)).unwrap();
       
       const actionMessages = {
-        'approve': 'Milestone approved successfully!',
-        'not_approved': 'Milestone marked as not approved!',
-        'review_request': 'Milestone sent for review!'
+        approve: t('milestone_approval.success_approved'),
+        not_approved: t('milestone_approval.success_not_approved'),
+        review_request: t('milestone_approval.success_review'),
       };
       
       toast.success(actionMessages[pendingAction] || 'Action completed successfully!');
@@ -90,7 +92,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
         onMilestoneAction();
       }
     } catch (err) {
-      toast.error(typeof err === 'string' ? err : 'Failed to update milestone status');
+      toast.error(typeof err === 'string' ? err : t('milestone_approval.failed_update'));
     } finally {
       setConfirmDialogOpen(false);
       setSelectedMilestone(null);
@@ -118,10 +120,10 @@ export default function MilestoneApproval({ onMilestoneAction }) {
 
   const getActionMessage = (action) => {
     switch (action) {
-      case 'approve': return 'Approve this milestone? The payment will be trasfered to the seller and will not be refundable.';
-      case 'not_approved': return 'Are you sure you want to mark this milestone as not approved?';
-      case 'review_request': return 'Are you sure you want to send this milestone for review?';
-      default: return 'Are you sure you want to perform this action?';
+      case 'approve': return t('milestone_approval.confirm_approve');
+      case 'not_approved': return t('milestone_approval.confirm_not_approved');
+      case 'review_request': return t('milestone_approval.confirm_review');
+      default: return t('milestone_approval.confirm_generic');
     }
   };
 
