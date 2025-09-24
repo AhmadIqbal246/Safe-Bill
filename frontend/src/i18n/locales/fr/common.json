@@ -803,7 +803,9 @@
     "sign_in": "Se connecter",
     "forgot_password": "Mot de passe oublié ?",
     "login_successful": "Connexion réussie !",
-    "invalid_redirect_url": "URL de redirection invalide :"
+    "invalid_redirect_url": "URL de redirection invalide :",
+    "no_active_account": "Aucun compte actif trouvé avec les identifiants fournis",
+    "invalid_credentials": "Identifiants invalides"
   },
   "contact_us": {
     "title": "Nous contacter",
