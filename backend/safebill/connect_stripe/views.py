@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from hubspot.tasks import sync_deal_task
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
 import stripe
@@ -610,6 +611,8 @@ def stripe_identity_webhook(request):
         project = Project.objects.get(id=project_id)
         project.status = "approved"
         project.save()
+        # Ensure HubSpot deal reflects approved status via custom properties
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
         payment = Payment.objects.get(stripe_payment_id=payment_id)
         if payment.status != "paid":
             platform_revenue = PlatformRevenue.objects.all().first()
