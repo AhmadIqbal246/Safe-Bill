@@ -48,21 +48,21 @@ def test_email_translations():
     
     # Test French translation
     with translation.override('fr'):
-        subject = translation.gettext("Verify Your Email - SafeBill")
+        subject = translation.gettext("Verify Your Email - Safe Bill")
         print(f"French subject: {subject}")
     
     # Test English translation
     with translation.override('en'):
-        subject = translation.gettext("Verify Your Email - SafeBill")
+        subject = translation.gettext("Verify Your Email - Safe Bill")
         print(f"English subject: {subject}")
     
     # Test project invitation
     with translation.override('fr'):
-        subject = translation.gettext("You've been invited to join the '{project_name}' project on SafeBill").format(project_name="Test Project")
+        subject = translation.gettext("You've been invited to join the '{project_name}' project on Safe Bill").format(project_name="Test Project")
         print(f"French invitation: {subject}")
     
     with translation.override('en'):
-        subject = translation.gettext("You've been invited to join the '{project_name}' project on SafeBill").format(project_name="Test Project")
+        subject = translation.gettext("You've been invited to join the '{project_name}' project on Safe Bill").format(project_name="Test Project")
         print(f"English invitation: {subject}")
 
 

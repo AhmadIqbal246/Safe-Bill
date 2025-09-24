@@ -271,7 +271,7 @@ export default function SellerReceipts() {
                         {/* Footer */}
                         <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
                           <div>{t('receipts.generated_by')}</div>
-                          <div>www.safebill.app</div>
+                          <div>www.safebill.fr</div>
                         </div>
                       </div>
                     )}

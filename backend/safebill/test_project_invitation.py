@@ -62,7 +62,7 @@ def test_project_invitation_template_rendering():
             'invitation_url': "https://safebill.com/project-invite?token=abc123def456",
             'invitation_token': "abc123def456",
             'frontend_url': "https://safebill.com",
-            'site_name': 'SafeBill',
+            'site_name': 'Safe Bill',
             'support_email': 'support@safebill.com',
         }
         
