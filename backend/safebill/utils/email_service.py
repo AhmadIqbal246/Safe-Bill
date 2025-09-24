@@ -63,7 +63,7 @@ class EmailService:
         context: Dict[str, Any],
         from_email: Optional[str] = None,
         fail_silently: bool = False,
-        language: str = "en",
+        language: str = "fr",
     ) -> bool:
         """
         Send an HTML email using Django templates.
@@ -147,7 +147,7 @@ class EmailService:
         verification_url: str,
         user_type: str = "user",
         verification_code: str = None,
-        language: str = 'en',
+        language: str = 'fr',
     ) -> bool:
         """
         Send email verification email.
@@ -187,7 +187,7 @@ class EmailService:
 
     @staticmethod
     def send_password_reset_email(
-        user_email: str, user_name: str, reset_url: str, reset_code: str = None, language: str = 'en'
+        user_email: str, user_name: str, reset_url: str, reset_code: str = None, language: str = 'fr'
     ) -> bool:
         """
         Send password reset email.
@@ -225,7 +225,7 @@ class EmailService:
 
     @staticmethod
     def send_welcome_email(
-        user_email: str, user_name: str, user_type: str = "user", language: str = 'en'
+        user_email: str, user_name: str, user_type: str = "user", language: str = 'fr'
     ) -> bool:
         """
         Send welcome email after successful registration.
@@ -266,6 +266,7 @@ class EmailService:
         notification_title: str,
         notification_message: str,
         action_url: Optional[str] = None,
+        language: str = 'fr',
     ) -> bool:
         """
         Send general notification email.
@@ -297,6 +298,7 @@ class EmailService:
             recipient_list=[user_email],
             template_name="notification",
             context=context,
+            language=language,
         )
 
     @staticmethod
@@ -305,7 +307,7 @@ class EmailService:
         seller_name: str,
         project_name: str,
         dispute_id: str,
-        language: str = "en",
+        language: str = "fr",
         dashboard_url: Optional[str] = None,
     ) -> bool:
         """
@@ -316,13 +318,13 @@ class EmailService:
             seller_name: Seller's name
             project_name: Project name
             dispute_id: Dispute reference id
-            language: Preferred language code ('en' | 'fr')
+            language: Preferred language code ('fr' | 'en')
             dashboard_url: Optional URL to view disputes
         """
         if not dashboard_url:
             dashboard_url = f"{settings.FRONTEND_URL}seller-dashboard"
 
-        with translation.override((language or "en").split(",")[0][:2]):
+        with translation.override((language or "fr").split(",")[0][:2]):
             notification_title = translation.gettext(
                 "New dispute opened - {project_name}"
             ).format(project_name=project_name)
@@ -356,7 +358,7 @@ class EmailService:
         buyer_email: str,
         project_name: str,
         message_preview: str,
-        language: str = 'en',
+        language: str = 'fr',
     ) -> bool:
         """
         Send email notification to seller for new quote chat message.
@@ -403,7 +405,7 @@ class EmailService:
         subject: str,
         body: str,
         professional_id: str,
-        language: str = 'en',
+        language: str = 'fr',
     ) -> bool:
         """
         Send quote request email to professional.
@@ -439,7 +441,7 @@ class EmailService:
 
     @staticmethod
     def send_quote_request_confirmation(
-        sender_email: str, subject: str, professional_id: str, to_email: str, language: str = 'en'
+        sender_email: str, subject: str, professional_id: str, to_email: str, language: str = 'fr'
     ) -> bool:
         """
         Send confirmation email to quote request sender.
@@ -481,7 +483,7 @@ class EmailService:
         project_name: str,
         invitation_url: str,
         invitation_token: str,
-        language: str = "en",
+        language: str = "fr",
     ) -> bool:
         """
         Send project invitation email to client.
@@ -528,7 +530,7 @@ class EmailService:
         project_name: str,
         amount: str,
         dashboard_url: Optional[str] = None,
-        language: str = 'en',
+        language: str = 'fr',
     ) -> bool:
         """
         Send payment success email to client.
@@ -559,13 +561,49 @@ class EmailService:
         )
 
     @staticmethod
+    def send_seller_payment_success_email(
+        user_email: str,
+        user_name: str,
+        project_name: str,
+        amount: str,
+        dashboard_url: Optional[str] = None,
+        language: str = 'fr',
+    ) -> bool:
+        """
+        Notify the seller that the buyer has credited the payment so the project can start.
+        """
+        if not dashboard_url:
+            dashboard_url = f"{settings.FRONTEND_URL}/seller-dashboard"
+
+        context = {
+            "user_name": user_name,
+            "project_name": project_name,
+            "amount": amount,
+            "dashboard_url": dashboard_url,
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            subject = translation.gettext("Client Payment Received - {project_name}").format(project_name=project_name)
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="payment_success_seller",
+            context=context,
+            language=language,
+        )
+
+    @staticmethod
     def send_client_payment_failed_email(
         user_email: str,
         user_name: str,
         project_name: str,
         amount: str,
         retry_url: Optional[str] = None,
-        language: str = 'en',
+        language: str = 'fr',
     ) -> bool:
         """
         Send payment failed email to client.
