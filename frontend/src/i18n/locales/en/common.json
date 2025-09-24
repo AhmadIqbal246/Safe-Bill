@@ -15,6 +15,12 @@
     "no_unread_notifications": "No unread notifications.",
     "how_to_accept_project_invite": "How to Accept Project Invite"
   },
+  "actions": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "submit": "Submit",
+    "processing": "Processing..."
+  },
   "chat": { 
     "messages": "Messages", 
     "type_message": "Type your message..." 
@@ -111,7 +117,9 @@
     "project_rejected_message": "This project has been rejected and is no longer active.",
     "secured_ssl": "Secured with SSL encryption and processed through Stripe",
     "loading_project": "Loading project...",
-    "no_project_data": "No project data to display."
+    "no_project_data": "No project data to display.",
+    "project_approved_toast": "Project approved successfully",
+    "accept_terms_error": "Please accept the terms and conditions to proceed with payment."
   },
   "footer": {
     "tagline": "Connecting clients with trusted professionals worldwide through secure, verified transactions.",
@@ -709,7 +717,20 @@
     "contact_support": "Contact Support",
     "accept_project_invite": "Accept Project Invite",
     "completed_projects": "Completed Projects",
-    "completed_on": "Completed on"
+    "completed_on": "Completed on",
+    "approve_project": "Approve Project",
+    "reject_project": "Reject Project"
+  },
+  "approved_projects": {
+    "header": "Approved Projects",
+    "title": "Approved Projects",
+    "search_placeholder": "Search Approved Projects",
+    "view_quote": "View Quote",
+    "none": "You have no approved projects yet."
+  },
+  "documents_section": {
+    "title": "Documents (Quotes)",
+    "search_placeholder": "Search by project or reference..."
   },
   "dispute_submit": {
     "back": "← Back",
@@ -971,6 +992,12 @@
   "quote_management": {
     "title": "Quote Management",
     "new_quote": "New Quote",
+    "filters": {
+      "status": "Status",
+      "date": "Date",
+      "amount": "Amount",
+      "client": "Client"
+    },
     "search_placeholder": "Search projects...",
     "quote_reference": "Quote Reference",
     "project_name": "Project Name",
@@ -1012,6 +1039,8 @@
     "processing": "Processing...",
     "enter_token_error": "Please enter a valid invitation code",
     "general_error": "An error occurred. Please try again.",
+    "invite_expired": "Invite link has expired.",
+    "invalid_or_expired": "Invalid or expired invite link.",
     "help_text": "Don't have an invitation code? Check your email or contact the project creator.",
     "back_to_dashboard": "Back to Dashboard"
   },
@@ -1327,6 +1356,7 @@
     "subtitle": "Track your payment history and manage your balance",
     "loading": "Loading billing information...",
     "common_loading": "Loading...",
+    "payment_tracking": "Payment Tracking",
     "balance_summary": "Balance Summary",
     "payment_history": "Payment History",
     "current_balance": "Current Balance",
@@ -1405,6 +1435,15 @@
     "completed": "Completed",
     "transfer_id": "Transfer ID"
   },
+  "payment_tracking": {
+    "title": "Payment Tracking",
+    "project_name": "Project Name",
+    "project_amount": "Project Amount",
+    "paid_amount": "Paid Amount",
+    "date": "Date",
+    "status": "Status",
+    "no_payments": "No payments found"
+  },
   "common": {
     "error": "Error",
     "error_loading_data": "Error loading data",
@@ -1417,7 +1456,88 @@
     "actions": "Actions",
     "project": "Project",
     "client_email": "Client email",
-    "created_at": "Created at"
+    "created_at": "Created at",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "milestones": {
+    "page_title": "Milestones for",
+    "back_to_projects": "Back to Projects",
+    "loading": "Loading milestones...",
+    "load_failed": "Failed to load milestones.",
+    "empty_state": "No milestones found for this project.",
+    "status_label": "Status",
+    "you_receive_prefix": "You receive",
+    "platform_fee": "Platform Fee",
+    "review_comment": "Review Comment",
+    "view_full_comment": "View Full Comment",
+    "description_label": "Description",
+    "view_full_description": "View Full Description",
+    "view_supporting_doc": "View Supporting Document",
+    "completion_notice": "Completion Notice",
+    "created_label": "Created",
+    "completed_label": "Completed",
+    "edit_tooltip": "Edit milestone",
+    "edit_title": "Edit Milestone",
+    "name_label": "Milestone Name",
+    "name_placeholder": "Enter milestone name",
+    "description_placeholder": "Enter milestone description",
+    "payment_amount_label": "Payment Amount (€)",
+    "payment_amount_placeholder": "Enter payment amount",
+    "supporting_documents": "Supporting Documents",
+    "current_document": "Current document",
+    "view_current_document": "View current document",
+    "upload_instructions": "Upload photos, reports, or other evidence",
+    "drag_drop_hint": "Drag and drop files here or click to browse",
+    "choose_files": "Choose Files",
+    "file_selected": "File selected",
+    "size_label": "Size",
+    "update_button": "Update Milestone",
+    "confirm_submission_title": "Confirm Submission",
+    "confirm_submission_body": "Are you sure you want to submit this milestone for approval? Once submitted, you won't be able to edit it until the buyer responds.",
+    "status_tooltip_submitted": "Submitted for Approval",
+    "status_tooltip_approved": "Approved",
+    "status_not_submitted": "Not Submitted",
+    "status_review_request": "Review Request",
+    "update_success": "Milestone updated successfully!",
+    "update_failed_default": "Failed to update milestone. Please try again.",
+    "submit_success": "Milestone submitted for approval!",
+    "submit_failed_default": "Failed to submit milestone for approval."
+  },
+  "milestone_approval": {
+    "success_approved": "Milestone approved successfully!",
+    "success_not_approved": "Milestone marked as Not Approved.",
+    "success_review": "Review request sent to the seller.",
+    "failed_update": "Failed to update milestone. Please try again.",
+    "confirm_approve": "Are you sure you want to approve this milestone?",
+    "confirm_not_approved": "Are you sure you want to mark this milestone as Not Approved?",
+    "confirm_review": "Send a review request with your comment?",
+    "confirm_generic": "Are you sure you want to perform this action?",
+    "title_single": "Milestone Approval",
+    "title_plural": "Milestone Approvals",
+    "loading_pending": "Loading pending milestones...",
+    "load_failed": "Failed to load milestones",
+    "empty_pending": "No milestones awaiting approval",
+    "search_placeholder": "Search by project name or milestone name...",
+    "no_search_results": "No milestones found matching your search.",
+    "awaiting_review": "Awaiting Review",
+    "project_label": "Project:",
+    "seller_label": "Seller:",
+    "submitted_label": "Submitted:",
+    "description_label": "Description:",
+    "view_full_description": "View Full Description",
+    "view_supporting_doc": "View Supporting Document",
+    "approve": "Approve",
+    "not_approve": "Not Approve",
+    "request_review": "Request Review",
+    "action_generic": "Action",
+    "confirm_action_title": "Confirm Action",
+    "milestone_label": "Milestone:",
+    "review_comment_label": "Review Comment (Optional)",
+    "review_comment_placeholder": "Please provide feedback on what needs to be changed or improved...",
+    "review_comment_hint": "This comment will be visible to the seller to understand your feedback.",
+    "review_comment_title": "Review Comment",
+    "milestone_description_title": "Milestone Description"
   },
   "receipts": {
     "title": "Receipts",

@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function DocumentsSection({ projects = [] }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   // Extract quotes from all projects the buyer is part of
@@ -57,12 +59,12 @@ export default function DocumentsSection({ projects = [] }) {
   return (
     <div style={{ flex: 1, borderRadius: 12, boxShadow: '0 1px 4px #e5e7eb', padding: 24, minWidth: 340 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontWeight: 600, fontSize: 18 }}>Documents (Quotes)</div>
+        <div style={{ fontWeight: 600, fontSize: 18 }}>{t('documents_section.title')}</div>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by project or reference..."
+          placeholder={t('documents_section.search_placeholder')}
           style={{
             border: '1px solid #e5e7eb',
             borderRadius: 8,

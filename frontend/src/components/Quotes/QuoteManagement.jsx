@@ -8,12 +8,20 @@ import { Dialog } from '@headlessui/react';
 import { useTranslation } from 'react-i18next';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
 
-const filters = ['Status', 'Date', 'Amount', 'Client'];
+// Filters will be translated via i18n inside the component
 
 export default function QuoteManagement() {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [activeSort, setActiveSort] = useState('Status');
+  // Use stable keys for sorting; labels are translated for display
+  const [activeSort, setActiveSort] = useState('status');
+
+  const filters = [
+    { key: 'status', label: t('quote_management.filters.status') },
+    { key: 'date', label: t('quote_management.filters.date') },
+    { key: 'amount', label: t('quote_management.filters.amount') },
+    { key: 'client', label: t('quote_management.filters.client') },
+  ];
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { projects, loading, error, completeProjectError } = useSelector(state => state.project);
@@ -33,13 +41,13 @@ export default function QuoteManagement() {
   );
 
   // Sorting logic
-  if (activeSort === 'Date') {
+  if (activeSort === 'date') {
     filteredProjects = filteredProjects.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  } else if (activeSort === 'Amount') {
+  } else if (activeSort === 'amount') {
     filteredProjects = filteredProjects.slice().sort((a, b) => b.total_amount - a.total_amount);
-  } else if (activeSort === 'Client') {
+  } else if (activeSort === 'client') {
     filteredProjects = filteredProjects.slice().sort((a, b) => a.client_email.localeCompare(b.client_email));
-  } else if (activeSort === 'Status') {
+  } else if (activeSort === 'status') {
     // For now, keep as is or random, since status is random
   }
 
@@ -159,13 +167,13 @@ export default function QuoteManagement() {
       </div>
       <div className="mb-4">
         <div className="flex flex-wrap gap-2 mb-4">
-          {filters.map(f => (
+          {filters.map(({ key, label }) => (
             <button
-              key={f}
-              className={`px-3 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${activeSort === f ? 'bg-[#E6F0FA] text-[#01257D] font-bold' : 'bg-[#E6F0FA] text-[#01257D]'}`}
-              onClick={() => setActiveSort(f)}
+              key={key}
+              className={`px-3 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${activeSort === key ? 'bg-[#E6F0FA] text-[#01257D] font-bold' : 'bg-[#E6F0FA] text-[#01257D]'}`}
+              onClick={() => setActiveSort(key)}
             >
-              {f}
+              {label}
             </button>
           ))}
         </div>

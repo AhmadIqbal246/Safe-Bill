@@ -1,8 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 export default function PaymentTracking({ billings = [] }) {
   const { user } = useSelector(state => state.auth);
+  const { t } = useTranslation();
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -32,7 +34,7 @@ export default function PaymentTracking({ billings = [] }) {
 
   return (
     <div style={{ flex: 1, borderRadius: 12, boxShadow: '0 1px 4px #e5e7eb', padding: 24, minWidth: 340 }}>
-      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>Payment Tracking</div>
+      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>{t('payment_tracking.title')}</div>
       
       {billings.length > 0 ? (
         <div style={{ overflowX: 'auto', width: '100%' }}>
@@ -57,7 +59,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Project Name
+                  {t('payment_tracking.project_name')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -68,7 +70,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Project Amount
+                  {t('payment_tracking.project_amount')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -79,7 +81,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                 Paid Amount
+                 {t('payment_tracking.paid_amount')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -90,7 +92,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Date
+                  {t('payment_tracking.date')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -100,7 +102,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Status
+                  {t('payment_tracking.status')}
                 </th>
               </tr>
             </thead>
@@ -187,7 +189,7 @@ export default function PaymentTracking({ billings = [] }) {
         </div>
       ) : (
         <div style={{ color: '#6b7280', fontSize: 14, textAlign: 'center', padding: '20px 0' }}>
-          No payments found
+          {t('payment_tracking.no_payments')}
         </div>
       )}
     </div>

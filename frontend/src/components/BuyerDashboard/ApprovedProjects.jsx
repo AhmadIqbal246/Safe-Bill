@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Eye, Search, CheckCircle } from 'lucide-react';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
+import { useTranslation } from 'react-i18next';
 
 export default function ApprovedProjects({ projects }) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
   // Only approved, real projects
@@ -30,7 +32,7 @@ export default function ApprovedProjects({ projects }) {
   if (allApproved.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Approved Projects</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('approved_projects.header')}</h3>
         <div className="text-center py-8">
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-500" />
@@ -45,7 +47,7 @@ export default function ApprovedProjects({ projects }) {
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-3 sm:mb-0">
-          Approved Projects ({allApproved.length})
+          {t('approved_projects.header')} ({allApproved.length})
         </h3>
         <div className="relative w-full sm:w-64">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -53,7 +55,7 @@ export default function ApprovedProjects({ projects }) {
           </div>
           <input
             type="text"
-            placeholder="Search approved"
+            placeholder={t('approved_projects.search_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#01257D] focus:border-[#01257D] text-sm"
@@ -86,7 +88,7 @@ export default function ApprovedProjects({ projects }) {
                     className="flex items-center gap-2 px-3 py-2 text-sm text-[#01257D] hover:bg-[#E6F0FA] rounded-md transition-colors"
                   >
                     <Eye className="w-4 h-4" />
-                    View Quote
+                    {t('approved_projects.view_quote')}
                   </a>
                 </div>
               )}
