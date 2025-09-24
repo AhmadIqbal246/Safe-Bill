@@ -96,6 +96,7 @@ INSTALLED_APPS = [
     "adminpanelApp",
     "connect_stripe",
     "payments",
+    "hubspot",
 
 ]
 
@@ -272,3 +273,15 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_DEFAULT_QUEUE = 'emails'
+
+# HubSpot Integration
+# Private App token for direct API access
+HUBSPOT_PRIVATE_APP_TOKEN = env("HUBSPOT_PRIVATE_APP_TOKEN", default="")
+# Base URL for HubSpot APIs (overrideable for testing/mocking)
+HUBSPOT_API_BASE = env("HUBSPOT_API_BASE", default="https://api.hubapi.com")
+# Tickets pipeline to use for disputes (string ID shown in HubSpot UI, often "0")
+HUBSPOT_TICKETS_PIPELINE = env("HUBSPOT_TICKETS_PIPELINE", default="0")
+HUBSPOT_MILESTONE_OBJECT = env("HUBSPOT_MILESTONE_OBJECT")
+HUBSPOT_REVENUE_OBJECT = env("HUBSPOT_REVENUE_OBJECT")
+HUBSPOT_FEEDBACK_OBJECT = env("HUBSPOT_FEEDBACK_OBJECT")
+HUBSPOT_CONTACT_MESSAGE_OBJECT = env("HUBSPOT_CONTACT_MESSAGE_OBJECT")

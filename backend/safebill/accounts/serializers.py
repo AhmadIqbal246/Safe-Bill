@@ -7,6 +7,8 @@ from .models import BankAccount
 import json
 from connect_stripe.models import StripeAccount, StripeIdentity
 from payments.models import Balance
+from django.db import transaction
+from hubspot.tasks import sync_company_task
 
 
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -93,7 +95,7 @@ class SellerRegistrationSerializer(serializers.Serializer):
         )
 
         # Create business detail
-        BusinessDetail.objects.create(
+        bd = BusinessDetail.objects.create(
             user=user,
             company_name=business_info["company_name"],
             siret_number=business_info["siret_number"],
@@ -111,6 +113,12 @@ class SellerRegistrationSerializer(serializers.Serializer):
                 "company_contact_person_last_name", ""
             ),
         )
+
+        # Enqueue HubSpot company sync and association after commit (only for seller/professional-buyer)
+        if role in ["seller", "professional-buyer"]:
+            def _commit_sync():
+                sync_company_task.delay(bd.id)
+            transaction.on_commit(_commit_sync)
 
         if role == "seller":
             StripeAccount.objects.create(
@@ -423,11 +431,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
                             value = []
                 business_data[backend_field] = value
 
-        if business_data:
+        if business_data and getattr(instance, "role", None) in ["seller", "professional-buyer"]:
             business_detail, created = BusinessDetail.objects.get_or_create(
                 user=instance
             )
             for field, value in business_data.items():
                 setattr(business_detail, field, value)
             business_detail.save()
+            # Enqueue HubSpot company sync and association after commit
+            def _commit_sync():
+                sync_company_task.delay(business_detail.id)
+            transaction.on_commit(_commit_sync)
         return instance

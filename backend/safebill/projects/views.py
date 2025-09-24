@@ -26,6 +26,8 @@ from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
 import logging
 from .tasks import send_project_invitation_email_task
+from django.db import transaction
+from hubspot.tasks import sync_deal_task, update_milestone_task, sync_milestone_task, sync_revenue_month_task
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +117,8 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         return Response(serializer.data, status=201, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save()
+        project = serializer.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
 
 class ProjectListAPIView(generics.ListAPIView):
@@ -188,6 +191,7 @@ class ProjectStatusUpdateAPIView(APIView):
         # Update status to in_progress
         project.status = "in_progress"
         project.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
         # Create notification for the client
         if project.client:
@@ -279,6 +283,7 @@ class ProjectCompletionAPIView(APIView):
         # Update status to completed
         project.status = "completed"
         project.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
         # Create notification for the client
         if project.client:
@@ -330,6 +335,15 @@ class MilestoneDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ["PUT", "PATCH"]:
             return MilestoneUpdateSerializer
         return MilestoneSerializer
+
+    def perform_update(self, serializer):
+        """After a milestone is updated, enqueue HubSpot sync."""
+        from django.db import transaction
+        from hubspot.tasks import update_milestone_task
+
+        milestone = serializer.save()
+        # Ensure HubSpot gets updated with latest milestone info
+        transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))
 
 
 class ProjectInviteAPIView(APIView):
@@ -546,6 +560,13 @@ class ProjectInviteAPIView(APIView):
             project.status = "approved"
             project.client = request.user
             project.save()
+            transaction.on_commit(lambda: sync_deal_task.delay(project.id))
+            # Also refresh the milestones summary so client_name appears
+            try:
+                for m in project.milestones.all()[:1]:
+                    transaction.on_commit(lambda mid=m.id: sync_milestone_task.delay(mid))
+            except Exception:
+                pass
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
@@ -572,6 +593,7 @@ class ProjectInviteAPIView(APIView):
             if project.client == request.user:
                 project.client = None
             project.save()
+            transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
             # Create notification for the seller
             NotificationService.create_notification(
@@ -704,6 +726,12 @@ class MilestoneApprovalAPIView(APIView):
             milestone.status = "pending"
             milestone.completion_date = None
         milestone.save()
+        # Enqueue HubSpot milestone update after commit
+        transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))
+        # Enqueue HubSpot Revenue monthly sync on approval events
+        if action_type == "approve":
+            now = timezone.now()
+            transaction.on_commit(lambda: sync_revenue_month_task.delay(now.year, now.month))
 
         project = milestone.project
         status_msg = {

@@ -12,6 +12,7 @@ from .serializers import (
 from notifications.models import Notification
 from projects.models import Project
 from projects.serializers import ProjectListSerializer
+from hubspot.tasks import update_dispute_ticket_task
 
 
 class DisputeListAPIView(generics.ListAPIView):
@@ -219,6 +220,11 @@ class DisputeAssignMediatorAPIView(APIView):
             user=dispute.respondent,
             message=message
         )
+        # Update HubSpot ticket asynchronously
+        try:
+            update_dispute_ticket_task.delay(dispute.id)
+        except Exception:
+            pass
         
         return Response({'detail': 'Mediator assigned successfully.'})
 
@@ -272,5 +278,10 @@ class DisputeResolveAPIView(APIView):
             user=dispute.respondent,
             message=message
         )
+        # Update HubSpot ticket asynchronously
+        try:
+            update_dispute_ticket_task.delay(dispute.id)
+        except Exception:
+            pass
         
         return Response({'detail': 'Dispute resolved successfully.'})

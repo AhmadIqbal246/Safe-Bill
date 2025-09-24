@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from hubspot.tasks import sync_deal_task
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
 import stripe
@@ -21,8 +22,10 @@ from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
 from adminpanelApp.models import PlatformRevenue
+from hubspot.tasks import sync_contact_task, sync_revenue_month_task
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -134,6 +137,11 @@ def stripe_connect_webhook(request):
                 user.onboarding_complete = True
                 user.save()
                 stripe_account.onboarding_complete = True
+
+                # Sync with HubSpot after Stripe onboarding completion
+                def _on_transaction_commit():
+                    sync_contact_task.delay(user.id)
+                transaction.on_commit(_on_transaction_commit)
 
                 # Send notification for successful Stripe onboarding
                 NotificationService.create_notification(
@@ -273,6 +281,11 @@ def check_stripe_status(request):
                 stripe_account.onboarding_complete = True
                 user.onboarding_complete = True
                 user.save()
+                
+                # Sync with HubSpot after Stripe onboarding completion
+                def _on_transaction_commit():
+                    sync_contact_task.delay(user.id)
+                transaction.on_commit(_on_transaction_commit)
             else:
                 # Only change to "pending" if user has started onboarding (details_submitted is True)
                 # Otherwise keep the current status (likely "onboarding")
@@ -498,6 +511,11 @@ def stripe_identity_webhook(request):
             stripe_identity.verified_at = timezone.now()
             stripe_identity.save()
 
+            # Sync with HubSpot after identity verification completion
+            def _on_transaction_commit():
+                sync_contact_task.delay(user.id)
+            transaction.on_commit(_on_transaction_commit)
+
             # Send notification for successful identity verification
             NotificationService.create_notification(
                 user,
@@ -593,6 +611,8 @@ def stripe_identity_webhook(request):
         project = Project.objects.get(id=project_id)
         project.status = "approved"
         project.save()
+        # Ensure HubSpot deal reflects approved status via custom properties
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
         payment = Payment.objects.get(stripe_payment_id=payment_id)
         if payment.status != "paid":
             platform_revenue = PlatformRevenue.objects.all().first()
@@ -603,6 +623,10 @@ def stripe_identity_webhook(request):
         payment.status = "paid"
         payment.webhook_response = event
         payment.save()
+
+        # Enqueue HubSpot Revenue monthly sync
+        now = timezone.now()
+        transaction.on_commit(lambda: sync_revenue_month_task.delay(now.year, now.month))
 
         try:
             # The payment is held in escrow until milestones are approved

@@ -1,10 +1,15 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import Feedback, QuoteRequest, ContactMessage
+from hubspot.tasks import (
+    create_contact_us_ticket_task,
+    create_feedback_object_task,
+    create_contact_message_object_task,
+)
 from .serializers import (
     FeedbackSerializer,
     QuoteRequestSerializer,
-    ContactMessageSerializer,
+    ContactMessageSerializer
 )
 from .tasks import (
     send_feedback_admin_notification_task,
@@ -38,6 +43,19 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
                 user_email=instance.email,
                 feedback_text=instance.feedback,
             )
+
+            # Create a HubSpot Feedback custom object asynchronously
+            try:
+                # Derive username: prefer authenticated user's username, fallback to email local part
+                username = request.user.username if hasattr(request.user, 'username') and request.user.is_authenticated else (instance.email.split('@')[0] if instance.email else "")
+                create_feedback_object_task.delay(
+                    username=username,
+                    initiator_email=instance.email,
+                    description=instance.feedback,
+                    metadata=None,
+                )
+            except Exception:
+                pass
 
             return Response(
                 {
@@ -82,6 +100,17 @@ class ContactMessageCreateAPIView(generics.CreateAPIView):
                 subject=instance.subject,
                 message=instance.message,
             )
+
+            # Create a HubSpot ContactMessage custom object asynchronously
+            try:
+                create_contact_message_object_task.delay(
+                    name=instance.name or "",
+                    initiator_email=instance.email or "",
+                    subject=instance.subject or "",
+                    description=instance.message or "",
+                )
+            except Exception:
+                pass
 
             return Response(
                 {
