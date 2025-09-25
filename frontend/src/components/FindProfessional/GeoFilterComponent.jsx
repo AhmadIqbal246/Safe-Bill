@@ -88,7 +88,8 @@ export default function GeoFilterComponent() {
   const location = useLocation();
 
   const [marker, setMarker] = useState(center);
-  const [address, setAddress] = useState(t('geo_filter.click_to_select'));
+  // Initialize with empty string so translation updates in real-time via render
+  const [address, setAddress] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [matchedAreaLabel, setMatchedAreaLabel] = useState('');
   const [query, setQuery] = useState('');
@@ -237,7 +238,7 @@ export default function GeoFilterComponent() {
             {isGeocoding ? (
               <span className="text-gray-500">Finding address...</span>
             ) : (
-              address
+              address || t('geo_filter.click_to_select')
             )}
           </div>
           {matchedAreaLabel && (
