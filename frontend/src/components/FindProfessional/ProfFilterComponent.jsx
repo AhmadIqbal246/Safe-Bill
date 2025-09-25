@@ -186,7 +186,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
         setSearchTerm(''); 
       };
       selected = selectedServiceTypeLabel;
-      label = 'Select Service Type';
+      label = t('find_professional.select_service_type');
     } else if (openFilter === 'area') {
       options = serviceAreaOptions.map(option => option.label); // Show labels in dropdown
       onSelect = (val) => { 
@@ -197,7 +197,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
         setSearchTerm(''); 
       };
       selected = selectedAreaLabel;
-      label = 'Select Area';
+      label = t('find_professional.select_area');
     } else if (openFilter === 'rating') {
       options = [
         { value: '1', label: '1+ stars' },
@@ -238,7 +238,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t('find_professional.search_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
@@ -307,7 +307,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
               className="mt-4 w-full py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold hover:bg-[#d1e6f5] transition-colors cursor-pointer"
               onClick={() => { setOpenFilter(null); setSearchTerm(''); }}
             >
-              Close
+              {t('find_professional.close')}
             </button>
           </Dialog.Panel>
         </div>

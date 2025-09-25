@@ -691,7 +691,15 @@
     "review_request": "Review Request",
     "not_submitted": "Not Submitted",
     "pending": "Pending",
-    "weeks": "weeks"
+    "weeks": "weeks",
+    "refund": {
+      "title": "Refund Information",
+      "refundable_amount": "Refundable Amount",
+      "description": "This amount is available for refund based on milestone adjustments and payments.",
+      "request_refund": "Request Refund",
+      "processing": "Processing...",
+      "only_available_when_completed": "Refund is only available when the project status is \"{{status}}\"."
+    }
   },
   "buyer_dashboard": {
     "active_projects": "Active Projects",
@@ -1458,7 +1466,11 @@
     "area": "Area",
     "apply_filters": "Apply Filters",
     "clear_all": "Clear All",
-    "results": "Results"
+    "results": "Results",
+    "select_service_type": "Select Service Type",
+    "select_area": "Select Area",
+    "search_placeholder": "Search...",
+    "close": "Close"
   },
   "common": {
     "error": "Error",

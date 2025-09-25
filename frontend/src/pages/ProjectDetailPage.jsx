@@ -232,14 +232,7 @@ export default function ProjectDetailPage() {
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
                   VAT: {Number(project.vat_rate || 0).toFixed(1)}%
                 </span>
-                <button
-                  onClick={() =>
-                    navigate("/dispute-submit", { state: { project } })
-                  }
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-                >
-                  {t("project_detail.raise_dispute")}
-                </button>
+
               </div>
             </div>
           </div>
@@ -536,19 +529,19 @@ export default function ProjectDetailPage() {
               {project.refundable_amount && parseFloat(project.refundable_amount) > 0 && (
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Refund Information
+                    {t('project_detail.refund.title')}
                   </h2>
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">
-                        Refundable Amount
+                        {t('project_detail.refund.refundable_amount')}
                       </span>
                       <span className="font-semibold text-green-600">
                         ${parseFloat(project.refundable_amount).toLocaleString()}
                       </span>
                     </div>
                     <div className="text-sm text-gray-600 mb-4">
-                      This amount is available for refund based on milestone adjustments and payments.
+                      {t('project_detail.refund.description')}
                     </div>
                     {project.status === "completed" && (
                       <button
@@ -556,12 +549,12 @@ export default function ProjectDetailPage() {
                         disabled={refundPaymentLoading}
                         className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {refundPaymentLoading ? 'Processing...' : 'Request Refund'}
+                        {refundPaymentLoading ? t('project_detail.refund.processing') : t('project_detail.refund.request_refund')}
                       </button>
                     )}
                     {project.status !== "completed" && (
                       <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
-                        Refund is only available when the project status is "Completed".
+                        {t('project_detail.refund.only_available_when_completed', { status: t('project_detail.completed') })}
                       </div>
                     )}
                   </div>
@@ -604,7 +597,7 @@ export default function ProjectDetailPage() {
                     }
                     className="w-full mt-4 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
                   >
-                    {t("project_detail.dispute")}
+                    {t("project_detail.raise_dispute")}
                   </button>
                 </div>
               </div>
