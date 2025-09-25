@@ -270,7 +270,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
       } else if (rawError.includes('must contain exactly 14') || rawError.includes('must be exactly 14')) {
         setSiretError(t('seller_registration.siret_error'));
       } else {
-        setSiretError(siretVerification.error);
+      setSiretError(siretVerification.error);
       }
       setFieldsDisabled(true);
       setSiretVerified(false);

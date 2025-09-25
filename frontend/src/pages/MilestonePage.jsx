@@ -5,11 +5,13 @@ import { fetchMilestones, updateMilestone, approveMilestone } from '../store/sli
 import { fetchNotifications } from '../store/slices/NotificationSlice';
 import { fetchProjectPlatformFee } from '../store/slices/PaymentSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import { useTranslation } from 'react-i18next';
 import { Dialog } from '@headlessui/react';
 import { toast } from 'react-toastify';
 import { Edit, Upload, Cloud } from 'lucide-react';
 
 export default function MilestonePage() {
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,12 +104,17 @@ export default function MilestonePage() {
   const getTooltipMessage = (milestone) => {
     switch (milestone.status) {
       case 'pending':
-        return 'Submitted for Approval';
+        return t('milestones.status_tooltip_submitted');
       case 'approved':
-        return 'Approved';
+        return t('milestones.status_tooltip_approved');
       default:
         return '';
     }
+  };
+
+  // Display status in English only (no translation)
+  const getDisplayStatus = (status) => {
+    return capitalizeStatus(status);
   };
 
   const capitalizeStatus = (status) => {
@@ -193,12 +200,12 @@ export default function MilestonePage() {
 
     try {
       await dispatch(updateMilestone(payload)).unwrap();
-      toast.success('Milestone updated successfully!');
+      toast.success(t('milestones.update_success'));
       dispatch(fetchMilestones(project.id));
       handleEditCancel();
     } catch (err) {
       // Handle different error formats
-      let errorMessage = 'Failed to update milestone. Please try again.';
+      let errorMessage = t('milestones.update_failed_default');
       
       if (typeof err === 'string') {
         errorMessage = err;
@@ -233,14 +240,14 @@ export default function MilestonePage() {
         milestoneId: pendingAction.milestone.id, 
         action: pendingAction.action 
       })).unwrap();
-      toast.success('Milestone submitted for approval!');
+      toast.success(t('milestones.submit_success'));
       
       // Fetch updated data and notifications
       dispatch(fetchMilestones(project.id));
       dispatch(fetchNotifications());
     } catch (err) {
       toast.error(
-        typeof err === 'string' ? err : 'Failed to submit milestone for approval.'
+        typeof err === 'string' ? err : t('milestones.submit_failed_default')
       );
     } finally {
       setSubmittingMilestoneId(null);
@@ -283,15 +290,15 @@ export default function MilestonePage() {
         className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 cursor-pointer"
         onClick={() => navigate(-1)}
       >
-        ← Back to Projects
+        ← {t('milestones.back_to_projects')}
       </button>
-      <h2 className="text-2xl md:text-3xl font-bold mb-6">Milestones for: <span className="text-[#01257D]">{project?.name}</span></h2>
+      <h2 className="text-2xl md:text-3xl font-bold mb-6">{t('milestones.page_title')}: <span className="text-[#01257D]">{project?.name}</span></h2>
       {milestonesLoading ? (
-        <div className="py-12 text-center text-gray-400">Loading milestones...</div>
+        <div className="py-12 text-center text-gray-400">{t('milestones.loading')}</div>
       ) : milestonesError ? (
-        <div className="py-12 text-center text-red-500">{typeof milestonesError === 'string' ? milestonesError : 'Failed to load milestones.'}</div>
+        <div className="py-12 text-center text-red-500">{typeof milestonesError === 'string' ? milestonesError : t('milestones.load_failed')}</div>
       ) : projectMilestones.length === 0 ? (
-        <div className="py-12 text-center text-gray-400">No milestones found for this project.</div>
+        <div className="py-12 text-center text-gray-400">{t('milestones.empty_state')}</div>
       ) : (
         <div className="space-y-6">
           {projectMilestones.map(milestone => (
@@ -299,18 +306,18 @@ export default function MilestonePage() {
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                 <div className="flex-1">
                   <div className="text-lg font-semibold text-[#01257D]">{milestone.name}</div>
-                  <div className="text-gray-500 text-sm">Status: <span className={
+                  <div className="text-gray-500 text-sm">{t('milestones.status_label')}: <span className={
                     milestone.status === 'approved' ? 'text-green-600' : milestone.status === 'pending' ? 'text-yellow-600' : 'text-red-600'
-                  }>{capitalizeStatus(milestone.status)}</span></div>
+                  }>{getDisplayStatus(milestone.status)}</span></div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="text-lg font-semibold text-gray-800">
-                      ${parseFloat(milestone.relative_payment || 0).toLocaleString()}
+                      €{parseFloat(milestone.relative_payment || 0).toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}
                     </div>
                     {projectPlatformFee && !projectPlatformFeeLoading && (
                       <div className="text-sm text-green-600 font-medium">
-                        You receive: €{calculateNetAmount(milestone.relative_payment || 0).netAmount.toLocaleString()}
+                        {t('milestones.you_receive_prefix')}: €{calculateNetAmount(milestone.relative_payment || 0).netAmount.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}
                       </div>
                     )}
                   </div>
@@ -321,7 +328,7 @@ export default function MilestonePage() {
                         ? 'text-gray-500 hover:text-[#01257D] hover:bg-[#E6F0FA] cursor-pointer'
                         : 'text-gray-300 cursor-not-allowed'
                     }`}
-                    title={canEditMilestone(milestone) ? 'Edit milestone' : getTooltipMessage(milestone)}
+                    title={canEditMilestone(milestone) ? t('milestones.edit_tooltip') : getTooltipMessage(milestone)}
                     disabled={!canEditMilestone(milestone)}
                   >
                     <Edit className="w-4 h-4" />
@@ -330,7 +337,7 @@ export default function MilestonePage() {
                 </div>
               </div>
               <div className="text-gray-700 mb-2">
-                <span className="font-medium">Description:</span> 
+                <span className="font-medium">{t('milestones.description_label')}:</span> 
                 <div className="mt-1">
                   {milestone.description.length > 100 ? (
                     <>
@@ -341,7 +348,7 @@ export default function MilestonePage() {
                         onClick={() => handleViewDescription(milestone.description)}
                         className="text-blue-600 underline text-sm hover:text-blue-800 mt-1 cursor-pointer"
                       >
-                        View Full Description
+                        {t('milestones.view_full_description')}
                       </button>
                     </>
                   ) : (
@@ -359,25 +366,25 @@ export default function MilestonePage() {
                     rel="noopener noreferrer"
                     className="text-blue-600 underline text-sm"
                   >
-                    View Supporting Document
+                    {t('milestones.view_supporting_doc')}
                   </a>
                 </div>
               )}
               {milestone.completion_notice && (
                 <div className="mb-2 text-sm text-gray-600">
-                  <span className="font-medium">Completion Notice:</span> {milestone.completion_notice}
+                  <span className="font-medium">{t('milestones.completion_notice')}:</span> {milestone.completion_notice}
                 </div>
               )}
               
               {/* Simple Fee Info */}
               {projectPlatformFee && !projectPlatformFeeLoading && (
                 <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  <span className="font-medium">Platform Fee:</span> {calculateNetAmount(milestone.relative_payment || 0).platformFeePct}% (${calculateNetAmount(milestone.relative_payment || 0).platformFee.toLocaleString()})
+                  <span className="font-medium">{t('milestones.platform_fee')}:</span> {calculateNetAmount(milestone.relative_payment || 0).platformFeePct}% (€{calculateNetAmount(milestone.relative_payment || 0).platformFee.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')})
                 </div>
               )}
               {milestone.review_comment && (
                 <div className="mb-2 text-sm text-gray-600">
-                  <span className="font-medium">Review Comment:</span> 
+                  <span className="font-medium">{t('milestones.review_comment')}:</span> 
                   <div className="mt-1">
                     {milestone.review_comment.length > 100 ? (
                       <>
@@ -388,7 +395,7 @@ export default function MilestonePage() {
                           onClick={() => handleViewComment(milestone.review_comment)}
                           className="text-blue-600 underline text-sm hover:text-blue-800 mt-1 cursor-pointer"
                         >
-                          View Full Comment
+                          {t('milestones.view_full_comment')}
                         </button>
                       </>
                     ) : (
@@ -400,8 +407,8 @@ export default function MilestonePage() {
                 </div>
               )}
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-500 mt-2">
-                <div>Created: {milestone.created_date}</div>
-                {milestone.completion_date && <div>Completed: {milestone.completion_date}</div>}
+                <div>{t('milestones.created_label')}: {milestone.created_date}</div>
+                {milestone.completion_date && <div>{t('milestones.completed_label')}: {milestone.completion_date}</div>}
               </div>
             </div>
           ))}
@@ -418,38 +425,38 @@ export default function MilestonePage() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-xl font-bold text-[#01257D] mb-4">
-              Edit Milestone
+              {t('milestones.edit_title')}
             </Dialog.Title>
             {editForm && (
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700">
-                    Milestone Name
+                    {t('milestones.name_label')}
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
                     value={editForm.name}
                     onChange={(e) => handleEditChange('name', e.target.value)}
-                    placeholder="Enter milestone name"
+                    placeholder={t('milestones.name_placeholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700">
-                    Description
+                    {t('milestones.description_label')}
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent min-h-[100px] resize-y"
                     value={editForm.description}
                     onChange={(e) => handleEditChange('description', e.target.value)}
-                    placeholder="Enter milestone description"
+                    placeholder={t('milestones.description_placeholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1 text-gray-700">
-                    Payment Amount ($)
+                    {t('milestones.payment_amount_label')}
                   </label>
                   <input
                     type="number"
@@ -458,24 +465,24 @@ export default function MilestonePage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
                     value={editForm.relative_payment}
                     onChange={(e) => handleEditChange('relative_payment', e.target.value)}
-                    placeholder="Enter payment amount"
+                    placeholder={t('milestones.payment_amount_placeholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-3 text-gray-700">
-                    Supporting Documents
+                    {t('milestones.supporting_documents')}
                   </label>
                   {selectedMilestone?.supporting_doc && (
                     <div className="text-sm text-gray-600 mb-3 p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium">Current document:</span>
+                      <span className="font-medium">{t('milestones.current_document')}:</span>
                       <a
                         href={selectedMilestone.supporting_doc}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline ml-1"
                       >
-                        View current document
+                        {t('milestones.view_current_document')}
                       </a>
                     </div>
                   )}
@@ -503,10 +510,10 @@ export default function MilestonePage() {
                       </div>
                       <div className="space-y-2">
                         <p className="text-gray-600">
-                          Upload photos, reports, or other evidence
+                          {t('milestones.upload_instructions')}
                         </p>
                         <p className="text-xs text-gray-400">
-                          Drag and drop files here or click to browse
+                          {t('milestones.drag_drop_hint')}
                         </p>
                       </div>
                       <button
@@ -514,7 +521,7 @@ export default function MilestonePage() {
                         className="px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        Choose Files
+                        {t('milestones.choose_files')}
                       </button>
                     </div>
                   </div>
@@ -523,11 +530,11 @@ export default function MilestonePage() {
                       <div className="flex items-center space-x-2">
                         <Upload className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-green-700 font-medium">
-                          File selected: {editForm.supporting_doc.name}
+                          {t('milestones.file_selected')}: {editForm.supporting_doc.name}
                         </span>
                       </div>
                       <p className="text-xs text-green-600 mt-1">
-                        Size: {(editForm.supporting_doc.size / 1024 / 1024).toFixed(2)} MB
+                        {t('milestones.size_label')}: {(editForm.supporting_doc.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
                   )}
@@ -540,14 +547,14 @@ export default function MilestonePage() {
                     className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
                     onClick={handleEditCancel}
                   >
-                    Cancel
+                    {t('actions.cancel')}
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                     disabled={milestoneUpdateLoading}
                   >
-                    {milestoneUpdateLoading ? 'Updating...' : 'Update Milestone'}
+                    {milestoneUpdateLoading ? t('actions.processing') : t('milestones.update_button')}
                   </button>
                 </div>
               </form>
@@ -566,10 +573,10 @@ export default function MilestonePage() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-bold text-[#01257D] mb-4">
-              Confirm Submission
+              {t('milestones.confirm_submission_title')}
             </Dialog.Title>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to submit this milestone for approval? Once submitted, you won't be able to edit it until the buyer responds.
+              {t('milestones.confirm_submission_body')}
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -577,7 +584,7 @@ export default function MilestonePage() {
                 className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-colors cursor-pointer"
                 onClick={cancelSubmission}
               >
-                Cancel
+                {t('actions.cancel')}
               </button>
               <button
                 type="button"
@@ -585,7 +592,7 @@ export default function MilestonePage() {
                 onClick={confirmSubmission}
                 disabled={submittingMilestoneId !== null}
               >
-                {submittingMilestoneId !== null ? 'Submitting...' : 'Submit'}
+                {submittingMilestoneId !== null ? t('actions.processing') : t('actions.submit')}
               </button>
             </div>
           </Dialog.Panel>
@@ -602,7 +609,7 @@ export default function MilestonePage() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
-              Review Comment
+              {t('milestones.review_comment')}
             </Dialog.Title>
             
             <div className="mb-6">
@@ -619,7 +626,7 @@ export default function MilestonePage() {
                 className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                 onClick={() => setViewCommentDialogOpen(false)}
               >
-                Close
+                {t('actions.close')}
               </button>
             </div>
           </Dialog.Panel>
@@ -636,7 +643,7 @@ export default function MilestonePage() {
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
-              Milestone Description
+              {t('milestones.description_label')}
             </Dialog.Title>
             
             <div className="mb-6">
@@ -653,7 +660,7 @@ export default function MilestonePage() {
                 className="px-4 py-2 rounded-md bg-[#01257D] text-white font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer"
                 onClick={() => setViewDescriptionDialogOpen(false)}
               >
-                Close
+                {t('actions.close')}
               </button>
             </div>
           </Dialog.Panel>

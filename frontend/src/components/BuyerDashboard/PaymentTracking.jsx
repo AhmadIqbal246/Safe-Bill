@@ -1,8 +1,16 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 export default function PaymentTracking({ billings = [] }) {
   const { user } = useSelector(state => state.auth);
+  const { t } = useTranslation();
+  const [search, setSearch] = React.useState('');
+  const filteredBillings = React.useMemo(() => {
+    const q = (search || '').trim().toLowerCase();
+    if (!q) return billings;
+    return billings.filter((p) => (p.project?.name || '').toLowerCase().includes(q));
+  }, [billings, search]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -32,10 +40,27 @@ export default function PaymentTracking({ billings = [] }) {
 
   return (
     <div style={{ flex: 1, borderRadius: 12, boxShadow: '0 1px 4px #e5e7eb', padding: 24, minWidth: 340 }}>
-      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>Payment Tracking</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+        <div style={{ fontWeight: 600, fontSize: 18 }}>{t('payment_tracking.title')}</div>
+        <div style={{ flex: '0 1 320px', width: '100%', maxWidth: 360 }}>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('payment_tracking.search_placeholder')}
+            style={{
+              border: '1px solid #e5e7eb',
+              borderRadius: 8,
+              padding: '8px 12px',
+              fontSize: 14,
+              width: '100%'
+            }}
+          />
+        </div>
+      </div>
       
-      {billings.length > 0 ? (
-        <div style={{ overflowX: 'auto', width: '100%' }}>
+      {filteredBillings.length > 0 ? (
+        <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '360px', width: '100%' }}>
           <table style={{ 
             minWidth: '750px',
             width: '100%', 
@@ -57,7 +82,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Project Name
+                  {t('payment_tracking.project_name')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -68,7 +93,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Project Amount
+                  {t('payment_tracking.project_amount')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -79,7 +104,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                 Paid Amount
+                 {t('payment_tracking.paid_amount')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -90,7 +115,7 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Date
+                  {t('payment_tracking.date')}
                 </th>
                 <th style={{ 
                   padding: '12px 16px', 
@@ -100,19 +125,19 @@ export default function PaymentTracking({ billings = [] }) {
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                  Status
+                  {t('payment_tracking.status')}
                 </th>
               </tr>
             </thead>
             <tbody>
-              {billings.map((payment, index) => {
+              {filteredBillings.map((payment, index) => {
                 const statusColor = getStatusColor(payment.status);
                 
                 return (
                   <tr 
                     key={payment.id} 
                     style={{ 
-                      borderBottom: index < billings.length - 1 ? '1px solid #e5e7eb' : 'none',
+                      borderBottom: index < filteredBillings.length - 1 ? '1px solid #e5e7eb' : 'none',
                       backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb'
                     }}
                   >
@@ -187,7 +212,7 @@ export default function PaymentTracking({ billings = [] }) {
         </div>
       ) : (
         <div style={{ color: '#6b7280', fontSize: 14, textAlign: 'center', padding: '20px 0' }}>
-          No payments found
+          {t('payment_tracking.no_payments')}
         </div>
       )}
     </div>

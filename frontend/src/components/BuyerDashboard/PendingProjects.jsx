@@ -60,7 +60,15 @@ export default function PendingProjects({ projects }) {
           window.location.reload();
         }, 2000);
       } else {
-        throw new Error(data.detail || 'Action failed');
+        // Map backend error messages to localized versions
+        const detail = (data && data.detail) || 'Action failed';
+        let localized = detail;
+        if (detail === 'Invite link has expired.') {
+          localized = t('accept_project_invite.invite_expired');
+        } else if (detail === 'Invalid or expired invite link.') {
+          localized = t('accept_project_invite.invalid_or_expired');
+        }
+        throw new Error(localized);
       }
     } catch (error) {
       setActionMessage(prev => ({ 
@@ -207,12 +215,12 @@ export default function PendingProjects({ projects }) {
                   {actionLoading[project.id] ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processing...
+                      {t('actions.processing')}
                     </>
                   ) : (
                     <>
                       <Check className="w-4 h-4" />
-                      Approve Project
+                      {t('buyer_dashboard.approve_project')}
                     </>
                   )}
                 </button>
@@ -225,12 +233,12 @@ export default function PendingProjects({ projects }) {
                   {actionLoading[project.id] ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processing...
+                      {t('actions.processing')}
                     </>
                   ) : (
                     <>
                       <X className="w-4 h-4" />
-                      Reject Project
+                      {t('buyer_dashboard.reject_project')}
                     </>
                   )}
                 </button>
