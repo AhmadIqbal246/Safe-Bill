@@ -97,7 +97,7 @@ export default function TrustedProfessionals() {
             ? formatServiceArea(pro.selected_service_areas[0])
             : (pro.full_address || '');
           return (
-            <div key={pro.id} className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center border border-gray-100">
+            <Link key={pro.id} to={`/professional/${pro.id}`} className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer">
               <img src={avatar} alt={pro.name} className="w-16 h-16 rounded-full mb-4 object-cover" />
               <div className="font-semibold text-[#111827] text-lg mb-1">{pro.name}</div>
               <div className="text-[#96C2DB] text-sm mb-2">{serviceType}</div>
@@ -111,7 +111,7 @@ export default function TrustedProfessionals() {
                 <MapPin className="w-4 h-4" />
                 {firstArea}
               </div>
-            </div>
+            </Link>
           );
         })}
 
