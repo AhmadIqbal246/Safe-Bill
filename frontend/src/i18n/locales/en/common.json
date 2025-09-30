@@ -978,6 +978,8 @@
     "pending_quotes": "Pending Quotes",
     "current_projects": "Current Projects",
     "monthly_revenue": "Monthly Revenue",
+    "total_projects_created": "Total Projects Created",
+    "monthly_projects": "Monthly Projects",
     "view": "View",
     "notifications": "Notifications",
     "mark_all_as_read": "Mark all as read",

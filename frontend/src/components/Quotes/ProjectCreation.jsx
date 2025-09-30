@@ -407,7 +407,7 @@ export default function ProjectCreation() {
           >
             <option value="20.0">20%</option>
             <option value="10.0">10%</option>
-            <option value="7.0">8.5%</option>
+            <option value="8.5">8.5%</option>
             <option value="5.5">5.5%</option>
             <option value="2.1">2.1%</option>
             <option value="0.0">0%</option>

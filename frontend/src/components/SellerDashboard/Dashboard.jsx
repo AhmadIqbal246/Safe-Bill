@@ -416,13 +416,13 @@ export default function Dashboard() {
           {/* Total Projects and Monthly Chart section (mobile order: 3) */}
           <div className="rounded-lg border border-[#E6F0FA] bg-white p-2 sm:p-3 md:p-5 shadow-sm min-w-0 w-full">
             <div className="mb-3 sm:mb-4">
-              <div className="text-gray-500 text-xs sm:text-sm mb-1">Total Projects Created</div>
+              <div className="text-gray-500 text-xs sm:text-sm mb-1">{t('dashboard.total_projects_created')}</div>
               <div className="text-base sm:text-lg md:text-2xl font-bold">{totalProjectsCount}</div>
             </div>
             
             {/* Monthly Project Creation Chart */}
             <div className="mb-3 sm:mb-4">
-              <div className="text-gray-500 text-xs sm:text-sm mb-2">Monthly Projects Created</div>
+              <div className="text-gray-500 text-xs sm:text-sm mb-2">{t('dashboard.monthly_projects')}</div>
               <div style={{ width: '100%', height: '120px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
