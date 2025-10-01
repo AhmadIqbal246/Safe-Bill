@@ -13,7 +13,7 @@ def send_payment_success_email_task(
     user_name,
     project_name,
     amount,
-    language="en",
+    language="fr",
 ):
     """
     Send payment success email to client asynchronously via Celery
@@ -40,7 +40,7 @@ def send_payment_failed_email_task(
     user_name,
     project_name,
     amount,
-    language="en",
+    language="fr",
 ):
     """
     Send payment failed email to client asynchronously via Celery
