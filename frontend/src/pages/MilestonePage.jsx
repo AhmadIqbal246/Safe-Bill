@@ -273,7 +273,7 @@ export default function MilestonePage() {
           disabled={isSubmitting}
           onClick={() => handleSubmitForApproval(milestone)}
         >
-          {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
+          {isSubmitting ? t('milestones.submitting') : t('milestones.submit_for_approval')}
         </button>
       );
     }
