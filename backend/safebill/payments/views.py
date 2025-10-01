@@ -8,7 +8,7 @@ from projects.models import Project, PaymentInstallment, Milestone
 from decimal import Decimal, DecimalException
 from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from .models import Payment, Balance, Payout, PayoutHold, Refund
 from .serializers import (
     PaymentSerializer,
@@ -19,6 +19,7 @@ from .serializers import (
 )
 from .transfer_service import TransferService
 from .services import BalanceService, FeeCalculationService
+
 # from connect_stripe.models import StripeAccount
 # from notifications.models import Notification
 from notifications.services import NotificationService
@@ -68,8 +69,17 @@ def create_stripe_payment(request, project_id):
         buyer_total = fees["buyer_total"]
         seller_net = fees["seller_net"]
         # Build checkout session params
+
+        # Check if customer already exists, otherwise create new one
+        existing_customers = stripe.Customer.list(email=user.email, limit=1)
+        if existing_customers.data:
+            customer = existing_customers.data[0]
+        else:
+            customer = stripe.Customer.create(
+                email=user.email,
+            )
         checkout_params = {
-            "customer_email": user.email,
+            "customer": customer.id,
             "line_items": [
                 {
                     "price_data": {
@@ -93,8 +103,19 @@ def create_stripe_payment(request, project_id):
         }
 
         # Restrict to card only when buyer_total > 1000
-        if buyer_total > Decimal("1000"):
-            checkout_params["payment_method_types"] = ["card"]
+        if buyer_total > Decimal("1001"):
+            checkout_params["payment_method_types"] = ["customer_balance"]
+            checkout_params["payment_method_options"] = {
+                "customer_balance": {
+                    "funding_type": "bank_transfer",
+                    "bank_transfer": {
+                        "type": "eu_bank_transfer",
+                        "eu_bank_transfer": {
+                            "country": "FR"  # Default to France, can be made dynamic based on user location
+                        },
+                    },
+                }
+            }
 
         checkout_session = stripe.checkout.Session.create(**checkout_params)
         # Delete any existing payments for this project by this user
@@ -155,7 +176,9 @@ def check_payment_status(request, project_id):
                     # Also notify the seller
                     try:
                         seller = payment.project.user
-                        seller_name = getattr(seller, "first_name", None) or seller.email
+                        seller_name = (
+                            getattr(seller, "first_name", None) or seller.email
+                        )
                         send_payment_success_email_seller_task.delay(
                             seller.email,
                             seller_name,
@@ -554,9 +577,18 @@ def revenue_comparison(request):
             completion_date__lt=now,
         )
 
-        current_month_revenue = current_month_milestones.aggregate(
-            total=Sum("relative_payment")
-        )["total"] or Decimal("0")
+        current_month_revenue = current_month_milestones.annotate(
+            _platform_fee_amount=ExpressionWrapper(
+                F("relative_payment")
+                * F("project__platform_fee_percentage")
+                / Decimal("100"),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
+            _net_amount=ExpressionWrapper(
+                F("relative_payment") - F("_platform_fee_amount"),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
+        ).aggregate(total=Sum("_net_amount")).get("total") or Decimal("0")
 
         # Calculate last month revenue from approved milestones
         last_month_milestones = Milestone.objects.filter(
@@ -566,9 +598,18 @@ def revenue_comparison(request):
             completion_date__lte=last_month_end,
         )
 
-        last_month_revenue = last_month_milestones.aggregate(
-            total=Sum("relative_payment")
-        )["total"] or Decimal("0")
+        last_month_revenue = last_month_milestones.annotate(
+            _platform_fee_amount=ExpressionWrapper(
+                F("relative_payment")
+                * F("project__platform_fee_percentage")
+                / Decimal("100"),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
+            _net_amount=ExpressionWrapper(
+                F("relative_payment") - F("_platform_fee_amount"),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
+        ).aggregate(total=Sum("_net_amount")).get("total") or Decimal("0")
 
         # Calculate percentage change
         if last_month_revenue > 0:
@@ -685,7 +726,9 @@ def payment_refund(request, project_id):
 
         # Email: refund requested
         try:
-            send_refund_created_email_task.delay(user.email, project.name, float(amount))
+            send_refund_created_email_task.delay(
+                user.email, project.name, float(amount)
+            )
         except Exception:
             pass
 
@@ -711,9 +754,13 @@ def payment_refund(request, project_id):
         # Email: if Stripe provided final status immediately
         try:
             if refund.status == "paid":
-                send_refund_paid_email_task.delay(user.email, project.name, float(amount))
+                send_refund_paid_email_task.delay(
+                    user.email, project.name, float(amount)
+                )
             elif refund.status == "failed":
-                send_refund_failed_email_task.delay(user.email, project.name, float(amount))
+                send_refund_failed_email_task.delay(
+                    user.email, project.name, float(amount)
+                )
         except Exception:
             pass
 

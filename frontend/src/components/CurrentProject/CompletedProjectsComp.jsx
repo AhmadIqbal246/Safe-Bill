@@ -106,7 +106,14 @@ export default function CompletedProjectsComp() {
                 <tr key={proj.id} className="border-t border-gray-100">
                   <td className="px-4 py-3 whitespace-normal max-w-xs">{proj.name}</td>
                   <td className="px-4 py-3 text-blue-700 font-medium whitespace-nowrap cursor-pointer hover:underline">{proj.client_email}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">${parseFloat(proj.total_amount).toLocaleString()}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">${(() => {
+                          const totalAmount = Number(proj.total_amount) || 0;
+                          const platformFeePct = Number(proj.platform_fee_percentage) || 0;
+                          const vatPct = Number(proj.vat_rate) || 0;
+                          const amountWithVat = totalAmount * (1 + vatPct / 100);
+                          const netAmount = amountWithVat * (1 - platformFeePct / 100);
+                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                        })()}</td>
                   <td className="px-4 py-3 whitespace-nowrap">{proj.completion_date}</td>
                 </tr>
               ))

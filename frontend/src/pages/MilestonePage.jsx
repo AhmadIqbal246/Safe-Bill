@@ -379,7 +379,7 @@ export default function MilestonePage() {
               {/* Simple Fee Info */}
               {projectPlatformFee && !projectPlatformFeeLoading && (
                 <div className="mb-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  <span className="font-medium">{t('milestones.platform_fee')}:</span> {calculateNetAmount(milestone.relative_payment || 0).platformFeePct}% (€{calculateNetAmount(milestone.relative_payment || 0).platformFee.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')})
+                  <span className="font-medium">{t('milestones.platform_fee')}:</span> €{calculateNetAmount(milestone.relative_payment || 0).platformFee.toLocaleString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}
                 </div>
               )}
               {milestone.review_comment && (
