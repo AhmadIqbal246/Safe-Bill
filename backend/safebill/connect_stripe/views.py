@@ -18,6 +18,7 @@ from .tasks import (
     send_payment_success_email_task,
     send_payment_failed_email_task,
 )
+from payments.tasks import send_payment_success_email_seller_task
 from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
@@ -669,8 +670,26 @@ def stripe_identity_webhook(request):
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
-                    language="en",  # Default to English for webhook emails
+                    language="fr",
                 )
+                # Also notify the seller in French
+                try:
+                    seller = project.user
+                    if seller and getattr(seller, "email", None):
+                        seller_name = (
+                            seller.get_full_name()
+                            or getattr(seller, "username", None)
+                            or seller.email
+                        )
+                        send_payment_success_email_seller_task.delay(
+                            seller.email,
+                            seller_name,
+                            project.name,
+                            float(payment.buyer_total_amount or payment.amount),
+                            "fr",
+                        )
+                except Exception:
+                    pass
         except Exception:
             # Avoid breaking webhook flow if email fails
             pass
@@ -753,7 +772,7 @@ def stripe_identity_webhook(request):
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
-                    language="en",  # Default to English for webhook emails
+                    language="fr",
                 )
         except Exception:
             # Avoid breaking webhook flow if email fails
