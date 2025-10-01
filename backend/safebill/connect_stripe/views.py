@@ -371,7 +371,13 @@ def create_stripe_identity_session(request):
 
         # Create a Stripe Identity verification session
         verification_session = stripe.identity.VerificationSession.create(
-            verification_flow=settings.STRIPE_VERIFICATION_FLOW_ID,
+            type="document",
+            options={
+                "document": {
+                    "require_live_capture": True,
+                    "require_matching_selfie": True,
+                }
+            },
             provided_details={"email": user.email},
             metadata={
                 "user_id": str(user.id),
