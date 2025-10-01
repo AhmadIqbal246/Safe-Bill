@@ -172,6 +172,7 @@ def check_payment_status(request, project_id):
                         getattr(user, "first_name", None) or user.email,
                         payment.project.name,
                         float(payment.buyer_total_amount or payment.amount),
+                        "fr",
                     )
                     # Also notify the seller
                     try:
@@ -184,6 +185,7 @@ def check_payment_status(request, project_id):
                             seller_name,
                             payment.project.name,
                             float(payment.buyer_total_amount or payment.amount),
+                            "fr",
                         )
                     except Exception:
                         pass
@@ -193,6 +195,7 @@ def check_payment_status(request, project_id):
                         getattr(user, "first_name", None) or user.email,
                         payment.project.name,
                         float(payment.buyer_total_amount or payment.amount),
+                        "fr",
                     )
             except Exception:
                 pass
