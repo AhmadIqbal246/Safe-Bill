@@ -28,6 +28,7 @@
   "actions": { 
     "request_quote": "Request Quote", 
     "send": "Send", 
+    "submit": "Submit",
     "cancel": "Cancel",
     "close": "Close",
     "download_view": "Download/View",
@@ -41,6 +42,7 @@
     "learn_more": "Learn More",
     "send_request": "Send Request",
     "sending": "Sending...",
+    "processing": "Processing...",
     "id": "ID",
     "created": "Created"
   },
@@ -1532,7 +1534,9 @@
     "update_success": "Milestone updated successfully!",
     "update_failed_default": "Failed to update milestone. Please try again.",
     "submit_success": "Milestone submitted for approval!",
-    "submit_failed_default": "Failed to submit milestone for approval."
+    "submit_failed_default": "Failed to submit milestone for approval.",
+    "submit_for_approval": "Submit for Approval",
+    "submitting": "Submitting..."
   },
   "milestone_approval": {
     "success_approved": "Milestone approved successfully!",
