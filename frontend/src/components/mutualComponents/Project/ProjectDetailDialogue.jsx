@@ -23,9 +23,17 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.client_email')}</span> {project.client_email}</div>
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.quote_reference')}</span> {project.quote?.reference_number}</div>
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.created_at')}</span> {project.created_at}</div>
-            <div className="mb-1"><span className="font-semibold">{t('project_dialog.total_amount')}</span> <span className="text-[#01257D] font-semibold">${parseFloat(project.total_amount).toLocaleString()}</span></div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.total_amount')}</span> <span className="text-[#01257D] font-semibold">€{parseFloat(project.total_amount).toLocaleString()}</span></div>
             <div className="mb-1"><span className="font-semibold">{t('project_dialog.vat_rate')}</span> {Number(project.vat_rate || 0).toFixed(1)}%</div>
-            <div className="mb-1"><span className="font-semibold">{t('project_dialog.platform_fee')}</span> {Number(project.platform_fee_percentage || 0).toFixed(1)}%</div>
+            <div className="mb-1"><span className="font-semibold">{t('project_dialog.platform_fee')}</span> €{(() => {
+              const totalAmount = Number(project.total_amount) || 0;
+              const platformFeePct = Number(project.platform_fee_percentage) || 0;
+              const vatPct = Number(project.vat_rate) || 0;
+              const amountWithVat = totalAmount * (1 + vatPct / 100);
+              const netAmount = amountWithVat * (1 - platformFeePct / 100);
+              const platformFeeAmount = amountWithVat - netAmount;
+              return Number.isFinite(platformFeeAmount) ? Math.round(platformFeeAmount).toLocaleString() : '0';
+            })()}</div>
             {project.quote?.file && (
               <div className="mb-1 flex items-center gap-2">
                 <span className="font-semibold">{t('project_dialog.quote_file')}</span>
@@ -56,7 +64,7 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
                   {(project.installments || []).map((inst, idx) => (
                     <tr key={idx} className="border-t border-gray-100">
                       <td className="px-3 py-2">{inst.step}</td>
-                      <td className="px-3 py-2 text-[#01257D] font-semibold">${parseFloat(inst.amount).toLocaleString()}</td>
+                      <td className="px-3 py-2 text-[#01257D] font-semibold">€{parseFloat(inst.amount).toLocaleString()}</td>
                       <td className="px-3 py-2 text-gray-600" title={inst.description}>
                         {truncate(inst.description)}
                       </td>

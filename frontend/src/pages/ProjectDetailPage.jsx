@@ -176,11 +176,11 @@ export default function ProjectDetailPage() {
   }
 
   const project = clientProjectDetail;
-  const totalAmount = project.total_amount || 0;
+  const totalAmount = (project.total_amount + (project.vat_rate / 100 * project.total_amount)) || 0;
   const paidAmount =
     project.milestones
       ?.filter((m) => m.status === "approved")
-      .reduce((sum, m) => sum + (parseFloat(m.relative_payment) || 0), 0) || 0;
+      .reduce((sum, m) => sum + (parseFloat(m.relative_payment) + (parseFloat(m.relative_payment) * parseFloat(project.vat_rate) / 100) || 0), 0) || 0;
   const pendingAmount = totalAmount - paidAmount;
 
   return (
@@ -487,7 +487,13 @@ export default function ProjectDetailPage() {
                       {t("project_detail.total_project_amount")}
                     </span>
                     <span className="font-semibold text-gray-900">
-                      ${totalAmount.toLocaleString()}
+                      ${(() => {
+                          const totalAmount = Number(project.total_amount) || 0;
+                          const vatPct = Number(project.vat_rate) || 0;
+                          const amountWithVat = totalAmount * (1 + vatPct / 100);
+                          const netAmount = amountWithVat;
+                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                        })()}
                     </span>
                   </div>
                   <div className="flex justify-between">

@@ -77,7 +77,13 @@ export default function CurrentProjects({ projects = [] }) {
                     <ProjectStatusBadge status={project.status} size="small" />
                   </div>
                   <div className="text-sm font-semibold text-gray-800">
-                    €{project.total_amount?.toFixed(2) || '0.00'}
+                  ${(() => {
+                          const totalAmount = Number(project.total_amount) || 0;
+                          const vatPct = Number(project.vat_rate) || 0;
+                          const amountWithVat = totalAmount * (1 + vatPct / 100);
+                          const netAmount = amountWithVat;
+                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                        })()}
                   </div>
                 </div>
                 

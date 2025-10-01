@@ -141,6 +141,7 @@ def stripe_connect_webhook(request):
                 # Sync with HubSpot after Stripe onboarding completion
                 def _on_transaction_commit():
                     sync_contact_task.delay(user.id)
+
                 transaction.on_commit(_on_transaction_commit)
 
                 # Send notification for successful Stripe onboarding
@@ -281,10 +282,11 @@ def check_stripe_status(request):
                 stripe_account.onboarding_complete = True
                 user.onboarding_complete = True
                 user.save()
-                
+
                 # Sync with HubSpot after Stripe onboarding completion
                 def _on_transaction_commit():
                     sync_contact_task.delay(user.id)
+
                 transaction.on_commit(_on_transaction_commit)
             else:
                 # Only change to "pending" if user has started onboarding (details_submitted is True)
@@ -514,6 +516,7 @@ def stripe_identity_webhook(request):
             # Sync with HubSpot after identity verification completion
             def _on_transaction_commit():
                 sync_contact_task.delay(user.id)
+
             transaction.on_commit(_on_transaction_commit)
 
             # Send notification for successful identity verification
@@ -626,13 +629,15 @@ def stripe_identity_webhook(request):
 
         # Enqueue HubSpot Revenue monthly sync
         now = timezone.now()
-        transaction.on_commit(lambda: sync_revenue_month_task.delay(now.year, now.month))
+        transaction.on_commit(
+            lambda: sync_revenue_month_task.delay(now.year, now.month)
+        )
 
         try:
             # The payment is held in escrow until milestones are approved
             if project.client:
                 BalanceService.update_buyer_balance_on_payment(
-                    buyer=project.client, payment_amount=payment.amount
+                    buyer=project.client, payment_amount=payment.buyer_total_amount
                 )
         except Exception as e:
             logger.error(f"Error updating buyer balance: {e}")
