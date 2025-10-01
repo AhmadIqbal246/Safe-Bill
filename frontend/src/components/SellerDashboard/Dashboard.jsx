@@ -483,14 +483,21 @@ export default function Dashboard() {
                     {sortedProjects.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-4 sm:py-6 text-gray-400 text-xs sm:text-sm">{t('dashboard.no_projects_found')}</td></tr>
                     ) : (
-                      sortedProjects.slice(0, 5).map((proj, idx) => (
+                      sortedProjects.slice(0, maxRows).map((proj) => (
                       <tr key={proj.id} className="border-t border-gray-100">
                         <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm max-w-[80px] sm:max-w-none truncate">{proj.name}</td>
                         <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-blue-700 font-medium cursor-pointer hover:underline text-xs sm:text-sm max-w-[80px] sm:max-w-none truncate">{proj.client_email}</td>
                         <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap">
                           <ProjectStatusBadge status={proj.status} size="small" />
                         </td>
-                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">${parseFloat(proj.total_amount).toLocaleString()}</td>
+                        <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap text-xs sm:text-sm">${(() => {
+                          const totalAmount = Number(proj.total_amount) || 0;
+                          const platformFeePct = Number(proj.platform_fee_percentage) || 0;
+                          const vatPct = Number(proj.vat_rate) || 0;
+                          const amountWithVat = totalAmount * (1 + vatPct / 100);
+                          const netAmount = amountWithVat * (1 - platformFeePct / 100);
+                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                        })()}</td>
                         <td className="px-1 sm:px-2 md:px-4 py-2 sm:py-3 whitespace-nowrap">
                           <button className="text-[#01257D] font-semibold hover:underline cursor-pointer text-xs sm:text-sm" onClick={() => handleViewDetails(proj)}>{t('dashboard.view')}</button>
                         </td>

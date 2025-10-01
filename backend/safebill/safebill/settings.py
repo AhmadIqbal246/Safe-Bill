@@ -1,3 +1,4 @@
+import os
 """
 Django settings for safebill project.
 
@@ -30,29 +31,55 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = "django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', default=True)
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '72.60.195.18',  # Your server IP
-    'api.safebill.fr',
-    'safebill.fr',
-    '.safebill.fr',  # This allows all subdomains
-]
+
+def _env_list(var_name, default_list):
+    value = os.environ.get(var_name)
+    if not value:
+        return default_list
+    # Support comma-separated values with optional spaces
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+ALLOWED_HOSTS = _env_list(
+    "ALLOWED_HOSTS",
+    [
+        "https://safebill.fr",
+        "http://safebill.fr",
+        "api.safebill.fr",
+        "https://www.safebill.fr",
+        "http://localhost:3000",  # For development
+        "http://127.0.0.1:3000",  # For development
+    ],
+)
+
 
 # to allow all credentials (cookies, authorization headers, etc.) to be included in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://safebill.fr",
-    "https://www.safebill.fr",
-    "http://localhost:3000",  # For development
-    "http://127.0.0.1:3000",  # For development
-]
+CORS_ALLOWED_ORIGINS = _env_list(
+    "CORS_ALLOWED_ORIGINS",
+    [
+        "https://safebill.fr",
+        "http://safebill.fr",
+        "api.safebill.fr",
+        "https://www.safebill.fr",
+        "http://localhost:3000",  # For development
+        "http://127.0.0.1:3000",  # For development
+    ],
+)
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = _env_list(
+    "CSRF_TRUSTED_ORIGINS",
+    [
+        "https://safebill.fr",
+        "https://api.safebill.fr",
+    ],
+)
 
 # For production, disable this
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
+#CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 
 # Allow custom headers for language detection
 CORS_ALLOW_HEADERS = [
@@ -67,7 +94,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'x-user-language',  # Custom header for language detection
 ]
-
 
 
 # Application definition

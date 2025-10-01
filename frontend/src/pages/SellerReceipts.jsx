@@ -97,7 +97,7 @@ export default function SellerReceipts() {
       }
 
       pdf.save(`receipt_seller_${project.reference_number || project.id}.pdf`);
-    } catch (e) {
+    } catch {
       toast.error('Failed to generate PDF');
     }
   };
@@ -168,7 +168,7 @@ export default function SellerReceipts() {
                     <div className="p-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div><span className="text-gray-500">{t('receipts.total_amount')}</span><div className="font-semibold">€{total.toLocaleString()}</div></div>
-                        <div><span className="text-gray-500">{t('receipts.platform_fee')}</span><div className="font-semibold">{pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div></div>
+                        <div><span className="text-gray-500">{t('receipts.platform_fee')}</span><div className="font-semibold">−€{platformFee.toLocaleString()}</div></div>
                         <div><span className="text-gray-500">{t('receipts.seller_receives')}</span><div className="font-semibold text-green-700">€{sellerNet.toLocaleString()}</div></div>
                       </div>
                     </div>
@@ -232,7 +232,7 @@ export default function SellerReceipts() {
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
                             <div className="text-gray-500">{t('receipts.platform_fee')}</div>
-                            <div className="text-base font-semibold">{pct.toFixed(1)}% (−€{platformFee.toLocaleString()})</div>
+                            <div className="text-base font-semibold">−€{platformFee.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
                             <div className="text-gray-500">{t('receipts.seller_receives')}</div>

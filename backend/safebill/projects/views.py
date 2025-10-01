@@ -25,9 +25,17 @@ from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
 import logging
-from .tasks import send_project_invitation_email_task, send_milestone_approval_request_email_task
+from .tasks import (
+    send_project_invitation_email_task,
+    send_milestone_approval_request_email_task,
+)
 from django.db import transaction
-from hubspot.tasks import sync_deal_task, update_milestone_task, sync_milestone_task, sync_revenue_month_task
+from hubspot.tasks import (
+    sync_deal_task,
+    update_milestone_task,
+    sync_milestone_task,
+    sync_revenue_month_task,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -431,7 +439,9 @@ class ProjectInviteAPIView(APIView):
         # Only allow resending for projects that are still pending
         if project.status != "pending":
             return Response(
-                {"detail": "Invitation can only be resent for projects with status 'pending'."},
+                {
+                    "detail": "Invitation can only be resent for projects with status 'pending'."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -461,13 +471,13 @@ class ProjectInviteAPIView(APIView):
                 "HTTP_ACCEPT_LANGUAGE", "en"
             )
             language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
-            
+
             send_project_invitation_email_task.delay(
                 client_email=project.client_email,
                 project_name=project.name,
                 invitation_url=invite_link,
                 invitation_token=new_token,
-                language=language
+                language=language,
             )
         except Exception:
             # Don't fail resend if email sending fails
@@ -564,7 +574,9 @@ class ProjectInviteAPIView(APIView):
             # Also refresh the milestones summary so client_name appears
             try:
                 for m in project.milestones.all()[:1]:
-                    transaction.on_commit(lambda mid=m.id: sync_milestone_task.delay(mid))
+                    transaction.on_commit(
+                        lambda mid=m.id: sync_milestone_task.delay(mid)
+                    )
             except Exception:
                 pass
 
@@ -693,7 +705,9 @@ class MilestoneApprovalAPIView(APIView):
                         seller=project.user,
                         buyer=project.client,
                         project=project,
-                        milestone_amount=milestone.relative_payment,
+                        milestone_amount=milestone.relative_payment
+                        + (milestone.relative_payment * project.vat_rate)
+                        / Decimal("100"),
                     )
             except Exception as e:
                 logger.error(
@@ -729,12 +743,16 @@ class MilestoneApprovalAPIView(APIView):
             try:
                 project = milestone.project
                 if project.client and project.client.email:
-                    preferred_lang = (
-                        self.request.headers.get("X-User-Language")
-                        or self.request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                    preferred_lang = self.request.headers.get(
+                        "X-User-Language"
+                    ) or self.request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                    language = (
+                        preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
                     )
-                    language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
-                    buyer_name = getattr(project.client, "username", None) or project.client.email.split("@")[0]
+                    buyer_name = (
+                        getattr(project.client, "username", None)
+                        or project.client.email.split("@")[0]
+                    )
                     send_milestone_approval_request_email_task.delay(
                         user_email=project.client.email,
                         user_name=buyer_name,
@@ -752,7 +770,9 @@ class MilestoneApprovalAPIView(APIView):
         # Enqueue HubSpot Revenue monthly sync on approval events
         if action_type == "approve":
             now = timezone.now()
-            transaction.on_commit(lambda: sync_revenue_month_task.delay(now.year, now.month))
+            transaction.on_commit(
+                lambda: sync_revenue_month_task.delay(now.year, now.month)
+            )
 
         project = milestone.project
         status_msg = {
@@ -845,7 +865,9 @@ def seller_receipts(request):
     """
     user = request.user
     if getattr(user, "role", None) != "seller":
-        return Response({"detail": "Only sellers can access this endpoint."}, status=403)
+        return Response(
+            {"detail": "Only sellers can access this endpoint."}, status=403
+        )
 
     projects = (
         Project.objects.filter(user=user, status="completed")

@@ -229,7 +229,14 @@ export default function QuoteManagement() {
                     <td className="px-4 py-3 whitespace-nowrap">{p.quote && p.quote.reference_number}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.name}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.client_email}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">${p.total_amount}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">${(() => {
+                          const totalAmount = Number(p.total_amount) || 0;
+                          const platformFeePct = Number(p.platform_fee_percentage) || 0;
+                          const vatPct = Number(p.vat_rate) || 0;
+                          const amountWithVat = totalAmount * (1 + vatPct / 100);
+                          const netAmount = amountWithVat * (1 - platformFeePct / 100);
+                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                        })()}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{p.created_at}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <ProjectStatusBadge status={p.status} size="small" />

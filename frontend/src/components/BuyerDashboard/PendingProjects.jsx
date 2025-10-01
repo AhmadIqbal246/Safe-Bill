@@ -159,7 +159,14 @@ export default function PendingProjects({ projects }) {
                 <div>
                   <div className="text-xs text-gray-400 font-medium mb-1">Total Amount</div>
                   <div className="text-lg font-semibold text-gray-900">
-                    ${project.total_amount?.toLocaleString()}
+                    ${(() => {
+                          const totalAmount = Number(project.total_amount) || 0;
+                          const platformFeePct = Number(project.platform_fee_percentage) || 0;
+                          const vatPct = Number(project.vat_rate) || 0;
+                          const amountWithVat = totalAmount * (1 + vatPct / 100);
+                          const netAmount = amountWithVat * (1 - platformFeePct / 100);
+                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                        })()}
                   </div>
                 </div>
                 <div>
