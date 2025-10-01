@@ -713,6 +713,84 @@ def stripe_identity_webhook(request):
             updated_at=payment.updated_at,
         )
 
+    # Handle async success for bank transfers (customer_balance)
+    elif event["type"] == "checkout.session.async_payment_succeeded":
+        payment = event["data"]["object"]
+        payment_id = payment["id"]
+        project_id = payment["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.status = "approved"
+        project.save()
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
+
+        payment_obj = Payment.objects.get(stripe_payment_id=payment_id)
+        if payment_obj.status != "paid":
+            platform_revenue = PlatformRevenue.objects.all().first()
+            platform_revenue.vat_collected += (
+                payment_obj.buyer_total_amount - payment_obj.amount
+            )
+            platform_revenue.save()
+        payment_obj.status = "paid"
+        payment_obj.webhook_response = event
+        payment_obj.save()
+
+        try:
+            if project.client:
+                client = project.client
+                client_name = (
+                    client.get_full_name()
+                    or getattr(client, "username", None)
+                    or (
+                        client.email.split("@")[0]
+                        if getattr(client, "email", None)
+                        else "User"
+                    )
+                )
+                send_payment_success_email_task.delay(
+                    user_email=client.email,
+                    user_name=client_name,
+                    project_name=project.name,
+                    amount=str(payment_obj.amount),
+                    language="fr",
+                )
+                # Notify seller in French
+                try:
+                    seller = project.user
+                    if seller and getattr(seller, "email", None):
+                        seller_name = (
+                            seller.get_full_name()
+                            or getattr(seller, "username", None)
+                            or seller.email
+                        )
+                        send_payment_success_email_seller_task.delay(
+                            seller.email,
+                            seller_name,
+                            project.name,
+                            float(payment_obj.buyer_total_amount or payment_obj.amount),
+                            "fr",
+                        )
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        NotificationService.create_notification(
+            project.user,
+            f"Project '{project.name}' has been approved.",
+        )
+        NotificationService.create_notification(
+            project.client,
+            f"Your payment of {payment_obj.amount} for project '{project.name}' has been processed successfully.",
+        )
+
+        send_payment_websocket_update(
+            project_id=project.id,
+            payment_status="paid",
+            payment_amount=payment_obj.amount,
+            project_status="approved",
+            updated_at=payment_obj.updated_at,
+        )
+
     # Handle checkout.session.expired event
     elif event["type"] == "checkout.session.expired":
         payment = event["data"]["object"]
