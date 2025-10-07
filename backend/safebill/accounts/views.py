@@ -362,6 +362,126 @@ class ResendVerificationView(APIView):
         )
 
 
+# Added: login endpoint that accepts desired_role and sets active_role if available
+class RoleLoginView(TokenObtainPairView):
+    serializer_class = UserTokenObtainPairSerializer
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        desired_role = (request.data.get("desired_role") or "").strip()
+
+        if desired_role and desired_role not in ["seller", "professional-buyer", "buyer"]:
+            return Response({"detail": "Invalid desired_role."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate credentials first to get the user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+
+        # Apply desired role BEFORE issuing tokens so claims reflect the change
+        if desired_role:
+            if desired_role == "seller" and not getattr(user, "is_seller", False):
+                return Response({"detail": "Seller role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+            if desired_role == "professional-buyer" and not getattr(user, "is_professional_buyer", False):
+                return Response({"detail": "Professional-buyer role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+            if desired_role == "buyer":
+                # Only allow individual-buyer role for accounts that are actually buyer accounts
+                from .models import BuyerModel
+                is_individual_buyer = (getattr(user, "role", None) == "buyer") or BuyerModel.objects.filter(user=user).exists()
+                if not is_individual_buyer:
+                    return Response({"detail": "Individual buyer role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+            user.active_role = desired_role
+            user.save(update_fields=["active_role"])
+
+        # Issue tokens using our serializer so custom claims include updated active_role
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        refresh = RefreshToken.for_user(user)
+        # Ensure our custom claims are present by calling get_token
+        token_with_claims = self.serializer_class.get_token(user)
+        access = token_with_claims.access_token
+
+        return Response({
+            "refresh": str(refresh),
+            "access": str(access),
+            # Added: echo role context in the login response payload
+            "active_role": getattr(user, "active_role", None),
+            "is_seller": getattr(user, "is_seller", False),
+            "is_professional_buyer": getattr(user, "is_professional_buyer", False),
+        }, status=status.HTTP_200_OK)
+
+# Added: switch active_role for the authenticated user (seller <-> professional-buyer)
+class RoleSwitchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target_role = (request.data.get("target_role") or "").strip()
+        if target_role not in ["seller", "professional-buyer"]:
+            return Response({"detail": "Invalid target_role."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+
+        # Validate availability: user must have the role enabled before switching
+        if target_role == "seller" and not getattr(user, "is_seller", False):
+            return Response({"detail": "Seller role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+        if target_role == "professional-buyer" and not getattr(user, "is_professional_buyer", False):
+            return Response({"detail": "Professional-buyer role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+
+        # Persist the active role for subsequent requests
+        user.active_role = target_role
+        user.save(update_fields=["active_role"])
+
+        return Response({
+            "detail": "Active role switched successfully.",
+            "active_role": user.active_role,
+            "is_seller": getattr(user, "is_seller", False),
+            "is_professional_buyer": getattr(user, "is_professional_buyer", False),
+        }, status=status.HTTP_200_OK)
+
+
+# Added: simple "me" endpoint to return role flags, active role, and basic statuses
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Derive role-scoped onboarding status from Stripe models (lightweight, mirrors token fields)
+        seller_complete = False
+        try:
+            from connect_stripe.models import StripeAccount, StripeIdentity  # local import to avoid cycles
+            sa = StripeAccount.objects.filter(user=user).first()
+            if sa:
+                data = sa.account_data or {}
+                seller_complete = (
+                    sa.account_status == "active"
+                    and bool(data.get("charges_enabled", False))
+                    and bool(data.get("payouts_enabled", False))
+                )
+        except Exception:
+            seller_complete = False
+
+        pro_buyer_complete = False
+        try:
+            from connect_stripe.models import StripeIdentity  # ensure identity import
+            si = StripeIdentity.objects.filter(user=user).first()
+            if si:
+                pro_buyer_complete = bool(si.identity_verified and si.identity_status == "verified")
+        except Exception:
+            pro_buyer_complete = False
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "active_role": getattr(user, "active_role", None),
+            "is_seller": getattr(user, "is_seller", False),
+            "is_professional_buyer": getattr(user, "is_professional_buyer", False),
+            "seller_onboarding_complete": seller_complete,
+            "pro_buyer_onboarding_complete": pro_buyer_complete,
+        }, status=status.HTTP_200_OK)
+
 
 class OnboardingStatusView(APIView):
     permission_classes = [IsAuthenticated]

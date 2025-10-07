@@ -94,6 +94,19 @@ class SellerRegistrationSerializer(serializers.Serializer):
             is_active=False,
         )
 
+        # Added: seed available roles and default active_role at registration time
+        # Policy: both seller and professional-buyer are available; onboarding remains role-specific
+        if role == "seller":
+            user.is_seller = True
+            user.is_professional_buyer = True
+            user.active_role = "seller"
+            user.save(update_fields=["is_seller", "is_professional_buyer", "active_role"])
+        elif role == "professional-buyer":
+            user.is_professional_buyer = True
+            user.is_seller = True
+            user.active_role = "professional-buyer"
+            user.save(update_fields=["is_seller", "is_professional_buyer", "active_role"])
+
         # Create business detail
         bd = BusinessDetail.objects.create(
             user=user,
@@ -196,6 +209,35 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["is_email_verified"] = user.is_email_verified
         token["phone_number"] = user.phone_number
         token["is_admin"] = user.is_admin
+        # Added: expose role selection and availability in token for client-side guards
+        token["active_role"] = getattr(user, "active_role", None)
+        token["is_seller"] = getattr(user, "is_seller", False)
+        token["is_professional_buyer"] = getattr(user, "is_professional_buyer", False)
+
+        # Added: role-scoped onboarding status derived from Stripe models (seller vs pro-buyer)
+        seller_complete = False
+        try:
+            sa = StripeAccount.objects.filter(user=user).first()
+            if sa:
+                data = sa.account_data or {}
+                seller_complete = (
+                    sa.account_status == "active"
+                    and bool(data.get("charges_enabled", False))
+                    and bool(data.get("payouts_enabled", False))
+                )
+        except Exception:
+            seller_complete = False
+
+        pro_buyer_complete = False
+        try:
+            si = StripeIdentity.objects.filter(user=user).first()
+            if si:
+                pro_buyer_complete = bool(si.identity_verified and si.identity_status == "verified")
+        except Exception:
+            pro_buyer_complete = False
+
+        token["seller_onboarding_complete"] = seller_complete
+        token["pro_buyer_onboarding_complete"] = pro_buyer_complete
         return token
 
 
@@ -339,6 +381,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "profile_pic",
             "average_rating",
             "rating_count",
+            "active_role",
+            "is_seller",
+            "is_professional_buyer",
         ]
         read_only_fields = ["email"]  # Only email is read-only now
 

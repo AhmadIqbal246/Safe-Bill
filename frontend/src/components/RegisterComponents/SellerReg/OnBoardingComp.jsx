@@ -59,7 +59,10 @@ export default function OnBoardingComp() {
 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const role = user?.role;
+  // Added: prefer active_role for onboarding branching; fallback to legacy role
+  const role = user?.active_role || user?.role;
+  const proBuyerComplete = user?.pro_buyer_onboarding_complete === true;
+  const sellerComplete = user?.seller_onboarding_complete === true;
   const { loading, error, success } = useSelector(
     (state) => state.businessDetail
   );
@@ -96,14 +99,25 @@ export default function OnBoardingComp() {
 
   const navigate = useNavigate();
 
+  // Added: immediately redirect verified professional-buyers away from onboarding
+  useEffect(() => {
+    if (role === "professional-buyer" && proBuyerComplete) {
+      navigate("/");
+    }
+    if (role === "seller" && sellerComplete) {
+      // Optional: redirect sellers with completed onboarding straight to dashboard
+      // navigate("/seller-dashboard");
+    }
+  }, [role, proBuyerComplete, sellerComplete, navigate]);
+
   const handleRoleBasedNavigation = () => {
     const userStr = sessionStorage.getItem("user");
     if (userStr) {
       try {
         const userObj = JSON.parse(userStr);
-        if (userObj.role === "seller") {
+        if ((userObj.active_role || userObj.role) === "seller") {
           navigate("/seller-dashboard");
-        } else if (userObj.role === "professional-buyer") {
+        } else if ((userObj.active_role || userObj.role) === "professional-buyer") {
           navigate("/");
         } else {
           // Default fallback
@@ -261,7 +275,7 @@ export default function OnBoardingComp() {
     { number: 1, title: "Basic Information", active: currentStep >= 1 },
     {
       number: 2,
-      title: role == "seller" ? "Connect Stripe" : "Identity Verification",
+      title: role === "seller" ? "Connect Stripe" : "Identity Verification",
       active: false,
     },
     { number: 3, title: "Verification", active: false },
@@ -303,7 +317,7 @@ export default function OnBoardingComp() {
     const checkStripeOnboardingStatus = () => {
       const accessToken = sessionStorage.getItem("access");
       if (accessToken) {
-        if (role === "seller") {
+          if (role === "seller") {
           dispatch(checkStripeStatus({ accessToken }));
         } else if (role === "professional-buyer") {
           dispatch(checkStripeIdentityStatus({ accessToken }));
@@ -327,7 +341,7 @@ export default function OnBoardingComp() {
     const fetchStatusOnMount = () => {
       const accessToken = sessionStorage.getItem("access");
       if (accessToken) {
-        if (role === "seller") {
+          if (role === "seller") {
           dispatch(checkStripeStatus({ accessToken }));
         } else if (role === "professional-buyer") {
           dispatch(checkStripeIdentityStatus({ accessToken }));
@@ -1041,9 +1055,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if (userObj.role === "seller") {
+                    if ((userObj.active_role || userObj.role) === "seller") {
                       return t("onboarding.go_to_dashboard_seller");
-                    } else if (userObj.role === "professional-buyer") {
+                    } else if ((userObj.active_role || userObj.role) === "professional-buyer") {
                       return t("onboarding.go_to_home_professional_buyer");
                     }
                   } catch {
@@ -1062,9 +1076,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if (userObj.role === "seller") {
+                    if ((userObj.active_role || userObj.role) === "seller") {
                       return t("onboarding.go_to_dashboard");
-                    } else if (userObj.role === "professional-buyer") {
+                    } else if ((userObj.active_role || userObj.role) === "professional-buyer") {
                       return t("onboarding.go_to_home");
                     }
                   } catch {

@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 
 export default function LogInComp() {
   const { t } = useTranslation();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", desiredRole: "" });
   const [emailError, setEmailError] = useState(""); // store i18n key when error exists
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
@@ -35,7 +35,12 @@ export default function LogInComp() {
       setEmailError('login.invalid_email');
       return;
     }
-    dispatch(loginUser(form));
+    // Enforce role selection before attempting login
+    if (!form.desiredRole) {
+      toast.error(t("login.choose_role_optional"));
+      return;
+    }
+    dispatch(loginUser(form)); // include desired_role
   };
 
   // Debug function to check current user data
@@ -71,9 +76,15 @@ export default function LogInComp() {
         // Determine where to redirect after successful login
         let targetUrl = "/"; // default fallback
         
-        if (user.onboarding_complete === false && 
-          (user.role === 'seller' || user.role === 'professional-buyer')) {
-          targetUrl = "/onboarding";
+        // Added: prefer active_role and role-scoped onboarding statuses
+        const activeRole = user.active_role || user.role;
+        const sellerComplete = user.seller_onboarding_complete;
+        const proBuyerComplete = user.pro_buyer_onboarding_complete;
+
+        if (activeRole === 'seller' && sellerComplete === false) {
+          targetUrl = '/onboarding';
+        } else if (activeRole === 'professional-buyer' && proBuyerComplete === false) {
+          targetUrl = '/onboarding';
         } else if (redirectUrl) {
           // If there's a redirect URL, use it (with validation)
           try {
@@ -86,16 +97,16 @@ export default function LogInComp() {
             console.warn(t("login.invalid_redirect_url"), redirectUrl);
             // Fall back to dashboard
           }
-        } else if (user.onboarding_complete !== false) {
-          // Role-based default landing pages
+        } else {
+          // Role-based default landings using active role
           if (user.role === 'admin') {
             targetUrl = '/admin';
-          } else if (user.role === 'professional-buyer') {
+          } else if (activeRole === 'professional-buyer') {
             targetUrl = '/buyer-dashboard';
-          } else if (user.role === 'seller') {
+          } else if (activeRole === 'seller') {
             targetUrl = '/seller-dashboard';
           }
-        } else if (user.role === 'buyer') {
+        } if (user.role === 'buyer') {
           targetUrl = '/buyer-dashboard';
         } else if (user.role === 'admin') {
           targetUrl = '/admin';
@@ -154,6 +165,21 @@ export default function LogInComp() {
             {emailError && (
               <p className="text-red-600 text-sm mt-1">{t(emailError)}</p>
             )}
+          </div>
+          {/* Added: optional role selector to login as seller or professional-buyer */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.login_as_role")}</label>
+            <select
+              name="desiredRole"
+              value={form.desiredRole}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A1128] focus:border-transparent border-gray-300"
+            >
+              <option value="">{t("login.choose_role_optional")}</option>
+              <option value="seller">{t("roles.seller")}</option>
+              <option value="professional-buyer">{t("roles.professional_buyer")}</option>
+              <option value="buyer">{t("roles.individual_buyer", "Individual Buyer")}</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.password")}</label>

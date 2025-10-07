@@ -18,7 +18,8 @@ export default function ProtectedRoute({ children, redirectTo = "/login", requir
 
   // Role-based protection
   if (requiredRole) {
-    const userRole = user?.role;
+    // Added: prefer active_role from token/me for route guards; fallback to legacy role
+    const userRole = user?.active_role || user?.role;
     let hasRequiredRole = false;
 
     // Handle both single role (string) and multiple roles (array)

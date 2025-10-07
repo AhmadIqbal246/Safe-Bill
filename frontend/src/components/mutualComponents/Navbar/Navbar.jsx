@@ -86,12 +86,13 @@ export default function SafeBillHeader({
         user.is_admin === true))
   );
 
+  // Added: use active_role for buyer nav visibility
   const canSeeProjectInvite = !!(
-    user &&
-    (user.role === "buyer" || user.role === "professional-buyer")
+    user && ((user.active_role || user.role) === "professional-buyer" || user.role === "buyer")
   );
 
-  const canSeeSellerDashboard = !!(user && user.role === "seller");
+  // Added: use active_role for seller nav visibility
+  const canSeeSellerDashboard = !!(user && ((user.active_role || user.role) === "seller"));
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -365,7 +366,7 @@ export default function SafeBillHeader({
                         </button>
                         <Link
                           to={
-                            user.role === "seller"
+                            (user.active_role || user.role) === "seller"
                               ? "/profile"
                               : user.role === "admin"
                               ? "/admin"
@@ -505,7 +506,7 @@ export default function SafeBillHeader({
                           </button>
                           <Link
                             to={
-                              user.role === "seller"
+                              (user.active_role || user.role) === "seller"
                                 ? "/profile"
                                 : user.role === "admin"
                                 ? "/admin"

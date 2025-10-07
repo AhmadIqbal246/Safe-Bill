@@ -19,6 +19,11 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    # Added: flags to indicate which roles this user has available (multi-role enablement)
+    is_seller = models.BooleanField(default=False)
+    is_professional_buyer = models.BooleanField(default=False)
+    # Added: active role for this session/user to drive dashboards, routing, and permissions
+    active_role = models.CharField(max_length=20, choices=[('seller', 'Seller'), ('professional-buyer', 'Professional Buyer')], blank=True, null=True)
     is_admin = models.BooleanField(
         default=False, 
         help_text=(

@@ -69,6 +69,15 @@ class Project(models.Model):
         help_text="Platform fee percentage applied to this project (e.g. 10.0 for 10%)",
     )
 
+    class Meta:
+        # Added: prevent self-projects where seller and client are the same user
+        constraints = [
+            models.CheckConstraint(
+                check=(models.Q(client__isnull=True) | ~models.Q(user=models.F("client"))),
+                name="project_seller_not_equal_client",
+            )
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.user.username})"
 

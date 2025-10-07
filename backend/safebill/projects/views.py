@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -47,13 +48,15 @@ class ProjectCreateAPIView(generics.CreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
-        # Check if user has seller role
-        if not hasattr(self.request.user, "role") or self.request.user.role not in [
-            "seller"
-        ]:
-            raise permissions.PermissionDenied(
-                "Only users with seller role can create projects."
-            )
+        # Check if user has seller role (supports legacy role, flags, and active_role)
+        user = self.request.user
+        has_seller = (
+            getattr(user, "role", None) == "seller"
+            or getattr(user, "is_seller", False)
+            or getattr(user, "active_role", None) == "seller"
+        )
+        if not has_seller:
+            raise PermissionDenied("Only users with seller role can create projects.")
 
         # Extract and process the form data
         data = {}
@@ -180,8 +183,13 @@ class ProjectStatusUpdateAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if user has seller role
-        if not hasattr(request.user, "role") or request.user.role not in ["seller"]:
+        # Check if user has seller role (support active_role/is_seller and legacy role)
+        user_is_seller = (
+            getattr(request.user, "is_seller", False)
+            or getattr(request.user, "active_role", None) == "seller"
+            or getattr(request.user, "role", None) == "seller"
+        )
+        if not user_is_seller:
             return Response(
                 {"detail": "Only sellers can update project status."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -244,8 +252,13 @@ class ProjectCompletionAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if user has seller role
-        if not hasattr(request.user, "role") or request.user.role not in ["seller"]:
+        # Check if user has seller role (support active_role/is_seller and legacy role)
+        user_is_seller = (
+            getattr(request.user, "is_seller", False)
+            or getattr(request.user, "active_role", None) == "seller"
+            or getattr(request.user, "role", None) == "seller"
+        )
+        if not user_is_seller:
             return Response(
                 {"detail": "Only sellers can complete projects."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -359,10 +372,12 @@ class ProjectInviteAPIView(APIView):
 
     def check_buyer_permission(self, request):
         """Check if user has buyer role"""
-        if not hasattr(request.user, "role") or request.user.role not in [
-            "buyer",
-            "professional-buyer",
-        ]:
+        # Added: allow professional-buyer context via active_role or new flags
+        if not (
+            (hasattr(request.user, "role") and request.user.role in ["buyer", "professional-buyer"]) or
+            getattr(request.user, "is_professional_buyer", False) or
+            getattr(request.user, "active_role", None) == "professional-buyer"
+        ):
             raise permissions.PermissionDenied(
                 "Only users with buyer or professional-buyer role can approve/reject projects."
             )
@@ -390,6 +405,9 @@ class ProjectInviteAPIView(APIView):
                 {"detail": "You are not authorized to view this project."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        # Added: prevent seller self-accept/view via invite
+        if getattr(project, "user_id", None) == getattr(request.user, "id", None):
+            return Response({"detail": "You cannot accept your own project invite."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Add the client to the project if not already added
         if not project.client:
@@ -536,6 +554,9 @@ class ProjectInviteAPIView(APIView):
                 {"detail": "You are not authorized to accept this project."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        # Added: prevent seller from approving their own project invite
+        if getattr(project, "user_id", None) == getattr(request.user, "id", None):
+            return Response({"detail": "You cannot approve your own project invite."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get the action from request data
         action = request.data.get("action")
@@ -838,8 +859,12 @@ def get_completed_projects(request):
     """
     user = request.user
 
-    # Only sellers can access this endpoint
-    if user.role != "seller":
+    # Only sellers can access this endpoint (support active_role/is_seller and legacy role)
+    if not (
+        getattr(user, "is_seller", False)
+        or getattr(user, "active_role", None) == "seller"
+        or getattr(user, "role", None) == "seller"
+    ):
         return Response(
             {"detail": "Only sellers can access completed projects."},
             status=status.HTTP_403_FORBIDDEN,
@@ -864,7 +889,12 @@ def seller_receipts(request):
     for receipts.
     """
     user = request.user
-    if getattr(user, "role", None) != "seller":
+    # Allow for legacy role OR new flags/active_role
+    if not (
+        (getattr(user, "role", None) == "seller")
+        or getattr(user, "is_seller", False)
+        or (getattr(user, "active_role", None) == "seller")
+    ):
         return Response(
             {"detail": "Only sellers can access this endpoint."}, status=403
         )
@@ -886,7 +916,12 @@ def buyer_receipts(request):
     for receipts.
     """
     user = request.user
-    if getattr(user, "role", None) not in ["buyer", "professional-buyer"]:
+    # Allow for legacy roles OR new flags/active_role
+    if not (
+        (getattr(user, "role", None) in ["buyer", "professional-buyer"]) 
+        or getattr(user, "is_professional_buyer", False)
+        or (getattr(user, "active_role", None) == "professional-buyer")
+    ):
         return Response({"detail": "Only buyers can access this endpoint."}, status=403)
 
     projects = (
@@ -905,7 +940,12 @@ def list_expired_project_invites(request):
     List projects for the authenticated seller that have expired invite tokens.
     """
     user = request.user
-    if not hasattr(user, "role") or user.role != "seller":
+    # Allow active_role/is_seller or legacy role
+    if not (
+        getattr(user, "is_seller", False)
+        or getattr(user, "active_role", None) == "seller"
+        or getattr(user, "role", None) == "seller"
+    ):
         return Response(
             {"detail": "Only sellers can access expired invitations."},
             status=status.HTTP_403_FORBIDDEN,

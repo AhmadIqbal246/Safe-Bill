@@ -53,11 +53,14 @@ export const registerSellerWithBasicAndBussiness = createAsyncThunk(
 // Login thunk
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ email, password }, { rejectWithValue }) => {
+  // Added: optional desiredRole to log in as a specific role (seller | professional-buyer)
+  async ({ email, password, desiredRole }, { rejectWithValue }) => {
     try {
+      const payload = { email, password };
+      if (desiredRole) payload.desired_role = desiredRole; // Added: send desired role to backend
       const response = await axios.post(
         `${BASE_URL}api/accounts/login/`,
-        { email, password }
+        payload
       );
       // Decode user info from access token
       const decodedUser = jwtDecode(response.data.access);
@@ -171,6 +174,8 @@ export const registerBuyer = createAsyncThunk(
   }
 );
 
+// Removed in-app role switcher: switching roles occurs only via login with desired_role
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -257,6 +262,7 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.success = false;
       })
+      // In-app role switching disabled by requirement
       .addCase(verifySiret.pending, (state) => {
         state.siretVerification.loading = true;
         state.siretVerification.error = null;
