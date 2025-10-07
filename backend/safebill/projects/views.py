@@ -765,8 +765,48 @@ class MilestoneApprovalAPIView(APIView):
                 # Do not fail the flow if email cannot be sent
                 pass
         milestone.save()
+
+        # If milestone was approved, check if all milestones are now approved
+        if action_type == "approve":
+            try:
+                project = milestone.project
+                # If no milestone is non-approved, mark project completed
+                has_unapproved = (
+                    Milestone.objects.filter(project=project)
+                    .exclude(status="approved")
+                    .exists()
+                )
+                if not has_unapproved and project.status != "completed":
+                    project.status = "completed"
+                    project.save(update_fields=["status"])
+                    # Best-effort notifications; do not break flow on failure
+                    try:
+                        if project.user:
+                            NotificationService.create_notification(
+                                project.user,
+                                f"Project '{project.name}' is now completed. Last Milestone: {milestone.name}, approved.",
+                            )
+                        if project.client:
+                            NotificationService.create_notification(
+                                project.client,
+                                f"Project '{project.name}' is now completed.",
+                            )
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.error(
+                    (
+                        "Error auto-completing project %s after milestone %s "
+                        "approval: %s"
+                    ),
+                    getattr(milestone.project, "id", "?"),
+                    getattr(milestone, "id", "?"),
+                    e,
+                )
         # Enqueue HubSpot milestone update after commit
-        transaction.on_commit(lambda: update_milestone_task.delay(milestone.id))
+        transaction.on_commit(
+            lambda: update_milestone_task.delay(milestone.id)
+        )
         # Enqueue HubSpot Revenue monthly sync on approval events
         if action_type == "approve":
             now = timezone.now()
