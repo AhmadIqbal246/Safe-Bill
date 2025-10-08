@@ -39,7 +39,7 @@ def connect_stripe(request):
     user = request.user
 
     # Added: restrict Connect onboarding to users with seller role enabled
-    if not getattr(user, "is_seller", False):
+    if not (getattr(user, "role", None) == "seller"):
         return Response({"detail": "Seller role not enabled for this account."}, status=409)
 
     # Get or create StripeAccount for the user
@@ -369,7 +369,7 @@ def create_stripe_identity_session(request):
     user = request.user
 
     # Added: restrict Identity verification to users with professional-buyer role enabled
-    if not getattr(user, "is_professional_buyer", False):
+    if not (getattr(user, "role", None) == "professional-buyer"):
         return Response({"detail": "Professional-buyer role not enabled for this account."}, status=409)
 
     try:

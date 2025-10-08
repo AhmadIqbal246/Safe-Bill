@@ -59,8 +59,8 @@ export default function OnBoardingComp() {
 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  // Added: prefer active_role for onboarding branching; fallback to legacy role
-  const role = user?.active_role || user?.role;
+  // Added: prefer role for onboarding branching; fallback to active_role
+  const role = user?.role || user?.active_role;
   const proBuyerComplete = user?.pro_buyer_onboarding_complete === true;
   const sellerComplete = user?.seller_onboarding_complete === true;
   const { loading, error, success } = useSelector(
@@ -115,9 +115,9 @@ export default function OnBoardingComp() {
     if (userStr) {
       try {
         const userObj = JSON.parse(userStr);
-        if ((userObj.active_role || userObj.role) === "seller") {
+        if ((userObj.role || userObj.active_role) === "seller") {
           navigate("/seller-dashboard");
-        } else if ((userObj.active_role || userObj.role) === "professional-buyer") {
+        } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
           navigate("/");
         } else {
           // Default fallback
@@ -1055,9 +1055,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if ((userObj.active_role || userObj.role) === "seller") {
+                    if ((userObj.role || userObj.active_role) === "seller") {
                       return t("onboarding.go_to_dashboard_seller");
-                    } else if ((userObj.active_role || userObj.role) === "professional-buyer") {
+                    } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
                       return t("onboarding.go_to_home_professional_buyer");
                     }
                   } catch {
@@ -1076,9 +1076,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if ((userObj.active_role || userObj.role) === "seller") {
+                    if ((userObj.role || userObj.active_role) === "seller") {
                       return t("onboarding.go_to_dashboard");
-                    } else if ((userObj.active_role || userObj.role) === "professional-buyer") {
+                    } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
                       return t("onboarding.go_to_home");
                     }
                   } catch {

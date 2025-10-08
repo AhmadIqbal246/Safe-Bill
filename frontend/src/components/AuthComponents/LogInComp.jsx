@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 
 export default function LogInComp() {
   const { t } = useTranslation();
-  const [form, setForm] = useState({ email: "", password: "", desiredRole: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [emailError, setEmailError] = useState(""); // store i18n key when error exists
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
@@ -35,12 +35,7 @@ export default function LogInComp() {
       setEmailError('login.invalid_email');
       return;
     }
-    // Enforce role selection before attempting login
-    if (!form.desiredRole) {
-      toast.error(t("login.choose_role_optional"));
-      return;
-    }
-    dispatch(loginUser(form)); // include desired_role
+    dispatch(loginUser(form));
   };
 
   // Debug function to check current user data
@@ -76,8 +71,8 @@ export default function LogInComp() {
         // Determine where to redirect after successful login
         let targetUrl = "/"; // default fallback
         
-        // Added: prefer active_role and role-scoped onboarding statuses
-        const activeRole = user.active_role || user.role;
+        // Added: prefer role and role-scoped onboarding statuses
+        const activeRole = user.role || user.active_role;
         const sellerComplete = user.seller_onboarding_complete;
         const proBuyerComplete = user.pro_buyer_onboarding_complete;
 
@@ -166,21 +161,7 @@ export default function LogInComp() {
               <p className="text-red-600 text-sm mt-1">{t(emailError)}</p>
             )}
           </div>
-          {/* Added: optional role selector to login as seller or professional-buyer */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.login_as_role")}</label>
-            <select
-              name="desiredRole"
-              value={form.desiredRole}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#0A1128] focus:border-transparent border-gray-300"
-            >
-              <option value="">{t("login.choose_role_optional")}</option>
-              <option value="seller">{t("roles.seller")}</option>
-              <option value="professional-buyer">{t("roles.professional_buyer")}</option>
-              <option value="buyer">{t("roles.individual_buyer", "Individual Buyer")}</option>
-            </select>
-          </div>
+          {/* Role selection removed; users will switch roles via navbar toggle */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.password")}</label>
             <div className="relative">

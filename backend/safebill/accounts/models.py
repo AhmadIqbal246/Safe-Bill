@@ -19,9 +19,8 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    # Added: flags to indicate which roles this user has available (multi-role enablement)
-    is_seller = models.BooleanField(default=False)
-    is_professional_buyer = models.BooleanField(default=False)
+    # Canonical list of roles this user is allowed to switch to (system-managed, not user-editable)
+    available_roles = models.JSONField(default=list, blank=True, help_text="System-managed field - users cannot edit this directly")
     # Added: active role for this session/user to drive dashboards, routing, and permissions
     active_role = models.CharField(max_length=20, choices=[('seller', 'Seller'), ('professional-buyer', 'Professional Buyer')], blank=True, null=True)
     is_admin = models.BooleanField(
@@ -42,6 +41,22 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+    def save(self, *args, **kwargs):
+        # Ensure available_roles is only set by the system, not by user input
+        # This prevents users from modifying their available roles
+        if hasattr(self, '_skip_available_roles_check'):
+            # Skip the check if this is a system operation
+            super().save(*args, **kwargs)
+        else:
+            # For normal saves, preserve the existing available_roles
+            if self.pk:
+                try:
+                    original = User.objects.get(pk=self.pk)
+                    self.available_roles = original.available_roles
+                except User.DoesNotExist:
+                    pass
+            super().save(*args, **kwargs)
 
     @property
     def is_super_admin(self):

@@ -50,13 +50,7 @@ def create_stripe_payment(request, project_id):
     # Added: enforce buyer-side context and prevent self-payment
     # Allow both Professional Buyer and Individual Buyer accounts
     active_role = getattr(user, "active_role", None)
-    legacy_role = getattr(user, "role", None)
-    is_pro_buyer = getattr(user, "is_professional_buyer", False)
-    if not (
-        (active_role in ["professional-buyer", "buyer"]) or
-        (legacy_role in ["professional-buyer", "buyer"]) or
-        is_pro_buyer
-    ):
+    if not (getattr(user, "role", None) in ["professional-buyer", "buyer"]):
         return Response({"detail": "Only buyers can create a payment."}, status=403)
     project = Project.objects.get(id=project_id)
     if getattr(project, "user_id", None) == getattr(user, "id", None):
@@ -302,8 +296,8 @@ def transfer_to_stripe_account(request):
     try:
         user = request.user
 
-        # Check if user has seller role (supports legacy role and new flags)
-        if not ((hasattr(user, "role") and user.role == "seller") or getattr(user, "is_seller", False)):
+        # Check if user has seller role
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can transfer funds."},
                 status=400,
@@ -357,8 +351,8 @@ def get_transfer_info(request):
     try:
         user = request.user
 
-        # Check if user has seller role (supports legacy role and new flags)
-        if not ((hasattr(user, "role") and user.role == "seller") or getattr(user, "is_seller", False)):
+        # Check if user has seller role
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can access transfer information."},
                 status=400,
@@ -386,8 +380,8 @@ def list_transfers(request):
     try:
         user = request.user
 
-        # Check if user has seller role (supports legacy role and new flags)
-        if not ((hasattr(user, "role") and user.role == "seller") or getattr(user, "is_seller", False)):
+        # Check if user has seller role
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can view transfer history."},
                 status=400,
@@ -418,7 +412,7 @@ def list_payout_holds(request):
     """
     try:
         user = request.user
-        if not ((hasattr(user, "role") and user.role == "seller") or getattr(user, "is_seller", False)):
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can view payout holds."}, status=400
             )
@@ -426,8 +420,8 @@ def list_payout_holds(request):
         # Release matured holds for all users (including current user)
         try:
 
-            # Include users flagged as sellers in addition to legacy role
-            sellers = User.objects.filter(role="seller").union(User.objects.filter(is_seller=True))
+            # Get all users with seller role
+            sellers = User.objects.filter(role="seller")
             total_released = 0
             for seller in sellers:
                 released = BalanceService.release_matured_holds(seller)
@@ -513,7 +507,7 @@ def generate_stripe_login_link(request):
         user = request.user
 
         # Only sellers can generate login links
-        if not ((hasattr(user, "role") and user.role == "seller") or getattr(user, "is_seller", False)):
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can access Stripe Dashboard"},
                 status=403,
@@ -558,8 +552,8 @@ def revenue_comparison(request):
     try:
         user = request.user
 
-        # Check if user has seller role (supports legacy role and new flags)
-        if not ((hasattr(user, "role") and user.role == "seller") or getattr(user, "is_seller", False)):
+        # Check if user has seller role
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can access revenue data."},
                 status=400,

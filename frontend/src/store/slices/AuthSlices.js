@@ -278,9 +278,64 @@ const authSlice = createSlice({
       .addCase(verifySiret.rejected, (state, action) => {
         state.siretVerification.loading = false;
         state.siretVerification.error = action.payload?.detail || 'Failed to verify SIRET.';
+      })
+      // Role switching cases
+      .addCase(switchActiveRole.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(switchActiveRole.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.error = null;
+      })
+      .addCase(switchActiveRole.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to switch role';
       });
   },
 });
+
+// Role switching thunk
+export const switchActiveRole = createAsyncThunk(
+  'auth/switchActiveRole',
+  async ({ targetRole }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}api/accounts/role/switch/`, {
+        target_role: targetRole
+      }, {
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
+      });
+      
+      if (response.data) {
+        // Fetch updated profile to get latest onboarding status
+        const profileResponse = await axios.get(`${BASE_URL}api/accounts/profile/`, {
+          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
+        });
+        
+        // Update sessionStorage with the complete updated user data
+        const updatedUser = {
+          ...profileResponse.data,
+          role: response.data.role,
+          active_role: response.data.active_role,
+          available_roles: response.data.available_roles
+        };
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        return {
+          user: updatedUser,
+          role: response.data.role,
+          active_role: response.data.active_role,
+          available_roles: response.data.available_roles
+        };
+      }
+      
+      throw new Error('Invalid response from server');
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to switch role');
+    }
+  }
+);
 
 export const { resetAuthState, logout, setUser, resetSiretVerification } = authSlice.actions;
 export default authSlice.reducer;

@@ -23,8 +23,6 @@ from .views import (
     EligibleProjectsForRating,
     filter_sellers_by_region,
     RoleSwitchView,
-    RoleLoginView,
-    MeView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -33,8 +31,8 @@ app_name = 'accounts'
 urlpatterns = [
     path('seller-register/', SellerRegisterView.as_view(), name='seller-register'),
     path('buyer-register/', BuyerRegistrationView.as_view(), name='buyer-register'),
-    # Added: login with optional desired_role to set active role at sign-in
-    path('login/', RoleLoginView.as_view(), name='login'),
+    # Use standard token obtain view (no role selection at login)
+    path('login/', UserTokenObtainPairView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
@@ -91,6 +89,4 @@ urlpatterns = [
     path('verify-siret/', verify_siret_api, name='verify-siret'),
     # Added: switch active role (seller <-> professional-buyer) for current session/user
     path('role/switch/', RoleSwitchView.as_view(), name='role-switch'),
-    # Added: minimal me endpoint exposing role flags, active role, and statuses
-    path('me/', MeView.as_view(), name='me'),
 ] 

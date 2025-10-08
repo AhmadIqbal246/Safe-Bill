@@ -94,18 +94,14 @@ class SellerRegistrationSerializer(serializers.Serializer):
             is_active=False,
         )
 
-        # Added: seed available roles and default active_role at registration time
-        # Policy: both seller and professional-buyer are available; onboarding remains role-specific
-        if role == "seller":
-            user.is_seller = True
-            user.is_professional_buyer = True
-            user.active_role = "seller"
-            user.save(update_fields=["is_seller", "is_professional_buyer", "active_role"])
-        elif role == "professional-buyer":
-            user.is_professional_buyer = True
-            user.is_seller = True
-            user.active_role = "professional-buyer"
-            user.save(update_fields=["is_seller", "is_professional_buyer", "active_role"])
+        # Seed available roles and set initial active_role mirroring role
+        if role in ["seller", "professional-buyer"]:
+            user.available_roles = ["seller", "professional-buyer"]
+            # Set active_role to mirror the primary role field
+            user.active_role = role
+            # Use system flag to allow setting available_roles
+            user._skip_available_roles_check = True
+            user.save(update_fields=["available_roles", "active_role"])
 
         # Create business detail
         bd = BusinessDetail.objects.create(
@@ -182,6 +178,11 @@ class BuyerRegistrationSerializer(serializers.ModelSerializer):
             role="buyer",
             is_active=False,
         )
+        
+        # Set available_roles for individual buyer
+        user.available_roles = ["buyer"]
+        user._skip_available_roles_check = True
+        user.save(update_fields=["available_roles"])
         BuyerModel.objects.create(
             user=user, first_name=first_name, last_name=last_name, address=address
         )
@@ -210,9 +211,9 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["phone_number"] = user.phone_number
         token["is_admin"] = user.is_admin
         # Added: expose role selection and availability in token for client-side guards
+        # Note: user.role is the primary field, active_role mirrors it for session context
         token["active_role"] = getattr(user, "active_role", None)
-        token["is_seller"] = getattr(user, "is_seller", False)
-        token["is_professional_buyer"] = getattr(user, "is_professional_buyer", False)
+        token["available_roles"] = getattr(user, "available_roles", []) or []
 
         # Added: role-scoped onboarding status derived from Stripe models (seller vs pro-buyer)
         seller_complete = False
@@ -366,6 +367,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     profile_pic = serializers.ImageField(required=False, allow_null=True)
     average_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
+    seller_onboarding_complete = serializers.SerializerMethodField()
+    pro_buyer_onboarding_complete = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -381,11 +384,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "profile_pic",
             "average_rating",
             "rating_count",
+            "available_roles",
             "active_role",
-            "is_seller",
-            "is_professional_buyer",
+            "seller_onboarding_complete",
+            "pro_buyer_onboarding_complete",
         ]
-        read_only_fields = ["email"]  # Only email is read-only now
+        read_only_fields = [
+            "email",
+            "available_roles",
+            "active_role",
+            "seller_onboarding_complete",
+            "pro_buyer_onboarding_complete",
+        ]
 
     def get_type_of_activity(self, obj):
         try:
@@ -423,7 +433,32 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_rating_count(self, obj):
         return obj.rating_count
 
+    def get_seller_onboarding_complete(self, obj):
+        try:
+            sa = StripeAccount.objects.filter(user=obj).first()
+            if not sa:
+                return False
+            data = sa.account_data or {}
+            charges = bool(data.get("charges_enabled", False))
+            payouts = bool(data.get("payouts_enabled", False))
+            return sa.account_status == "active" and charges and payouts
+        except Exception:
+            return False
+
+    def get_pro_buyer_onboarding_complete(self, obj):
+        try:
+            si = StripeIdentity.objects.filter(user=obj).first()
+            if not si:
+                return False
+            return bool(si.identity_verified and si.identity_status == "verified")
+        except Exception:
+            return False
+
     def update(self, instance, validated_data):
+        # Remove system-managed fields to prevent user modification
+        validated_data.pop('available_roles', None)
+        validated_data.pop('active_role', None)
+        
         # Allow username update with uniqueness check
         new_username = validated_data.get("username", instance.username)
         if new_username != instance.username:
