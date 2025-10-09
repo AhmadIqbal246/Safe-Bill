@@ -7,9 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
 from datetime import timedelta
-import logging
-
-logger = logging.getLogger(__name__)
 from .models import Project, Quote, PaymentInstallment, Milestone
 from .serializers import (
     ProjectCreateSerializer,
@@ -128,51 +125,7 @@ class ProjectCreateAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         project = serializer.save()
-        
-        # Capture project ID in closure to avoid scope issues
-        project_id = project.id
-        
-        # Validate project exists before triggering
-        try:
-            from projects.models import Project
-            project_obj = Project.objects.get(id=project_id)
-            logger.info(f"Project {project_id} validated for deal sync")
-        except Project.DoesNotExist:
-            logger.error(f"Project {project_id} not found for deal sync")
-            return
-        
-        def trigger_deal_sync():
-            import logging
-            logger = logging.getLogger(__name__)
-            
-            # Retry mechanism for deal sync
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    logger.info(f"Triggering deal sync for project {project_id} (attempt {attempt + 1})")
-                    result = sync_deal_task.delay(project_id)
-                    logger.info(f"Deal sync task queued: {result.id}")
-                    return  # Success, exit retry loop
-                except Exception as e:
-                    logger.error(f"Attempt {attempt + 1} failed for deal sync project {project_id}: {e}")
-                    if attempt == max_retries - 1:  # Last attempt
-                        logger.error(f"All {max_retries} attempts failed for deal sync project {project_id}")
-                    else:
-                        import time
-                        time.sleep(0.5)  # Brief delay before retry
-        
-        try:
-            transaction.on_commit(trigger_deal_sync)
-            logger.info(f"Deal sync enqueued for project {project_id}")
-        except Exception as e:
-            logger.error(f"Failed to enqueue deal sync for project {project_id}: {e}")
-            # Fallback: try to trigger immediately if transaction.on_commit fails
-            try:
-                logger.info(f"Attempting fallback deal sync for project {project_id}")
-                result = sync_deal_task.delay(project_id)
-                logger.info(f"Fallback deal sync task queued: {result.id}")
-            except Exception as fallback_error:
-                logger.error(f"Fallback deal sync also failed for project {project_id}: {fallback_error}")
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
 
 class ProjectListAPIView(generics.ListAPIView):
@@ -246,17 +199,7 @@ class ProjectStatusUpdateAPIView(APIView):
         # Update status to in_progress
         project.status = "in_progress"
         project.save()
-        
-        # Trigger deal sync with proper error handling
-        project_id = project.id
-        def trigger_deal_sync():
-            try:
-                logger.info(f"Triggering deal sync for project {project_id} (status update)")
-                result = sync_deal_task.delay(project_id)
-                logger.info(f"Deal sync task queued: {result.id}")
-            except Exception as e:
-                logger.error(f"Failed to trigger deal sync for project {project_id}: {e}")
-        transaction.on_commit(trigger_deal_sync)
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
         # Create notification for the client
         if project.client:
@@ -349,17 +292,7 @@ class ProjectCompletionAPIView(APIView):
         # Update status to completed
         project.status = "completed"
         project.save()
-        
-        # Trigger deal sync with proper error handling
-        project_id = project.id
-        def trigger_deal_sync():
-            try:
-                logger.info(f"Triggering deal sync for project {project_id} (status completed)")
-                result = sync_deal_task.delay(project_id)
-                logger.info(f"Deal sync task queued: {result.id}")
-            except Exception as e:
-                logger.error(f"Failed to trigger deal sync for project {project_id}: {e}")
-        transaction.on_commit(trigger_deal_sync)
+        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
         # Create notification for the client
         if project.client:
@@ -642,17 +575,7 @@ class ProjectInviteAPIView(APIView):
             project.status = "approved"
             project.client = request.user
             project.save()
-            
-            # Trigger deal sync with proper error handling
-            project_id = project.id
-            def trigger_deal_sync():
-                try:
-                    logger.info(f"Triggering deal sync for project {project_id} (project approved)")
-                    result = sync_deal_task.delay(project_id)
-                    logger.info(f"Deal sync task queued: {result.id}")
-                except Exception as e:
-                    logger.error(f"Failed to trigger deal sync for project {project_id}: {e}")
-            transaction.on_commit(trigger_deal_sync)
+            transaction.on_commit(lambda: sync_deal_task.delay(project.id))
             # Also refresh the milestones summary so client_name appears
             try:
                 for m in project.milestones.all()[:1]:
@@ -687,17 +610,7 @@ class ProjectInviteAPIView(APIView):
             if project.client == request.user:
                 project.client = None
             project.save()
-            
-            # Trigger deal sync with proper error handling
-            project_id = project.id
-            def trigger_deal_sync():
-                try:
-                    logger.info(f"Triggering deal sync for project {project_id} (project rejected)")
-                    result = sync_deal_task.delay(project_id)
-                    logger.info(f"Deal sync task queued: {result.id}")
-                except Exception as e:
-                    logger.error(f"Failed to trigger deal sync for project {project_id}: {e}")
-            transaction.on_commit(trigger_deal_sync)
+            transaction.on_commit(lambda: sync_deal_task.delay(project.id))
 
             # Create notification for the seller
             NotificationService.create_notification(
