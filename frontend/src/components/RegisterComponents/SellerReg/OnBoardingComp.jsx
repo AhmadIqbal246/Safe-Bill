@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { UploadCloud, X, CheckCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -14,6 +14,7 @@ import {
   createStripeIdentitySession,
   checkStripeIdentityStatus,
 } from "../../../store/slices/ConnectStripe";
+import { setUser } from "../../../store/slices/AuthSlices";
 
 // const documents = [
 //   { key: "kbis", labelKey: "onboarding.upload_kbis" },
@@ -42,7 +43,6 @@ const requiredDocs = [
 
 export default function OnBoardingComp() {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState(2);
   const [files] = useState({});
   // const [bank] = useState({
   //   account_holder: "",
@@ -59,7 +59,55 @@ export default function OnBoardingComp() {
 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const role = user?.role;
+  
+  // Added error handling for user object
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+  
+  // Added: prefer role for onboarding branching; fallback to active_role
+  const role = user?.role || user?.active_role;
+  const proBuyerComplete = user?.pro_buyer_onboarding_complete === true;
+  const sellerComplete = user?.seller_onboarding_complete === true;
+  
+  // Calculate the correct step based on current role and onboarding status
+  const correctStep = useMemo(() => {
+    try {
+      if (!role) return 1;
+      
+      if (role === "seller" && sellerComplete) {
+        return 3; // Show completion for sellers
+      } else if (role === "professional-buyer" && proBuyerComplete) {
+        return 3; // Show completion for pro buyers
+      } else if (role === "seller" && !sellerComplete) {
+        return 2; // Show Stripe Connect for sellers
+      } else if (role === "professional-buyer" && !proBuyerComplete) {
+        return 2; // Show Stripe Identity for pro buyers
+      } else {
+        return 1; // Default to step 1
+      }
+    } catch (error) {
+      console.error('Error calculating correctStep:', error);
+      return 1; // Fallback to step 1
+    }
+  }, [role, sellerComplete, proBuyerComplete]);
+
+  // Use derived state instead of local state to prevent re-renders
+  const currentStep = correctStep;
+
+  // Debug logging for onboarding status (only when values change)
+  useEffect(() => {
+    console.log('OnBoardingComp Debug:', {
+      role,
+      sellerComplete,
+      proBuyerComplete,
+      currentStep,
+      user: user ? {
+        seller_onboarding_complete: user.seller_onboarding_complete,
+        pro_buyer_onboarding_complete: user.pro_buyer_onboarding_complete
+      } : null
+    });
+  }, [role, sellerComplete, proBuyerComplete, currentStep, user]);
   const { loading, error, success } = useSelector(
     (state) => state.businessDetail
   );
@@ -96,14 +144,27 @@ export default function OnBoardingComp() {
 
   const navigate = useNavigate();
 
-  const handleRoleBasedNavigation = () => {
+  // Added: immediately redirect verified users away from onboarding
+  useEffect(() => {
+    if (role === "professional-buyer" && proBuyerComplete) {
+      navigate("/");
+    }
+    if (role === "seller" && sellerComplete) {
+      // Optional: redirect sellers with completed onboarding straight to dashboard
+      // navigate("/seller-dashboard");
+    }
+  }, [role, proBuyerComplete, sellerComplete, navigate]);
+
+  // No need for useEffect since we're using derived state
+
+  const handleRoleBasedNavigation = useCallback(() => {
     const userStr = sessionStorage.getItem("user");
     if (userStr) {
       try {
         const userObj = JSON.parse(userStr);
-        if (userObj.role === "seller") {
+        if ((userObj.role || userObj.active_role) === "seller") {
           navigate("/seller-dashboard");
-        } else if (userObj.role === "professional-buyer") {
+        } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
           navigate("/");
         } else {
           // Default fallback
@@ -117,7 +178,7 @@ export default function OnBoardingComp() {
       // Fallback if no user in session
       navigate("/seller-dashboard");
     }
-  };
+  }, [navigate]);
 
   // const validateFileTypeAndSize = (key, file) => {
   //   const maxSize = 7 * 1024 * 1024; // 7 MB
@@ -187,7 +248,7 @@ export default function OnBoardingComp() {
     if (
       role === "seller" &&
       stripeStatusData &&
-      !stripeStatusData.onboarding_complete
+      !sellerComplete
     ) {
       return;
     }
@@ -226,26 +287,12 @@ export default function OnBoardingComp() {
 
   useEffect(() => {
     if (success) {
-      // Only auto-advance after documents for sellers
-      if (role === "seller") {
-        setCurrentStep(3);
-      }
+      // Reset business detail state after successful upload
       dispatch(resetBusinessDetailState());
-      // Update onboarding_complete only for sellers
-      const userStr = sessionStorage.getItem("user");
-      if (userStr) {
-        try {
-          const userObj = JSON.parse(userStr);
-          if (role === "seller") {
-            userObj.onboarding_complete = true;
-          }
-          sessionStorage.setItem("user", JSON.stringify(userObj));
-        } catch {
-          // Ignore parsing errors
-        }
-      }
+      // Note: currentStep is now derived from role and onboarding status
+      // No need to manually set it
     }
-  }, [success, dispatch, role]);
+  }, [success, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -261,7 +308,7 @@ export default function OnBoardingComp() {
     { number: 1, title: "Basic Information", active: currentStep >= 1 },
     {
       number: 2,
-      title: role == "seller" ? "Connect Stripe" : "Identity Verification",
+      title: role === "seller" ? "Connect Stripe" : "Identity Verification",
       active: false,
     },
     { number: 3, title: "Verification", active: false },
@@ -303,7 +350,7 @@ export default function OnBoardingComp() {
     const checkStripeOnboardingStatus = () => {
       const accessToken = sessionStorage.getItem("access");
       if (accessToken) {
-        if (role === "seller") {
+          if (role === "seller") {
           dispatch(checkStripeStatus({ accessToken }));
         } else if (role === "professional-buyer") {
           dispatch(checkStripeIdentityStatus({ accessToken }));
@@ -327,7 +374,7 @@ export default function OnBoardingComp() {
     const fetchStatusOnMount = () => {
       const accessToken = sessionStorage.getItem("access");
       if (accessToken) {
-        if (role === "seller") {
+          if (role === "seller") {
           dispatch(checkStripeStatus({ accessToken }));
         } else if (role === "professional-buyer") {
           dispatch(checkStripeIdentityStatus({ accessToken }));
@@ -346,9 +393,24 @@ export default function OnBoardingComp() {
       console.log("Account Status:", stripeStatusData.account_status);
       console.log("Onboarding Complete:", stripeStatusData.onboarding_complete);
 
-      if (stripeStatusData.onboarding_complete) {
-        // Stripe onboarding is complete, move to step 3
-        setCurrentStep(3);
+      // If backend reports completion, immediately merge into auth.user to refresh UI
+      if (stripeStatusData.onboarding_complete === true || stripeStatusData.seller_onboarding_complete === true) {
+        try {
+          const currentUserStr = sessionStorage.getItem("user");
+          const currentUser = currentUserStr ? JSON.parse(currentUserStr) : user;
+          const mergedUser = {
+            ...(currentUser || {}),
+            seller_onboarding_complete: true,
+          };
+          dispatch(setUser(mergedUser));
+        } catch (e) {
+          // no-op if session storage parsing fails
+        }
+      }
+
+      if (sellerComplete) {
+        // Stripe onboarding is complete, step will be automatically set to 3
+        // No need to manually set currentStep
       } else if (
         stripeStatusData.account_status &&
         stripeStatusData.account_status.toLowerCase() === "onboarding"
@@ -381,9 +443,24 @@ export default function OnBoardingComp() {
         stripeIdentityStatusData.identity_status
       );
 
+      // If backend reports identity verified, immediately merge into auth.user to refresh UI
+      if (stripeIdentityStatusData.identity_verified === true || stripeIdentityStatusData.pro_buyer_onboarding_complete === true) {
+        try {
+          const currentUserStr = sessionStorage.getItem("user");
+          const currentUser = currentUserStr ? JSON.parse(currentUserStr) : user;
+          const mergedUser = {
+            ...(currentUser || {}),
+            pro_buyer_onboarding_complete: true,
+          };
+          dispatch(setUser(mergedUser));
+        } catch (e) {
+          // no-op if session storage parsing fails
+        }
+      }
+
       if (stripeIdentityStatusData.identity_verified) {
-        // Identity verification is complete, move to step 3
-        setCurrentStep(3);
+        // Identity verification is complete, step will be automatically set to 3
+        // No need to manually set currentStep
       } else if (stripeIdentityStatusData.identity_status === "failed") {
         toast.error("Identity verification failed. Please try again.");
       } else if (stripeIdentityStatusData.identity_status === "canceled") {
@@ -573,7 +650,7 @@ export default function OnBoardingComp() {
                     <div className="mb-6">
                       <div
                         className={`border rounded-lg p-4 ${
-                          stripeStatusData.onboarding_complete
+                          sellerComplete
                             ? "border-green-200 bg-green-50"
                             : "border-yellow-200 bg-yellow-50"
                         }`}
@@ -582,12 +659,12 @@ export default function OnBoardingComp() {
                           <div>
                             <h4
                               className={`font-semibold ${
-                                stripeStatusData.onboarding_complete
+                                sellerComplete
                                   ? "text-green-800"
                                   : "text-yellow-800"
                               }`}
                             >
-                              {stripeStatusData.onboarding_complete
+                              {sellerComplete
                                 ? t(
                                     "onboarding.stripe_complete_title",
                                     "Stripe Setup Complete"
@@ -599,19 +676,19 @@ export default function OnBoardingComp() {
                             </h4>
                             <p
                               className={`text-sm mt-1 ${
-                                stripeStatusData.onboarding_complete
+                                sellerComplete
                                   ? "text-green-700"
                                   : "text-yellow-700"
                               }`}
                             >
-                              {stripeStatusData.onboarding_complete
+                              {sellerComplete
                                 ? "Your Stripe account is ready to receive payments"
                                 : t(
                                     "onboarding.stripe_incomplete_default",
                                     "Your Stripe account setup is not yet complete."
                                   )}
                             </p>
-                            {!stripeStatusData.onboarding_complete && (
+                            {!sellerComplete && (
                               <div className="mt-2 text-sm text-yellow-700">
                                 <p className="font-medium">
                                   Missing requirements:
@@ -987,7 +1064,7 @@ export default function OnBoardingComp() {
                   loading ||
                   (role === "seller" &&
                     stripeStatusData &&
-                    !stripeStatusData.onboarding_complete) ||
+                    !sellerComplete) ||
                   (role === "professional-buyer" &&
                     stripeIdentityStatusData &&
                     !stripeIdentityStatusData.identity_verified) ||
@@ -1005,7 +1082,7 @@ export default function OnBoardingComp() {
                   loading ||
                   (role === "seller" &&
                     stripeStatusData &&
-                    !stripeStatusData.onboarding_complete) ||
+                    !sellerComplete) ||
                   (role === "professional-buyer" &&
                     stripeIdentityStatusData &&
                     !stripeIdentityStatusData.identity_verified) ||
@@ -1041,9 +1118,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if (userObj.role === "seller") {
+                    if ((userObj.role || userObj.active_role) === "seller") {
                       return t("onboarding.go_to_dashboard_seller");
-                    } else if (userObj.role === "professional-buyer") {
+                    } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
                       return t("onboarding.go_to_home_professional_buyer");
                     }
                   } catch {
@@ -1062,9 +1139,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if (userObj.role === "seller") {
+                    if ((userObj.role || userObj.active_role) === "seller") {
                       return t("onboarding.go_to_dashboard");
-                    } else if (userObj.role === "professional-buyer") {
+                    } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
                       return t("onboarding.go_to_home");
                     }
                   } catch {

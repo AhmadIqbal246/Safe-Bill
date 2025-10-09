@@ -53,11 +53,14 @@ export const registerSellerWithBasicAndBussiness = createAsyncThunk(
 // Login thunk
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ email, password }, { rejectWithValue }) => {
+  // Added: optional desiredRole to log in as a specific role (seller | professional-buyer)
+  async ({ email, password, desiredRole }, { rejectWithValue }) => {
     try {
+      const payload = { email, password };
+      if (desiredRole) payload.desired_role = desiredRole; // Added: send desired role to backend
       const response = await axios.post(
         `${BASE_URL}api/accounts/login/`,
-        { email, password }
+        payload
       );
       // Decode user info from access token
       const decodedUser = jwtDecode(response.data.access);
@@ -171,6 +174,8 @@ export const registerBuyer = createAsyncThunk(
   }
 );
 
+// Removed in-app role switcher: switching roles occurs only via login with desired_role
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -257,6 +262,7 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.success = false;
       })
+      // In-app role switching disabled by requirement
       .addCase(verifySiret.pending, (state) => {
         state.siretVerification.loading = true;
         state.siretVerification.error = null;
@@ -272,9 +278,66 @@ const authSlice = createSlice({
       .addCase(verifySiret.rejected, (state, action) => {
         state.siretVerification.loading = false;
         state.siretVerification.error = action.payload?.detail || 'Failed to verify SIRET.';
+      })
+      // Role switching cases
+      .addCase(switchActiveRole.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(switchActiveRole.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.error = null;
+        // Force update sessionStorage with the complete user data
+        sessionStorage.setItem('user', JSON.stringify(action.payload.user));
+      })
+      .addCase(switchActiveRole.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to switch role';
       });
   },
 });
+
+// Role switching thunk
+export const switchActiveRole = createAsyncThunk(
+  'auth/switchActiveRole',
+  async ({ targetRole }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}api/accounts/role/switch/`, {
+        target_role: targetRole
+      }, {
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
+      });
+      
+      if (response.data) {
+        // Fetch updated profile to get latest onboarding status
+        const profileResponse = await axios.get(`${BASE_URL}api/accounts/profile/`, {
+          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
+        });
+        
+        // Update sessionStorage with the complete updated user data
+        const updatedUser = {
+          ...profileResponse.data,
+          role: response.data.role,
+          active_role: response.data.active_role,
+          available_roles: response.data.available_roles
+        };
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        return {
+          user: updatedUser,
+          role: response.data.role,
+          active_role: response.data.active_role,
+          available_roles: response.data.available_roles
+        };
+      }
+      
+      throw new Error('Invalid response from server');
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to switch role');
+    }
+  }
+);
 
 export const { resetAuthState, logout, setUser, resetSiretVerification } = authSlice.actions;
 export default authSlice.reducer;

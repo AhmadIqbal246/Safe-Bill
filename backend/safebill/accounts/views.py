@@ -362,6 +362,46 @@ class ResendVerificationView(APIView):
         )
 
 
+# Added: login endpoint that accepts desired_role and sets active_role if available
+# Removed RoleLoginView; login handled by UserTokenObtainPairView in urls
+
+# Added: switch active_role for the authenticated user (seller <-> professional-buyer)
+class RoleSwitchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target_role = (request.data.get("target_role") or "").strip()
+        if target_role not in ["seller", "professional-buyer"]:
+            return Response({"detail": "Invalid target_role."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+
+        # Explicit validation: Only seller and professional-buyer users can switch roles
+        if user.role not in ["seller", "professional-buyer"]:
+            return Response({
+                "detail": "Role switching is only available for seller and professional-buyer accounts."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate availability strictly via available_roles array
+        roles_list = getattr(user, "available_roles", []) or []
+        if target_role not in roles_list:
+            return Response({"detail": "Requested role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+
+        # Persist legacy role as primary and mirror to active_role
+        user.role = target_role
+        user.active_role = target_role
+        user.save(update_fields=["role", "active_role"])
+
+        return Response({
+            "detail": "Role switched successfully.",
+            "role": user.role,
+            "active_role": user.active_role,
+            "available_roles": roles_list,
+        }, status=status.HTTP_200_OK)
+
+
+# Removed MeView; profile and token already expose required info
+
 
 class OnboardingStatusView(APIView):
     permission_classes = [IsAuthenticated]

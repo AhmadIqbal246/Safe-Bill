@@ -94,6 +94,15 @@ class SellerRegistrationSerializer(serializers.Serializer):
             is_active=False,
         )
 
+        # Seed available roles and set initial active_role mirroring role
+        if role in ["seller", "professional-buyer"]:
+            user.available_roles = ["seller", "professional-buyer"]
+            # Set active_role to mirror the primary role field
+            user.active_role = role
+            # Use system flag to allow setting available_roles
+            user._skip_available_roles_check = True
+            user.save(update_fields=["available_roles", "active_role"])
+
         # Create business detail
         bd = BusinessDetail.objects.create(
             user=user,
@@ -169,6 +178,11 @@ class BuyerRegistrationSerializer(serializers.ModelSerializer):
             role="buyer",
             is_active=False,
         )
+        
+        # Set available_roles for individual buyer
+        user.available_roles = ["buyer"]
+        user._skip_available_roles_check = True
+        user.save(update_fields=["available_roles"])
         BuyerModel.objects.create(
             user=user, first_name=first_name, last_name=last_name, address=address
         )
@@ -196,6 +210,14 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["is_email_verified"] = user.is_email_verified
         token["phone_number"] = user.phone_number
         token["is_admin"] = user.is_admin
+        # Added: expose role selection and availability in token for client-side guards
+        # Note: user.role is the primary field, active_role mirrors it for session context
+        token["active_role"] = getattr(user, "active_role", None)
+        token["available_roles"] = getattr(user, "available_roles", []) or []
+
+        # Use stored onboarding completion fields
+        token["seller_onboarding_complete"] = user.seller_onboarding_complete
+        token["pro_buyer_onboarding_complete"] = user.pro_buyer_onboarding_complete
         return token
 
 
@@ -324,6 +346,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     profile_pic = serializers.ImageField(required=False, allow_null=True)
     average_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
+    seller_onboarding_complete = serializers.BooleanField(read_only=True)
+    pro_buyer_onboarding_complete = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
@@ -339,8 +363,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "profile_pic",
             "average_rating",
             "rating_count",
+            "available_roles",
+            "active_role",
+            "seller_onboarding_complete",
+            "pro_buyer_onboarding_complete",
         ]
-        read_only_fields = ["email"]  # Only email is read-only now
+        read_only_fields = [
+            "email",
+            "available_roles",
+            "active_role",
+            "seller_onboarding_complete",
+            "pro_buyer_onboarding_complete",
+        ]
 
     def get_type_of_activity(self, obj):
         try:
@@ -378,7 +412,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_rating_count(self, obj):
         return obj.rating_count
 
+
     def update(self, instance, validated_data):
+        # Remove system-managed fields to prevent user modification
+        validated_data.pop('available_roles', None)
+        validated_data.pop('active_role', None)
+        
         # Allow username update with uniqueness check
         new_username = validated_data.get("username", instance.username)
         if new_username != instance.username:

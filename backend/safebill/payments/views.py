@@ -47,7 +47,14 @@ def create_stripe_payment(request, project_id):
     Create a Stripe checkout session for the authenticated user
     """
     user = request.user
+    # Added: enforce buyer-side context and prevent self-payment
+    # Allow both Professional Buyer and Individual Buyer accounts
+    active_role = getattr(user, "active_role", None)
+    if not (getattr(user, "role", None) in ["professional-buyer", "buyer"]):
+        return Response({"detail": "Only buyers can create a payment."}, status=403)
     project = Project.objects.get(id=project_id)
+    if getattr(project, "user_id", None) == getattr(user, "id", None):
+        return Response({"detail": "You cannot pay your own project."}, status=400)
     redirect_url = request.data.get("redirect_url")
     stripe.api_key = settings.STRIPE_API_KEY
 
@@ -290,7 +297,7 @@ def transfer_to_stripe_account(request):
         user = request.user
 
         # Check if user has seller role
-        if not hasattr(user, "role") or user.role != "seller":
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can transfer funds."},
                 status=400,
@@ -345,7 +352,7 @@ def get_transfer_info(request):
         user = request.user
 
         # Check if user has seller role
-        if not hasattr(user, "role") or user.role != "seller":
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can access transfer information."},
                 status=400,
@@ -374,7 +381,7 @@ def list_transfers(request):
         user = request.user
 
         # Check if user has seller role
-        if not hasattr(user, "role") or user.role != "seller":
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can view transfer history."},
                 status=400,
@@ -405,7 +412,7 @@ def list_payout_holds(request):
     """
     try:
         user = request.user
-        if not hasattr(user, "role") or user.role != "seller":
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can view payout holds."}, status=400
             )
@@ -413,6 +420,7 @@ def list_payout_holds(request):
         # Release matured holds for all users (including current user)
         try:
 
+            # Get all users with seller role
             sellers = User.objects.filter(role="seller")
             total_released = 0
             for seller in sellers:
@@ -499,7 +507,7 @@ def generate_stripe_login_link(request):
         user = request.user
 
         # Only sellers can generate login links
-        if user.role != "seller":
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can access Stripe Dashboard"},
                 status=403,
@@ -545,7 +553,7 @@ def revenue_comparison(request):
         user = request.user
 
         # Check if user has seller role
-        if not hasattr(user, "role") or user.role != "seller":
+        if not (getattr(user, "role", None) == "seller"):
             return Response(
                 {"detail": "Only sellers can access revenue data."},
                 status=400,

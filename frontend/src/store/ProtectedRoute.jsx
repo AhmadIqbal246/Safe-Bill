@@ -1,12 +1,15 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 export default function ProtectedRoute({ children, redirectTo = "/login", requiredRole }) {
   const location = useLocation();
-  // Check both user and access token in sessionStorage
-  const user = JSON.parse(sessionStorage.getItem("user"));
-  const access = sessionStorage.getItem("access");
+  // Get user and access token from Redux store instead of sessionStorage
+  const user = useSelector((state) => state.auth.user);
+  const access = useSelector((state) => state.auth.access);
   const adminRoleFlag = user?.is_admin;
+  
+  console.log("ProtectedRoute - Current user from Redux:", user);
   console.log("adminRoleFlag", adminRoleFlag);
 
   if (!user && !access) {
@@ -18,7 +21,8 @@ export default function ProtectedRoute({ children, redirectTo = "/login", requir
 
   // Role-based protection
   if (requiredRole) {
-    const userRole = user?.role;
+    // Added: prefer role from token/me for route guards; fallback to active_role
+    const userRole = user?.role || user?.active_role;
     let hasRequiredRole = false;
 
     // Handle both single role (string) and multiple roles (array)

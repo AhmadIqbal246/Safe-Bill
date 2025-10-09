@@ -38,6 +38,10 @@ def connect_stripe(request):
     stripe.api_key = settings.STRIPE_API_KEY
     user = request.user
 
+    # Added: restrict Connect onboarding to users with seller role enabled
+    if not (getattr(user, "role", None) == "seller"):
+        return Response({"detail": "Seller role not enabled for this account."}, status=409)
+
     # Get or create StripeAccount for the user
     stripe_account, created = StripeAccount.objects.get_or_create(
         user=user, defaults={"account_status": "onboarding"}
@@ -136,6 +140,7 @@ def stripe_connect_webhook(request):
             if is_onboarding_complete:
                 stripe_account.account_status = "active"
                 user.onboarding_complete = True
+                user.seller_onboarding_complete = True
                 user.save()
                 stripe_account.onboarding_complete = True
 
@@ -282,6 +287,7 @@ def check_stripe_status(request):
                 stripe_account.account_status = "active"
                 stripe_account.onboarding_complete = True
                 user.onboarding_complete = True
+                user.seller_onboarding_complete = True
                 user.save()
 
                 # Sync with HubSpot after Stripe onboarding completion
@@ -317,6 +323,7 @@ def check_stripe_status(request):
                 {
                     "stripe_connected": True,
                     "onboarding_complete": stripe_account.onboarding_complete,
+                    "seller_onboarding_complete": getattr(user, "seller_onboarding_complete", False),
                     "account_status": stripe_account.account_status,
                     "charges_enabled": charges_enabled,
                     "payouts_enabled": payouts_enabled,
@@ -336,6 +343,7 @@ def check_stripe_status(request):
                 {
                     "stripe_connected": True,
                     "onboarding_complete": stripe_account.onboarding_complete,
+                    "seller_onboarding_complete": getattr(user, "seller_onboarding_complete", False),
                     "account_status": stripe_account.account_status,
                     "error": "Failed to fetch latest account status from Stripe",
                     "account_data": stripe_account.account_data,
@@ -347,6 +355,7 @@ def check_stripe_status(request):
             {
                 "stripe_connected": False,
                 "onboarding_complete": False,
+                "seller_onboarding_complete": getattr(user, "seller_onboarding_complete", False),
                 "account_status": stripe_account.account_status,
                 "message": "No Stripe account ID found",
             },
@@ -363,6 +372,10 @@ def create_stripe_identity_session(request):
     """
     stripe.api_key = settings.STRIPE_API_KEY
     user = request.user
+
+    # Added: restrict Identity verification to users with professional-buyer role enabled
+    if not (getattr(user, "role", None) == "professional-buyer"):
+        return Response({"detail": "Professional-buyer role not enabled for this account."}, status=409)
 
     try:
         # Get or create StripeIdentity for the user
@@ -431,6 +444,7 @@ def check_stripe_identity_status(request):
             {
                 "identity_verified": stripe_identity.identity_verified,
                 "identity_status": stripe_identity.identity_status,
+                "pro_buyer_onboarding_complete": getattr(user, "pro_buyer_onboarding_complete", False),
                 "verification_data": stripe_identity.verification_data,
             },
             status=200,
@@ -440,6 +454,7 @@ def check_stripe_identity_status(request):
             {
                 "identity_verified": False,
                 "identity_status": "not_started",
+                "pro_buyer_onboarding_complete": getattr(user, "pro_buyer_onboarding_complete", False),
                 "verification_data": {},
             },
             status=200,
@@ -516,6 +531,7 @@ def stripe_identity_webhook(request):
             stripe_identity.verification_data = event
 
             user.onboarding_complete = True
+            user.pro_buyer_onboarding_complete = True
             user.save()
             stripe_identity.verified_at = timezone.now()
             stripe_identity.save()

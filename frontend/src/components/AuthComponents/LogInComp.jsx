@@ -39,31 +39,28 @@ export default function LogInComp() {
   };
 
   // Debug function to check current user data
-  const debugUserData = () => {
-    const storedUser = sessionStorage.getItem('user');
-    const storedAccess = sessionStorage.getItem('access');
-    console.log('=== DEBUG USER DATA ===');
-    console.log('Stored user:', storedUser);
-    console.log('Stored access:', storedAccess);
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      console.log('Parsed user:', parsedUser);
-      console.log('User role:', parsedUser.role);
-      console.log('Role comparison tests:');
-      console.log('role === "buyer":', parsedUser.role === 'buyer');
-      console.log('role === "professional-buyer":', parsedUser.role === 'professional-buyer');
-      console.log('role.includes("buyer"):', parsedUser.role && parsedUser.role.includes('buyer'));
-    }
-    console.log('=====================');
-  };
+  // const debugUserData = () => {
+  //   const storedUser = sessionStorage.getItem('user');
+  //   const storedAccess = sessionStorage.getItem('access');
+  //   console.log('=== DEBUG USER DATA ===');
+  //   console.log('Stored user:', storedUser);
+  //   console.log('Stored access:', storedAccess);
+  //   if (storedUser) {
+  //     const parsedUser = JSON.parse(storedUser);
+  //     console.log('Parsed user:', parsedUser);
+  //     console.log('User role:', parsedUser.role);
+  //     console.log('Role comparison tests:');
+  //     console.log('role === "buyer":', parsedUser.role === 'buyer');
+  //     console.log('role === "professional-buyer":', parsedUser.role === 'professional-buyer');
+  //     console.log('role.includes("buyer"):', parsedUser.role && parsedUser.role.includes('buyer'));
+  //   }
+  //   console.log('=====================');
+  // };
 
   useEffect(() => {
     if (success && user) {
       toast.success(t("login.login_successful"));
-      console.log("User data:", user);
-      console.log("User role:", user.role);
-      console.log("User role type:", typeof user.role);
-      console.log("User onboarding status:", user.onboarding_complete);
+
       
       setTimeout(() => {
         dispatch(resetAuthState());
@@ -71,9 +68,15 @@ export default function LogInComp() {
         // Determine where to redirect after successful login
         let targetUrl = "/"; // default fallback
         
-        if (user.onboarding_complete === false && 
-          (user.role === 'seller' || user.role === 'professional-buyer')) {
-          targetUrl = "/onboarding";
+        // Added: prefer role and role-scoped onboarding statuses
+        const activeRole = user.role || user.active_role;
+        const sellerComplete = user.seller_onboarding_complete;
+        const proBuyerComplete = user.pro_buyer_onboarding_complete;
+
+        if (activeRole === 'seller' && sellerComplete === false) {
+          targetUrl = '/onboarding';
+        } else if (activeRole === 'professional-buyer' && proBuyerComplete === false) {
+          targetUrl = '/onboarding';
         } else if (redirectUrl) {
           // If there's a redirect URL, use it (with validation)
           try {
@@ -86,19 +89,15 @@ export default function LogInComp() {
             console.warn(t("login.invalid_redirect_url"), redirectUrl);
             // Fall back to dashboard
           }
-        } else if (user.onboarding_complete !== false) {
-          // Role-based default landing pages
+        } else {
+          // Role-based default landings using active role
           if (user.role === 'admin') {
             targetUrl = '/admin';
-          } else if (user.role === 'professional-buyer') {
+          } else if (user.role === 'buyer' || activeRole === 'professional-buyer') {
             targetUrl = '/buyer-dashboard';
-          } else if (user.role === 'seller') {
+          } else if (activeRole === 'seller') {
             targetUrl = '/seller-dashboard';
           }
-        } else if (user.role === 'buyer') {
-          targetUrl = '/buyer-dashboard';
-        } else if (user.role === 'admin') {
-          targetUrl = '/admin';
         }
         
         navigate(targetUrl);
@@ -155,6 +154,7 @@ export default function LogInComp() {
               <p className="text-red-600 text-sm mt-1">{t(emailError)}</p>
             )}
           </div>
+          {/* Role selection removed; users will switch roles via navbar toggle */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.password")}</label>
             <div className="relative">

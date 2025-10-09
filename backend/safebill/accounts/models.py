@@ -19,6 +19,10 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    # Canonical list of roles this user is allowed to switch to (system-managed, not user-editable)
+    available_roles = models.JSONField(default=list, blank=True, help_text="System-managed field - users cannot edit this directly")
+    # Added: active role for this session/user to drive dashboards, routing, and permissions
+    active_role = models.CharField(max_length=20, choices=[('seller', 'Seller'), ('professional-buyer', 'Professional Buyer')], blank=True, null=True)
     is_admin = models.BooleanField(
         default=False, 
         help_text=(
@@ -26,6 +30,9 @@ class User(AbstractUser):
         )
     )
     onboarding_complete = models.BooleanField(default=False)
+    # New onboarding completion fields for role-specific tracking
+    seller_onboarding_complete = models.BooleanField(default=False)
+    pro_buyer_onboarding_complete = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_pic = models.ImageField(
@@ -37,6 +44,22 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+    def save(self, *args, **kwargs):
+        # Ensure available_roles is only set by the system, not by user input
+        # This prevents users from modifying their available roles
+        if hasattr(self, '_skip_available_roles_check'):
+            # Skip the check if this is a system operation
+            super().save(*args, **kwargs)
+        else:
+            # For normal saves, preserve the existing available_roles
+            if self.pk:
+                try:
+                    original = User.objects.get(pk=self.pk)
+                    self.available_roles = original.available_roles
+                except User.DoesNotExist:
+                    pass
+            super().save(*args, **kwargs)
 
     @property
     def is_super_admin(self):

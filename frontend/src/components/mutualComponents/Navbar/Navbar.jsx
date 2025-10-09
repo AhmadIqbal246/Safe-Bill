@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../../../store/slices/AuthSlices";
+import { logoutUser, switchActiveRole } from "../../../store/slices/AuthSlices";
 import {
   fetchNotifications,
   markNotificationRead,
@@ -86,12 +86,51 @@ export default function SafeBillHeader({
         user.is_admin === true))
   );
 
-  const canSeeProjectInvite = !!(
-    user &&
-    (user.role === "buyer" || user.role === "professional-buyer")
+  // Visibility based on current role
+  const canSeeProjectInvite = !!(user && (user.role === "professional-buyer" || user.role === "buyer"));
+  const canSeeSellerDashboard = !!(user && user.role === "seller");
+
+  // Toggle visibility: show only if both seller and professional-buyer are enabled
+  // AND user's current role is either seller or professional-buyer
+  const canToggleRoles = !!(
+    user && 
+    Array.isArray(user.available_roles) &&
+    user.available_roles.includes("seller") &&
+    user.available_roles.includes("professional-buyer") &&
+    (user.role === "seller" || user.role === "professional-buyer")
   );
 
-  const canSeeSellerDashboard = !!(user && user.role === "seller");
+  const handleToggleRole = async () => {
+    if (!user) return;
+    const targetRole = user.role === "seller" ? "professional-buyer" : "seller";
+    
+    try {
+      const action = await dispatch(switchActiveRole({ targetRole }));
+      
+      if (action?.error) {
+        console.error('Role switch failed:', action.error);
+        return;
+      }
+      
+      const updated = action?.payload?.user || null;
+      const role = updated?.role || user.role;
+      const sellerComplete = !!updated?.seller_onboarding_complete;
+      const proBuyerComplete = !!updated?.pro_buyer_onboarding_complete;
+      
+      // Determine the target URL based on the new role
+      let targetUrl = '/';
+      if (role === 'seller') {
+        targetUrl = !sellerComplete ? '/onboarding' : '/seller-dashboard';
+      } else if (role === 'professional-buyer') {
+        targetUrl = !proBuyerComplete ? '/onboarding' : '/buyer-dashboard';
+      }
+      
+      // Use React Router navigation - ProtectedRoute will automatically re-evaluate
+      navigate(targetUrl);
+    } catch (error) {
+      console.error('Error in role switch:', error);
+    }
+  };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -283,6 +322,34 @@ export default function SafeBillHeader({
             className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`}
             style={leftShiftStyle}
           >
+            {/* Role Toggle Button */}
+            {canToggleRoles && (
+              <div className="flex items-center mr-2">
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => user.role !== 'seller' && handleToggleRole()}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                      user.role === 'seller'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Seller
+                  </button>
+                  <button
+                    onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                      user.role === 'professional-buyer'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Pro Buyer
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Language Switcher */}
             <div className="flex items-center gap-1 mr-2">
               <button
@@ -365,7 +432,7 @@ export default function SafeBillHeader({
                         </button>
                         <Link
                           to={
-                            user.role === "seller"
+                            (user.role || user.active_role) === "seller"
                               ? "/profile"
                               : user.role === "admin"
                               ? "/admin"
@@ -422,6 +489,36 @@ export default function SafeBillHeader({
           {/* Mobile Right Side (avatar and bell only, no hamburger) */}
           {!showMobileMenuButton && (
             <div className="flex md:hidden items-center space-x-4">
+              {/* Role Toggle Button - Mobile */}
+              {canToggleRoles && (
+                <div className="flex items-center">
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => user.role !== 'seller' && handleToggleRole()}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'seller'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Seller</span>
+                      <span className="sm:hidden">S</span>
+                    </button>
+                    <button
+                      onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'professional-buyer'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Pro Buyer</span>
+                      <span className="sm:hidden">P</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Language Switcher - Mobile */}
               <div className="flex items-center gap-1">
                 <button
@@ -505,7 +602,7 @@ export default function SafeBillHeader({
                           </button>
                           <Link
                             to={
-                              user.role === "seller"
+                              (user.role || user.active_role) === "seller"
                                 ? "/profile"
                                 : user.role === "admin"
                                 ? "/admin"
@@ -629,6 +726,36 @@ export default function SafeBillHeader({
                   {t(item.label)}
                 </Link>
               ))}
+
+              {/* Role Toggle Button - Mobile in menu */}
+              {canToggleRoles && (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <div className="flex bg-gray-100 rounded-lg p-1 w-full">
+                    <button
+                      onClick={() => user.role !== 'seller' && handleToggleRole()}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'seller'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden min-[480px]:inline">Seller</span>
+                      <span className="min-[480px]:hidden">S</span>
+                    </button>
+                    <button
+                      onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'professional-buyer'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden min-[480px]:inline">Pro Buyer</span>
+                      <span className="min-[480px]:hidden">P</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Language Switcher - Mobile in menu */}
               <div className="flex items-center gap-2 px-3 py-2">
