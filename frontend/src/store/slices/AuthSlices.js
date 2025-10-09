@@ -288,6 +288,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.error = null;
+        // Force update sessionStorage with the complete user data
+        sessionStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(switchActiveRole.rejected, (state, action) => {
         state.loading = false;

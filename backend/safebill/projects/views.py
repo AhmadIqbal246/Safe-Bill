@@ -360,8 +360,8 @@ class ProjectInviteAPIView(APIView):
 
     def check_buyer_permission(self, request):
         """Check if user has buyer role"""
-        # Added: allow professional-buyer context via active_role or new flags
-        if not (getattr(request.user, "role", None) == "professional-buyer"):
+        # Allow both individual buyer and professional-buyer roles
+        if not (getattr(request.user, "role", None) in ["buyer", "professional-buyer"]):
             raise permissions.PermissionDenied(
                 "Only users with buyer or professional-buyer role can approve/reject projects."
             )
@@ -892,8 +892,8 @@ def buyer_receipts(request):
     for receipts.
     """
     user = request.user
-    # Allow for legacy roles OR new flags/active_role
-    if not (getattr(user, "role", None) == "professional-buyer"):
+    # Allow both individual buyer and professional-buyer roles
+    if not (getattr(user, "role", None) in ["buyer", "professional-buyer"]):
         return Response({"detail": "Only buyers can access this endpoint."}, status=403)
 
     projects = (

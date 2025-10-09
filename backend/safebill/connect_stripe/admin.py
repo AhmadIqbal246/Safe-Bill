@@ -67,3 +67,21 @@ class StripeIdentityAdmin(admin.ModelAdmin):
             {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
         ),
     )
+
+
+#  this block is added just for testing purpose, to change the stripe identity status and is_pro_buyer_onboarding complete status
+    def save_model(self, request, obj, form, change):
+        # Save the StripeIdentity first
+        super().save_model(request, obj, form, change)
+
+        # After saving, sync the user's pro buyer onboarding flag based on identity status
+        try:
+            user = obj.user
+            should_complete = obj.identity_verified and obj.identity_status == "verified"
+
+            if user.pro_buyer_onboarding_complete != should_complete:
+                user.pro_buyer_onboarding_complete = should_complete
+                user.save(update_fields=["pro_buyer_onboarding_complete"])
+        except Exception:
+            # Admin should not crash on sync errors; errors will be visible elsewhere (logs)
+            pass

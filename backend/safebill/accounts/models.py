@@ -30,6 +30,9 @@ class User(AbstractUser):
         )
     )
     onboarding_complete = models.BooleanField(default=False)
+    # New onboarding completion fields for role-specific tracking
+    seller_onboarding_complete = models.BooleanField(default=False)
+    pro_buyer_onboarding_complete = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_pic = models.ImageField(

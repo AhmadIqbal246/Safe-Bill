@@ -39,31 +39,28 @@ export default function LogInComp() {
   };
 
   // Debug function to check current user data
-  const debugUserData = () => {
-    const storedUser = sessionStorage.getItem('user');
-    const storedAccess = sessionStorage.getItem('access');
-    console.log('=== DEBUG USER DATA ===');
-    console.log('Stored user:', storedUser);
-    console.log('Stored access:', storedAccess);
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      console.log('Parsed user:', parsedUser);
-      console.log('User role:', parsedUser.role);
-      console.log('Role comparison tests:');
-      console.log('role === "buyer":', parsedUser.role === 'buyer');
-      console.log('role === "professional-buyer":', parsedUser.role === 'professional-buyer');
-      console.log('role.includes("buyer"):', parsedUser.role && parsedUser.role.includes('buyer'));
-    }
-    console.log('=====================');
-  };
+  // const debugUserData = () => {
+  //   const storedUser = sessionStorage.getItem('user');
+  //   const storedAccess = sessionStorage.getItem('access');
+  //   console.log('=== DEBUG USER DATA ===');
+  //   console.log('Stored user:', storedUser);
+  //   console.log('Stored access:', storedAccess);
+  //   if (storedUser) {
+  //     const parsedUser = JSON.parse(storedUser);
+  //     console.log('Parsed user:', parsedUser);
+  //     console.log('User role:', parsedUser.role);
+  //     console.log('Role comparison tests:');
+  //     console.log('role === "buyer":', parsedUser.role === 'buyer');
+  //     console.log('role === "professional-buyer":', parsedUser.role === 'professional-buyer');
+  //     console.log('role.includes("buyer"):', parsedUser.role && parsedUser.role.includes('buyer'));
+  //   }
+  //   console.log('=====================');
+  // };
 
   useEffect(() => {
     if (success && user) {
       toast.success(t("login.login_successful"));
-      console.log("User data:", user);
-      console.log("User role:", user.role);
-      console.log("User role type:", typeof user.role);
-      console.log("User onboarding status:", user.onboarding_complete);
+
       
       setTimeout(() => {
         dispatch(resetAuthState());
@@ -96,15 +93,11 @@ export default function LogInComp() {
           // Role-based default landings using active role
           if (user.role === 'admin') {
             targetUrl = '/admin';
-          } else if (activeRole === 'professional-buyer') {
+          } else if (user.role === 'buyer' || activeRole === 'professional-buyer') {
             targetUrl = '/buyer-dashboard';
           } else if (activeRole === 'seller') {
             targetUrl = '/seller-dashboard';
           }
-        } if (user.role === 'buyer') {
-          targetUrl = '/buyer-dashboard';
-        } else if (user.role === 'admin') {
-          targetUrl = '/admin';
         }
         
         navigate(targetUrl);

@@ -215,30 +215,9 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["active_role"] = getattr(user, "active_role", None)
         token["available_roles"] = getattr(user, "available_roles", []) or []
 
-        # Added: role-scoped onboarding status derived from Stripe models (seller vs pro-buyer)
-        seller_complete = False
-        try:
-            sa = StripeAccount.objects.filter(user=user).first()
-            if sa:
-                data = sa.account_data or {}
-                seller_complete = (
-                    sa.account_status == "active"
-                    and bool(data.get("charges_enabled", False))
-                    and bool(data.get("payouts_enabled", False))
-                )
-        except Exception:
-            seller_complete = False
-
-        pro_buyer_complete = False
-        try:
-            si = StripeIdentity.objects.filter(user=user).first()
-            if si:
-                pro_buyer_complete = bool(si.identity_verified and si.identity_status == "verified")
-        except Exception:
-            pro_buyer_complete = False
-
-        token["seller_onboarding_complete"] = seller_complete
-        token["pro_buyer_onboarding_complete"] = pro_buyer_complete
+        # Use stored onboarding completion fields
+        token["seller_onboarding_complete"] = user.seller_onboarding_complete
+        token["pro_buyer_onboarding_complete"] = user.pro_buyer_onboarding_complete
         return token
 
 
@@ -367,8 +346,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     profile_pic = serializers.ImageField(required=False, allow_null=True)
     average_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
-    seller_onboarding_complete = serializers.SerializerMethodField()
-    pro_buyer_onboarding_complete = serializers.SerializerMethodField()
+    seller_onboarding_complete = serializers.BooleanField(read_only=True)
+    pro_buyer_onboarding_complete = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
@@ -433,26 +412,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_rating_count(self, obj):
         return obj.rating_count
 
-    def get_seller_onboarding_complete(self, obj):
-        try:
-            sa = StripeAccount.objects.filter(user=obj).first()
-            if not sa:
-                return False
-            data = sa.account_data or {}
-            charges = bool(data.get("charges_enabled", False))
-            payouts = bool(data.get("payouts_enabled", False))
-            return sa.account_status == "active" and charges and payouts
-        except Exception:
-            return False
-
-    def get_pro_buyer_onboarding_complete(self, obj):
-        try:
-            si = StripeIdentity.objects.filter(user=obj).first()
-            if not si:
-                return False
-            return bool(si.identity_verified and si.identity_status == "verified")
-        except Exception:
-            return False
 
     def update(self, instance, validated_data):
         # Remove system-managed fields to prevent user modification
