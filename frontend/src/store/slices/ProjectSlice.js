@@ -349,6 +349,32 @@ export const approveMilestone = createAsyncThunk(
   }
 );
 
+// Reject a project invite by token (client-side action)
+export const rejectProjectInvite = createAsyncThunk(
+  'project/rejectProjectInvite',
+  async ({ token }, { rejectWithValue }) => {
+    try {
+      const access = sessionStorage.getItem('access');
+      const response = await axios.post(
+        `${BASE_URL}api/projects/invite/${encodeURIComponent(token)}/`,
+        { action: 'reject' },
+        {
+          headers: {
+            'Authorization': `Bearer ${access}`,
+            'Content-Type': 'application/json',
+            'X-User-Language': i18n.language,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 export const fetchClientProjectsWithPendingMilestones = createAsyncThunk(
   'project/fetchClientProjectsWithPendingMilestones',
   async (_, { rejectWithValue }) => {
@@ -716,6 +742,19 @@ const projectSlice = createSlice({
       .addCase(submitSellerRating.rejected, (state, action) => {
         state.ratingSubmitting = false;
         state.ratingError = action.payload || 'Failed to submit rating';
+      })
+      // Reject project invite
+      .addCase(rejectProjectInvite.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(rejectProjectInvite.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(rejectProjectInvite.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to reject project';
       });
   },
 });
