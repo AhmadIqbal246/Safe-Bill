@@ -552,7 +552,7 @@ def filter_sellers_by_service_type(request):
     
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -586,7 +586,7 @@ def filter_sellers_by_service_area(request):
     
     sellers = BusinessDetail.objects.filter(
         selected_service_areas__contains=[service_area],
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -622,7 +622,7 @@ def filter_sellers_by_type_and_area(request):
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         selected_service_areas__contains=[service_area],
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -658,7 +658,7 @@ def filter_sellers_by_type_area_and_skills(request):
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         selected_service_areas__contains=[service_area],
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -691,7 +691,7 @@ def list_all_sellers(request):
     min_rating = request.GET.get('min_rating')
     
     # Base queryset
-    sellers = BusinessDetail.objects.filter(user__role='seller').select_related('user')
+    sellers = BusinessDetail.objects.filter(user__seller_onboarding_complete=True).select_related('user')
 
     # Apply rating filter if provided
     if min_rating:
@@ -718,7 +718,7 @@ def list_all_sellers(request):
 def get_seller_details(request, seller_id):
     """Get detailed information for a specific seller"""
     try:
-        seller = BusinessDetail.objects.get(user__id=seller_id, user__role='seller')
+        seller = BusinessDetail.objects.get(user__id=seller_id, user__seller_onboarding_complete=True)
         data = _get_seller_data(seller)
         return Response(data)
     except BusinessDetail.DoesNotExist:
@@ -809,7 +809,7 @@ def filter_sellers_by_location(request):
     min_rating = request.GET.get('min_rating')
 
     # Base queryset: sellers only
-    qs = BusinessDetail.objects.filter(user__role='seller')
+    qs = BusinessDetail.objects.filter(user__seller_onboarding_complete=True)
 
     # Apply rating filter if provided
     if min_rating:
@@ -862,7 +862,7 @@ def filter_sellers_by_region(request):
         return Response({'detail': 'Unknown region key.'}, status=400)
     # Filter sellers that have selected_service_areas containing ANY of the department values
     sellers = BusinessDetail.objects.filter(
-        user__role='seller',
+        user__seller_onboarding_complete=True,
         selected_service_areas__overlap=departments
     ).select_related('user').order_by('-user__average_rating', 'user__username')
     data = [_get_seller_data(seller) for seller in sellers]
