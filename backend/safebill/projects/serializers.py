@@ -238,54 +238,10 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         # Enqueue ONLY one summary sync after all milestones have been created
         if created_milestones:
             first_ms_id = created_milestones[0]
-            
-            # Validate milestone exists before triggering
             try:
-                from projects.models import Milestone
-                milestone = Milestone.objects.get(id=first_ms_id)
-                logger.info(f"Milestone {first_ms_id} validated for project {project.id}")
-            except Milestone.DoesNotExist:
-                logger.error(f"Milestone {first_ms_id} not found for project {project.id}")
-                return project
-            
-            # Capture variables in closure to avoid scope issues
-            project_id = project.id
-            milestone_id = first_ms_id
-            
-            def trigger_milestone_sync():
-                import logging
-                logger = logging.getLogger(__name__)
-                
-                # Retry mechanism for milestone sync
-                max_retries = 3
-                for attempt in range(max_retries):
-                    try:
-                        logger.info(f"Triggering milestone sync for project {project_id}, milestone {milestone_id} (attempt {attempt + 1})")
-                        result = sync_milestone_task.delay(milestone_id)
-                        logger.info(f"Milestone sync task queued: {result.id}")
-                        return  # Success, exit retry loop
-                    except Exception as e:
-                        logger.error(f"Attempt {attempt + 1} failed for milestone sync project {project_id}, milestone {milestone_id}: {e}")
-                        if attempt == max_retries - 1:  # Last attempt
-                            logger.error(f"All {max_retries} attempts failed for milestone sync project {project_id}")
-                        else:
-                            import time
-                            time.sleep(0.5)  # Brief delay before retry
-            
-            try:
-                transaction.on_commit(trigger_milestone_sync)
-                logger.info(f"Milestone sync enqueued for project {project_id}")
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to enqueue milestone sync for project {project_id}: {e}")
-                # Fallback: try to trigger immediately if transaction.on_commit fails
-                try:
-                    logger.info(f"Attempting fallback milestone sync for project {project_id}")
-                    result = sync_milestone_task.delay(milestone_id)
-                    logger.info(f"Fallback milestone sync task queued: {result.id}")
-                except Exception as fallback_error:
-                    logger.error(f"Fallback milestone sync also failed for project {project_id}: {fallback_error}")
+                transaction.on_commit(lambda ms_id=first_ms_id: sync_milestone_task.delay(ms_id))
+            except Exception:
+                pass
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
