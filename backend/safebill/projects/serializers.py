@@ -198,6 +198,10 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context["request"].user
+        # Added: prevent self-invite by rejecting when client_email equals seller's email
+        client_email = (validated_data.get("client_email") or "").strip().lower()
+        if client_email and client_email == (getattr(user, "email", "") or "").strip().lower():
+            raise serializers.ValidationError({"client_email": "You cannot invite yourself as the client."})
         quote_data = validated_data.pop("quote", {})
         installments_data = validated_data.pop("installments")
         # Generate secure invite token and expiry
