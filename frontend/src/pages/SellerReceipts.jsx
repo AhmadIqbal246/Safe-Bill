@@ -77,7 +77,41 @@ export default function SellerReceipts() {
       const element = document.getElementById(`receipt-${project.id}`);
       if (!element) return;
 
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      // Inline any images to avoid CORS tainting in production
+      const inlineImages = async (root) => {
+        const imgs = Array.from(root.querySelectorAll('img'));
+        await Promise.all(
+          imgs.map(async (img) => {
+            try {
+              if (!img || !img.src || img.src.startsWith('data:')) return;
+              img.setAttribute('crossorigin', 'anonymous');
+              const resp = await fetch(img.src, { mode: 'cors', credentials: 'omit' });
+              if (!resp.ok) return;
+              const blob = await resp.blob();
+              await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  try { img.src = reader.result; } catch {}
+                  resolve();
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+            } catch {}
+          })
+        );
+      };
+
+      await inlineImages(element);
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        allowTaint: false,
+        foreignObjectRendering: true,
+      });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -97,7 +131,8 @@ export default function SellerReceipts() {
       }
 
       pdf.save(`receipt_seller_${project.reference_number || project.id}.pdf`);
-    } catch {
+    } catch (e) {
+      console.error('Seller receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
     }
   };

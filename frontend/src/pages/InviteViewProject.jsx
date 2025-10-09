@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { rejectProjectInvite } from "../store/slices/ProjectSlice";
 import ProjectStatusBadge from "../components/common/ProjectStatusBadge";
 import Loader from "../components/common/Loader";
 import paymentWebSocketService from "../services/paymentWebSocketService";
@@ -23,6 +25,7 @@ function getQuoteFileUrl(file) {
 
 export default function InviteViewProject() {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   const query = useQuery();
   const token = query.get("token");
   const checkoutStatus = query.get("status");
@@ -188,35 +191,21 @@ export default function InviteViewProject() {
       return;
     }
 
-    // try {
-    //   const res = await axios.post(
-    //     `${backendBaseUrl}api/projects/invite/${token}/`,
-    //     { action },
-    //     {
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         Authorization: `Bearer ${sessionStorage.getItem('access')}`,
-    //       },
-    //       withCredentials: true,
-    //     }
-    //   );
-
-    //   setActionMessage(res.data.detail);
-
-    //   // Refresh project data to get updated status
-    //   setTimeout(() => {
-    //     fetchProject();
-    //   }, 1000);
-
-    // } catch (err) {
-    //   setError(
-    //     err.response && err.response.data && err.response.data.detail
-    //       ? err.response.data.detail
-    //       : err.message
-    //   );
-    // } finally {
-    //   setActionLoading(false);
-    // }
+    if (action === "reject") {
+      try {
+        const res = await dispatch(rejectProjectInvite({ token })).unwrap();
+        setActionMessage(res?.detail || t('invite_view.project_rejected'));
+        // Refresh project state
+        setTimeout(() => {
+          fetchProject();
+        }, 800);
+      } catch (err) {
+        setError(err?.detail || err?.message || 'Failed to reject project');
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
   };
 
   const retryPayment = async () => {
