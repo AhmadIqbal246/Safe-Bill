@@ -13,6 +13,8 @@ from django.db.models import Sum
 from .tasks import send_project_invitation_email_task
 from django.db import transaction
 from hubspot.tasks import sync_milestone_task, update_milestone_task
+# Import production-safe sync utilities
+from hubspot.sync_utils import sync_milestone_to_hubspot
 
 
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
@@ -235,13 +237,14 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             )
             created_milestones.append(ms.id)
 
-        # Enqueue ONLY one summary sync after all milestones have been created
+        # Use production-safe sync for milestone summary after project creation
         if created_milestones:
             first_ms_id = created_milestones[0]
-            try:
-                transaction.on_commit(lambda ms_id=first_ms_id: sync_milestone_task.delay(ms_id))
-            except Exception:
-                pass
+            sync_milestone_to_hubspot(
+                milestone_id=first_ms_id,
+                reason="project_created_with_milestones",
+                use_transaction_commit=True
+            )
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")

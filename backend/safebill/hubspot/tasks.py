@@ -41,23 +41,48 @@ User = get_user_model()
 # Deal pipeline id (Sales pipeline is "default")
 DEALS_PIPELINE_ID = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
 
+# Simple in-memory task deduplication
+_running_tasks = set()
+
+def _is_task_running(task_key):
+    """Check if a task is already running"""
+    return task_key in _running_tasks
+
+def _mark_task_running(task_key):
+    """Mark a task as running"""
+    _running_tasks.add(task_key)
+
+def _mark_task_finished(task_key):
+    """Mark a task as finished"""
+    _running_tasks.discard(task_key)
+
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
 def sync_contact_task(self, user_id: int) -> Optional[str]:
     """Create or update a HubSpot contact for the given user and persist mapping."""
-    logger.info("HubSpot: sync_contact_task started for user_id=%s", user_id)
-    user = User.objects.filter(id=user_id).first()
-    if not user:
-        logger.warning("HubSpot: sync_contact_task abort - user %s not found", user_id)
+    task_key = f"sync_contact_task_{user_id}"
+    
+    # Check if task is already running
+    if _is_task_running(task_key):
+        logger.info("HubSpot: sync_contact_task already running for user_id=%s, skipping", user_id)
         return None
-
-    client = HubSpotClient()
-    props = build_contact_properties(user)
-    logger.info("HubSpot: built contact props for %s -> %s", user.email, {k: props[k] for k in ["email","firstname","lastname","role","language","is_email_verified","onboarding_complete"]})
-
-    # Try mapping record first
-    link = HubSpotContactLink.objects.filter(user=user).first()
-    hubspot_id = link.hubspot_id if link else None
+    
+    _mark_task_running(task_key)
+    logger.info("HubSpot: sync_contact_task started for user_id=%s", user_id)
+    
     try:
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            logger.warning("HubSpot: sync_contact_task abort - user %s not found", user_id)
+            return None
+
+        client = HubSpotClient()
+        props = build_contact_properties(user)
+        logger.info("HubSpot: built contact props for %s -> %s", user.email, {k: props[k] for k in ["email","firstname","lastname","role","language","is_email_verified","onboarding_complete"]})
+
+        # Try mapping record first
+        link = HubSpotContactLink.objects.filter(user=user).first()
+        hubspot_id = link.hubspot_id if link else None
+        
         if hubspot_id:
             logger.info("HubSpot: updating existing contact id=%s", hubspot_id)
             data = client.update_contact(hubspot_id, props)
@@ -75,10 +100,24 @@ def sync_contact_task(self, user_id: int) -> Optional[str]:
             client.update_contact(hubspot_id, props)
         else:
             logger.info("HubSpot: creating new contact for email=%s", props.get("email"))
-            created = client.create_contact(props)
-            hubspot_id = created.get("id")
+            try:
+                created = client.create_contact(props)
+                hubspot_id = created.get("id")
+            except Exception as create_error:
+                # Handle conflict - contact might have been created by another task
+                if "409" in str(create_error) or "Conflict" in str(create_error):
+                    logger.info("HubSpot: contact creation conflict, searching for existing contact")
+                    existing = client.search_contact_by_email(props["email"])
+                    if existing:
+                        hubspot_id = existing.get("id")
+                        logger.info("HubSpot: found existing contact after conflict id=%s", hubspot_id)
+                        client.update_contact(hubspot_id, props)
+                    else:
+                        raise create_error
+                else:
+                    raise create_error
 
-        # Persist mapping
+        # Persist mapping with duplicate prevention
         if hubspot_id:
             if link:
                 link.hubspot_id = hubspot_id
@@ -86,12 +125,21 @@ def sync_contact_task(self, user_id: int) -> Optional[str]:
                 link.last_error = ""
                 link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
             else:
-                HubSpotContactLink.objects.create(
+                # Use get_or_create to prevent duplicate link creation
+                link, created = HubSpotContactLink.objects.get_or_create(
                     user=user,
-                    hubspot_id=hubspot_id,
-                    status="success",
-                    last_error="",
+                    defaults={
+                        'hubspot_id': hubspot_id,
+                        'status': "success",
+                        'last_error': "",
+                    }
                 )
+                if not created:
+                    # Update existing link
+                    link.hubspot_id = hubspot_id
+                    link.status = "success"
+                    link.last_error = ""
+                    link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
 
         logger.info("HubSpot: sync_contact_task finished for user_id=%s with id=%s", user_id, hubspot_id)
         return hubspot_id
@@ -103,39 +151,51 @@ def sync_contact_task(self, user_id: int) -> Optional[str]:
             link.last_error = str(exc)
             link.save(update_fields=["status", "last_error", "last_synced_at"])
         raise
+    finally:
+        _mark_task_finished(task_key)
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
 def sync_company_task(self, business_detail_id: int) -> Optional[str]:
+    task_key = f"sync_company_task_{business_detail_id}"
+    
+    # Check if task is already running
+    if _is_task_running(task_key):
+        logger.info("HubSpot: sync_company_task already running for business_detail_id=%s, skipping", business_detail_id)
+        return None
+    
+    _mark_task_running(task_key)
     logger.info("HubSpot: sync_company_task started for business_detail_id=%s", business_detail_id)
-    bd = BusinessDetail.objects.filter(id=business_detail_id).first()
-    if not bd:
-        logger.warning("HubSpot: sync_company_task abort - business_detail %s not found", business_detail_id)
-        return None
-    # Guard: only seller or professional-buyer should create/update companies
-    role = getattr(getattr(bd, "user", None), "role", None)
-    if role not in ["seller", "professional-buyer"]:
-        logger.info("HubSpot: skipping company sync for role=%s (bd=%s)", role, business_detail_id)
-        return None
-
-    # Avoid creating empty companies
-    if not (getattr(bd, "company_name", None) and getattr(bd, "siret_number", None)):
-        logger.info(
-            "HubSpot: skipping company sync due to missing required fields (name=%s, siret=%s) for bd=%s",
-            getattr(bd, "company_name", None), getattr(bd, "siret_number", None), business_detail_id,
-        )
-        return None
-
-    client = HubSpotCompanyClient()
-    props = build_company_properties(bd)
-    logger.info(
-        "HubSpot: built company props -> name=%s, siret=%s, address=%s, type=%s",
-        props.get("name"), props.get("siret_number"), props.get("address"), props.get("type_of_activity"),
-    )
-
-    link = HubSpotCompanyLink.objects.filter(business_detail=bd).first()
-    hubspot_id = link.hubspot_id if link else None
+    
     try:
+        bd = BusinessDetail.objects.filter(id=business_detail_id).first()
+        if not bd:
+            logger.warning("HubSpot: sync_company_task abort - business_detail %s not found", business_detail_id)
+            return None
+        # Guard: only seller or professional-buyer should create/update companies
+        role = getattr(getattr(bd, "user", None), "role", None)
+        if role not in ["seller", "professional-buyer"]:
+            logger.info("HubSpot: skipping company sync for role=%s (bd=%s)", role, business_detail_id)
+            return None
+
+        # Avoid creating empty companies
+        if not (getattr(bd, "company_name", None) and getattr(bd, "siret_number", None)):
+            logger.info(
+                "HubSpot: skipping company sync due to missing required fields (name=%s, siret=%s) for bd=%s",
+                getattr(bd, "company_name", None), getattr(bd, "siret_number", None), business_detail_id,
+            )
+            return None
+
+        client = HubSpotCompanyClient()
+        props = build_company_properties(bd)
+        logger.info(
+            "HubSpot: built company props -> name=%s, siret=%s, address=%s, type=%s",
+            props.get("name"), props.get("siret_number"), props.get("address"), props.get("type_of_activity"),
+        )
+
+        link = HubSpotCompanyLink.objects.filter(business_detail=bd).first()
+        hubspot_id = link.hubspot_id if link else None
+        
         if hubspot_id:
             logger.info("HubSpot: updating existing company id=%s", hubspot_id)
             data = client.update_company(hubspot_id, props)
@@ -167,12 +227,21 @@ def sync_company_task(self, business_detail_id: int) -> Optional[str]:
                 link.last_error = ""
                 link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
             else:
-                HubSpotCompanyLink.objects.create(
+                # Use get_or_create to prevent duplicate link creation
+                link, created = HubSpotCompanyLink.objects.get_or_create(
                     business_detail=bd,
-                    hubspot_id=hubspot_id,
-                    status="success",
-                    last_error="",
+                    defaults={
+                        'hubspot_id': hubspot_id,
+                        'status': "success",
+                        'last_error': "",
+                    }
                 )
+                if not created:
+                    # Update existing link
+                    link.hubspot_id = hubspot_id
+                    link.status = "success"
+                    link.last_error = ""
+                    link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
 
         # Association intentionally disabled for now
 
@@ -186,37 +255,51 @@ def sync_company_task(self, business_detail_id: int) -> Optional[str]:
             link.last_error = str(exc)
             link.save(update_fields=["status", "last_error", "last_synced_at"])
         raise
+    finally:
+        _mark_task_finished(task_key)
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
 def sync_deal_task(self, project_id: int) -> Optional[str]:
-    logger.info("HubSpot: sync_deal_task started for project_id=%s", project_id)
-    project = Project.objects.filter(id=project_id).select_related("user").first()
-    if not project:
-        logger.warning("HubSpot: sync_deal_task abort - project %s not found", project_id)
+    task_key = f"sync_deal_task_{project_id}"
+    
+    # Check if task is already running
+    if _is_task_running(task_key):
+        logger.info("HubSpot: sync_deal_task already running for project_id=%s, skipping", project_id)
         return None
-
-    client = HubSpotDealsClient()
-    # Resolve stage id dynamically from pipeline labels (no env map needed)
-    # Do not manage HubSpot pipeline/stages; rely only on custom properties
-    dealstage_id = None
-    props = build_deal_properties(project, None, None)
-    logger.info("HubSpot: built deal props for project %s -> name=%s, stage_id=%s", project.id, props.get("dealname"), props.get("dealstage"))
-
+    
+    _mark_task_running(task_key)
+    logger.info("HubSpot: sync_deal_task started for project_id=%s", project_id)
+    
     try:
-        existing = client.search_deal_by_project_id(str(project.id))
-        if existing:
-            deal_id = existing.get("id")
-            logger.info("HubSpot: updating existing deal id=%s for project_id=%s", deal_id, project_id)
-            client.update_deal(deal_id, props)
+        project = Project.objects.filter(id=project_id).select_related("user").first()
+        if not project:
+            logger.warning("HubSpot: sync_deal_task abort - project %s not found", project_id)
+            return None
+
+        client = HubSpotDealsClient()
+        # Resolve stage id dynamically from pipeline labels (no env map needed)
+        # Do not manage HubSpot pipeline/stages; rely only on custom properties
+        dealstage_id = None
+        props = build_deal_properties(project, None, None)
+        logger.info("HubSpot: built deal props for project %s -> name=%s, stage_id=%s", project.id, props.get("dealname"), props.get("dealstage"))
+
+        try:
+            existing = client.search_deal_by_project_id(str(project.id))
+            if existing:
+                deal_id = existing.get("id")
+                logger.info("HubSpot: updating existing deal id=%s for project_id=%s", deal_id, project_id)
+                client.update_deal(deal_id, props)
+                return deal_id
+            created = client.create_deal(props)
+            deal_id = created.get("id")
+            logger.info("HubSpot: created new deal id=%s for project_id=%s", deal_id, project_id)
             return deal_id
-        created = client.create_deal(props)
-        deal_id = created.get("id")
-        logger.info("HubSpot: created new deal id=%s for project_id=%s", deal_id, project_id)
-        return deal_id
-    except Exception as exc:
-        logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
-        raise
+        except Exception as exc:
+            logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
+            raise
+    finally:
+        _mark_task_finished(task_key)
 
 # Removed: sync_contact_company_and_associate (association disabled)
 

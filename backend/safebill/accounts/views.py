@@ -119,8 +119,9 @@ class SellerRegisterView(APIView):
         serializer = SellerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Enqueue HubSpot sync after commit
-            transaction.on_commit(lambda: sync_contact_task.delay(user.id))
+            # Enqueue HubSpot sync after commit with fallback
+            from hubspot.sync_utils import safe_contact_sync
+            safe_contact_sync(user.id, "seller_registration")
             
             # Generate verification token and URL
             token = default_token_generator.make_token(user)
@@ -156,8 +157,9 @@ class BuyerRegistrationView(APIView):
         serializer = BuyerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Enqueue HubSpot sync after commit
-            transaction.on_commit(lambda: sync_contact_task.delay(user.id))
+            # Enqueue HubSpot sync after commit with fallback
+            from hubspot.sync_utils import safe_contact_sync
+            safe_contact_sync(user.id, "buyer_registration")
             # Send verification email using the new email service
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -198,10 +200,9 @@ class VerifyEmailView(APIView):
             user.save()
             
             # Sync with HubSpot after email verification
-            def _on_transaction_commit():
-                logger.info("HubSpot enqueue: email verified for user_id=%s", user.id)
-                sync_contact_task.delay(user.id)
-            transaction.on_commit(_on_transaction_commit)
+            from hubspot.sync_utils import safe_contact_sync
+            logger.info("HubSpot enqueue: email verified for user_id=%s", user.id)
+            safe_contact_sync(user.id, "email_verification_get")
             
             # Extract language from request headers
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
@@ -269,10 +270,9 @@ class VerifyEmailView(APIView):
                 user.save()
                 
                 # Sync with HubSpot after email verification (POST flow)
-                def _on_transaction_commit():
-                    logger.info("HubSpot enqueue: email verified (POST) for user_id=%s", user.id)
-                    sync_contact_task.delay(user.id)
-                transaction.on_commit(_on_transaction_commit)
+                from hubspot.sync_utils import safe_contact_sync
+                logger.info("HubSpot enqueue: email verified (POST) for user_id=%s", user.id)
+                safe_contact_sync(user.id, "email_verification_post")
                 
                 # Extract language from request headers
                 preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
@@ -418,9 +418,8 @@ class OnboardingStatusView(APIView):
             request.user.save()
             
             # Sync with HubSpot after onboarding status update
-            def _on_transaction_commit():
-                sync_contact_task.delay(request.user.id)
-            transaction.on_commit(_on_transaction_commit)
+            from hubspot.sync_utils import safe_contact_sync
+            safe_contact_sync(request.user.id, "onboarding_status_update")
             
             return Response({'onboarding_complete': request.user.onboarding_complete})
         return Response({'detail': 'Missing onboarding_complete field.'}, status=400)
