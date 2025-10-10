@@ -145,10 +145,8 @@ def stripe_connect_webhook(request):
                 stripe_account.onboarding_complete = True
 
                 # Sync with HubSpot after Stripe onboarding completion
-                def _on_transaction_commit():
-                    sync_contact_task.delay(user.id)
-
-                transaction.on_commit(_on_transaction_commit)
+                from hubspot.sync_utils import safe_contact_sync
+                safe_contact_sync(user.id, "stripe_onboarding_complete")
 
                 # Send notification for successful Stripe onboarding
                 NotificationService.create_notification(
@@ -291,10 +289,8 @@ def check_stripe_status(request):
                 user.save()
 
                 # Sync with HubSpot after Stripe onboarding completion
-                def _on_transaction_commit():
-                    sync_contact_task.delay(user.id)
-
-                transaction.on_commit(_on_transaction_commit)
+                from hubspot.sync_utils import safe_contact_sync
+                safe_contact_sync(user.id, "stripe_onboarding_complete_flow2")
             else:
                 # Only change to "pending" if user has started onboarding (details_submitted is True)
                 # Otherwise keep the current status (likely "onboarding")
@@ -537,10 +533,8 @@ def stripe_identity_webhook(request):
             stripe_identity.save()
 
             # Sync with HubSpot after identity verification completion
-            def _on_transaction_commit():
-                sync_contact_task.delay(user.id)
-
-            transaction.on_commit(_on_transaction_commit)
+            from hubspot.sync_utils import safe_contact_sync
+            safe_contact_sync(user.id, "identity_verification_complete")
 
             # Send notification for successful identity verification
             NotificationService.create_notification(
@@ -638,7 +632,8 @@ def stripe_identity_webhook(request):
         project.status = "approved"
         project.save()
         # Ensure HubSpot deal reflects approved status via custom properties
-        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
+        from hubspot.sync_utils import sync_project_to_hubspot
+        sync_project_to_hubspot(project.id, "payment_success")
         payment = Payment.objects.get(stripe_payment_id=payment_id)
         if payment.status != "paid":
             platform_revenue = PlatformRevenue.objects.all().first()
@@ -651,10 +646,9 @@ def stripe_identity_webhook(request):
         payment.save()
 
         # Enqueue HubSpot Revenue monthly sync
+        from hubspot.sync_utils import sync_revenue_to_hubspot
         now = timezone.now()
-        transaction.on_commit(
-            lambda: sync_revenue_month_task.delay(now.year, now.month)
-        )
+        sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success")
 
         try:
             # The payment is held in escrow until milestones are approved
@@ -737,7 +731,8 @@ def stripe_identity_webhook(request):
         project = Project.objects.get(id=project_id)
         project.status = "approved"
         project.save()
-        transaction.on_commit(lambda: sync_deal_task.delay(project.id))
+        from hubspot.sync_utils import sync_project_to_hubspot
+        sync_project_to_hubspot(project.id, "payment_webhook_success")
 
         payment_obj = Payment.objects.get(stripe_payment_id=payment_id)
         if payment_obj.status != "paid":

@@ -49,7 +49,7 @@ ALLOWED_HOSTS = _env_list(
         "api.safebill.fr",
         "https://www.safebill.fr",
         "http://localhost:3000",  # For development
-        "http://127.0.0.1:3000",  # For development
+        "http://127.0.0.1:3000", # For development
     ],
 )
 
@@ -65,7 +65,7 @@ CORS_ALLOWED_ORIGINS = _env_list(
         "api.safebill.fr",
         "https://www.safebill.fr",
         "http://localhost:3000",  # For development
-        "http://127.0.0.1:3000",  # For development
+        "http://127.0.0.1:3000", # For development
     ],
 )
 
@@ -75,6 +75,7 @@ CSRF_TRUSTED_ORIGINS = _env_list(
     [
         "https://safebill.fr",
         "https://api.safebill.fr",
+
     ],
 )
 
@@ -311,3 +312,18 @@ HUBSPOT_MILESTONE_OBJECT = env("HUBSPOT_MILESTONE_OBJECT")
 HUBSPOT_REVENUE_OBJECT = env("HUBSPOT_REVENUE_OBJECT")
 HUBSPOT_FEEDBACK_OBJECT = env("HUBSPOT_FEEDBACK_OBJECT")
 HUBSPOT_CONTACT_MESSAGE_OBJECT = env("HUBSPOT_CONTACT_MESSAGE_OBJECT")
+# Core HubSpot settings
+HUBSPOT_SYNC_ENABLED = env.bool('HUBSPOT_SYNC_ENABLED')
+HUBSPOT_SYNC_DEBUG = env.bool('HUBSPOT_SYNC_DEBUG')
+HUBSPOT_SYNC_TIMEOUT = env.int('HUBSPOT_SYNC_TIMEOUT')
+
+# Feature flags for safe deployment
+HUBSPOT_PROJECT_SIGNALS_ENABLED = env.bool('HUBSPOT_PROJECT_SIGNALS_ENABLED')
+HUBSPOT_MILESTONE_SIGNALS_ENABLED = env.bool('HUBSPOT_MILESTONE_SIGNALS_ENABLED')
+HUBSPOT_SIGNALS_DEBUG = env.bool('HUBSPOT_SIGNALS_DEBUG')
+
+# Rate limiting and circuit breaker
+HUBSPOT_RATE_LIMIT_MAX = env.int('HUBSPOT_RATE_LIMIT_MAX')
+HUBSPOT_RATE_LIMIT_WINDOW = env.int('HUBSPOT_RATE_LIMIT_WINDOW')
+HUBSPOT_CIRCUIT_BREAKER_THRESHOLD = env.int('HUBSPOT_CIRCUIT_BREAKER_THRESHOLD')
+HUBSPOT_CIRCUIT_BREAKER_TIMEOUT = env.int('HUBSPOT_CIRCUIT_BREAKER_TIMEOUT')

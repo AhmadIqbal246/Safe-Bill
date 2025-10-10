@@ -125,9 +125,8 @@ class SellerRegistrationSerializer(serializers.Serializer):
 
         # Enqueue HubSpot company sync and association after commit (only for seller/professional-buyer)
         if role in ["seller", "professional-buyer"]:
-            def _commit_sync():
-                sync_company_task.delay(bd.id)
-            transaction.on_commit(_commit_sync)
+            from hubspot.sync_utils import safe_company_sync
+            safe_company_sync(bd.id, f"{role}_registration")
 
         if role == "seller":
             StripeAccount.objects.create(
@@ -478,7 +477,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 setattr(business_detail, field, value)
             business_detail.save()
             # Enqueue HubSpot company sync and association after commit
-            def _commit_sync():
-                sync_company_task.delay(business_detail.id)
-            transaction.on_commit(_commit_sync)
+            from hubspot.sync_utils import safe_company_sync
+            safe_company_sync(business_detail.id, "business_detail_update")
         return instance
