@@ -230,7 +230,7 @@ def auto_sync_user_to_hubspot(sender, instance, created, **kwargs):
     
     try:
         # Use immediate execution for maximum reliability
-        result = safe_contact_sync(user_id, reason)
+        result = safe_contact_sync(user_id, reason, use_transaction_commit=False)
         logger.info(f"User {user_id} sync result ({sync_type}): {result}")
     except Exception as e:
         # Never let signal failures break the main application

@@ -500,7 +500,7 @@ def get_hubspot_sync_stats() -> Dict[str, Any]:
     return HubSpotHealthCheck.get_system_status()
 
 
-def safe_contact_sync(user_id: int, reason: str = "unknown") -> Dict[str, Any]:
+def safe_contact_sync(user_id: int, reason: str = "unknown", **kwargs) -> Dict[str, Any]:
     """
     Safely sync a contact to HubSpot with fallback.
     
@@ -516,7 +516,8 @@ def safe_contact_sync(user_id: int, reason: str = "unknown") -> Dict[str, Any]:
     return safe_hubspot_sync_with_backup(
         sync_contact_task,
         f"Contact Sync (reason: {reason})",
-        user_id
+        user_id,
+        **kwargs
     )
 
 
