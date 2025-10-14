@@ -31,19 +31,8 @@ from .tasks import (
     send_milestone_approval_request_email_task,
 )
 from django.db import transaction
-from hubspot.tasks import (
-    sync_deal_task,
-    update_milestone_task,
-    sync_milestone_task,
-    sync_revenue_month_task,
-)
-# Import production-safe sync utilities
-from hubspot.sync_utils import (
-    sync_project_to_hubspot,
-    sync_milestone_to_hubspot,
-    update_milestone_in_hubspot,
-    sync_revenue_to_hubspot
-)
+# HubSpot syncing is now handled automatically by Django signals
+# No need to manually import sync functions
 
 logger = logging.getLogger(__name__)
 
@@ -132,13 +121,8 @@ class ProjectCreateAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         project = serializer.save()
-        # Use production-safe sync with proper error handling and logging
-        sync_project_to_hubspot(
-            project_id=project.id,
-            reason="project_created_via_api",
-            use_transaction_commit=True
-        )
-
+        # HubSpot sync now handled automatically by Django signals in hubspot/signals.py
+        # This ensures 100% reliability without manual sync calls
 
 class ProjectListAPIView(generics.ListAPIView):
     serializer_class = ProjectListSerializer
@@ -211,12 +195,7 @@ class ProjectStatusUpdateAPIView(APIView):
         # Update status to in_progress
         project.status = "in_progress"
         project.save()
-        # Use production-safe sync for status update
-        sync_project_to_hubspot(
-            project_id=project.id,
-            reason="project_status_in_progress",
-            use_transaction_commit=True
-        )
+        # HubSpot sync now handled automatically by Django signals
 
         # Create notification for the client
         if project.client:
@@ -309,12 +288,7 @@ class ProjectCompletionAPIView(APIView):
         # Update status to completed
         project.status = "completed"
         project.save()
-        # Use production-safe sync for completion
-        sync_project_to_hubspot(
-            project_id=project.id,
-            reason="project_completed",
-            use_transaction_commit=True
-        )
+        # HubSpot sync now handled automatically by Django signals
 
         # Create notification for the client
         if project.client:
@@ -368,14 +342,10 @@ class MilestoneDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
         return MilestoneSerializer
 
     def perform_update(self, serializer):
-        """After a milestone is updated, enqueue HubSpot sync."""
+        """After a milestone is updated, sync is handled automatically by Django signals."""
         milestone = serializer.save()
-        # Use production-safe sync for milestone update
-        update_milestone_in_hubspot(
-            milestone_id=milestone.id,
-            reason="milestone_updated_via_api",
-            use_transaction_commit=True
-        )
+        # HubSpot sync now handled automatically by Django signals
+        # milestone.save() will trigger the milestone signal
 
 
 class ProjectInviteAPIView(APIView):
@@ -598,22 +568,8 @@ class ProjectInviteAPIView(APIView):
             project.status = "approved"
             project.client = request.user
             project.save()
-            # Use production-safe sync for approval
-            sync_project_to_hubspot(
-                project_id=project.id,
-                reason="project_approved_by_client",
-                use_transaction_commit=True
-            )
-            # Also refresh the milestones summary so client_name appears
-            try:
-                for m in project.milestones.all()[:1]:
-                    sync_milestone_to_hubspot(
-                        milestone_id=m.id,
-                        reason="milestone_after_project_approval",
-                        use_transaction_commit=True
-                    )
-            except Exception as e:
-                logger.warning(f"Failed to sync milestone after project approval: {e}")
+            # HubSpot sync now handled automatically by Django signals
+            # Project status update will trigger project sync signal automatically
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
@@ -640,12 +596,7 @@ class ProjectInviteAPIView(APIView):
             if project.client == request.user:
                 project.client = None
             project.save()
-            # Use production-safe sync for rejection
-            sync_project_to_hubspot(
-                project_id=project.id,
-                reason="project_rejected_by_client",
-                use_transaction_commit=True
-            )
+            # HubSpot sync now handled automatically by Django signals
 
             # Create notification for the seller
             NotificationService.create_notification(
@@ -843,21 +794,9 @@ class MilestoneApprovalAPIView(APIView):
                     getattr(milestone, "id", "?"),
                     e,
                 )
-        # Use production-safe sync for milestone update
-        update_milestone_in_hubspot(
-            milestone_id=milestone.id,
-            reason=f"milestone_{action_type}",
-            use_transaction_commit=True
-        )
-        # Enqueue HubSpot Revenue monthly sync on approval events
-        if action_type == "approve":
-            now = timezone.now()
-            sync_revenue_to_hubspot(
-                year=now.year,
-                month=now.month,
-                reason="milestone_approved",
-                use_transaction_commit=True
-            )
+        # HubSpot sync now handled automatically by Django signals
+        # Milestone save() will trigger milestone signal for HubSpot sync
+        # Revenue sync will be triggered automatically on project completion
 
         project = milestone.project
         status_msg = {

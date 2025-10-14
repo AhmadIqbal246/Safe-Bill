@@ -316,8 +316,29 @@ export const switchActiveRole = createAsyncThunk(
         });
         
         // Update sessionStorage with the complete updated user data
+        // Derive a stable user_id with multiple fallbacks
+        let stableUserId = profileResponse.data?.id ?? profileResponse.data?.user_id ?? null;
+        if (stableUserId == null) {
+          try {
+            const existingRaw = sessionStorage.getItem('user');
+            const existingUser = existingRaw ? JSON.parse(existingRaw) : null;
+            const decoded = (() => {
+              try { return jwtDecode(sessionStorage.getItem('access') || ''); } catch (_) { return null; }
+            })();
+            stableUserId = (
+              existingUser?.user_id ?? existingUser?.id ??
+              decoded?.user_id ?? decoded?.userId ?? decoded?.id ??
+              null
+            );
+          } catch (_) {
+            stableUserId = null;
+          }
+        }
+
         const updatedUser = {
           ...profileResponse.data,
+          // Ensure stable identifier expected by chat logic
+          user_id: stableUserId,
           role: response.data.role,
           active_role: response.data.active_role,
           available_roles: response.data.available_roles
