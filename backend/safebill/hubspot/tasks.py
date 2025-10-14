@@ -588,7 +588,8 @@ def sync_milestone_task(self, milestone_id: int) -> Optional[str]:
     hubspot_id = link.hubspot_id if link else None
 
     try:
-        if hubspot_id:
+        # Check if we have a real HubSpot ID (not the temporary 'PROCESSING' marker)
+        if hubspot_id and hubspot_id != 'PROCESSING':
             logger.info("HubSpot: updating existing milestone id=%s", hubspot_id)
             data = client.update(hubspot_id, props)
             if link:
@@ -615,11 +616,14 @@ def sync_milestone_task(self, milestone_id: int) -> Optional[str]:
                 link.last_error = ""
                 link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
             else:
-                HubSpotMilestoneLink.objects.create(
+                # Use get_or_create to avoid race condition duplicates
+                HubSpotMilestoneLink.objects.get_or_create(
                     milestone=m,
-                    hubspot_id=hubspot_id,
-                    status="success",
-                    last_error="",
+                    defaults={
+                        "hubspot_id": hubspot_id,
+                        "status": "success",
+                        "last_error": "",
+                    }
                 )
 
         return hubspot_id
@@ -638,21 +642,70 @@ def sync_revenue_month_task(self, year: int, month: int) -> Optional[str]:
     """Upsert monthly revenue summary into HubSpot Revenue custom object."""
     logger.info("HubSpot: sync_revenue_month_task start year=%s month=%s", year, month)
     try:
-        # Load PlatformRevenue for the month (auto creates on access patterns in services)
-        revenue = PlatformRevenue.objects.filter(year=year, month=month).first()
-
-        # Compute totals if record missing or fields needed
+        # Calculate ALL revenue values LIVE from database for accuracy
+        # This ensures HubSpot always has current data regardless of PlatformRevenue sync state
+        
+        # 1. Total payments amount (what buyers paid)
         total_payments_amount = (
             Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
             .aggregate(total=Sum("amount"))
             .get("total")
             or 0
         )
-
-        seller_revenue = getattr(revenue, "seller_revenue", 0) if revenue else 0
-        vat_collected = getattr(revenue, "vat_collected", 0) if revenue else 0
-        total_revenue = getattr(revenue, "total_revenue", 0) if revenue else (seller_revenue)
-        total_milestones_approved = getattr(revenue, "total_milestones_approved", 0) if revenue else 0
+        
+        # 2. VAT collected (difference between buyer_total and amount)
+        payments_with_vat = Payment.objects.filter(
+            status="paid", created_at__year=year, created_at__month=month
+        )
+        vat_collected = sum(
+            (p.buyer_total_amount or 0) - (p.amount or 0) for p in payments_with_vat
+        )
+        
+        # 3. Seller revenue (platform fees from approved milestones)
+        from projects.models import Milestone
+        from payments.services import FeeCalculationService
+        
+        # FIXED: Only count milestones from projects that received payments in this month
+        # This prevents counting milestones from projects without payments
+        paid_projects_in_month = Payment.objects.filter(
+            status="paid",
+            created_at__year=year,
+            created_at__month=month
+        ).values_list('project_id', flat=True).distinct()
+        
+        # Get approved milestones for this month but ONLY from projects with payments
+        milestones = Milestone.objects.filter(
+            status="approved",
+            completion_date__year=year,
+            completion_date__month=month,
+            project_id__in=paid_projects_in_month  # Only count milestones from paid projects
+        ).select_related('project')
+        
+        seller_revenue = 0
+        total_milestones_approved = milestones.count()
+        
+        for milestone in milestones:
+            try:
+                # Calculate platform fee for this milestone
+                fees = FeeCalculationService.calculate_fees(
+                    milestone.relative_payment,
+                    milestone.project.platform_fee_percentage,
+                    milestone.project.vat_rate
+                )
+                seller_revenue += float(fees["platform_fee"])
+            except Exception as e:
+                logger.warning(f"Error calculating fees for milestone {milestone.id}: {e}")
+        
+        # 4. Total revenue (same as seller revenue for now)
+        total_revenue = seller_revenue
+        
+        # Debug logging for revenue calculation transparency
+        logger.info(
+            f"HubSpot revenue calculation for {year}-{month:02d}: "
+            f"total_payments={total_payments_amount}, vat_collected={vat_collected}, "
+            f"seller_revenue={seller_revenue}, total_revenue={total_revenue}, "
+            f"milestones_approved={total_milestones_approved} (from {len(paid_projects_in_month)} paid projects)"
+        )
 
         period_key = f"{year}-{month:02d}"
 

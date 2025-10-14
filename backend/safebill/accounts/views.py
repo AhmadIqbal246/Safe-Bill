@@ -119,9 +119,7 @@ class SellerRegisterView(APIView):
         serializer = SellerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Enqueue HubSpot sync after commit with fallback
-            from hubspot.sync_utils import safe_contact_sync
-            safe_contact_sync(user.id, "seller_registration")
+            # HubSpot sync now handled automatically by Django signals
             
             # Generate verification token and URL
             token = default_token_generator.make_token(user)
@@ -157,9 +155,7 @@ class BuyerRegistrationView(APIView):
         serializer = BuyerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Enqueue HubSpot sync after commit with fallback
-            from hubspot.sync_utils import safe_contact_sync
-            safe_contact_sync(user.id, "buyer_registration")
+            # HubSpot sync now handled automatically by Django signals
             # Send verification email using the new email service
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -198,11 +194,7 @@ class VerifyEmailView(APIView):
             user.is_active = True
             user.is_email_verified = True
             user.save()
-            
-            # Sync with HubSpot after email verification
-            from hubspot.sync_utils import safe_contact_sync
-            logger.info("HubSpot enqueue: email verified for user_id=%s", user.id)
-            safe_contact_sync(user.id, "email_verification_get")
+            # HubSpot sync now handled automatically by Django signals
             
             # Extract language from request headers
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
@@ -268,11 +260,7 @@ class VerifyEmailView(APIView):
                 user.is_active = True
                 user.is_email_verified = True
                 user.save()
-                
-                # Sync with HubSpot after email verification (POST flow)
-                from hubspot.sync_utils import safe_contact_sync
-                logger.info("HubSpot enqueue: email verified (POST) for user_id=%s", user.id)
-                safe_contact_sync(user.id, "email_verification_post")
+                # HubSpot sync now handled automatically by Django signals
                 
                 # Extract language from request headers
                 preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
@@ -416,10 +404,7 @@ class OnboardingStatusView(APIView):
         if onboarding_complete is not None:
             request.user.onboarding_complete = onboarding_complete
             request.user.save()
-            
-            # Sync with HubSpot after onboarding status update
-            from hubspot.sync_utils import safe_contact_sync
-            safe_contact_sync(request.user.id, "onboarding_status_update")
+            # HubSpot sync now handled automatically by Django signals
             
             return Response({'onboarding_complete': request.user.onboarding_complete})
         return Response({'detail': 'Missing onboarding_complete field.'}, status=400)

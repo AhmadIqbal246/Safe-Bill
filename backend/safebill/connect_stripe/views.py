@@ -631,9 +631,7 @@ def stripe_identity_webhook(request):
         project = Project.objects.get(id=project_id)
         project.status = "approved"
         project.save()
-        # Ensure HubSpot deal reflects approved status via custom properties
-        from hubspot.sync_utils import sync_project_to_hubspot
-        sync_project_to_hubspot(project.id, "payment_success")
+        # HubSpot sync now handled automatically by Django signals
         payment = Payment.objects.get(stripe_payment_id=payment_id)
         if payment.status != "paid":
             platform_revenue = PlatformRevenue.objects.all().first()
@@ -645,10 +643,15 @@ def stripe_identity_webhook(request):
         payment.webhook_response = event
         payment.save()
 
-        # Enqueue HubSpot Revenue monthly sync
+        # Enqueue HubSpot Revenue monthly sync with transaction safety
         from hubspot.sync_utils import sync_revenue_to_hubspot
+        from django.db import transaction
         now = timezone.now()
-        sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success")
+        
+        # Ensure revenue sync only happens after database commit
+        transaction.on_commit(
+            lambda: sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success")
+        )
 
         try:
             # The payment is held in escrow until milestones are approved
@@ -731,8 +734,7 @@ def stripe_identity_webhook(request):
         project = Project.objects.get(id=project_id)
         project.status = "approved"
         project.save()
-        from hubspot.sync_utils import sync_project_to_hubspot
-        sync_project_to_hubspot(project.id, "payment_webhook_success")
+        # HubSpot sync now handled automatically by Django signals
 
         payment_obj = Payment.objects.get(stripe_payment_id=payment_id)
         if payment_obj.status != "paid":

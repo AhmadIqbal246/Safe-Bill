@@ -123,10 +123,7 @@ class SellerRegistrationSerializer(serializers.Serializer):
             ),
         )
 
-        # Enqueue HubSpot company sync and association after commit (only for seller/professional-buyer)
-        if role in ["seller", "professional-buyer"]:
-            from hubspot.sync_utils import safe_company_sync
-            safe_company_sync(bd.id, f"{role}_registration")
+        # HubSpot company sync now handled automatically by Django signals
 
         if role == "seller":
             StripeAccount.objects.create(

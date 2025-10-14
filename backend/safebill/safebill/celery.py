@@ -24,38 +24,38 @@ logger = logging.getLogger(__name__)
 def log_task_failure(sender=None, task_id=None, exception=None, traceback=None, einfo=None, **kwargs):
     """Log when any Celery task fails (catches silent failures)"""
     task_name = getattr(sender, 'name', 'Unknown')
-    print(f"\n🚨 TASK FAILED SILENTLY: {task_name}")
+    print(f"\n ❌ TASK FAILED SILENTLY: {task_name}")
     print(f"   Task ID: {task_id}")
     print(f"   Error: {exception}")
     if 'hubspot' in task_name.lower():
-        print(f"   ⚠️  HubSpot sync failure detected!")
+        print(f"   [WARNING] HubSpot sync failure detected!")
     logger.error(f"Task {task_name} failed: {exception}", extra={'task_id': task_id})
 
 @task_retry.connect
 def log_task_retry(sender=None, task_id=None, reason=None, einfo=None, **kwargs):
     """Log when tasks are retrying"""
     task_name = getattr(sender, 'name', 'Unknown')
-    print(f"\n🔄 TASK RETRY: {task_name}")
+    print(f"\n[RETRY] TASK RETRY: {task_name}")
     print(f"   Task ID: {task_id}")
     print(f"   Reason: {reason}")
     if 'hubspot' in task_name.lower():
-        print(f"   ⚠️  HubSpot task retrying...")
+        print(f"   [WARNING] HubSpot task retrying...")
 
 @task_revoked.connect
 def log_task_revoked(sender=None, task_id=None, reason=None, **kwargs):
     """Log when tasks are cancelled/revoked"""
     task_name = getattr(sender, 'name', 'Unknown')
-    print(f"\n❌ TASK REVOKED: {task_name}")
+    print(f"\n[REVOKED] TASK REVOKED: {task_name}")
     print(f"   Task ID: {task_id}")
     print(f"   Reason: {reason}")
     if 'hubspot' in task_name.lower():
-        print(f"   ⚠️  HubSpot task was cancelled!")
+        print(f"   [WARNING] HubSpot task was cancelled!")
 
 @task_success.connect
 def log_task_success(sender=None, task_id=None, result=None, **kwargs):
     """Log when HubSpot tasks complete successfully"""
     task_name = getattr(sender, 'name', 'Unknown')
     if 'hubspot' in task_name.lower():
-        print(f"\n✅ HUBSPOT TASK SUCCESS: {task_name}")
+        print(f"\n ✅ HUBSPOT TASK SUCCESS: {task_name}")
         print(f"   Task ID: {task_id}")
         print(f"   Result: {result}")
