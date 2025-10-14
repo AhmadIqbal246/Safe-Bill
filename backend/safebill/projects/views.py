@@ -33,6 +33,7 @@ from .tasks import (
 from django.db import transaction
 # HubSpot syncing is now handled automatically by Django signals
 # No need to manually import sync functions
+from hubspot.sync_utils import sync_project_to_hubspot
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +122,11 @@ class ProjectCreateAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         project = serializer.save()
-        # HubSpot sync now handled automatically by Django signals in hubspot/signals.py
-        # This ensures 100% reliability without manual sync calls
+        # Defensive fallback to ensure deal is enqueued even if signal path is guarded
+        try:
+            sync_project_to_hubspot(project.id, 'creation_fallback', use_transaction_commit=False)
+        except Exception:
+            pass
 
 class ProjectListAPIView(generics.ListAPIView):
     serializer_class = ProjectListSerializer
