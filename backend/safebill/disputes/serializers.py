@@ -167,7 +167,12 @@ class DisputeCreateSerializer(serializers.ModelSerializer):
                 dispute_id=dispute.dispute_id,
                 language=language,
             )
-            # Note: HubSpot ticket creation is handled automatically by Django signals
+            # Also create a HubSpot ticket directly (signals disabled for disputes)
+            try:
+                create_dispute_ticket_task.delay(dispute.id)
+            except Exception:
+                # Do not fail dispute creation if HubSpot enqueue fails
+                pass
         except Exception:
             # Do not fail dispute creation if email sending fails
             pass
