@@ -72,16 +72,9 @@ def _enqueue_ticket_update_on_change(sender, instance: Dispute, created: bool, *
     if not is_hubspot_sync_enabled():
         return
     
-    # Handle dispute creation (create HubSpot ticket immediately)
+    # Dispute creation: skip signal-based ticket creation to avoid duplication.
     if created:
-        print(f"🎫 Django signal fired - Dispute creation (Dispute {instance.id})")
-        logger.info(f"Auto-creating HubSpot ticket for new dispute {instance.id}")
-        
-        try:
-            create_dispute_ticket_task.delay(instance.id)
-            logger.info(f"HubSpot ticket creation task enqueued for dispute {instance.id}")
-        except Exception as e:
-            logger.error(f"Failed to enqueue HubSpot ticket creation for dispute {instance.id}: {e}")
+        # Creation is handled explicitly in DisputeCreateSerializer.create()
         return
     
     # Handle dispute updates (update existing HubSpot ticket)
