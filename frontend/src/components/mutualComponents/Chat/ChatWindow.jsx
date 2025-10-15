@@ -11,10 +11,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { X, Paperclip, Send } from 'lucide-react';
 import { closeChat } from '../../../store/slices/ChatSlice';
 
-// Helper function to get current user ID
+// Helper function to get current user ID (use only id)
 const getCurrentUserId = () => {
   const user = sessionStorage.getItem('user');
-  return user ? JSON.parse(user).user_id : null;
+  if (!user) return null;
+  const parsed = JSON.parse(user);
+  return parsed?.id ?? null;
 };
 
 const ChatWindow = () => {
@@ -146,7 +148,7 @@ const ChatWindow = () => {
           ) : (
             currentMessages.map((message) => {
               const currentUserId = getCurrentUserId();
-              const isCurrentUserMessage = message.sender === currentUserId;
+              const isCurrentUserMessage = Number(message.sender) === Number(currentUserId);
               
               return (
                 <div

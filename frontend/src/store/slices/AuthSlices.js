@@ -315,14 +315,8 @@ export const switchActiveRole = createAsyncThunk(
           headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
         });
         
-        // Update sessionStorage with the complete updated user data
-        // Ensure stable identifier expected by chat logic
-        const stableUserId = profileResponse.data?.user_id ?? profileResponse.data?.id ?? null;
-
         const updatedUser = {
           ...profileResponse.data,
-          // Ensure stable identifier expected by chat logic
-          user_id: stableUserId,
           role: response.data.role,
           active_role: response.data.active_role,
           available_roles: response.data.available_roles
