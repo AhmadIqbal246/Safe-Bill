@@ -685,6 +685,8 @@ class MilestoneApprovalAPIView(APIView):
         if action_type not in ["approve", "not_approved", "review_request", "pending"]:
             return Response({"detail": "Invalid action."}, status=400)
 
+        old_status = milestone.status
+
         if action_type == "approve":
             milestone.status = "approved"
             milestone.completion_date = timezone.now()
@@ -734,7 +736,11 @@ class MilestoneApprovalAPIView(APIView):
         elif action_type == "pending":
             milestone.status = "pending"
             milestone.completion_date = None
-            # Notify buyer of approval request
+        # Persist change
+        milestone.save()
+
+        # Notify buyer if milestone just entered pending state (regardless of action source)
+        if milestone.status == "pending" and old_status != "pending":
             try:
                 project = milestone.project
                 if project.client and project.client.email:
@@ -759,7 +765,6 @@ class MilestoneApprovalAPIView(APIView):
             except Exception:
                 # Do not fail the flow if email cannot be sent
                 pass
-        milestone.save()
 
         # If milestone was approved, check if all milestones are now approved
         if action_type == "approve":

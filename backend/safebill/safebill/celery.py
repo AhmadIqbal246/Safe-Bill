@@ -57,5 +57,5 @@ def log_task_success(sender=None, task_id=None, result=None, **kwargs):
     task_name = getattr(sender, 'name', 'Unknown')
     if 'hubspot' in task_name.lower():
         print(f"\n ✅ HUBSPOT TASK SUCCESS: {task_name}")
-        print(f"   Task ID: {task_id}")
+        # print(f"   Task ID: {task_id}")
         print(f"   Result: {result}")
