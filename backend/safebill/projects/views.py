@@ -122,11 +122,6 @@ class ProjectCreateAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         project = serializer.save()
-        # Defensive fallback to ensure deal is enqueued even if signal path is guarded
-        try:
-            sync_project_to_hubspot(project.id, 'creation_fallback', use_transaction_commit=False)
-        except Exception:
-            pass
 
 class ProjectListAPIView(generics.ListAPIView):
     serializer_class = ProjectListSerializer

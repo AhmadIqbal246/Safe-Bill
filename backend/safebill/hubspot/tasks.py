@@ -598,16 +598,41 @@ def sync_milestone_task(self, milestone_id: int) -> Optional[str]:
                 link.save(update_fields=["status", "last_error", "last_synced_at"])
             return data.get("id")
 
-        # Upsert summary record by unique SafeBill project id
-        existing = client.search_by_project_id(props.get("safebill_project_id", ""))
-        if existing:
-            hubspot_id = existing.get("id")
-            logger.info("HubSpot: found existing milestone summary id=%s", hubspot_id)
-            client.update(hubspot_id, props)
+        # Prefer CREATE first for a brand-new project (to ensure 201 on first insert),
+        # then fallback to search/update if a concurrent task already created it.
+        project_id_str = props.get("safebill_project_id", "")
+        has_any_project_link = HubSpotMilestoneLink.objects.filter(
+            milestone__project_id=getattr(m.project, 'id', None)
+        ).exists()
+
+        if not has_any_project_link:
+            try:
+                created = client.create(props)
+                hubspot_id = created.get("id")
+                logger.info("HubSpot: created milestone summary id=%s for project=%s", hubspot_id, props.get("project_name"))
+            except Exception as create_error:
+                # If another worker created it first, resolve by search/update
+                if "409" in str(create_error) or "Conflict" in str(create_error):
+                    existing = client.search_by_project_id(project_id_str)
+                    if existing:
+                        hubspot_id = existing.get("id")
+                        logger.info("HubSpot: found existing milestone summary after conflict id=%s", hubspot_id)
+                        client.update(hubspot_id, props)
+                    else:
+                        raise create_error
+                else:
+                    raise create_error
         else:
-            created = client.create(props)
-            hubspot_id = created.get("id")
-            logger.info("HubSpot: created milestone summary id=%s for project=%s", hubspot_id, props.get("project_name"))
+            # Upsert by unique SafeBill project id
+            existing = client.search_by_project_id(project_id_str)
+            if existing:
+                hubspot_id = existing.get("id")
+                logger.info("HubSpot: found existing milestone summary id=%s", hubspot_id)
+                client.update(hubspot_id, props)
+            else:
+                created = client.create(props)
+                hubspot_id = created.get("id")
+                logger.info("HubSpot: created milestone summary id=%s for project=%s", hubspot_id, props.get("project_name"))
 
         if hubspot_id:
             if link:

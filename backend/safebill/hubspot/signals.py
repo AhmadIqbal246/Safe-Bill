@@ -292,7 +292,7 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
         result = sync_project_to_hubspot(
             project_id=project_id,
             reason=reason,
-            use_transaction_commit=False  # CHANGED: Immediate execution for reliability
+            use_transaction_commit=True
         )
         logger.info(f"Project {project_id} sync result: {result}")
     except Exception as e:
