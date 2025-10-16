@@ -82,6 +82,7 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         project = instance.project
+        old_status = instance.status
 
         # Validate milestone amount within paid amount limit if changing
         if "relative_payment" in validated_data:
@@ -119,6 +120,39 @@ class MilestoneUpdateSerializer(serializers.ModelSerializer):
 
         # Update milestone fields
         milestone = super().update(instance, validated_data)
+
+        # Check if milestone just entered pending state and notify buyer
+        if milestone.status == "pending" and old_status != "pending":
+            try:
+                from projects.tasks import send_milestone_approval_request_email_task
+                
+                if project.client and project.client.email:
+                    # Get language from request context if available
+                    request = self.context.get('request')
+                    if request:
+                        preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                        language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+                    else:
+                        language = "fr"  # Default to French
+                    
+                    buyer_name = (
+                        getattr(project.client, "username", None)
+                        or project.client.email.split("@")[0]
+                    )
+                    
+                    send_milestone_approval_request_email_task.delay(
+                        user_email=project.client.email,
+                        user_name=buyer_name,
+                        project_name=project.name,
+                        milestone_name=milestone.name,
+                        amount=str(milestone.relative_payment),
+                        language=language,
+                    )
+            except Exception as e:
+                # Do not fail milestone update if email cannot be sent
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send milestone approval email for milestone {milestone.id}: {e}")
 
         # Update corresponding installment if it exists
         if milestone.related_installment:
@@ -235,6 +269,19 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
         # HubSpot sync now handled automatically by Django signals
         # Project and milestone creation will trigger sync signals automatically
+        # Fallback: ensure at least one milestone summary sync is enqueued for this project
+        try:
+            if created_milestones:
+                from hubspot.sync_utils import sync_milestone_to_hubspot
+                # Use immediate enqueue to avoid transaction timing issues
+                sync_milestone_to_hubspot(
+                    milestone_id=created_milestones[-1],
+                    reason="creation_fallback",
+                    use_transaction_commit=False,
+                )
+        except Exception:
+            # Do not fail project creation if HubSpot enqueue fails
+            pass
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")

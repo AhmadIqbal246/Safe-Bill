@@ -16,6 +16,7 @@ from .services import RevenueService
 from .models import PlatformRevenue
 from payments.models import Refund
 from payments.serializers import RefundSerializer
+from hubspot.tasks import update_dispute_ticket_task
 
 logger = logging.getLogger(__name__)
 
@@ -279,6 +280,13 @@ class AssignMediatorAPIView(APIView):
         dispute.assigned_mediator = mediator
         dispute.status = "mediation_initiated"
         dispute.save()
+        
+        # Update HubSpot ticket asynchronously
+        try:
+            update_dispute_ticket_task.delay(dispute.id)
+        except Exception:
+            pass
+        
         DisputeEvent.objects.create(
             dispute=dispute,
             event_type="mediation_initiated",
@@ -401,6 +409,12 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
 
         dispute.status = new_status
         dispute.save()
+
+        # Update HubSpot ticket asynchronously
+        try:
+            update_dispute_ticket_task.delay(dispute.id)
+        except Exception:
+            pass
 
         # Helper function to format status for display
         def format_status_display(status):

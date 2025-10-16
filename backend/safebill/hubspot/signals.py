@@ -61,45 +61,10 @@ def _capture_dispute_previous_state(sender, instance: Dispute, **kwargs):
 @receiver(post_save, sender=Dispute)
 def _enqueue_ticket_update_on_change(sender, instance: Dispute, created: bool, **kwargs):
     """
-    Automatically sync dispute updates to HubSpot when status or mediator changes.
-    Executes immediately without waiting for transaction commit.
+    Dispute HubSpot syncing via signals is disabled to prevent duplication.
+    Creation and updates are handled explicitly in serializers.
     """
-    # Feature flag check
-    if not DISPUTE_SIGNALS_ENABLED:
-        return
-        
-    # Global sync check
-    if not is_hubspot_sync_enabled():
-        return
-    
-    # Dispute creation: skip signal-based ticket creation to avoid duplication.
-    if created:
-        # Creation is handled explicitly in DisputeCreateSerializer.create()
-        return
-    
-    # Handle dispute updates (update existing HubSpot ticket)
-    prev = getattr(_local, "prev", {"status": None, "mediator_id": None})
-    status_changed = prev.get("status") is not None and prev.get("status") != instance.status
-    mediator_changed = prev.get("mediator_id") != instance.assigned_mediator_id
-
-    if not (status_changed or mediator_changed):
-        return
-    
-    # Simple emoji indicator when signal fires
-    change_type = []
-    if status_changed:
-        change_type.append(f"status: {prev.get('status')} → {instance.status}")
-    if mediator_changed:
-        change_type.append("mediator assignment")
-    
-    print(f"🎫 Django signal fired - Dispute update (Dispute {instance.id}) - {', '.join(change_type)}")
-    logger.info(f"Auto-syncing dispute {instance.id} to HubSpot via signal - changes: {', '.join(change_type)}")
-
-    try:
-        update_dispute_ticket_task.delay(instance.id)
-        logger.info(f"HubSpot ticket update task enqueued for dispute {instance.id}")
-    except Exception as e:
-        logger.error(f"Failed to enqueue HubSpot ticket update for dispute {instance.id}: {e}")
+    return
 
 
 # ============================================================================
@@ -301,9 +266,9 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
             if time_diff < 10 and last_sync_status == current_status:
                 logger.info(f"❌ DEBUG: Project {project_id} duplicate sync detected (same status '{current_status}', {time_diff:.1f}s ago) - SKIPPING")
                 return
-            # Skip if ANY update within 5 seconds (rapid webhook duplicates)
-            elif time_diff < 5:
-                logger.info(f"❌ DEBUG: Project {project_id} rapid sync detected ({time_diff:.1f}s ago) - SKIPPING")
+            # Skip rapid duplicate only if status did not change
+            elif time_diff < 1 and last_sync_status == current_status:
+                logger.info(f"❌ DEBUG: Project {project_id} rapid same-status sync ({time_diff:.1f}s ago) - SKIPPING")
                 return
         
         # Claim this project for syncing
