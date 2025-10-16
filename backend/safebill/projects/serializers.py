@@ -269,6 +269,19 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
         # HubSpot sync now handled automatically by Django signals
         # Project and milestone creation will trigger sync signals automatically
+        # Fallback: ensure at least one milestone summary sync is enqueued for this project
+        try:
+            if created_milestones:
+                from hubspot.sync_utils import sync_milestone_to_hubspot
+                # Use immediate enqueue to avoid transaction timing issues
+                sync_milestone_to_hubspot(
+                    milestone_id=created_milestones[-1],
+                    reason="creation_fallback",
+                    use_transaction_commit=False,
+                )
+        except Exception:
+            # Do not fail project creation if HubSpot enqueue fails
+            pass
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
