@@ -345,8 +345,12 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
             last_sync_time = _milestone_sync_locks[lock_key]
             time_diff = current_time - last_sync_time
             
+            # For creation: be very strict - skip if ANY sync happened recently
+            if created and time_diff < 30:  # 30 second window for milestone creation
+                logger.info(f"❌ DEBUG: Project {project_id} milestone creation sync already happened ({time_diff:.1f}s ago) - SKIPPING")
+                return
             # For rapid updates, apply stricter deduplication
-            if time_diff < 10:  # 10 second window for milestone updates
+            elif not created and time_diff < 10:  # 10 second window for milestone updates
                 logger.info(f"❌ DEBUG: Project {project_id} milestone sync already in progress ({time_diff:.1f}s ago) - SKIPPING")
                 return
         
@@ -383,7 +387,7 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
             result = sync_milestone_to_hubspot(
                 milestone_id=milestone_id,
                 reason=reason,
-                use_transaction_commit=False
+                use_transaction_commit=True
             )
             logger.info(f"Milestone creation sync result for project {project_id}: {result}")
         else:
@@ -392,7 +396,7 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
             result = update_milestone_in_hubspot(
                 milestone_id=milestone_id,
                 reason=reason,
-                use_transaction_commit=False
+                use_transaction_commit=True
             )
             logger.info(f"Milestone update sync result for milestone {milestone_id}: {result}")
             
