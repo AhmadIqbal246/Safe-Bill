@@ -4,7 +4,7 @@ from projects.serializers import ProjectListSerializer
 from notifications.models import Notification
 from utils.email_service import EmailService
 from .tasks import send_dispute_created_email_task
-from hubspot.tasks import create_dispute_ticket_task, update_dispute_ticket_task
+from hubspot.tasks import create_dispute_ticket_task
 
 
 class DisputeDocumentSerializer(serializers.ModelSerializer):
@@ -205,7 +205,7 @@ class DisputeUpdateSerializer(serializers.ModelSerializer):
             
             # Update HubSpot ticket explicitly (signals disabled for disputes)
             try:
-                update_dispute_ticket_task.delay(instance.id)
+                create_dispute_ticket_task.delay(instance.id)
             except Exception:
                 pass
         
@@ -224,7 +224,7 @@ class DisputeUpdateSerializer(serializers.ModelSerializer):
             
             # Update HubSpot ticket explicitly (signals disabled for disputes)
             try:
-                update_dispute_ticket_task.delay(instance.id)
+                create_dispute_ticket_task.delay(instance.id)
             except Exception:
                 pass
         

@@ -13,6 +13,45 @@ app = Celery('safebill')
 # Configure Celery using Django settings
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
+# Celery Beat Schedule Configuration
+app.conf.beat_schedule = {
+    # Process HubSpot sync queue every 1 minute (for testing)
+    'process-hubspot-sync-queue': {
+        'task': 'hubspot.tasks.process_sync_queue',
+        'schedule': 180.0,  # 1 minute (temporarily for testing)
+        'options': {
+            'queue': 'emails',
+            'priority': 5,
+        }
+    },
+    
+    # Retry failed sync items every hour
+    'retry-failed-hubspot-syncs': {
+        'task': 'hubspot.tasks.retry_failed_sync_items',
+        'schedule': 3600.0,  # 1 hour
+        'options': {
+            'queue': 'emails',
+            'priority': 3,
+        }
+    },
+    
+    # Clean up old sync queue items daily at 2 AM
+    'cleanup-hubspot-sync-queue': {
+        'task': 'hubspot.tasks.cleanup_old_sync_queue_items',
+        'schedule': 86400.0,  # 24 hours
+        'options': {
+            'queue': 'emails',
+            'priority': 1,
+        }
+    },
+}
+
+# Timezone for Celery Beat
+app.conf.timezone = 'UTC'
+
+# Celery Beat scheduler settings
+app.conf.beat_max_loop_interval = 180  # Check for due tasks every 30 seconds max
+
 # Automatically discover and register tasks from all registered Django apps
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
