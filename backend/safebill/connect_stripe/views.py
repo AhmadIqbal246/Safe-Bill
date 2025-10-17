@@ -23,7 +23,7 @@ from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
 from adminpanelApp.models import PlatformRevenue
-from hubspot.tasks import sync_contact_task, sync_revenue_month_task
+from hubspot.tasks import sync_contact_task, sync_revenue_task
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

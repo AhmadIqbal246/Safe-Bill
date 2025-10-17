@@ -16,7 +16,7 @@ from .services import RevenueService
 from .models import PlatformRevenue
 from payments.models import Refund
 from payments.serializers import RefundSerializer
-from hubspot.tasks import update_dispute_ticket_task
+from hubspot.tasks import create_dispute_ticket_task
 
 logger = logging.getLogger(__name__)
 
@@ -283,7 +283,7 @@ class AssignMediatorAPIView(APIView):
         
         # Update HubSpot ticket asynchronously
         try:
-            update_dispute_ticket_task.delay(dispute.id)
+            create_dispute_ticket_task.delay(dispute.id)
         except Exception:
             pass
         
@@ -412,7 +412,7 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
 
         # Update HubSpot ticket asynchronously
         try:
-            update_dispute_ticket_task.delay(dispute.id)
+            create_dispute_ticket_task.delay(dispute.id)
         except Exception:
             pass
 

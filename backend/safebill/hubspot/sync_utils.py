@@ -326,10 +326,10 @@ def update_milestone_in_hubspot(milestone_id: int, reason: str = "unknown", **kw
     Returns:
         dict: Operation result
     """
-    from .tasks import update_milestone_task
+    from .tasks import sync_milestone_task
     
     return safe_hubspot_sync_with_backup(
-        update_milestone_task,
+        sync_milestone_task,
         f"Milestone Update (reason: {reason})",
         milestone_id,
         **kwargs
@@ -349,10 +349,10 @@ def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kw
     Returns:
         dict: Operation result
     """
-    from .tasks import sync_revenue_month_task
+    from .tasks import sync_revenue_task
     
     return safe_hubspot_sync_with_backup(
-        sync_revenue_month_task,
+        sync_revenue_task,
         f"Revenue Sync (reason: {reason})",
         year,
         month,
@@ -538,4 +538,358 @@ def safe_company_sync(business_detail_id: int, reason: str = "unknown") -> Dict[
         sync_company_task,
         f"Company Sync (reason: {reason})",
         business_detail_id
+    )
+
+
+# =============================================================================
+# QUEUE MANAGEMENT UTILITIES
+# =============================================================================
+
+def create_sync_queue_item(content_object, sync_type, priority='normal', scheduled_at=None, **kwargs):
+    """
+    Create a new item in the HubSpot sync queue.
+    
+    Args:
+        content_object: The Django model instance to sync
+        sync_type: Type of sync ('feedback', 'dispute', 'milestone', 'contact_message')
+        priority: Priority level ('low', 'normal', 'high', 'urgent')
+        scheduled_at: When to process this item (None for immediate)
+        **kwargs: Additional fields for the queue item
+        
+    Returns:
+        HubSpotSyncQueue: The created queue item
+    """
+    from .models import HubSpotSyncQueue
+    from django.contrib.contenttypes.models import ContentType
+    
+    try:
+        # Get content type
+        content_type = ContentType.objects.get_for_model(content_object)
+        
+        # Check if item already exists
+        existing_item = HubSpotSyncQueue.objects.filter(
+            content_type=content_type,
+            object_id=content_object.id,
+            sync_type=sync_type
+        ).first()
+        
+        if existing_item:
+            # Update existing item if it's failed or retry
+            if existing_item.status in ['failed', 'retry']:
+                existing_item.status = 'pending'
+                existing_item.priority = priority
+                existing_item.scheduled_at = scheduled_at
+                existing_item.error_message = ''
+                existing_item.error_details = {}
+                existing_item.retry_count = 0
+                existing_item.next_retry_at = None
+                existing_item.save()
+                logger.info(f"🔄 Updated existing queue item for {sync_type} sync: {content_object}")
+                return existing_item
+            else:
+                logger.info(f"📋 Queue item already exists for {sync_type} sync: {content_object}")
+                return existing_item
+        
+        # Create new queue item
+        queue_item = HubSpotSyncQueue.objects.create(
+            content_type=content_type,
+            object_id=content_object.id,
+            sync_type=sync_type,
+            priority=priority,
+            scheduled_at=scheduled_at,
+            **kwargs
+        )
+        
+        logger.info(f"✅ Created queue item for {sync_type} sync: {content_object}")
+        return queue_item
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to create queue item for {sync_type} sync: {e}", exc_info=True)
+        raise HubSpotSyncError(f"Failed to create queue item: {e}")
+
+
+def get_pending_sync_items(sync_type=None, priority=None, limit=50):
+    """
+    Get pending items from the sync queue.
+    
+    Args:
+        sync_type: Filter by sync type (optional)
+        priority: Filter by priority (optional)
+        limit: Maximum number of items to return
+        
+    Returns:
+        QuerySet: Pending sync items
+    """
+    from .models import HubSpotSyncQueue
+    from django.utils import timezone
+    
+    queryset = HubSpotSyncQueue.objects.filter(
+        status__in=['pending', 'retry'],
+        scheduled_at__lte=timezone.now(),
+        next_retry_at__lte=timezone.now()
+    ).order_by('priority', 'created_at')
+    
+    if sync_type:
+        queryset = queryset.filter(sync_type=sync_type)
+    
+    if priority:
+        queryset = queryset.filter(priority=priority)
+    
+    return queryset[:limit]
+
+
+def get_queue_statistics():
+    """
+    Get comprehensive statistics about the sync queue.
+    
+    Returns:
+        dict: Queue statistics
+    """
+    from .models import HubSpotSyncQueue
+    from django.db.models import Count, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Overall statistics
+    stats = HubSpotSyncQueue.objects.aggregate(
+        total=Count('id'),
+        pending=Count('id', filter=Q(status='pending')),
+        processing=Count('id', filter=Q(status='processing')),
+        synced=Count('id', filter=Q(status='synced')),
+        failed=Count('id', filter=Q(status='failed')),
+        retry=Count('id', filter=Q(status='retry')),
+    )
+    
+    # Recent activity (last 24 hours)
+    yesterday = timezone.now() - timedelta(days=1)
+    recent_stats = HubSpotSyncQueue.objects.filter(
+        created_at__gte=yesterday
+    ).aggregate(
+        recent_total=Count('id'),
+        recent_synced=Count('id', filter=Q(status='synced')),
+        recent_failed=Count('id', filter=Q(status='failed')),
+    )
+    
+    # By sync type
+    type_stats = {}
+    for sync_type in ['feedback', 'dispute', 'milestone', 'contact_message']:
+        type_stats[sync_type] = HubSpotSyncQueue.objects.filter(
+            sync_type=sync_type
+        ).aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status='pending')),
+            synced=Count('id', filter=Q(status='synced')),
+            failed=Count('id', filter=Q(status='failed')),
+        )
+    
+    # By priority
+    priority_stats = {}
+    for priority in ['low', 'normal', 'high', 'urgent']:
+        priority_stats[priority] = HubSpotSyncQueue.objects.filter(
+            priority=priority
+        ).aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status='pending')),
+            synced=Count('id', filter=Q(status='synced')),
+            failed=Count('id', filter=Q(status='failed')),
+        )
+    
+    return {
+        'overall': stats,
+        'recent': recent_stats,
+        'by_type': type_stats,
+        'by_priority': priority_stats,
+    }
+
+
+def reset_stuck_queue_items():
+    """
+    Reset queue items that have been stuck in 'processing' status for too long.
+    This is a safety mechanism for production environments.
+    
+    Returns:
+        int: Number of items reset
+    """
+    from .models import HubSpotSyncQueue
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Items stuck in processing for more than 1 hour
+    cutoff_time = timezone.now() - timedelta(hours=1)
+    
+    stuck_items = HubSpotSyncQueue.objects.filter(
+        status='processing',
+        processing_started_at__lt=cutoff_time
+    )
+    
+    count = stuck_items.count()
+    if count > 0:
+        stuck_items.update(
+            status='pending',
+            worker_id='',
+            processing_started_at=None,
+            error_message='Reset due to stuck processing',
+            error_details={'reset_reason': 'stuck_processing'}
+        )
+        logger.warning(f"🔄 Reset {count} stuck queue items")
+    
+    return count
+
+
+def cleanup_old_queue_items(days_old=7):
+    """
+    Clean up old queue items to prevent database bloat.
+    
+    Args:
+        days_old: Age in days for cleanup threshold
+        
+    Returns:
+        dict: Cleanup statistics
+    """
+    from .models import HubSpotSyncQueue
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    cutoff_date = timezone.now() - timedelta(days=days_old)
+    
+    # Delete old synced items
+    synced_deleted = HubSpotSyncQueue.objects.filter(
+        status='synced',
+        processed_at__lt=cutoff_date
+    ).delete()[0]
+    
+    # Delete old failed items (keep for longer debugging)
+    failed_cutoff = timezone.now() - timedelta(days=days_old * 2)
+    failed_deleted = HubSpotSyncQueue.objects.filter(
+        status='failed',
+        processed_at__lt=failed_cutoff
+    ).delete()[0]
+    
+    logger.info(f"🧹 Cleaned up {synced_deleted} synced items and {failed_deleted} failed items")
+    
+    return {
+        'synced_deleted': synced_deleted,
+        'failed_deleted': failed_deleted,
+        'total_deleted': synced_deleted + failed_deleted
+    }
+
+
+def queue_feedback_sync(feedback, priority='normal'):
+    """
+    Queue a feedback item for HubSpot sync.
+    
+    Args:
+        feedback: Feedback model instance
+        priority: Priority level
+        
+    Returns:
+        HubSpotSyncQueue: Created queue item
+    """
+    return create_sync_queue_item(
+        content_object=feedback,
+        sync_type='feedback',
+        priority=priority
+    )
+
+
+def queue_dispute_sync(dispute, priority='normal'):
+    """
+    Queue a dispute item for HubSpot sync.
+    
+    Args:
+        dispute: Dispute model instance
+        priority: Priority level
+        
+    Returns:
+        HubSpotSyncQueue: Created queue item
+    """
+    return create_sync_queue_item(
+        content_object=dispute,
+        sync_type='dispute',
+        priority=priority
+    )
+
+
+def queue_milestone_sync(milestone, priority='normal'):
+    """
+    Queue a milestone sync for HubSpot (creates one summary record per project).
+    
+    Args:
+        milestone: Milestone model instance (used for context)
+        priority: Priority level
+        
+    Returns:
+        HubSpotSyncQueue: Created or updated queue item (linked to PROJECT, not milestone)
+    """
+    from .models import HubSpotSyncQueue
+    from django.contrib.contenttypes.models import ContentType
+    from projects.models import Project
+    
+    # Queue the PROJECT, not the individual milestone
+    project = milestone.project
+    project_ct = ContentType.objects.get_for_model(Project)
+    
+    # Check if there's already a sync item for this project (any status)
+    existing_item = HubSpotSyncQueue.objects.filter(
+        content_type=project_ct,
+        object_id=project.id,
+        sync_type='milestone'
+    ).first()
+    
+    if existing_item:
+        # Flip previously synced/processing items back to pending so updates are processed
+        new_status = existing_item.status
+        if existing_item.status in ['synced', 'processing']:
+            existing_item.status = 'pending'
+            new_status = 'pending'
+
+        # Raise priority if needed
+        if priority == 'high' and existing_item.priority != 'high':
+            existing_item.priority = 'high'
+
+        if existing_item.status != new_status or existing_item.priority == 'high':
+            existing_item.save(update_fields=['status', 'priority'])
+        return existing_item
+    else:
+        # Create new queue item
+        return create_sync_queue_item(
+            content_object=project,
+            sync_type='milestone',
+            priority=priority
+        )
+
+
+def queue_feedback_sync(feedback, priority='normal'):
+    """
+    Queue a feedback item for HubSpot sync.
+    
+    Args:
+        feedback: Feedback model instance
+        priority: Priority level
+        
+    Returns:
+        HubSpotSyncQueue: Created queue item
+    """
+    return create_sync_queue_item(
+        content_object=feedback,
+        sync_type='feedback',
+        priority=priority
+    )
+
+
+def queue_contact_message_sync(contact_message, priority='normal'):
+    """
+    Queue a contact message item for HubSpot sync.
+    
+    Args:
+        contact_message: ContactMessage model instance
+        priority: Priority level
+        
+    Returns:
+        HubSpotSyncQueue: Created queue item
+    """
+    return create_sync_queue_item(
+        content_object=contact_message,
+        sync_type='contact_message',
+        priority=priority
     )

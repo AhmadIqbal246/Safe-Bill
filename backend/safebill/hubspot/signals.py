@@ -8,7 +8,7 @@ from django.db import transaction
 from django.conf import settings
 
 from disputes.models import Dispute
-from .tasks import update_dispute_ticket_task, create_dispute_ticket_task
+from .tasks import create_dispute_ticket_task
 
 # Import for revenue syncing
 from payments.models import Payment
@@ -187,8 +187,8 @@ def auto_sync_user_to_hubspot(sender, instance, created, **kwargs):
     logger.info(f"Auto-syncing user {user_id} to HubSpot via signal ({reason})")
     
     try:
-        # Use immediate execution for maximum reliability
-        result = safe_contact_sync(user_id, reason, use_transaction_commit=False)
+        # Use transaction.on_commit for production data consistency
+        result = safe_contact_sync(user_id, reason, use_transaction_commit=True)
         logger.info(f"User {user_id} sync result ({sync_type}): {result}")
     except Exception as e:
         # Never let signal failures break the main application
@@ -292,7 +292,7 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
         result = sync_project_to_hubspot(
             project_id=project_id,
             reason=reason,
-            use_transaction_commit=False  # CHANGED: Immediate execution for reliability
+            use_transaction_commit=True
         )
         logger.info(f"Project {project_id} sync result: {result}")
     except Exception as e:
@@ -378,62 +378,45 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
     sync_type = "creation" if created else "update"
     print(f"🎯 Django signal fired - Milestone {sync_type} sync (Project {project_id})")
     
-    reason = f"signal_milestone_{sync_type}"
-    logger.info(f"Auto-syncing milestone {sync_type} for project {project_id} via signal ({reason})")
-    
+    # Changed: Only queue on creation. We no longer sync milestone status updates to HubSpot.
+    if not created:
+        if SIGNALS_DEBUG_MODE:
+            logger.info(f"Skipping milestone update sync for project {project_id} (updates disabled)")
+        return
+
+    reason = f"signal_milestone_creation"
+    logger.info(f"Auto-syncing milestone creation for project {project_id} via signal ({reason})")
+
     try:
-        if created:
-            # Use milestone creation sync (creates milestone summary for project)
-            result = sync_milestone_to_hubspot(
-                milestone_id=milestone_id,
-                reason=reason,
-                use_transaction_commit=True
-            )
-            logger.info(f"Milestone creation sync result for project {project_id}: {result}")
-        else:
-            # Use milestone update sync (updates existing milestone summary with new statuses)
-            from hubspot.sync_utils import update_milestone_in_hubspot
-            result = update_milestone_in_hubspot(
-                milestone_id=milestone_id,
-                reason=reason,
-                use_transaction_commit=True
-            )
-            logger.info(f"Milestone update sync result for milestone {milestone_id}: {result}")
-            
-            # ADDED: Trigger revenue sync when milestone is approved (status update)
-            if not created:  # Only for milestone updates, not creation
-                try:
-                    milestone = Milestone.objects.get(id=milestone_id)
-                    if milestone.status == "approved":
-                        # Trigger revenue sync for the month when milestone was approved
-                        from django.utils import timezone
-                        from hubspot.sync_utils import sync_revenue_to_hubspot
-                        
-                        completion_date = milestone.completion_date or timezone.now()
-                        
-                        print(f"💰 Django signal - Revenue sync triggered by milestone approval (Milestone {milestone_id})")
-                        logger.info(f"Triggering revenue sync due to milestone {milestone_id} approval")
-                        
-                        # Sync revenue for the completion month
-                        sync_result = sync_revenue_to_hubspot(
-                            year=completion_date.year,
-                            month=completion_date.month,
-                            reason=f"milestone_approved_{milestone_id}",
-                            use_transaction_commit=False
-                        )
-                        logger.info(f"Milestone approval revenue sync result: {sync_result}")
-                except Exception as revenue_sync_error:
-                    # Don't break milestone sync if revenue sync fails
-                    logger.error(f"Revenue sync failed after milestone approval {milestone_id}: {revenue_sync_error}")
-    except Exception as e:
-        # Never let signal failures break the main application
-        logger.error(f"Milestone summary sync failed for project {project_id}: {e}", exc_info=True)
+        from .models import HubSpotSyncQueue
+        from django.contrib.contenttypes.models import ContentType
+        from projects.models import Project
+        from .sync_utils import queue_milestone_sync
         
-        # Clean up the sync lock if sync failed
+        project = instance.project
+        project_ct = ContentType.objects.get_for_model(Project)
+        
+        existing_sync = HubSpotSyncQueue.objects.filter(
+            content_type=project_ct,
+            object_id=project.id,
+            sync_type='milestone',
+            status__in=['pending', 'processing']
+        ).exists()
+        
+        if not existing_sync:
+            queue_item = queue_milestone_sync(
+                milestone=instance,
+                priority='normal'
+            )
+            logger.info(f"✅ Queued milestone creation sync for project {project_id} (queue_id: {queue_item.id})")
+        else:
+            logger.info(f"⏭️ Skipping milestone creation sync for project {project_id} - already queued")
+    except Exception as e:
+        logger.error(f"Failed to queue milestone creation sync for project {project_id}: {e}", exc_info=True)
         with _milestone_lock:
             if lock_key in _milestone_sync_locks:
                 del _milestone_sync_locks[lock_key]
-                logger.info(f"🧹 DEBUG: Cleaned up failed sync lock for project {project_id}")
+                logger.info(f"🧹 DEBUG: Cleaned up failed milestone sync lock for project {project_id}")
 
 
 @receiver(post_save, sender=Payment)

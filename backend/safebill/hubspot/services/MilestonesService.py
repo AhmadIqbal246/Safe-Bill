@@ -121,6 +121,30 @@ class HubSpotMilestonesClient:
 
 
 def build_milestone_properties(m: Milestone) -> Dict[str, Any]:
+    def normalize_status(value: Optional[str]) -> str:
+        if not value:
+            return "not_submitted"
+        v = str(value).strip().lower()
+        mapping = {
+            "not_submitted": "not_submitted",
+            "draft": "not_submitted",
+            "new": "not_submitted",
+            "pending": "pending",
+            "submitted": "pending",
+            "submit": "pending",
+            "review_request": "pending",
+            "in_progress": "pending",
+            "awaiting_approval": "pending",
+            "approved": "approved",
+            "accepted": "approved",
+            "rejected": "not_approved",
+            "declined": "not_approved",
+            "not_approved": "not_approved",
+            "payment_withdrawal": "payment_withdrawal",
+            "withdrawal_requested": "payment_withdrawal",
+            "payout_requested": "payment_withdrawal",
+        }
+        return mapping.get(v, "not_submitted")
     project = m.project
     seller = getattr(project, "user", None)
     buyer = getattr(project, "client", None)
@@ -168,15 +192,15 @@ def build_milestone_properties(m: Milestone) -> Dict[str, Any]:
 
         # First milestone trio
         "m1_name": (m1.name if m1 else "") if hasattr(m1, "name") else "",
-        "m1_status": (m1.status if m1 else "") if hasattr(m1, "status") else "",
+        "m1_status": normalize_status(getattr(m1, "status", None)) if m1 else "not_submitted",
         "m1_amount": float(m1.relative_payment) if (m1 and getattr(m1, "relative_payment", None) is not None) else 0,
 
         "m2_name": (m2.name if m2 else "") if hasattr(m2, "name") else "",
-        "m2_status": (m2.status if m2 else "") if hasattr(m2, "status") else "",
+        "m2_status": normalize_status(getattr(m2, "status", None)) if m2 else "not_submitted",
         "m2_amount": float(m2.relative_payment) if (m2 and getattr(m2, "relative_payment", None) is not None) else 0,
 
         "m3_name": (m3.name if m3 else "") if hasattr(m3, "name") else "",
-        "m3_status": (m3.status if m3 else "") if hasattr(m3, "status") else "",
+        "m3_status": normalize_status(getattr(m3, "status", None)) if m3 else "not_submitted",
         "m3_amount": float(m3.relative_payment) if (m3 and getattr(m3, "relative_payment", None) is not None) else 0,
     }
 

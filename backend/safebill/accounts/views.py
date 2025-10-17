@@ -26,8 +26,7 @@ from rest_framework.pagination import PageNumberPagination
 from .models import SellerRating
 from projects.models import Project
 from django.db import transaction
-from hubspot.tasks import sync_contact_task
-from hubspot.sync_utils import safe_contact_sync
+# HubSpot sync now handled automatically by Django signals
 
 logger = logging.getLogger(__name__)
 
@@ -121,11 +120,6 @@ class SellerRegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             # HubSpot sync now handled automatically by Django signals
-            # Defensive fallback to ensure contact is enqueued even if signal path is guarded
-            try:
-                safe_contact_sync(user.id, 'registration_fallback')
-            except Exception:
-                pass
             
             # Generate verification token and URL
             token = default_token_generator.make_token(user)
@@ -162,11 +156,6 @@ class BuyerRegistrationView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             # HubSpot sync now handled automatically by Django signals
-            # Defensive fallback to ensure contact is enqueued even if signal path is guarded
-            try:
-                safe_contact_sync(user.id, 'registration_fallback')
-            except Exception:
-                pass
             # Send verification email using the new email service
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -206,11 +195,6 @@ class VerifyEmailView(APIView):
             user.is_email_verified = True
             user.save()
             # HubSpot sync now handled automatically by Django signals
-            # Defensive fallback to ensure contact is enqueued on verification
-            try:
-                safe_contact_sync(user.id, 'email_verified_fallback')
-            except Exception:
-                pass
             
             # Extract language from request headers
             preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
