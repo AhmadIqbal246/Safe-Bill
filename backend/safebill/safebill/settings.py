@@ -170,17 +170,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Ensure channels middleware is loaded
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
-]
+# Note: MIDDLEWARE is already defined above, no need to redefine
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -268,12 +258,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
 }
 
-# Channels / Redis layer (use in-memory if REDIS_URL not provided)
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
-}
+# Note: CHANNEL_LAYERS is already defined above with Redis configuration
 
 # Email backend for development
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -292,14 +277,93 @@ STRIPE_VERIFICATION_FLOW_ID = env("STRIPE_VERIFICATION_FLOW_ID")
 
 # X-Frame-Options disabled for PDF iframe embedding
 
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/safebill/django.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'projects': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'disputes': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'hubspot': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounts': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
 # Celery Configuration
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_DEFAULT_QUEUE = 'emails'
+
+# Celery Task Routing
+CELERY_TASK_ROUTES = {
+    'projects.tasks.*': {'queue': 'emails'},
+    'disputes.tasks.*': {'queue': 'emails'},
+    'hubspot.tasks.*': {'queue': 'emails'},
+    'accounts.tasks.*': {'queue': 'emails'},
+    'payments.tasks.*': {'queue': 'emails'},
+    'feedback.tasks.*': {'queue': 'emails'},
+}
+
+# Celery Task Discovery
+CELERY_IMPORTS = [
+    'projects.tasks',
+    'disputes.tasks',
+    'hubspot.tasks',
+    'accounts.tasks',
+    'payments.tasks',
+    'feedback.tasks',
+]
 
 # HubSpot Integration
 # Private App token for direct API access

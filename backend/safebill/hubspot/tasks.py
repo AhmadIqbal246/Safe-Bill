@@ -85,7 +85,7 @@ def _mark_task_finished(task_key):
 # CORE SYNC TASKS (UNIFIED - SUPPORT BOTH DIRECT AND QUEUE MODES)
 # =============================================================================
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_contact_task(self, user_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified contact sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -215,7 +215,7 @@ def sync_contact_task(self, user_id: int = None, queue_item_id: int = None) -> O
         _mark_task_finished(task_key)
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_company_task(self, business_detail_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified company sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -349,7 +349,7 @@ def sync_company_task(self, business_detail_id: int = None, queue_item_id: int =
         _mark_task_finished(task_key)
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified deal sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -407,7 +407,7 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
         _mark_task_finished(task_key)
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_milestone_task(self, milestone_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified milestone sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -543,7 +543,7 @@ def sync_milestone_task(self, milestone_id: int = None, queue_item_id: int = Non
         raise
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified revenue sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -685,7 +685,7 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
 # SPECIALIZED TASKS (SPECIFIC PURPOSES)
 # =============================================================================
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def create_dispute_ticket_task(self, dispute_id: int) -> str:
     """Create a HubSpot ticket for a newly created dispute and persist mapping."""
     logger.info("HubSpot: create_dispute_ticket_task start dispute_id=%s", dispute_id)
@@ -745,7 +745,7 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
     return ticket_id
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def create_feedback_task(self, username: str = None, initiator_email: str = None, description: str = None, create_ticket: bool = True, metadata: Optional[dict] = None, queue_item_id: int = None) -> str:
     """Unified feedback task that works in both direct and queue modes.
     
@@ -874,7 +874,7 @@ def create_feedback_task(self, username: str = None, initiator_email: str = None
         raise
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def create_contact_message_task(self, name: str = None, initiator_email: str = None, subject: str = None, description: str = None, create_ticket: bool = True, metadata: Optional[dict] = None, queue_item_id: int = None) -> str:
     """Unified contact message task that works in both direct and queue modes.
     
@@ -995,7 +995,7 @@ def create_contact_message_task(self, name: str = None, initiator_email: str = N
 # QUEUE PROCESSING TASKS (SYSTEM MANAGEMENT)
 # =============================================================================
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3, queue='emails')
 def process_sync_queue(self, batch_size=50):
     """Process pending items in the HubSpot sync queue."""
     from .models import HubSpotSyncQueue
@@ -1079,7 +1079,7 @@ def process_sync_queue(self, batch_size=50):
 # REMOVED: sync_feedback_from_queue() - functionality merged into create_feedback_task()
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_dispute_from_queue(self, queue_item_id):
     """Process dispute sync from queue."""
     from .models import HubSpotSyncQueue
@@ -1113,7 +1113,7 @@ def sync_dispute_from_queue(self, queue_item_id):
 # REMOVED: sync_contact_message_from_queue() - functionality merged into create_contact_message_task()
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3, queue='emails')
 def cleanup_old_sync_queue_items(self, days_old=7):
     """Clean up old synced items from the queue to prevent database bloat."""
     from .models import HubSpotSyncQueue
@@ -1144,7 +1144,7 @@ def cleanup_old_sync_queue_items(self, days_old=7):
         raise
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3, queue='emails')
 def retry_failed_sync_items(self):
     """Retry failed sync items that are ready for retry."""
     from .models import HubSpotSyncQueue

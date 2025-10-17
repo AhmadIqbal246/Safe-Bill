@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 # Rely on Celery's logging to output to terminal; do not add handlers here to avoid duplicates
 logger.propagate = True
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_project_invitation_email_task(self, client_email, project_name, invitation_url, invitation_token, language='en'):
     """
     Celery task to send project invitation email asynchronously
@@ -35,7 +35,7 @@ def send_project_invitation_email_task(self, client_email, project_name, invitat
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_milestone_approval_request_email_task(
     self,
     user_email,

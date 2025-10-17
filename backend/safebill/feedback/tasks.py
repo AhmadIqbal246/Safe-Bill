@@ -52,7 +52,7 @@ def send_contact_admin_notification_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_quote_request_email_task(
     self,
     professional_email,
@@ -81,7 +81,7 @@ def send_quote_request_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_quote_request_confirmation_email_task(
     self,
     sender_email,
