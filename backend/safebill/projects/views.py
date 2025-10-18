@@ -719,6 +719,20 @@ class MilestoneApprovalAPIView(APIView):
                 )
                 # Don't break the milestone approval flow if revenue tracking fails
 
+            # Sync milestone-related revenue metrics to HubSpot
+            try:
+                from hubspot.sync_utils import sync_revenue_to_hubspot
+                from django.db import transaction
+                now = timezone.now()
+                
+                # Sync milestone-related metrics (seller revenue + total revenue + milestones approved)
+                transaction.on_commit(
+                    lambda: sync_revenue_to_hubspot(now.year, now.month, "milestone_approved", sync_type="milestone")
+                )
+            except Exception as e:
+                logger.error(f"Error syncing milestone revenue to HubSpot: {e}")
+                # Don't break the milestone approval flow if HubSpot sync fails
+
         elif action_type == "not_approved":
             milestone.status = "not_approved"
             milestone.completion_date = None

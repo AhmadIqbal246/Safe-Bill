@@ -419,49 +419,53 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
                 logger.info(f"🧹 DEBUG: Cleaned up failed milestone sync lock for project {project_id}")
 
 
-@receiver(post_save, sender=Payment)
-@safe_signal_handler('Revenue Sync', REVENUE_SIGNALS_ENABLED)
-def auto_sync_revenue_on_payment(sender, instance, created, **kwargs):
-    """
-    Automatically sync revenue to HubSpot when payments are marked as paid.
-    Provides backup/redundancy to webhook-based revenue sync.
-    """
-    # Only sync when payment status becomes 'paid'
-    if instance.status != 'paid':
-        return
-        
-    payment_id = getattr(instance, 'id', None)
-    if not payment_id:
-        return
-        
-    # Simple emoji indicator when signal fires
-    print("💰 Django signal fired - Revenue sync (Payment)")
-    
-    # Use transaction.on_commit for safety
-    from django.db import transaction
-    from django.utils import timezone
-    from hubspot.sync_utils import sync_revenue_to_hubspot
-    
-    now = timezone.now()
-    reason = "signal_payment_paid"
-    
-    logger.info(f"Auto-syncing revenue for payment {payment_id} via signal ({reason})")
-    
-    def _sync_revenue():
-        try:
-            result = sync_revenue_to_hubspot(
-                year=now.year,
-                month=now.month,
-                reason=reason,
-                use_transaction_commit=False  # Already in transaction.on_commit
-            )
-            logger.info(f"Payment {payment_id} revenue sync result: {result}")
-        except Exception as e:
-            # Never let signal failures break the main application
-            logger.error(f"Payment {payment_id} revenue sync failed: {e}", exc_info=True)
-    
-    # Queue after transaction commit
-    transaction.on_commit(_sync_revenue)
+# DISABLED: This signal was causing double revenue sync triggers
+# Revenue sync is now handled separately:
+# - Payment completion: syncs VAT collected + total payments (via webhook)
+# - Milestone approval: syncs seller revenue + total revenue + milestones approved
+# @receiver(post_save, sender=Payment)
+# @safe_signal_handler('Revenue Sync', REVENUE_SIGNALS_ENABLED)
+# def auto_sync_revenue_on_payment(sender, instance, created, **kwargs):
+#     """
+#     Automatically sync revenue to HubSpot when payments are marked as paid.
+#     Provides backup/redundancy to webhook-based revenue sync.
+#     """
+#     # Only sync when payment status becomes 'paid'
+#     if instance.status != 'paid':
+#         return
+#         
+#     payment_id = getattr(instance, 'id', None)
+#     if not payment_id:
+#         return
+#         
+#     # Simple emoji indicator when signal fires
+#     print("💰 Django signal fired - Revenue sync (Payment)")
+#     
+#     # Use transaction.on_commit for safety
+#     from django.db import transaction
+#     from django.utils import timezone
+#     from hubspot.sync_utils import sync_revenue_to_hubspot
+#     
+#     now = timezone.now()
+#     reason = "signal_payment_paid"
+#     
+#     logger.info(f"Auto-syncing revenue for payment {payment_id} via signal ({reason})")
+#     
+#     def _sync_revenue():
+#         try:
+#             result = sync_revenue_to_hubspot(
+#                 year=now.year,
+#                 month=now.month,
+#                 reason=reason,
+#                 use_transaction_commit=False  # Already in transaction.on_commit
+#             )
+#             logger.info(f"Payment {payment_id} revenue sync result: {result}")
+#         except Exception as e:
+#             # Never let signal failures break the main application
+#             logger.error(f"Payment {payment_id} revenue sync failed: {e}", exc_info=True)
+#     
+#     # Queue after transaction commit
+#     transaction.on_commit(_sync_revenue)
 
 
 # Health check function for monitoring

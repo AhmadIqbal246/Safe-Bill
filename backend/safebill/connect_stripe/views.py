@@ -643,14 +643,15 @@ def stripe_identity_webhook(request):
         payment.webhook_response = event
         payment.save()
 
-        # Enqueue HubSpot Revenue monthly sync with transaction safety
+        # Enqueue HubSpot Revenue monthly sync for payment metrics only
         from hubspot.sync_utils import sync_revenue_to_hubspot
         from django.db import transaction
         now = timezone.now()
         
         # Ensure revenue sync only happens after database commit
+        # Only sync payment-related metrics (VAT collected + total payments)
         transaction.on_commit(
-            lambda: sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success")
+            lambda: sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success", sync_type="payment")
         )
 
         try:

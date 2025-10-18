@@ -544,8 +544,16 @@ def sync_milestone_task(self, milestone_id: int = None, queue_item_id: int = Non
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
-def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: int = None) -> Optional[str]:
-    """Unified revenue sync task that works in both direct and queue modes."""
+def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: int = None, sync_type: str = "all") -> Optional[str]:
+    """
+    Unified revenue sync task that works in both direct and queue modes.
+    
+    Args:
+        year: Year for revenue sync
+        month: Month for revenue sync
+        queue_item_id: Queue item ID for queue mode
+        sync_type: Type of sync - "payment" (VAT + total payments) or "milestone" (seller revenue + milestones) or "all" (everything)
+    """
     from .models import HubSpotSyncQueue
     
     # Handle queue mode
@@ -564,69 +572,75 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         logger.info("HubSpot: sync_revenue_task start (direct mode) year=%s month=%s", year, month)
     
     try:
-        # Calculate ALL revenue values LIVE from database for accuracy
-        # This ensures HubSpot always has current data regardless of PlatformRevenue sync state
-        
-        # 1. Total payments amount (what buyers paid)
-        total_payments_amount = (
-            Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
-            .aggregate(total=Sum("amount"))
-            .get("total")
-            or 0
-        )
-        
-        # 2. VAT collected (difference between buyer_total and amount)
-        payments_with_vat = Payment.objects.filter(
-            status="paid", created_at__year=year, created_at__month=month
-        )
-        vat_collected = sum(
-            (p.buyer_total_amount or 0) - (p.amount or 0) for p in payments_with_vat
-        )
-        
-        # 3. Seller revenue (platform fees from approved milestones)
-        from projects.models import Milestone
-        from payments.services import FeeCalculationService
-        
-        # FIXED: Only count milestones from projects that received payments in this month
-        # This prevents counting milestones from projects without payments
-        paid_projects_in_month = Payment.objects.filter(
-            status="paid",
-            created_at__year=year,
-            created_at__month=month
-        ).values_list('project_id', flat=True).distinct()
-        
-        # Get approved milestones for this month but ONLY from projects with payments
-        milestones = Milestone.objects.filter(
-            status="approved",
-            completion_date__year=year,
-            completion_date__month=month,
-            project_id__in=paid_projects_in_month  # Only count milestones from paid projects
-        ).select_related('project')
-        
+        # Initialize all revenue values
+        total_payments_amount = 0
+        vat_collected = 0
         seller_revenue = 0
-        total_milestones_approved = milestones.count()
+        total_revenue = 0
+        total_milestones_approved = 0
         
-        for milestone in milestones:
-            try:
-                # Calculate platform fee for this milestone
-                fees = FeeCalculationService.calculate_fees(
-                    milestone.relative_payment,
-                    milestone.project.platform_fee_percentage,
-                    milestone.project.vat_rate
-                )
-                seller_revenue += float(fees["platform_fee"])
-            except Exception as e:
-                logger.warning(f"Error calculating fees for milestone {milestone.id}: {e}")
+        # Calculate revenue values based on sync type
+        if sync_type in ["payment", "all"]:
+            # 1. Total payments amount (what buyers paid)
+            total_payments_amount = (
+                Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
+                .aggregate(total=Sum("amount"))
+                .get("total")
+                or 0
+            )
+            
+            # 2. VAT collected (difference between buyer_total and amount)
+            payments_with_vat = Payment.objects.filter(
+                status="paid", created_at__year=year, created_at__month=month
+            )
+            vat_collected = sum(
+                (p.buyer_total_amount or 0) - (p.amount or 0) for p in payments_with_vat
+            )
         
-        # 4. Total revenue (same as seller revenue for now)
-        total_revenue = seller_revenue
+        if sync_type in ["milestone", "all"]:
+            # 3. Seller revenue (platform fees from approved milestones)
+            from projects.models import Milestone
+            from payments.services import FeeCalculationService
+            
+            # FIXED: Only count milestones from projects that received payments in this month
+            # This prevents counting milestones from projects without payments
+            paid_projects_in_month = Payment.objects.filter(
+                status="paid",
+                created_at__year=year,
+                created_at__month=month
+            ).values_list('project_id', flat=True).distinct()
+            
+            # Get approved milestones for this month but ONLY from projects with payments
+            milestones = Milestone.objects.filter(
+                status="approved",
+                completion_date__year=year,
+                completion_date__month=month,
+                project_id__in=paid_projects_in_month  # Only count milestones from paid projects
+            ).select_related('project')
+            
+            total_milestones_approved = milestones.count()
+            
+            for milestone in milestones:
+                try:
+                    # Calculate platform fee for this milestone
+                    fees = FeeCalculationService.calculate_fees(
+                        milestone.relative_payment,
+                        milestone.project.platform_fee_percentage,
+                        milestone.project.vat_rate
+                    )
+                    seller_revenue += float(fees["platform_fee"])
+                except Exception as e:
+                    logger.warning(f"Error calculating fees for milestone {milestone.id}: {e}")
+            
+            # 4. Total revenue (same as seller revenue for now)
+            total_revenue = seller_revenue
         
         # Debug logging for revenue calculation transparency
         logger.info(
-            f"HubSpot revenue calculation for {year}-{month:02d}: "
+            f"HubSpot revenue calculation for {year}-{month:02d} (sync_type={sync_type}): "
             f"total_payments={total_payments_amount}, vat_collected={vat_collected}, "
             f"seller_revenue={seller_revenue}, total_revenue={total_revenue}, "
-            f"milestones_approved={total_milestones_approved} (from {len(paid_projects_in_month)} paid projects)"
+            f"milestones_approved={total_milestones_approved}"
         )
 
         period_key = f"{year}-{month:02d}"
@@ -636,18 +650,29 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         # Create period start date (first day of month at midnight UTC)
         period_start_date = f"{year}-{month:02d}-01T00:00:00Z"
         
+        # Build properties based on sync type
         props = {
             client.period_key_property: period_key,
             "year": year,
             # Save month as zero-padded string ("01".."12")
             "month": f"{month:02d}",
             "period_start_date": period_start_date,
-            "total_payments_amount": float(total_payments_amount),
-            "vat_collected": float(vat_collected),
-            "seller_revenue": float(seller_revenue),
-            "total_revenue": float(total_revenue),
-            "total_milestones_approved": int(total_milestones_approved),
         }
+        
+        # Add payment-related properties
+        if sync_type in ["payment", "all"]:
+            props.update({
+                "total_payments_amount": float(total_payments_amount),
+                "vat_collected": float(vat_collected),
+            })
+        
+        # Add milestone-related properties
+        if sync_type in ["milestone", "all"]:
+            props.update({
+                "seller_revenue": float(seller_revenue),
+                "total_revenue": float(total_revenue),
+                "total_milestones_approved": int(total_milestones_approved),
+            })
 
         if existing:
             hs_id = existing.get("id")

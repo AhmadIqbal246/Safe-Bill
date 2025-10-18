@@ -336,7 +336,7 @@ def update_milestone_in_hubspot(milestone_id: int, reason: str = "unknown", **kw
     )
 
 
-def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kwargs) -> Dict[str, Any]:
+def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", sync_type: str = "all", **kwargs) -> Dict[str, Any]:
     """
     Safely sync revenue data to HubSpot.
     
@@ -344,6 +344,7 @@ def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kw
         year: Year for revenue sync
         month: Month for revenue sync  
         reason: Reason for syncing (for monitoring)
+        sync_type: Type of sync - "payment", "milestone", or "all"
         **kwargs: Additional options for sync behavior
         
     Returns:
@@ -353,9 +354,10 @@ def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kw
     
     return safe_hubspot_sync_with_backup(
         sync_revenue_task,
-        f"Revenue Sync (reason: {reason})",
+        f"Revenue Sync (reason: {reason}, type: {sync_type})",
         year,
         month,
+        sync_type=sync_type,
         **kwargs
     )
 
