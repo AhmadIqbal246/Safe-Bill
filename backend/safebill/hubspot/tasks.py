@@ -814,7 +814,7 @@ def create_feedback_task(self, username: str = None, initiator_email: str = None
                 elif hasattr(feedback, 'user') and getattr(feedback.user, 'email', None):
                     initiator_email = feedback.user.email
 
-                description = getattr(feedback, 'message', None) or str(feedback)
+                description = getattr(feedback, 'feedback', None) or str(feedback)
 
                 # Validate required email
                 if not initiator_email:
