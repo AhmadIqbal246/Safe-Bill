@@ -1046,12 +1046,11 @@ def process_sync_queue(self, batch_size=50):
         
         if not pending_items:
             logger.info("📭 No pending sync items found")
-            return {"processed": 0, "success": 0, "failed": 0}
+            return {"processed": 0, "failed": 0}
         
         logger.info(f"📋 Processing {len(pending_items)} sync items")
         
         processed = 0
-        success = 0
         failed = 0
         
         for item in pending_items:
@@ -1094,7 +1093,7 @@ def process_sync_queue(self, batch_size=50):
         ).count()
         
         logger.info(f"🎯 Queue processing completed: {processed} queued, {recent_synced} recently synced, {failed} failed")
-        return {"processed": processed, "success": recent_synced, "failed": failed}
+        return {"processed": processed, "failed": failed}
         
     except Exception as e:
         logger.error(f"💥 Queue processing failed: {e}", exc_info=True)
