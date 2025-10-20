@@ -349,7 +349,7 @@ CELERY_TASK_DEFAULT_QUEUE = 'emails'
 CELERY_BEAT_SCHEDULE = {
     'process-hubspot-sync-queue': {
         'task': 'hubspot.tasks.process_sync_queue',
-        'schedule': float(os.environ.get('HUBSPOT_PROCESS_SYNC_QUEUE_INTERVAL', 180.0)),
+        'schedule': float(os.environ.get('HUBSPOT_PROCESS_SYNC_QUEUE_INTERVAL', 7200.0)),
         'options': {
             'queue': 'emails',
             'priority': 5,
@@ -374,7 +374,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Celery Beat max loop interval
-CELERY_BEAT_MAX_LOOP_INTERVAL = int(os.environ.get('CELERY_BEAT_MAX_LOOP_INTERVAL', 180))
+CELERY_BEAT_MAX_LOOP_INTERVAL = int(os.environ.get('CELERY_BEAT_MAX_LOOP_INTERVAL', 3600))
 
 # Celery Task Routing
 CELERY_TASK_ROUTES = {
