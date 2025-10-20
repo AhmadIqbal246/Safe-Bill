@@ -8,7 +8,7 @@ from django.db import transaction
 from django.conf import settings
 
 from disputes.models import Dispute
-from .tasks import create_dispute_ticket_task
+from .tasks import sync_dispute_ticket_task
 
 # Import for revenue syncing
 from payments.models import Payment

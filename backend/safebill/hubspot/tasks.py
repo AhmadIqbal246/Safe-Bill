@@ -711,9 +711,9 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
 # =============================================================================
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
-def create_dispute_ticket_task(self, dispute_id: int) -> str:
-    """Create a HubSpot ticket for a newly created dispute and persist mapping."""
-    logger.info("HubSpot: create_dispute_ticket_task start dispute_id=%s", dispute_id)
+def sync_dispute_ticket_task(self, dispute_id: int) -> str:
+    """Create or update HubSpot ticket for dispute and persist mapping."""
+    logger.info("HubSpot: sync_dispute_ticket_task start dispute_id=%s", dispute_id)
     dispute = Dispute.objects.filter(id=dispute_id).select_related("project", "initiator", "respondent").first()
     if not dispute:
         logger.warning("HubSpot: dispute not found id=%s", dispute_id)
@@ -732,6 +732,7 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
         f"Status: {dispute.get_status_display()}",
         f"Initiator: {getattr(dispute.initiator, 'email', '')}",
         f"Respondent: {getattr(dispute.respondent, 'email', '')}",
+        f"Mediator: {getattr(getattr(dispute, 'assigned_mediator', None), 'email', 'Not assigned')}",
         "",
         dispute.description or "",
     ])
@@ -753,21 +754,39 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
         "safebill_assigned_mediator_email": getattr(getattr(dispute, "assigned_mediator", None), "email", ""),
     }
 
-    created = client.create_ticket(properties)
-    ticket_id = created.get("id", "")
-
-    if ticket_id:
-        HubSpotTicketLink.objects.update_or_create(
-            dispute=dispute,
-            defaults={
-                "hubspot_id": ticket_id,
-                "status": "success",
-                "last_error": "",
-            },
-        )
-
-    logger.info("HubSpot: created ticket id=%s for dispute=%s", ticket_id, dispute_id)
-    return ticket_id
+    # Check if ticket already exists
+    try:
+        existing_link = HubSpotTicketLink.objects.get(dispute=dispute)
+        ticket_id = existing_link.hubspot_id
+        
+        # Update existing ticket
+        logger.info("HubSpot: updating existing ticket id=%s for dispute=%s", ticket_id, dispute_id)
+        client.update_ticket(ticket_id, properties)
+        
+        # Update link status
+        existing_link.status = "success"
+        existing_link.last_error = ""
+        existing_link.save()
+        
+        logger.info("HubSpot: updated ticket id=%s for dispute=%s", ticket_id, dispute_id)
+        return ticket_id
+        
+    except HubSpotTicketLink.DoesNotExist:
+        # Create new ticket
+        logger.info("HubSpot: creating new ticket for dispute=%s", dispute_id)
+        created = client.create_ticket(properties)
+        ticket_id = created.get("id", "")
+        
+        if ticket_id:
+            HubSpotTicketLink.objects.create(
+                dispute=dispute,
+                hubspot_id=ticket_id,
+                status="success",
+                last_error="",
+            )
+            logger.info("HubSpot: created new ticket id=%s for dispute=%s", ticket_id, dispute_id)
+        
+        return ticket_id
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
@@ -1119,7 +1138,7 @@ def sync_dispute_from_queue(self, queue_item_id):
         logger.info(f"🔄 Processing dispute sync from queue: {dispute.id}")
         
         # Call the existing dispute sync task
-        result = create_dispute_ticket_task(dispute.id)
+        result = sync_dispute_ticket_task(dispute.id)
         
         # Mark as synced
         queue_item.mark_synced()
