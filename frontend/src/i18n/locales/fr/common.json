@@ -13,7 +13,9 @@
     "settings": "Paramètres",
     "billing": "Facturation",
     "no_unread_notifications": "Aucune notification non lue.",
-    "how_to_accept_project_invite": "Comment accepter un invité de projet"
+    "how_to_accept_project_invite": "Comment accepter un invité de projet",
+    "seller": "Vendeur",
+    "pro_buyer": "Acheteur Pro"
   },
   "actions": {
     "cancel": "Annuler",
@@ -604,7 +606,7 @@
     "search_placeholder": "Rechercher par email client ou nom de projet",
     "client": "Client",
     "view_details": "Voir les Détails",
-    "view_milestones": "Voir les Jalons",
+    "view_milestones": "Voir les Acomptes",
     "progress": "Progression",
     "other_projects": "Autres Projets",
     "milestones": "Jalons",

@@ -334,7 +334,7 @@ export default function SafeBillHeader({
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                   >
-                    Seller
+                    {t("navbar.seller")}
                   </button>
                   <button
                     onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
@@ -344,7 +344,7 @@ export default function SafeBillHeader({
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                   >
-                    Pro Buyer
+                    {t("navbar.pro_buyer")}
                   </button>
                 </div>
               </div>
@@ -501,7 +501,7 @@ export default function SafeBillHeader({
                           : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
-                      <span className="hidden sm:inline">Seller</span>
+                      <span className="hidden sm:inline">{t("navbar.seller")}</span>
                       <span className="sm:hidden">S</span>
                     </button>
                     <button
@@ -512,7 +512,7 @@ export default function SafeBillHeader({
                           : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
-                      <span className="hidden sm:inline">Pro Buyer</span>
+                      <span className="hidden sm:inline">{t("navbar.pro_buyer")}</span>
                       <span className="sm:hidden">P</span>
                     </button>
                   </div>
@@ -739,7 +739,7 @@ export default function SafeBillHeader({
                           : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
-                      <span className="hidden min-[480px]:inline">Seller</span>
+                      <span className="hidden min-[480px]:inline">{t("navbar.seller")}</span>
                       <span className="min-[480px]:hidden">S</span>
                     </button>
                     <button
@@ -750,7 +750,7 @@ export default function SafeBillHeader({
                           : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
-                      <span className="hidden min-[480px]:inline">Pro Buyer</span>
+                      <span className="hidden min-[480px]:inline">{t("navbar.pro_buyer")}</span>
                       <span className="min-[480px]:hidden">P</span>
                     </button>
                   </div>
