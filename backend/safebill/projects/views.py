@@ -196,17 +196,19 @@ class ProjectStatusUpdateAPIView(APIView):
         project.save()
         # HubSpot sync now handled automatically by Django signals
 
-        # Create notification for the client
+        # Create notification for the client (translated)
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Project '{project.name}' has been started and is now in progress.",
+                user=project.client,
+                message="notifications.project_started_buyer",
+                project_name=project.name,
             )
 
-        # Create notification for the seller
+        # Create notification for the seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"You have started project '{project.name}' and it is now in progress.",
+            user=request.user,
+            message="notifications.project_started_seller",
+            project_name=project.name,
         )
 
         return Response(
@@ -289,17 +291,20 @@ class ProjectCompletionAPIView(APIView):
         project.save()
         # HubSpot sync now handled automatically by Django signals
 
-        # Create notification for the client
+        # Create notification for the client (translated)
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Project '{project.name}' has been completed by {request.user.username}.",
+                user=project.client,
+                message="notifications.project_completed_buyer",
+                project_name=project.name,
+                seller_name=request.user.username,
             )
 
-        # Create notification for the seller
+        # Create notification for the seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"You have successfully completed project '{project.name}'.",
+            user=request.user,
+            message="notifications.project_completed_seller",
+            project_name=project.name,
         )
 
         return Response(
@@ -394,10 +399,12 @@ class ProjectInviteAPIView(APIView):
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have been added to the project '{project.name}' by {project.user.username}.",
+                user=request.user,
+                message="notifications.project_added",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
         # Return project details
@@ -477,10 +484,11 @@ class ProjectInviteAPIView(APIView):
             # Don't fail resend if email sending fails
             pass
 
-        # Notify seller
+        # Notify seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"A new invitation link has been generated for project '{project.name}'.",
+            user=request.user,
+            message="notifications.invitation_generated",
+            project_name=project.name,
         )
 
         return Response(
@@ -553,9 +561,12 @@ class ProjectInviteAPIView(APIView):
                 self._create_chat_contacts(project)
 
                 # Create notification for the buyer
-                Notification.objects.create(
+                from notifications.services import NotificationService
+                NotificationService.create_notification(
                     user=request.user,
-                    message=f"You have been added to the project '{project.name}' by {project.user.username}.",
+                    message="notifications.project_added",
+                    project_name=project.name,
+                    seller_name=project.user.username
                 )
 
             return Response(
@@ -573,16 +584,20 @@ class ProjectInviteAPIView(APIView):
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
 
-            # Create notification for the seller
+            # Create notification for the seller (translated)
             NotificationService.create_notification(
-                project.user,
-                f"Client {request.user.email} has approved the project '{project.name}'.",
+                user=project.user,
+                message="notifications.project_approved_seller",
+                client_email=request.user.email,
+                project_name=project.name,
             )
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have successfully approved the project '{project.name}' from {project.user.username}.",
+                user=request.user,
+                message="notifications.project_approved_buyer",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
             return Response(
@@ -597,16 +612,20 @@ class ProjectInviteAPIView(APIView):
             project.save()
             # HubSpot sync now handled automatically by Django signals
 
-            # Create notification for the seller
+            # Create notification for the seller (translated)
             NotificationService.create_notification(
-                project.user,
-                f"Client {request.user.email} has rejected the project '{project.name}'.",
+                user=project.user,
+                message="notifications.project_rejected_seller",
+                client_email=request.user.email,
+                project_name=project.name,
             )
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have rejected the project '{project.name}' from {project.user.username}.",
+                user=request.user,
+                message="notifications.project_rejected_buyer",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
             return Response(
@@ -792,13 +811,16 @@ class MilestoneApprovalAPIView(APIView):
                     try:
                         if project.user:
                             NotificationService.create_notification(
-                                project.user,
-                                f"Project '{project.name}' is now completed. Last Milestone: {milestone.name}, approved.",
+                                user=project.user,
+                                message="notifications.project_completed_milestone",
+                                project_name=project.name,
+                                milestone_name=milestone.name,
                             )
                         if project.client:
                             NotificationService.create_notification(
-                                project.client,
-                                f"Project '{project.name}' is now completed.",
+                                user=project.client,
+                                message="notifications.project_completed_final",
+                                project_name=project.name,
                             )
                     except Exception:
                         pass
@@ -827,14 +849,20 @@ class MilestoneApprovalAPIView(APIView):
         # Notify seller
         if project.user:
             NotificationService.create_notification(
-                project.user,
-                f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}.",
+                user=project.user,
+                message="notifications.milestone_status_seller",
+                project_name=project.name,
+                milestone_name=milestone.name,
+                status=status_msg
             )
         # Notify buyer/client
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}.",
+                user=project.client,
+                message="notifications.milestone_status_buyer",
+                project_name=project.name,
+                milestone_name=milestone.name,
+                status=status_msg
             )
 
         return Response(

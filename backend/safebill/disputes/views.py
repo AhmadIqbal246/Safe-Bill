@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Dispute, DisputeDocument, DisputeEvent, DisputeComment
 from django.db.models import Q
+from notifications.services import NotificationService
 from .serializers import (
     DisputeListSerializer, DisputeDetailSerializer, DisputeCreateSerializer,
     DisputeUpdateSerializer, DisputeCommentCreateSerializer
@@ -207,18 +208,20 @@ class DisputeAssignMediatorAPIView(APIView):
         )
         
         # Send notifications to both parties
-        message = f"Mediator {mediator.username} has been assigned to dispute {dispute.dispute_id}"
-        
         # Notify initiator
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.initiator,
-            message=message
+            message="notifications.dispute_mediator_assigned_initiator",
+            mediator_username=mediator.username,
+            dispute_id=dispute.dispute_id
         )
         
         # Notify respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.respondent,
-            message=message
+            message="notifications.dispute_mediator_assigned_respondent",
+            mediator_username=mediator.username,
+            dispute_id=dispute.dispute_id
         )
         # Update HubSpot ticket asynchronously
         try:
@@ -265,18 +268,18 @@ class DisputeResolveAPIView(APIView):
         )
         
         # Send notifications to both parties
-        message = f"Dispute {dispute.dispute_id} has been resolved"
-        
         # Notify initiator
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.initiator,
-            message=message
+            message="notifications.dispute_resolved_initiator",
+            dispute_id=dispute.dispute_id
         )
         
         # Notify respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.respondent,
-            message=message
+            message="notifications.dispute_resolved_respondent",
+            dispute_id=dispute.dispute_id
         )
         # Update HubSpot ticket asynchronously
         try:

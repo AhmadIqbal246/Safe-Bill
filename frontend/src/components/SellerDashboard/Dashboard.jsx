@@ -144,12 +144,19 @@ export default function Dashboard() {
   ];
 
 
-  // Icon selection based on message content (simple heuristic)
-  function getNotificationIcon(message) {
-    if (message.toLowerCase().includes('project')) return '+';
-    if (message.toLowerCase().includes('approved')) return '✓';
-    if (message.toLowerCase().includes('deadline')) return '⏰';
-    if (message.toLowerCase().includes('payment')) return '$';
+  // Icon selection that prefers stable translation keys (language-agnostic)
+  function getNotificationIconFromNotification(n) {
+    const key = n?.translation_key || '';
+    if (key.startsWith('notifications.project_')) return '+';
+    if (key.startsWith('notifications.payment_')) return '$';
+    if (key.includes('approved')) return '✓';
+    if (key.includes('deadline')) return '⏰';
+    // Fallback to message heuristic to preserve previous behavior
+    const msg = (n?.message || '').toLowerCase();
+    if (msg.includes('project')) return '+';
+    if (msg.includes('approved')) return '✓';
+    if (msg.includes('deadline')) return '⏰';
+    if (msg.includes('payment')) return '$';
     return '!';
   }
 
@@ -304,6 +311,38 @@ export default function Dashboard() {
   // Check if there are any unread notifications
   const hasUnreadNotifications = notifications && notifications.some(n => !n.is_read);
 
+  // Translate notification message using i18n
+  const translateNotification = (notification) => {
+    if (notification && notification.translation_key) {
+      // Try to parse translation_variables if it's a string
+      let variables = notification.translation_variables || {};
+      if (typeof variables === 'string') {
+        try {
+          variables = JSON.parse(variables);
+        } catch (e) {
+          variables = {};
+        }
+      }
+      
+      // Use the full key path with notifications namespace
+      return t(notification.translation_key, { ...variables });
+    }
+    if (notification && typeof notification.message === 'string' && notification.message.startsWith('notifications.')) {
+      // For old notifications, we need to extract variables from the message or use defaults
+      // This is a fallback for notifications created before the new system
+      let variables = {};
+      
+      // Try to extract project name from the message if it contains it
+      if (notification.message.includes('project_created') || notification.message.includes('invitation_generated')) {
+        // For old notifications, we can't get the actual project name, so we'll show a generic message
+        variables = { project_name: 'Projet' }; // Generic fallback
+      }
+      
+      return t(notification.message, variables);
+    }
+    return notification?.message || '';
+  };
+
   // Notification UI rendering (shared for mobile and desktop)
   function renderNotifications(list = notifications) {
     if (notifLoading) {
@@ -317,11 +356,11 @@ export default function Dashboard() {
     }
     return list.map((n) => (
       <div key={n.id} className="flex items-start gap-2 sm:gap-3">
-        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full ${n.is_read ? 'bg-gray-200 text-gray-400' : 'bg-[#E6F0FA] text-[#01257D]'} text-sm sm:text-lg font-bold flex-shrink-0`}>
-          {getNotificationIcon(n.message)}
+        <div className={`flex items-center justify_center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full ${n.is_read ? 'bg-gray-200 text-gray-400' : 'bg-[#E6F0FA] text-[#01257D]'} text-sm sm:text-lg font-bold flex-shrink-0`}>
+          {getNotificationIconFromNotification(n)}
         </div>
         <div className="flex-1 flex flex-col min-w-0">
-          <div className={`text-xs sm:text-sm ${n.is_read ? 'text-gray-400' : 'text-gray-800'} break-words`}>{n.message}</div>
+          <div className={`text-xs sm:text-sm ${n.is_read ? 'text-gray-400' : 'text-gray-800'} break-words`}>{translateNotification(n)}</div>
           <div className="text-xs text-gray-400 mt-1">
             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
           </div>

@@ -183,12 +183,56 @@ export default function SafeBillHeader({
     : navbarRightClassName || "justify-end";
 
   // Notification icon logic (reuse from dashboard)
-  function getNotificationIcon(message) {
-    if (message.toLowerCase().includes("project")) return "+";
-    if (message.toLowerCase().includes("approved")) return "✓";
-    if (message.toLowerCase().includes("deadline")) return "⏰";
-    if (message.toLowerCase().includes("payment")) return "$";
+  function getNotificationIconFromNotification(notification) {
+    // Prefer stable translation keys so icons don't depend on language
+    const key = notification?.translation_key || "";
+    if (key.startsWith("notifications.project_")) return "+";
+    if (key.startsWith("notifications.payment_")) return "$";
+    // Fallback to heuristic on translated text
+    const message = translateNotification(notification) || "";
+    const lower = message.toLowerCase();
+    if (lower.includes("project")) return "+";
+    if (lower.includes("approved")) return "✓";
+    if (lower.includes("deadline")) return "⏰";
+    if (lower.includes("payment")) return "$";
     return "!";
+  }
+
+  // Function to translate notification messages dynamically
+  function translateNotification(notification) {
+    // Check if notification has translation_key field (new format)
+    if (notification.translation_key) {
+      // Try to parse translation_variables if it's a string
+      let variables = notification.translation_variables || {};
+      if (typeof variables === 'string') {
+        try {
+          variables = JSON.parse(variables);
+        } catch (e) {
+          variables = {};
+        }
+      }
+      
+      // Use the full key path with notifications namespace
+      return t(notification.translation_key, { ...variables });
+    }
+    
+    // Fallback: Check if message is a translation key (backward compatibility)
+    if (notification.message && notification.message.startsWith('notifications.')) {
+      // For old notifications, we need to extract variables from the message or use defaults
+      // This is a fallback for notifications created before the new system
+      let variables = {};
+      
+      // Try to extract project name from the message if it contains it
+      if (notification.message.includes('project_created') || notification.message.includes('invitation_generated')) {
+        // For old notifications, we can't get the actual project name, so we'll show a generic message
+        variables = { project_name: 'Projet' }; // Generic fallback
+      }
+      
+      return t(notification.message, variables);
+    }
+    
+    // Return plain text message (old notifications without translation)
+    return notification.message;
   }
 
   function renderNotifications(list = notifications) {
@@ -206,10 +250,10 @@ export default function SafeBillHeader({
         className="flex items-center gap-3 p-2 hover:bg-gray-50"
       >
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold flex-shrink-0">
-          {getNotificationIcon(n.message)}
+          {getNotificationIconFromNotification(n)}
         </div>
         <div className="flex-1 flex flex-col justify-center">
-          <div className="text-sm text-gray-800">{n.message}</div>
+          <div className="text-sm text-gray-800">{translateNotification(n)}</div>
           <div className="text-xs text-gray-400 mt-1">
             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
           </div>
@@ -834,6 +878,7 @@ export default function SafeBillHeader({
                       </button>
                       {isMobileNotifDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                        <div className="py-2">{renderNotifications()}</div>
                           <div className="py-2">{renderNotifications()}</div>
                         </div>
                       )}

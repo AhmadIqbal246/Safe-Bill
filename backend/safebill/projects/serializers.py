@@ -299,8 +299,11 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
                 f"{project.client_email}: {str(e)}"
             )
         # Create notification for the user
-        Notification.objects.create(
-            user=user, message=f"New project '{project.name}' created."
+        from notifications.services import NotificationService
+        NotificationService.create_notification(
+            user=user, 
+            message="notifications.project_created",
+            project_name=project.name
         )
         return project
 
