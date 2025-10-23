@@ -2,7 +2,7 @@ import React from 'react';
 import { Mail, Phone, Facebook, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import Logo from '../../assets/Safe_Bill_Logo_Bleu.svg';
+import Logo from '../../assets/Safe_Bill_Dark.png';
 
 const Email = import.meta.env.VITE_SAFE_BILL_EMAIL;
 const PhoneNumber = import.meta.env.VITE_SAFE_BILL_PHONE_NUMBER;
@@ -16,9 +16,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-10 md:gap-4">
         {/* Columns */}
         <div className="flex-1 min-w-[180px] mb-8 md:mb-0">
-          <Link to="/" className="inline-flex items-center mb-2">
-            <img src={Logo} alt="Safe Bill" className="h-28 w-auto object-contain" />
-          </Link>
+          <div className="mb-5 mt-5">
+            <img src={Logo} alt="Safe Bill" className="h-6 w-auto object-contain" />
+          </div>
           <div className="text-[#96C2DB] text-sm mb-4">{t('footer.tagline')}</div>
         </div>
         <div className="flex-1 min-w-[140px] mb-8 md:mb-0 md:mt-4">

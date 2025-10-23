@@ -5,7 +5,7 @@ import MainLayout from '../components/Layout/MainLayout';
 import Loader from '../components/common/Loader';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import Logo from '../assets/Safe_Bill_Logo_Bleu.png';
+import Logo from '../assets/Safe_Bill_Dark.png';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -244,7 +244,7 @@ export default function SellerReceipts() {
                         {/* Brand header */}
                         <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
                             <div className="flex items-center gap-3">
-                            <img src={Logo} alt="Safe Bill" style={{ height: 80, width: 'auto' }} />
+                            <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
                           </div>
                           <div className="text-xs text-gray-500">{t('receipts.seller_copy')}</div>
                         </div>

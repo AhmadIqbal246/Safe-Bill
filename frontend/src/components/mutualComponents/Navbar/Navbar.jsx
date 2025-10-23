@@ -11,7 +11,7 @@ import { useNotificationWebSocket } from "../../../hooks/useNotificationWebSocke
 import { formatDistanceToNow } from "date-fns";
 import SignUpPopup from "./SignUpPopup";
 import { useTranslation } from "react-i18next";
-import Logo from "../../../assets/Safe_Bill_Logo_Bleu.svg";
+import Logo from "../../../assets/Safe_Bill_Dark.png";
 
 export const signedOutNavItems = [
   { label: "navbar.home", href: "/" },
@@ -284,12 +284,12 @@ export default function SafeBillHeader({
             {showSafeBillHeaderOnMobile ? (
               <Link
                 to="/"
-                className="md:hidden inline-flex items-center cursor-pointer pt-4"
+                className="md:hidden inline-flex items-center cursor-pointer pt-2 -ml-4 mr-1"
               >
                 <img
                   src={Logo}
                   alt="Safe Bill"
-                  className="h-24 w-auto object-contain"
+                  className="h-4 w-auto object-contain"
                 />
               </Link>
             ) : (
@@ -301,7 +301,7 @@ export default function SafeBillHeader({
                   <img
                     src={Logo}
                     alt="Safe Bill"
-                    className="h-24 w-auto object-contain"
+                    className="h-6 w-auto object-contain"
                   />
                 </Link>
               )

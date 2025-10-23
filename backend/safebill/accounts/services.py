@@ -144,7 +144,7 @@ class UserDeletionService:
     
     @staticmethod
     def delete_user_account(user, reason=None, deletion_initiated_by='user'):
-        """Delete user account and create tracking record"""
+        """Anonymize user account while preserving data for other users"""
         
         # 1. Validate deletion eligibility
         can_delete, message = UserDeletionService.can_delete_user(user)
@@ -152,16 +152,17 @@ class UserDeletionService:
             raise ValueError(message)
         
         with transaction.atomic():
-            # 2. Create deleted user record BEFORE deletion
+            # 2. Create deleted user record BEFORE anonymization
             deleted_user_record = UserDeletionService._create_deleted_user_record(
                 user, reason, deletion_initiated_by
             )
             
-            # 3. Delete related records in correct order
-            UserDeletionService._delete_related_records(user)
+            # 3. Anonymize user data while preserving relationships
+            anonymized_id = UserDeletionService._anonymize_user_data(user)
             
-            # 4. Delete user account
-            user.delete()
+            # 4. Update the deleted user record with anonymized ID
+            deleted_user_record.anonymized_id = anonymized_id
+            deleted_user_record.save()
             
             return deleted_user_record
     
@@ -190,68 +191,21 @@ class UserDeletionService:
         return deleted_user
     
     @staticmethod
-    def _delete_related_records(user):
-        """Delete all related records in correct order to avoid foreign key constraints"""
+    def _anonymize_user_data(user):
+        """Anonymize user data while preserving relationships for other users"""
+        from datetime import datetime
+        import uuid
+        
+        # Generate a unique anonymized identifier
+        anonymized_id = f"deleted_user_{uuid.uuid4().hex[:8]}"
+        anonymized_email = f"deleted_{anonymized_id}@deleted.local"
+        anonymized_username = f"deleted_{anonymized_id}"
         
         try:
-            # 1. Notifications
-            from notifications.models import Notification
-            Notification.objects.filter(user=user).delete()
-        except Exception as e:
-            print(f"Warning: Could not delete notifications: {e}")
-        
-        try:
-            # 2. Business documents
+            # 1. Delete personal documents and profiles (these are truly personal)
             from bussiness_documents.models import Document
             Document.objects.filter(user=user).delete()
-        except Exception as e:
-            print(f"Warning: Could not delete documents: {e}")
-        
-        try:
-            # 3. Ratings (both given and received)
-            from .models import SellerRating
-            SellerRating.objects.filter(seller=user).delete()  # Ratings received
-            SellerRating.objects.filter(buyer=user).delete()    # Ratings given
-        except Exception as e:
-            print(f"Warning: Could not delete ratings: {e}")
-        
-        try:
-            # 4. Disputes (as initiator and respondent)
-            from disputes.models import Dispute
-            Dispute.objects.filter(initiator=user).delete()
-            Dispute.objects.filter(respondent=user).delete()
-        except Exception as e:
-            print(f"Warning: Could not delete disputes: {e}")
-        
-        try:
-            # 5. Payments and financial records
-            from payments.models import Payment, Payout, PayoutHold, Refund
-            Payment.objects.filter(user=user).delete()
-            Payment.objects.filter(project__user=user).delete()  # Payments for user's projects
-            Payout.objects.filter(user=user).delete()
-            PayoutHold.objects.filter(user=user).delete()
-            Refund.objects.filter(user=user).delete()
-        except Exception as e:
-            print(f"Warning: Could not delete payments: {e}")
-        
-        try:
-            # 6. Stripe accounts
-            from connect_stripe.models import StripeAccount, StripeIdentity
-            StripeAccount.objects.filter(user=user).delete()
-            StripeIdentity.objects.filter(user=user).delete()
-        except Exception as e:
-            print(f"Warning: Could not delete Stripe accounts: {e}")
-        
-        try:
-            # 7. HubSpot links
-            from hubspot.models import HubSpotContactLink, HubSpotCompanyLink
-            HubSpotContactLink.objects.filter(user=user).delete()
-            HubSpotCompanyLink.objects.filter(business_detail__user=user).delete()
-        except Exception as e:
-            print(f"Warning: Could not delete HubSpot links: {e}")
-        
-        try:
-            # 8. Business details and bank accounts
+            
             if hasattr(user, 'business_detail'):
                 user.business_detail.delete()
             if hasattr(user, 'bank_account'):
@@ -259,16 +213,39 @@ class UserDeletionService:
             if hasattr(user, 'buyer_profile'):
                 user.buyer_profile.delete()
         except Exception as e:
-            print(f"Warning: Could not delete business details: {e}")
+            print(f"Warning: Could not delete personal data: {e}")
         
         try:
-            # 9. Projects (as seller)
-            user.projects.all().delete()
-            
-            # 10. Client projects (as buyer)
-            user.client_projects.all().delete()
+            # 2. Delete Stripe accounts (these are personal and should be deleted)
+            from connect_stripe.models import StripeAccount, StripeIdentity
+            StripeAccount.objects.filter(user=user).delete()
+            StripeIdentity.objects.filter(user=user).delete()
         except Exception as e:
-            print(f"Warning: Could not delete projects: {e}")
+            print(f"Warning: Could not delete Stripe accounts: {e}")
+        
+        try:
+            # 3. Delete HubSpot links (personal data)
+            from hubspot.models import HubSpotContactLink, HubSpotCompanyLink
+            HubSpotContactLink.objects.filter(user=user).delete()
+            HubSpotCompanyLink.objects.filter(business_detail__user=user).delete()
+        except Exception as e:
+            print(f"Warning: Could not delete HubSpot links: {e}")
+        
+        # 4. Keep all business data intact (projects, payments, disputes, ratings)
+        # These are needed by other users and will show "Deleted User" instead of real name
+        
+        # 10. Finally, anonymize the user account itself
+        # This preserves all relationships while hiding personal data
+        user.email = anonymized_email
+        user.username = anonymized_username
+        user.first_name = "Deleted"
+        user.last_name = "User"
+        user.is_active = False
+        user.is_deleted = True
+        user.deleted_at = datetime.now()
+        user.save()
+        
+        return anonymized_id
     
     @staticmethod
     def get_deletion_eligibility(user):
