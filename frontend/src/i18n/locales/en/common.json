@@ -1671,6 +1671,18 @@
     "dispute_mediator_assigned_admin_respondent": "Mediator {{mediator_name}} ({{mediator_email}}) has been assigned to your dispute: {{dispute_title}}",
     "dispute_mediator_assigned_admin_mediator": "You have been assigned as mediator for dispute: {{dispute_title}}",
     "dispute_status_changed_admin_initiator": "Dispute {{dispute_id}} status changed from {{old_status}} to {{new_status}}",
-    "dispute_status_changed_admin_respondent": "Dispute {{dispute_id}} status changed from {{old_status}} to {{new_status}}"
+    "dispute_status_changed_admin_respondent": "Dispute {{dispute_id}} status changed from {{old_status}} to {{new_status}}",
+    "refund_balance_updated": "Refund balance updated successfully",
+    "transfer_sent": "Transfer of {{amount}} {{currency}} has been sent to your Stripe account.",
+    "transfer_reversed": "Transfer of {{amount}} {{currency}} was reversed. Reason: {{reason}}. Funds have been returned to your balance.",
+    "funds_released": "Great news! ${{amount}} has been released from hold and is now available for payout.",
+    "stripe_onboarding_complete": "Your Stripe account has been successfully verified and is now active. You can now receive payments.",
+    "stripe_account_disconnected": "Your Stripe account has been disconnected. You will no longer be able to receive payments until you reconnect.",
+    "identity_verification_success": "Your identity has been successfully verified!",
+    "identity_verification_failed": "Your identity verification has failed. Please try again!",
+    "project_approved_seller": "Project '{{project_name}}' has been approved.",
+    "payment_processed_buyer": "Your payment of {{amount}} for project '{{project_name}}' has been processed successfully.",
+    "payment_session_expired": "Your payment session for project '{{project_name}}' has expired.",
+    "payment_failed": "Payment for project '{{project_name}}' has failed."
   }
 }

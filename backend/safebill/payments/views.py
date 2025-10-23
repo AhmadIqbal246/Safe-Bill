@@ -812,8 +812,7 @@ def update_refund_balance(request, milestone_id):
 
         NotificationService.create_notification(
             user=project.client,
-            message="Refund balance updated successfully",
-            notification_type="refund_balance_updated",
+            message="notifications.refund_balance_updated"
         )
         return Response({"detail": "Refund updated successfully"}, status=200)
     except Exception as e:

@@ -50,6 +50,8 @@ ALLOWED_HOSTS = _env_list(
         "https://www.safebill.fr",
         "http://localhost:3000",  # For development
         "http://127.0.0.1:3000", # For development
+        "https://dea6eb7b074c.ngrok-free.app",
+        "dea6eb7b074c.ngrok-free.app",
     ],
 )
 

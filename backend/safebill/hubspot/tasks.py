@@ -841,7 +841,7 @@ def create_feedback_task(self, username: str = None, initiator_email: str = None
                 create_ticket = False  # Use custom object for queue processing
                 metadata = {'feedback_id': feedback.id}
                 
-                logger.info(f"🔄 Processing feedback sync from queue: {feedback.id}")
+                logger.info(f"Processing feedback sync from queue: {feedback.id}")
             except Exception as e:
                 logger.error(f"HubSpot: Failed to get queue item {queue_item_id}: {e}")
                 return ""
@@ -959,7 +959,7 @@ def create_contact_message_task(self, name: str = None, initiator_email: str = N
                     raise ValueError("Contact message email missing; refusing to send placeholder to HubSpot")
                 create_ticket = False  # Use custom object for queue processing
                 
-                logger.info(f"🔄 Processing contact message sync from queue: {contact_message.id}")
+                logger.info(f"Processing contact message sync from queue: {contact_message.id}")
             except Exception as e:
                 logger.error(f"HubSpot: Failed to get queue item {queue_item_id}: {e}")
                 return ""
@@ -1048,7 +1048,7 @@ def process_sync_queue(self, batch_size=50):
     import uuid
     
     worker_id = f"{self.request.hostname}-{uuid.uuid4().hex[:8]}"
-    logger.info(f"🔄 Starting sync queue processing (worker: {worker_id}, batch_size: {batch_size})")
+    logger.info(f"Starting sync queue processing (worker: {worker_id}, batch_size: {batch_size})")
     
     try:
         # Get pending items that are ready to process
@@ -1064,10 +1064,10 @@ def process_sync_queue(self, batch_size=50):
         ).order_by('priority', 'created_at')[:batch_size]
         
         if not pending_items:
-            logger.info("📭 No pending sync items found")
+            logger.info("No pending sync items found")
             return {"processed": 0, "failed": 0}
         
-        logger.info(f"📋 Processing {len(pending_items)} sync items")
+        logger.info(f"Processing {len(pending_items)} sync items")
         
         processed = 0
         failed = 0
@@ -1087,16 +1087,16 @@ def process_sync_queue(self, batch_size=50):
                 elif item.sync_type == 'contact_message':
                     result = create_contact_message_task.delay(queue_item_id=item.id)
                 else:
-                    logger.warning(f"⚠️ Unknown sync type: {item.sync_type}")
+                    logger.warning(f"Unknown sync type: {item.sync_type}")
                     item.mark_failed(f"Unknown sync type: {item.sync_type}")
                     failed += 1
                     continue
                 
                 processed += 1
-                logger.info(f"✅ Queued {item.sync_type} sync for {item.content_object}")
+                logger.info(f"Queued {item.sync_type} sync for {item.content_object}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to queue {item.sync_type} sync: {e}", exc_info=True)
+                logger.error(f"Failed to queue {item.sync_type} sync: {e}", exc_info=True)
                 item.mark_failed(str(e), {"error_type": "queue_error"})
                 failed += 1
         
@@ -1111,11 +1111,11 @@ def process_sync_queue(self, batch_size=50):
             processed_at__gte=timezone.now() - timedelta(minutes=5)
         ).count()
         
-        logger.info(f"🎯 Queue processing completed: {processed} queued, {recent_synced} recently synced, {failed} failed")
+        logger.info(f"Queue processing completed: {processed} queued, {recent_synced} recently synced, {failed} failed")
         return {"processed": processed, "failed": failed}
         
     except Exception as e:
-        logger.error(f"💥 Queue processing failed: {e}", exc_info=True)
+        logger.error(f"Queue processing failed: {e}", exc_info=True)
         raise
 
 
@@ -1135,7 +1135,7 @@ def sync_dispute_from_queue(self, queue_item_id):
         if not isinstance(dispute, Dispute):
             raise ValueError(f"Expected Dispute object, got {type(dispute)}")
         
-        logger.info(f"🔄 Processing dispute sync from queue: {dispute.id}")
+        logger.info(f"Processing dispute sync from queue: {dispute.id}")
         
         # Call the existing dispute sync task
         result = sync_dispute_ticket_task(dispute.id)
@@ -1143,11 +1143,11 @@ def sync_dispute_from_queue(self, queue_item_id):
         # Mark as synced
         queue_item.mark_synced()
         
-        logger.info(f"✅ Dispute sync completed: {dispute.id}")
+        logger.info(f"Dispute sync completed: {dispute.id}")
         return result
         
     except Exception as e:
-        logger.error(f"❌ Dispute sync from queue failed: {e}", exc_info=True)
+        logger.error(f"Dispute sync from queue failed: {e}", exc_info=True)
         if 'queue_item' in locals():
             queue_item.mark_failed(str(e), {"error_type": "sync_error"})
         raise
@@ -1179,11 +1179,11 @@ def cleanup_old_sync_queue_items(self, days_old=7):
             processed_at__lt=failed_cutoff
         ).delete()[0]
         
-        logger.info(f"🧹 Cleaned up {deleted_count} synced items and {failed_deleted_count} failed items")
+        logger.info(f"Cleaned up {deleted_count} synced items and {failed_deleted_count} failed items")
         return {"synced_deleted": deleted_count, "failed_deleted": failed_deleted_count}
         
     except Exception as e:
-        logger.error(f"❌ Queue cleanup failed: {e}", exc_info=True)
+        logger.error(f"Queue cleanup failed: {e}", exc_info=True)
         raise
 
 
@@ -1203,7 +1203,7 @@ def retry_failed_sync_items(self):
         ).order_by('next_retry_at')[:20]  # Limit to 20 items per run
         
         if not retry_items:
-            logger.info("📭 No items ready for retry")
+            logger.info("No items ready for retry")
             return {"retried": 0}
         
         retried = 0
@@ -1225,15 +1225,15 @@ def retry_failed_sync_items(self):
                     create_contact_message_task.delay(queue_item_id=item.id)
                 
                 retried += 1
-                logger.info(f"🔄 Retrying {item.sync_type} sync for {item.content_object}")
+                logger.info(f"Retrying {item.sync_type} sync for {item.content_object}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to retry {item.sync_type} sync: {e}", exc_info=True)
+                logger.error(f"Failed to retry {item.sync_type} sync: {e}", exc_info=True)
                 item.mark_failed(str(e), {"error_type": "retry_error"})
         
-        logger.info(f"🔄 Retry processing completed: {retried} items retried")
+        logger.info(f"Retry processing completed: {retried} items retried")
         return {"retried": retried}
         
     except Exception as e:
-        logger.error(f"❌ Retry processing failed: {e}", exc_info=True)
+        logger.error(f"Retry processing failed: {e}", exc_info=True)
         raise

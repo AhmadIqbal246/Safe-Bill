@@ -36,7 +36,8 @@ class NotificationService:
             message.startswith('notifications.identity_') or
             message.startswith('notifications.funds_') or
             message.startswith('notifications.transfer_') or
-            message.startswith('notifications.dispute_')):
+            message.startswith('notifications.dispute_') or
+            message.startswith('notifications.refund_')):
             # Store translation key and variables in dedicated fields
             notification = Notification.objects.create(
                 user=user,

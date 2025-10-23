@@ -1661,6 +1661,18 @@
     "dispute_mediator_assigned_admin_respondent": "Le médiateur {{mediator_name}} ({{mediator_email}}) a été assigné à votre litige : {{dispute_title}}",
     "dispute_mediator_assigned_admin_mediator": "Vous avez été assigné comme médiateur pour le litige : {{dispute_title}}",
     "dispute_status_changed_admin_initiator": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}",
-    "dispute_status_changed_admin_respondent": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}"
+    "dispute_status_changed_admin_respondent": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}",
+    "refund_balance_updated": "Solde de remboursement mis à jour avec succès",
+    "transfer_sent": "Transfert de {{amount}} {{currency}} a été envoyé vers votre compte Stripe.",
+    "transfer_reversed": "Transfert de {{amount}} {{currency}} a été annulé. Raison : {{reason}}. Les fonds ont été retournés à votre solde.",
+    "funds_released": "Excellente nouvelle ! {{amount}} $ a été libéré de la retenue et est maintenant disponible pour le paiement.",
+    "stripe_onboarding_complete": "Votre compte Stripe a été vérifié avec succès et est maintenant actif. Vous pouvez maintenant recevoir des paiements.",
+    "stripe_account_disconnected": "Votre compte Stripe a été déconnecté. Vous ne pourrez plus recevoir de paiements jusqu'à ce que vous vous reconnectiez.",
+    "identity_verification_success": "Votre identité a été vérifiée avec succès !",
+    "identity_verification_failed": "Votre vérification d'identité a échoué. Veuillez réessayer !",
+    "project_approved_seller": "Le projet '{{project_name}}' a été approuvé.",
+    "payment_processed_buyer": "Votre paiement de {{amount}} pour le projet '{{project_name}}' a été traité avec succès.",
+    "payment_session_expired": "Votre session de paiement pour le projet '{{project_name}}' a expiré.",
+    "payment_failed": "Le paiement pour le projet '{{project_name}}' a échoué."
   }
 }
