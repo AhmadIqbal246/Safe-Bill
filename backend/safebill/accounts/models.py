@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Avg, Count
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.utils import timezone
 
 # Create your models here.
 
@@ -166,3 +167,56 @@ def update_seller_rating_stats(sender, instance, **kwargs):
     seller.average_rating = rating_stats['avg_rating'] or 0.00
     seller.rating_count = rating_stats['rating_count'] or 0
     seller.save(update_fields=['average_rating', 'rating_count'])
+
+
+class DeletedUser(models.Model):
+    """Track deleted users for basic audit purposes"""
+    
+    # Original user data (anonymized)
+    original_user_id = models.PositiveIntegerField(unique=True, help_text="Original user ID before deletion")
+    original_email = models.EmailField(help_text="Original email before deletion")
+    original_username = models.CharField(max_length=150, help_text="Original username before deletion")
+    original_role = models.CharField(max_length=20, help_text="Original user role")
+    
+    # Deletion information
+    deleted_at = models.DateTimeField(auto_now_add=True, help_text="When the account was deleted")
+    deletion_reason = models.TextField(blank=True, null=True, help_text="Reason provided by user")
+    deletion_initiated_by = models.CharField(
+        max_length=20, 
+        choices=[
+            ('user', 'User Self-Initiated'),
+            ('admin', 'Admin Deleted'),
+            ('system', 'System Deleted'),
+            ('compliance', 'Compliance Deleted')
+        ],
+        default='user',
+        help_text="Who initiated the deletion"
+    )
+    
+    # Account status at deletion
+    account_created_at = models.DateTimeField(help_text="When the original account was created")
+    last_login_at = models.DateTimeField(null=True, blank=True, help_text="Last login before deletion")
+    was_email_verified = models.BooleanField(default=False, help_text="Was email verified at deletion")
+    onboarding_complete = models.BooleanField(default=False, help_text="Was onboarding complete at deletion")
+    
+    # Compliance and legal
+    data_retention_until = models.DateTimeField(help_text="Data retention period end date")
+    gdpr_compliant = models.BooleanField(default=True, help_text="Deletion was GDPR compliant")
+    
+    class Meta:
+        db_table = 'deleted_users'
+        verbose_name = 'Deleted User'
+        verbose_name_plural = 'Deleted Users'
+        indexes = [
+            models.Index(fields=['deleted_at']),
+            models.Index(fields=['original_user_id']),
+            models.Index(fields=['data_retention_until']),
+        ]
+    
+    def __str__(self):
+        return f"Deleted User {self.original_user_id} ({self.original_email})"
+    
+    @property
+    def is_data_retention_expired(self):
+        """Check if data retention period has expired"""
+        return timezone.now() > self.data_retention_until

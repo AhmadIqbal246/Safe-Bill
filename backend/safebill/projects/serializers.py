@@ -9,6 +9,7 @@ import secrets
 from utils.email_service import EmailService
 from django.conf import settings
 from notifications.models import Notification
+from notifications.services import NotificationService
 from django.db.models import Sum
 from .tasks import send_project_invitation_email_task
 from django.db import transaction
@@ -299,7 +300,6 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
                 f"{project.client_email}: {str(e)}"
             )
         # Create notification for the user
-        from notifications.services import NotificationService
         NotificationService.create_notification(
             user=user, 
             message="notifications.project_created",

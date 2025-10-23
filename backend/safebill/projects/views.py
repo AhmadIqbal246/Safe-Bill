@@ -561,7 +561,6 @@ class ProjectInviteAPIView(APIView):
                 self._create_chat_contacts(project)
 
                 # Create notification for the buyer
-                from notifications.services import NotificationService
                 NotificationService.create_notification(
                     user=request.user,
                     message="notifications.project_added",

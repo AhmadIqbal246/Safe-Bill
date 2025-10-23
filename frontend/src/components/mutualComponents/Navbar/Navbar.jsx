@@ -499,6 +499,12 @@ export default function SafeBillHeader({
                           {t("navbar.billing")}
                         </Link>
                         <div className="border-t border-gray-100">
+                          <Link
+                            to="/delete-account"
+                            className="block px-4 py-2 text-sm text-black hover:bg-gray-50"
+                          >
+                            Delete My Account
+                          </Link>
                           <button
                             onClick={handleSignOut}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
@@ -669,6 +675,12 @@ export default function SafeBillHeader({
                             {t("navbar.billing")}
                           </Link>
                           <div className="border-t border-gray-100">
+                            <Link
+                              to="/delete-account"
+                              className="block px-4 py-2 text-sm text-black hover:bg-gray-50"
+                            >
+                              Delete My Account
+                            </Link>
                             <button
                               onClick={handleSignOut}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -918,6 +930,12 @@ export default function SafeBillHeader({
                             {t("navbar.billing")}
                           </Link>
                           <div className="border-t border-gray-100">
+                            <Link
+                              to="/delete-account"
+                              className="block px-4 py-2 text-sm text-black hover:bg-gray-50"
+                            >
+                              Delete My Account
+                            </Link>
                             <button
                               onClick={handleSignOut}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

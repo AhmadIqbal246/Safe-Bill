@@ -23,6 +23,8 @@ from .views import (
     EligibleProjectsForRating,
     filter_sellers_by_region,
     RoleSwitchView,
+    deletion_eligibility,
+    delete_account,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -89,4 +91,7 @@ urlpatterns = [
     path('verify-siret/', verify_siret_api, name='verify-siret'),
     # Added: switch active role (seller <-> professional-buyer) for current session/user
     path('role/switch/', RoleSwitchView.as_view(), name='role-switch'),
+    # User Account Deletion endpoints
+    path('deletion-eligibility/', deletion_eligibility, name='deletion-eligibility'),
+    path('delete-account/', delete_account, name='delete-account'),
 ] 

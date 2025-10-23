@@ -42,6 +42,7 @@ import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
 import SellerReceipts from "./pages/SellerReceipts";
 import BuyerReceipts from "./pages/BuyerReceipts";
 import NotFound from "./pages/NotFound";
+import DeleteAccount from "./components/AccountDeletion/DeleteAccount";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -100,6 +101,7 @@ function App() {
           <Route path='/privacy-policy' element={<PrivacyPolicyPage/>}/>
           <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
           <Route path='/billings' element={<BillingsPage/>}/>
+          <Route path='/delete-account' element={<ProtectedRoute><DeleteAccount/></ProtectedRoute>}/>
           {/* Add more routes as needed */}
           <Route path='/not-found' element={<NotFound/>}/>
           <Route path='*' element={<NotFound/>}/>

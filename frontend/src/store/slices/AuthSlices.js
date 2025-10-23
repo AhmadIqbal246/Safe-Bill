@@ -24,6 +24,14 @@ const initialState = {
     result: null,
     lastSiret: null,
   },
+  accountDeletion: {
+    eligibility: null,
+    loading: false,
+    error: null,
+    deletionLoading: false,
+    deletionError: null,
+    deletionSuccess: false,
+  },
 };
 
 export const registerSellerWithBasicAndBussiness = createAsyncThunk(
@@ -294,6 +302,35 @@ const authSlice = createSlice({
       .addCase(switchActiveRole.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Failed to switch role';
+      })
+      // Account deletion reducers
+      .addCase(checkDeletionEligibility.pending, (state) => {
+        state.accountDeletion.loading = true;
+        state.accountDeletion.error = null;
+      })
+      .addCase(checkDeletionEligibility.fulfilled, (state, action) => {
+        state.accountDeletion.loading = false;
+        state.accountDeletion.eligibility = action.payload;
+        state.accountDeletion.error = null;
+      })
+      .addCase(checkDeletionEligibility.rejected, (state, action) => {
+        state.accountDeletion.loading = false;
+        state.accountDeletion.error = action.payload;
+      })
+      .addCase(deleteUserAccount.pending, (state) => {
+        state.accountDeletion.deletionLoading = true;
+        state.accountDeletion.deletionError = null;
+        state.accountDeletion.deletionSuccess = false;
+      })
+      .addCase(deleteUserAccount.fulfilled, (state, action) => {
+        state.accountDeletion.deletionLoading = false;
+        state.accountDeletion.deletionSuccess = true;
+        state.accountDeletion.deletionError = null;
+      })
+      .addCase(deleteUserAccount.rejected, (state, action) => {
+        state.accountDeletion.deletionLoading = false;
+        state.accountDeletion.deletionError = action.payload;
+        state.accountDeletion.deletionSuccess = false;
       });
   },
 });
@@ -334,6 +371,56 @@ export const switchActiveRole = createAsyncThunk(
       throw new Error('Invalid response from server');
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || 'Failed to switch role');
+    }
+  }
+);
+
+// Account deletion thunks
+export const checkDeletionEligibility = createAsyncThunk(
+  'auth/checkDeletionEligibility',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const response = await axios.get(
+        `${BASE_URL}api/accounts/deletion-eligibility/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${state.auth.access}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Failed to check deletion eligibility' });
+    }
+  }
+);
+
+export const deleteUserAccount = createAsyncThunk(
+  'auth/deleteUserAccount',
+  async (formData, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const response = await axios.post(
+        `${BASE_URL}api/accounts/delete-account/`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${state.auth.access}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Failed to delete account' });
     }
   }
 );
