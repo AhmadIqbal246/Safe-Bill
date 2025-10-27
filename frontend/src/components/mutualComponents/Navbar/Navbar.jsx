@@ -501,9 +501,9 @@ export default function SafeBillHeader({
                         <div className="border-t border-gray-100">
                           <Link
                             to="/delete-account"
-                            className="block px-4 py-2 text-sm text-black hover:bg-gray-50"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
-                            Delete My Account
+                            {t("navbar.delete_my_account")}
                           </Link>
                           <button
                             onClick={handleSignOut}
@@ -677,9 +677,9 @@ export default function SafeBillHeader({
                           <div className="border-t border-gray-100">
                             <Link
                               to="/delete-account"
-                              className="block px-4 py-2 text-sm text-black hover:bg-gray-50"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              Delete My Account
+                              {t("navbar.delete_my_account")}
                             </Link>
                             <button
                               onClick={handleSignOut}
@@ -932,9 +932,9 @@ export default function SafeBillHeader({
                           <div className="border-t border-gray-100">
                             <Link
                               to="/delete-account"
-                              className="block px-4 py-2 text-sm text-black hover:bg-gray-50"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              Delete My Account
+                              {t("navbar.delete_my_account")}
                             </Link>
                             <button
                               onClick={handleSignOut}

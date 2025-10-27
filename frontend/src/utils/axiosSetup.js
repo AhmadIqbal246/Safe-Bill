@@ -14,6 +14,11 @@ axios.interceptors.request.use((config) => {
   if (access && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${access}`;
   }
+  
+  // Add consent status header for GDPR compliance
+  const consentStatus = window.axeptio?.getConsentStatus?.() || 'pending';
+  config.headers['X-Consent-Status'] = consentStatus;
+  
   return config;
 });
 

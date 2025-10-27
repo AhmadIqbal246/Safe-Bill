@@ -44,6 +44,14 @@ export default function Footer() {
           <ul className="space-y-1">
             <li><Link to="/terms-of-service" className="hover:underline text-[#96C2DB]">{t('footer.terms')}</Link></li>
             <li><Link to="/privacy-policy" className="hover:underline text-[#96C2DB]">{t('footer.privacy')}</Link></li>
+            <li>
+              <button 
+                onClick={() => window.axeptio?.showConsentModal?.()}
+                className="hover:underline text-[#96C2DB] cursor-pointer"
+              >
+                Cookie Preferences
+              </button>
+            </li>
           </ul>
         </div>
       </div>

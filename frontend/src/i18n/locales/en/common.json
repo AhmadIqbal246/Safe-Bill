@@ -15,7 +15,8 @@
     "no_unread_notifications": "No unread notifications.",
     "how_to_accept_project_invite": "How to Accept Project Invite",
     "seller": "Seller",
-    "pro_buyer": "Pro Buyer"
+    "pro_buyer": "Pro Buyer",
+    "delete_my_account": "Delete My Account"
   },
   "actions": {
     "cancel": "Cancel",
@@ -1148,6 +1149,42 @@
         ]
       }
     },
+    "cookie_policy": {
+      "title": "Cookie Policy",
+      "subtitle": "We use cookies to enhance your experience and ensure GDPR compliance.",
+      "essential_cookies": {
+        "title": "Essential Cookies",
+        "description": "These cookies are necessary for the website to function properly and cannot be disabled. They are usually set in response to actions made by you which amount to a request for services.",
+        "examples": [
+          "Session management and authentication",
+          "Security features and CSRF protection",
+          "Basic user preferences (language, theme)"
+        ]
+      },
+      "analytics_cookies": {
+        "title": "Analytics Cookies",
+        "description": "These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.",
+        "examples": [
+          "Page views and user behavior",
+          "Performance monitoring",
+          "Error tracking and debugging"
+        ]
+      },
+      "marketing_cookies": {
+        "title": "Marketing Cookies",
+        "description": "These cookies are used to track visitors across websites for advertising and marketing purposes.",
+        "examples": [
+          "Email marketing preferences",
+          "Newsletter subscriptions",
+          "Marketing campaign tracking"
+        ]
+      },
+      "consent_management": {
+        "title": "Consent Management",
+        "description": "We use Axeptio to manage your cookie preferences and ensure compliance with GDPR regulations. You can change your consent settings at any time.",
+        "withdrawal": "You have the right to withdraw your consent at any time. Withdrawing consent will not affect the lawfulness of processing based on consent before its withdrawal."
+      }
+    },
     "how_we_use": {
       "title": "How We Use Your Information",
       "service_provision": {
@@ -1236,6 +1273,12 @@
       "title": "Acceptance of Terms",
       "content": "By creating an account, accessing our platform, or using any of our services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service and our Privacy Policy.",
       "agreement": "Your continued use of Safe Bill constitutes your acceptance of any updates or modifications to these Terms."
+    },
+    "consent_requirements": {
+      "title": "Consent Requirements",
+      "content": "By using Safe Bill, you consent to our collection and use of your information as described in our Privacy Policy. You must provide valid consent for all data processing activities in compliance with GDPR regulations.",
+      "cookie_consent": "Our platform uses cookies and similar technologies. You must provide consent for non-essential cookies through our consent management platform powered by Axeptio.",
+      "withdrawal": "You may withdraw your consent at any time, but this may limit your ability to use certain features of our platform."
     },
     "service_description": {
       "title": "Service Description",
@@ -1684,5 +1727,65 @@
     "payment_processed_buyer": "Your payment of {{amount}} for project '{{project_name}}' has been processed successfully.",
     "payment_session_expired": "Your payment session for project '{{project_name}}' has expired.",
     "payment_failed": "Payment for project '{{project_name}}' has failed."
+  },
+  "account_deletion": {
+    "title": "Delete My Account",
+    "subtitle": "Permanently remove your account and all associated data",
+    "checking_eligibility": "Checking Eligibility",
+    "please_wait": "Please wait while we verify your account status...",
+    "error_title": "Error",
+    "failed_to_check": "Failed to check eligibility",
+    "retry": "Retry",
+    "back_to_dashboard": "Back to Dashboard",
+    "initializing": "Initializing Account Deletion",
+    "preparing": "Preparing to check your account status...",
+    "eligible_title": "Account Deletion Eligible",
+    "eligible_message": "Your account meets all requirements for deletion.",
+    "eligibility_criteria_met": "Eligibility Criteria Met",
+    "no_active_projects": "No active projects",
+    "no_pending_payments": "No pending payments",
+    "no_active_disputes": "No active disputes",
+    "no_outstanding_balances": "No outstanding balances",
+    "continue_to_deletion": "Continue to Deletion",
+    "confirm_deletion": "Confirm Account Deletion",
+    "enter_password": "Please enter your password to confirm this irreversible action.",
+    "warning_title": "Warning: This action is irreversible",
+    "warning_data_deleted": "All your data will be permanently deleted",
+    "warning_cannot_recover": "You cannot recover your account",
+    "warning_lost": "All projects, payments, and messages will be lost",
+    "warning_cannot_undo": "This action cannot be undone",
+    "password_label": "Password *",
+    "enter_your_password": "Enter your password",
+    "confirm_password_label": "Confirm Password *",
+    "confirm_your_password": "Confirm your password",
+    "passwords_not_match": "Passwords do not match",
+    "cancel": "Cancel",
+    "continue_to_confirmation": "Continue to Confirmation",
+    "final_confirmation_title": "Final Confirmation",
+    "final_confirmation_message": "Are you absolutely sure you want to delete your account? This action is irreversible and all your data will be permanently lost.",
+    "will_delete": "This will permanently delete:",
+    "delete_account": "Your account and profile",
+    "delete_projects": "All projects and payments",
+    "delete_messages": "All messages and communications",
+    "delete_data": "All associated data",
+    "go_back": "Go Back",
+    "yes_delete_account": "Yes, Delete My Account",
+    "deleting": "Deleting...",
+    "deleting_account": "Deleting Your Account",
+    "processing_deletion": "Please wait while we process your account deletion...",
+    "deleted_successfully": "Account Deleted Successfully",
+    "account_permanently_deleted": "Your account has been permanently deleted.",
+    "redirecting": "Redirecting to home page...",
+    "not_eligible_title": "Account Deletion Not Eligible",
+    "not_eligible_message": "Your account cannot be deleted at this time due to the following restrictions:",
+    "active_projects": "Active Projects",
+    "pending_payments": "Pending Payments",
+    "active_disputes": "Active Disputes",
+    "to_delete_need_to": "To delete your account, you need to:",
+    "complete_projects": "Complete or cancel all active projects",
+    "wait_payments": "Wait for all pending payments to be processed",
+    "resolve_disputes": "Resolve all active disputes",
+    "password_required": "Password is required",
+    "confirm_password_required": "Confirm password is required"
   }
 }

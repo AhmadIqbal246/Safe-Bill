@@ -84,7 +84,7 @@ CSRF_TRUSTED_ORIGINS = _env_list(
 # For production, disable this
 #CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 
-# Allow custom headers for language detection
+# Allow custom headers for language detection and GDPR consent
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -96,6 +96,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'x-user-language',  # Custom header for language detection
+    'x-consent-status',  # GDPR consent status header
 ]
 
 
@@ -137,6 +138,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "utils.consent_middleware.ConsentMiddleware",  # GDPR consent checking
     "utils.language_middleware.LanguageMiddleware",  # Custom language middleware
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
 ]

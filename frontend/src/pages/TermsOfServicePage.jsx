@@ -64,6 +64,29 @@ export default function TermsOfServicePage() {
               </div>
             </section>
 
+            {/* Consent Requirements */}
+            <section>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Shield className="w-6 h-6 mr-3 text-[#1e3a8a]" />
+                {t('terms_of_service.consent_requirements.title')}
+              </h2>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  {t('terms_of_service.consent_requirements.content')}
+                </p>
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                  <p className="text-yellow-800">
+                    {t('terms_of_service.consent_requirements.cookie_consent')}
+                  </p>
+                </div>
+                <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                  <p className="text-red-800">
+                    {t('terms_of_service.consent_requirements.withdrawal')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
             {/* Service Description */}
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">

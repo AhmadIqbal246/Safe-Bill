@@ -67,7 +67,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
         >
           <X className="w-6 h-6" />
         </button>
-        <Link to="/seller-dashboard" className="mb-8 block hover:text-[#01257D] transition-colors cursor-pointer"><img src={Logo} alt="Safe Bill" className="h-5 w-auto object-contain" /></Link>
+        <Link to="/seller-dashboard" className="mb-8 block hover:text-[#01257D] transition-colors cursor-pointer"><img src={Logo} alt="Safe Bill" className="h-12 w-auto object-contain" /></Link>
         <nav className="flex flex-col gap-2">
           {links.map(link => (
             link.to === "#" ? (

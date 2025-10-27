@@ -6,6 +6,24 @@
     <link rel="shortcut icon" type="image/png" href="/src/assets/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Safe Bill</title>
+    
+    <!-- Axeptio Consent Management -->
+    <script>
+      window.axeptioSettings = {
+        clientId: "68f348675a572554038060b6",
+        cookiesVersion: "26043d2f-9318-44fb-9356-00c1ac006b99",
+        mode: "banner", // Show banner automatically
+        bannerPosition: "bottom", // Bottom of page
+        language: "fr", // Default to French
+        showConsentModal: true, // Enable detailed modal
+      };
+      
+      (function(d, s) {
+        var t = d.getElementsByTagName(s)[0], e = d.createElement(s);
+        e.async = true; e.src = "//static.axept.io/sdk.js";
+        t.parentNode.insertBefore(e, t);
+      })(document, "script");
+    </script>
   </head>
   <body>
     <div id="root"></div>
