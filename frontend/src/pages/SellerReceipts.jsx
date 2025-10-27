@@ -55,16 +55,45 @@ export default function SellerReceipts() {
 
   const calcTotals = (project) => {
     const total = (project.installments || []).reduce((s, i) => s + Number(i.amount || 0), 0);
+    const vatRate = Number(project.vat_rate || 0);
     const pct = Number(project.platform_fee_percentage || 0);
+    
+    // Calculate VAT amount
+    const vatAmount = +(total * vatRate / 100).toFixed(2);
+    
+    // Calculate amount including VAT
+    const amountIncludingVat = +(total + vatAmount).toFixed(2);
+    
+    // Calculate platform fee
     const platformFee = +(total * pct / 100).toFixed(2);
-    const sellerNet = +(total - platformFee).toFixed(2);
-    return { total, pct, platformFee, sellerNet };
+    
+    // Calculate platform fee including VAT
+    const platformFeeWithVat = +(platformFee * (1 + vatRate / 100)).toFixed(2);
+    
+    // Final amount = (amount including VAT) - (service fees including VAT)
+    const finalAmount = +(amountIncludingVat - platformFeeWithVat).toFixed(2);
+    
+    return { total, pct, platformFee, sellerNet: finalAmount, vatRate, vatAmount, platformFeeWithVat, amountIncludingVat, finalAmount };
   };
 
-  const calcMilestoneNet = (amount, pct) => {
+  const calcMilestoneNet = (amount, pct, vatRate) => {
     const a = Number(amount || 0);
+    const vatR = Number(vatRate || 0);
+    
+    // Calculate VAT for this milestone
+    const vatAmt = +(a * vatR / 100).toFixed(2);
+    const amountWithVat = +(a + vatAmt).toFixed(2);
+    
+    // Calculate platform fee
     const fee = +(a * pct / 100).toFixed(2);
-    return { fee, net: +(a - fee).toFixed(2) };
+    
+    // Calculate platform fee with VAT
+    const feeWithVat = +(fee * (1 + vatR / 100)).toFixed(2);
+    
+    // Final net amount
+    const net = +(amountWithVat - feeWithVat).toFixed(2);
+    
+    return { fee, net, vatAmt, amountWithVat, feeWithVat };
   };
 
   const downloadPdf = async (project) => {
@@ -75,7 +104,64 @@ export default function SellerReceipts() {
       ]);
 
       const element = document.getElementById(`receipt-${project.id}`);
-      if (!element) return;
+      if (!element) {
+        console.error(`Element with id 'receipt-${project.id}' not found`);
+        toast.error('Receipt not found');
+        return;
+      }
+
+      console.log('Found element:', {
+        id: element.id,
+        hasContent: element.textContent.length > 0,
+        classes: element.className
+      });
+
+      // Clone the element to avoid affecting the original
+      const clone = element.cloneNode(true);
+      
+      // Create a temporary container for the clone
+      const container = document.createElement('div');
+      container.id = 'pdf-temp-container';
+      container.style.position = 'absolute';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '210mm';
+      container.style.height = '297mm'; // A4 height
+      container.style.backgroundColor = '#ffffff';
+      container.style.opacity = '0';
+      container.style.pointerEvents = 'none';
+      container.style.zIndex = '999999';
+      container.style.overflow = 'visible';
+      
+      // Style the clone for PDF
+      clone.style.width = '800px';
+      clone.style.maxWidth = '800px';
+      clone.style.padding = '24px';
+      clone.style.backgroundColor = '#ffffff';
+      clone.className = ''; // Remove all classes to avoid hidden styling
+      clone.style.margin = '0';
+      
+      // Append clone to container
+      container.appendChild(clone);
+      document.body.appendChild(container);
+
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log('Element for PDF:', {
+        id: element.id,
+        cloneHeight: clone.offsetHeight,
+        cloneWidth: clone.offsetWidth,
+        containerExists: !!container.parentNode
+      });
+
+      // Additional check
+      if (clone.offsetHeight === 0 || clone.offsetWidth === 0) {
+        console.error('Clone has no dimensions!');
+        document.body.removeChild(container);
+        toast.error('Failed to render receipt for PDF');
+        return;
+      }
 
       // Inline any images to avoid CORS tainting in production
       const inlineImages = async (root) => {
@@ -102,17 +188,39 @@ export default function SellerReceipts() {
         );
       };
 
-      await inlineImages(element);
+      await inlineImages(clone);
 
-      const canvas = await html2canvas(element, {
+      console.log('Starting html2canvas capture...');
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false,
+        logging: true,
         allowTaint: false,
         foreignObjectRendering: true,
       });
+      
+      console.log('Canvas created:', {
+        width: canvas.width,
+        height: canvas.height
+      });
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        console.error('Canvas has no content!');
+        document.body.removeChild(container);
+        toast.error('Failed to capture receipt content');
+        return;
+      }
+
       const imgData = canvas.toDataURL('image/png');
+      
+      if (!imgData || imgData === 'data:,' || imgData.length < 100) {
+        console.error('Invalid image data!');
+        document.body.removeChild(container);
+        toast.error('Failed to generate PDF image');
+        return;
+      }
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -130,10 +238,20 @@ export default function SellerReceipts() {
         }
       }
 
+      console.log('PDF created successfully');
       pdf.save(`receipt_seller_${project.reference_number || project.id}.pdf`);
+
+      // Clean up the temporary container
+      document.body.removeChild(container);
     } catch (e) {
       console.error('Seller receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
+      
+      // Clean up the temporary container in case of error
+      const container = document.getElementById('pdf-temp-container');
+      if (container) {
+        document.body.removeChild(container);
+      }
     }
   };
 
@@ -185,7 +303,7 @@ export default function SellerReceipts() {
           ) : (
             <div className="space-y-6">
               {paged.map((p) => {
-                const { total, pct, platformFee, sellerNet } = calcTotals(p);
+                const { total, pct, platformFee, sellerNet, vatRate, vatAmount, finalAmount, amountIncludingVat } = calcTotals(p);
                 return (
                   <div key={p.id} className="border border-gray-200 rounded-lg">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-gray-50">
@@ -203,8 +321,9 @@ export default function SellerReceipts() {
                     <div className="p-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div><span className="text-gray-500">{t('receipts.total_amount')}</span><div className="font-semibold">€{total.toLocaleString()}</div></div>
-                        <div><span className="text-gray-500">{t('receipts.platform_fee')}</span><div className="font-semibold">−€{platformFee.toLocaleString()}</div></div>
-                        <div><span className="text-gray-500">{t('receipts.seller_receives')}</span><div className="font-semibold text-green-700">€{sellerNet.toLocaleString()}</div></div>
+                        <div><span className="text-gray-500">VAT ({vatRate.toFixed(1)}%)</span><div className="font-semibold">+€{vatAmount.toLocaleString()}</div></div>
+                        <div><span className="text-gray-500">Amount with VAT</span><div className="font-semibold">€{amountIncludingVat.toLocaleString()}</div></div>
+                        <div><span className="text-gray-500">{t('receipts.seller_receives')}</span><div className="font-semibold text-green-700">€{finalAmount.toLocaleString()}</div></div>
                       </div>
                     </div>
 
@@ -222,7 +341,7 @@ export default function SellerReceipts() {
                             </thead>
                             <tbody>
                               {(p.milestones || []).filter(m => m.status === 'approved').map((m) => {
-                                const { net } = calcMilestoneNet(m.relative_payment, pct);
+                                const { net } = calcMilestoneNet(m.relative_payment, pct, vatRate);
                                 return (
                                   <tr key={m.id} className="border-t border-gray-100">
                                     <td className="py-2 pr-4">{m.name}</td>
@@ -238,9 +357,8 @@ export default function SellerReceipts() {
                       </div>
                     )}
 
-                    {/* Printable area for PDF (hide/show with Details toggle) */}
-                    {expands[p.id] && (
-                      <div id={`receipt-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4" style={{ background: '#ffffff' }}>
+                    {/* Printable area for PDF (always rendered but hidden when collapsed) */}
+                    <div id={`receipt-${p.id}`} className={`max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4 ${!expands[p.id] ? 'hidden' : ''}`} style={{ background: '#ffffff' }}>
                         {/* Brand header */}
                         <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
                             <div className="flex items-center gap-3">
@@ -260,18 +378,22 @@ export default function SellerReceipts() {
                         </div>
 
                         {/* Summary grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-6">
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
                             <div className="text-gray-500">{t('receipts.total')}</div>
                             <div className="text-base font-semibold">€{total.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">{t('receipts.platform_fee')}</div>
-                            <div className="text-base font-semibold">−€{platformFee.toLocaleString()}</div>
+                            <div className="text-gray-500">VAT ({vatRate.toFixed(1)}%)</div>
+                            <div className="text-base font-semibold">+€{vatAmount.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                            <div className="text-gray-500">Amount with VAT</div>
+                            <div className="text-base font-semibold">€{amountIncludingVat.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
                             <div className="text-gray-500">{t('receipts.seller_receives')}</div>
-                            <div className="text-base font-semibold text-green-700">€{sellerNet.toLocaleString()}</div>
+                            <div className="text-base font-semibold text-green-700">€{finalAmount.toLocaleString()}</div>
                           </div>
                         </div>
 
@@ -289,7 +411,7 @@ export default function SellerReceipts() {
                             </thead>
                             <tbody>
                               {(p.milestones || []).filter(m => m.status === 'approved').map((m, idx) => {
-                                const { net } = calcMilestoneNet(m.relative_payment, pct);
+                                const { net } = calcMilestoneNet(m.relative_payment, pct, vatRate);
                                 return (
                                   <tr key={m.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                     <td className="py-2 px-2">{m.name}</td>
@@ -308,8 +430,7 @@ export default function SellerReceipts() {
                           <div>{t('receipts.generated_by')}</div>
                           <div>www.safebill.fr</div>
                         </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}

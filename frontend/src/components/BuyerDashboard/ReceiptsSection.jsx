@@ -60,11 +60,124 @@ export default function ReceiptsSection() {
         import('jspdf'),
       ]);
 
-      const el = document.getElementById(`buyer-receipt-${project.id}`);
-      if (!el) return;
+      const element = document.getElementById(`buyer-receipt-${project.id}`);
+      if (!element) {
+        console.error(`Element with id 'buyer-receipt-${project.id}' not found`);
+        toast.error('Receipt not found');
+        return;
+      }
 
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      console.log('Found element:', {
+        id: element.id,
+        hasContent: element.textContent.length > 0,
+        classes: element.className
+      });
+
+      // Clone the element to avoid affecting the original
+      const clone = element.cloneNode(true);
+      
+      // Create a temporary container for the clone
+      const container = document.createElement('div');
+      container.id = 'pdf-section-temp-container';
+      container.style.position = 'absolute';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '210mm';
+      container.style.height = '297mm'; // A4 height
+      container.style.backgroundColor = '#ffffff';
+      container.style.opacity = '0';
+      container.style.pointerEvents = 'none';
+      container.style.zIndex = '999999';
+      container.style.overflow = 'visible';
+      
+      // Style the clone for PDF
+      clone.style.width = '800px';
+      clone.style.maxWidth = '800px';
+      clone.style.padding = '24px';
+      clone.style.backgroundColor = '#ffffff';
+      clone.className = ''; // Remove all classes to avoid hidden styling
+      clone.style.margin = '0';
+      
+      // Append clone to container
+      container.appendChild(clone);
+      document.body.appendChild(container);
+
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log('Element for PDF:', {
+        id: element.id,
+        cloneHeight: clone.offsetHeight,
+        cloneWidth: clone.offsetWidth,
+        containerExists: !!container.parentNode
+      });
+
+      // Additional check
+      if (clone.offsetHeight === 0 || clone.offsetWidth === 0) {
+        console.error('Clone has no dimensions!');
+        document.body.removeChild(container);
+        toast.error('Failed to render receipt for PDF');
+        return;
+      }
+
+      // Inline any images to avoid CORS tainting in production
+      const inlineImages = async (root) => {
+        const imgs = Array.from(root.querySelectorAll('img'));
+        await Promise.all(
+          imgs.map(async (img) => {
+            try {
+              if (!img || !img.src || img.src.startsWith('data:')) return;
+              img.setAttribute('crossorigin', 'anonymous');
+              const resp = await fetch(img.src, { mode: 'cors', credentials: 'omit' });
+              if (!resp.ok) return;
+              const blob = await resp.blob();
+              await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  try { img.src = reader.result; } catch {}
+                  resolve();
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+            } catch {}
+          })
+        );
+      };
+
+      await inlineImages(clone);
+
+      console.log('Starting html2canvas capture...');
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: true,
+        allowTaint: false,
+        foreignObjectRendering: true,
+      });
+      
+      console.log('Canvas created:', {
+        width: canvas.width,
+        height: canvas.height
+      });
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        console.error('Canvas has no content!');
+        document.body.removeChild(container);
+        toast.error('Failed to capture receipt content');
+        return;
+      }
+
       const imgData = canvas.toDataURL('image/png');
+      
+      if (!imgData || imgData === 'data:,' || imgData.length < 100) {
+        console.error('Invalid image data!');
+        document.body.removeChild(container);
+        toast.error('Failed to generate PDF image');
+        return;
+      }
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -81,9 +194,21 @@ export default function ReceiptsSection() {
           pos = 0 - (imgHeight - heightLeft);
         }
       }
+
+      console.log('PDF created successfully');
       pdf.save(`receipt_buyer_${project.reference_number || project.id}.pdf`);
+
+      // Clean up the temporary container
+      document.body.removeChild(container);
     } catch (e) {
+      console.error('Receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
+      
+      // Clean up the temporary container in case of error
+      const container = document.getElementById('pdf-section-temp-container');
+      if (container) {
+        document.body.removeChild(container);
+      }
     }
   };
 
