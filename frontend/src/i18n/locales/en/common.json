@@ -1652,7 +1652,18 @@
     "next": "Next",
     "name": "Name",
     "seller_label": "Seller",
-    "buyer_label": "Buyer"
+    "buyer_label": "Buyer",
+    "project_amount": "Project Amount",
+    "service_fees_excl_vat": "Service Fees (Excl VAT)",
+    "vat_rate": "VAT",
+    "vat_on_service_fees": "VAT on Service Fees",
+    "total_service_fees": "Total Service Fees",
+    "platform_invoice": "Platform Invoice",
+    "invoice_date": "Invoice Date",
+    "issued_to": "Issued to",
+    "invoice_details": "Platform Invoice Details",
+    "my_receipts": "My Receipts",
+    "platform_invoices": "Platform Invoices"
   },
   "not_found": {
     "page_not_found": "The page you are looking for does not exist.",

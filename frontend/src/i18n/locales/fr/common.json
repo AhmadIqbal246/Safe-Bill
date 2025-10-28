@@ -1600,7 +1600,18 @@
     "next": "Suivant",
     "name": "Nom",
     "seller_label": "Vendeur",
-    "buyer_label": "Acheteur"
+    "buyer_label": "Acheteur",
+    "project_amount": "Montant du projet",
+    "service_fees_excl_vat": "Frais de service (HT)",
+    "vat_rate": "TVA",
+    "vat_on_service_fees": "TVA sur les frais de service",
+    "total_service_fees": "Total des frais de service",
+    "platform_invoice": "Facture plateforme",
+    "invoice_date": "Date de facturation",
+    "issued_to": "Émis à",
+    "invoice_details": "Détails de la facture plateforme",
+    "my_receipts": "Mes Reçus",
+    "platform_invoices": "Factures Plateforme"
   },
   "not_found": {
     "page_not_found": "La page que vous recherchez n'existe pas.",

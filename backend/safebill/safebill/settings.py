@@ -264,13 +264,22 @@ SIMPLE_JWT = {
 
 # Note: CHANNEL_LAYERS is already defined above with Redis configuration
 
-# Email backend for development
+# Email backend for development - Hostinger Email Configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+# Hostinger SMTP settings for safebill.fr domain
+# SMTP: smtp.hostinger.com
+# Port: 465 (SSL) or 587 (TLS)
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.hostinger.com")
+EMAIL_PORT = int(env("EMAIL_PORT", default=465))  # Using SSL port (465)
+EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False, cast=bool)
+EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=True, cast=bool)  # SSL enabled for port 465
+EMAIL_TIMEOUT = 60
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+
+# Hostinger email connection settings
+EMAIL_SSL_CERTFILE = None
+EMAIL_SSL_KEYFILE = None
 FRONTEND_URL = env("FRONTEND_URL")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 SIRET_VALIDATION_ACCESS_TOKEN = env("SIRET_VALIDATION_ACCESS_TOKEN")

@@ -17,6 +17,7 @@ export default function SellerReceipts() {
   const [expands, setExpands] = React.useState({});
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
+  const [receiptType, setReceiptType] = React.useState('seller'); // 'seller' or 'platform'
   const pageSize = 5;
 
   const fetchData = React.useCallback(async () => {
@@ -96,14 +97,39 @@ export default function SellerReceipts() {
     return { fee, net, vatAmt, amountWithVat, feeWithVat };
   };
 
-  const downloadPdf = async (project) => {
+  // Calculate platform invoice data (SafeBill to Seller)
+  const calcPlatformReceipt = (project) => {
+    const total = (project.installments || []).reduce((s, i) => s + Number(i.amount || 0), 0);
+    const vatRate = Number(project.vat_rate || 0);
+    const pct = Number(project.platform_fee_percentage || 0);
+    
+    // Service fees excluding VAT
+    const serviceFeesExclVat = +(total * pct / 100).toFixed(2);
+    
+    // VAT amount on service fees
+    const vatOnServiceFees = +(serviceFeesExclVat * vatRate / 100).toFixed(2);
+    
+    // Service fees including VAT
+    const serviceFeesInclVat = +(serviceFeesExclVat + vatOnServiceFees).toFixed(2);
+    
+    return {
+      projectAmount: total,
+      serviceFeesExclVat,
+      vatRate,
+      vatOnServiceFees,
+      serviceFeesInclVat
+    };
+  };
+
+  const downloadPdf = async (project, type = 'seller') => {
     try {
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
         import('html2canvas'),
         import('jspdf'),
       ]);
 
-      const element = document.getElementById(`receipt-${project.id}`);
+      const elementId = type === 'platform' ? `platform-invoice-${project.id}` : `receipt-${project.id}`;
+      const element = document.getElementById(elementId);
       if (!element) {
         console.error(`Element with id 'receipt-${project.id}' not found`);
         toast.error('Receipt not found');
@@ -239,7 +265,10 @@ export default function SellerReceipts() {
       }
 
       console.log('PDF created successfully');
-      pdf.save(`receipt_seller_${project.reference_number || project.id}.pdf`);
+      const filename = type === 'platform' 
+        ? `platform_invoice_${project.reference_number || project.id}.pdf`
+        : `receipt_seller_${project.reference_number || project.id}.pdf`;
+      pdf.save(filename);
 
       // Clean up the temporary container
       document.body.removeChild(container);
@@ -298,11 +327,120 @@ export default function SellerReceipts() {
             </div>
           </div>
 
+          {/* Toggle Bar for Receipt Types */}
+          <div className="flex border border-gray-200 rounded-lg mb-6 bg-white shadow-sm">
+            <button
+              onClick={() => setReceiptType('seller')}
+              className={`flex-1 py-3 px-4 text-center font-medium transition-colors rounded-l-lg ${
+                receiptType === 'seller'
+                  ? 'bg-[#01257D] text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {t('receipts.my_receipts')}
+            </button>
+            <button
+              onClick={() => setReceiptType('platform')}
+              className={`flex-1 py-3 px-4 text-center font-medium transition-colors rounded-r-lg ${
+                receiptType === 'platform'
+                  ? 'bg-[#01257D] text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {t('receipts.platform_invoices')}
+            </button>
+          </div>
+
           {projects.length === 0 ? (
             <div className="text-gray-500 text-center py-10">{t('receipts.no_completed')}</div>
           ) : (
             <div className="space-y-6">
               {paged.map((p) => {
+                if (receiptType === 'platform') {
+                  // Platform Invoice Section
+                  const { projectAmount, serviceFeesExclVat, vatRate, vatOnServiceFees, serviceFeesInclVat } = calcPlatformReceipt(p);
+                  return (
+                    <div key={p.id} className="border border-gray-200 rounded-lg">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-gray-50">
+                        <div>
+                          <div className="text-lg font-semibold text-[#01257D]">{p.name}</div>
+                          <div className="text-sm text-gray-600">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                          <div className="text-xs text-gray-500">{t('receipts.start')} {p.created_at} {p.completion_date ? `• ${t('receipts.completed')}: ${p.completion_date}` : ''}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => toggleExpand(p.id)} className="px-3 py-2 text-sm rounded-md bg-white border cursor-pointer hover:bg-gray-100">{expands[p.id] ? t('receipts.hide') : t('receipts.details')}</button>
+                           <button onClick={() => downloadPdf(p, 'platform')} className="px-3 py-2 text-sm rounded-md bg-[#01257D] text-white cursor-pointer hover:bg-[#1d3f99]">{t('receipts.download_pdf')}</button>
+                        </div>
+                      </div>
+
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div><span className="text-gray-500">{t('receipts.project_amount')}</span><div className="font-semibold">€{projectAmount.toLocaleString()}</div></div>
+                          <div><span className="text-gray-500">{t('receipts.service_fees_excl_vat')}</span><div className="font-semibold">€{serviceFeesExclVat.toLocaleString()}</div></div>
+                          <div><span className="text-gray-500">{t('receipts.vat_rate')} ({vatRate.toFixed(1)}%)</span><div className="font-semibold">+€{vatOnServiceFees.toLocaleString()}</div></div>
+                          <div><span className="text-gray-500">{t('receipts.total_service_fees')}</span><div className="font-semibold text-blue-700">€{serviceFeesInclVat.toLocaleString()}</div></div>
+                        </div>
+                      </div>
+
+                      {expands[p.id] && (
+                        <div className="p-4 pt-0">
+                          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+                            <div className="text-sm font-semibold text-blue-900 mb-2">{t('receipts.invoice_details')}</div>
+                            <div className="text-xs text-blue-700 space-y-1">
+                              <div>{t('receipts.issued_to')}: {p.seller_username || p.seller_email}</div>
+                              <div>{t('receipts.name')}: {p.name}</div>
+                              <div>{t('receipts.ref')} {p.reference_number}</div>
+                              <div>{t('receipts.invoice_date')}: {p.completion_date || p.created_at}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Platform Invoice Printable Area */}
+                      <div id={`platform-invoice-${p.id}`} className={`max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200 mb-4 ${!expands[p.id] ? 'hidden' : ''}`} style={{ background: '#ffffff' }}>
+                        <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+                          <div className="flex items-center gap-3">
+                            <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
+                          </div>
+                          <div className="text-xs text-gray-500">{t('receipts.platform_invoice')}</div>
+                        </div>
+
+                        <div className="mb-5">
+                          <div className="text-lg font-semibold text-gray-900">{p.name}</div>
+                          <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                          <div className="text-xs text-gray-500 mt-1">{t('receipts.vat_rate')}: {vatRate.toFixed(1)}%</div>
+                          <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {p.completion_date || p.created_at}</div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
+                          <div className="bg-blue-50 rounded-md p-3 border border-blue-200">
+                            <div className="text-gray-500">{t('receipts.project_amount')}</div>
+                            <div className="text-base font-semibold">€{projectAmount.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-blue-50 rounded-md p-3 border border-blue-200">
+                            <div className="text-gray-500">{t('receipts.service_fees_excl_vat')}</div>
+                            <div className="text-base font-semibold">€{serviceFeesExclVat.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-blue-50 rounded-md p-3 border border-blue-200">
+                            <div className="text-gray-500">{t('receipts.vat_rate')} ({vatRate.toFixed(1)}%)</div>
+                            <div className="text-base font-semibold">+€{vatOnServiceFees.toLocaleString()}</div>
+                          </div>
+                          <div className="bg-blue-50 rounded-md p-3 border border-blue-200">
+                            <div className="text-gray-500">{t('receipts.total_service_fees')}</div>
+                            <div className="text-base font-semibold text-blue-700">€{serviceFeesInclVat.toLocaleString()}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
+                          <div>{t('receipts.generated_by')}</div>
+                          <div>www.safebill.fr</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Seller Receipt Section (existing)
                 const { total, pct, platformFee, sellerNet, vatRate, vatAmount, finalAmount, amountIncludingVat } = calcTotals(p);
                 return (
                   <div key={p.id} className="border border-gray-200 rounded-lg">
@@ -430,7 +568,7 @@ export default function SellerReceipts() {
                           <div>{t('receipts.generated_by')}</div>
                           <div>www.safebill.fr</div>
                         </div>
-                    </div>
+                      </div>
                   </div>
                 );
               })}
@@ -476,5 +614,9 @@ export default function SellerReceipts() {
       </MainLayout>
   );
 }
+
+
+
+
 
 
