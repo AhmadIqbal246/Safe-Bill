@@ -41,6 +41,30 @@ export const submitContactMessage = createAsyncThunk(
   }
 );
 
+export const submitCallbackRequest = createAsyncThunk(
+  'feedback/submitCallbackRequest',
+  async ({ company_name, siret_number, first_name, last_name, email, phone, role }, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const token = state?.auth?.access;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await axios.post(
+        `${BASE_URL}api/feedback/callback-request/`,
+        { company_name, siret_number, first_name, last_name, email, phone, role },
+        { headers }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Network error' });
+    }
+  }
+);
+
 const feedbackSlice = createSlice({
   name: 'feedback',
   initialState: {
@@ -82,6 +106,19 @@ const feedbackSlice = createSlice({
       .addCase(submitContactMessage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.detail || 'Failed to send message.';
+      })
+      .addCase(submitCallbackRequest.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(submitCallbackRequest.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(submitCallbackRequest.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.detail || 'Failed to submit callback request.';
       });
   },
 });

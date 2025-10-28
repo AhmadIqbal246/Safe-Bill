@@ -736,6 +736,24 @@
     "search_placeholder": "Rechercher des projets approuvés",
     "view_quote": "Voir le devis"
   },
+  "callback": {
+    "title": "Demander un rappel",
+    "open_button": "Demander un rappel",
+    "company_name": "Nom de l'entreprise",
+    "siret": "SIRET",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "role": "Rôle",
+    "select_role": "Sélectionner un rôle",
+    "seller": "Vendeur",
+    "professional_buyer": "Acheteur professionnel",
+    "cancel": "Annuler",
+    "submit": "Envoyer",
+    "submitting": "Envoi...",
+    "error": "Échec de l'envoi. Veuillez réessayer."
+  },
   "documents_section": {
     "title": "Documents (Devis)",
     "search_placeholder": "Rechercher par projet ou référence..."

@@ -57,6 +57,7 @@ from payments.models import Payment
 from django.db.models import Sum
 from datetime import datetime
 from .services.ContactMessageService import HubSpotContactMessageClient
+from .services.LeadsService import HubSpotLeadsClient
 
 
 logger = logging.getLogger(__name__)
@@ -1032,6 +1033,70 @@ def create_contact_message_task(self, name: str = None, initiator_email: str = N
             except Exception as e:
                 logger.error(f"HubSpot: Failed to mark contact message queue item as failed: {e}")
         
+        raise
+
+
+# =============================================================================
+# CallbackRequest -> Lead Object
+# =============================================================================
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
+def create_lead_from_callback_task(self, callback_request_id: int = None) -> str:
+    """Create a HubSpot Lead custom object from a CallbackRequest.
+
+    We intentionally do not persist hubspot_id per product decision.
+    """
+    from feedback.models import CallbackRequest
+    logger.info("HubSpot: create_lead_from_callback_task start for callback_request_id=%s", callback_request_id)
+
+    if not callback_request_id:
+        logger.warning("HubSpot: create_lead_from_callback_task abort - missing callback_request_id")
+        return ""
+
+    try:
+        cb = CallbackRequest.objects.filter(id=callback_request_id).first()
+        if not cb:
+            logger.warning("HubSpot: CallbackRequest %s not found", callback_request_id)
+            return ""
+
+        client = HubSpotLeadsClient()
+        properties = {
+            "company_name": cb.company_name,
+            "siret_number": cb.siret_number or "",
+            "firstname": cb.first_name,
+            "lastname": cb.last_name,
+            "email": cb.email,
+            "phone": cb.phone,
+            "user_role": (cb.role or "").replace('-', '_'),
+        }
+
+        # HubSpot requires a primary association to Contact or Company for Leads
+        contact_id: str = ""
+        try:
+            # Try to find or create a Contact by email
+            contacts_client = HubSpotClient()
+            existing = contacts_client.search_contact_by_email(cb.email)
+            if existing:
+                contact_id = existing.get("id", "")
+            else:
+                created_contact = contacts_client.create_contact({
+                    "email": cb.email,
+                    "firstname": cb.first_name or "",
+                    "lastname": cb.last_name or "",
+                    "phone": cb.phone or "",
+                })
+                contact_id = created_contact.get("id", "")
+        except Exception:
+            # Do not fail lead creation if contact creation fails; proceed without association
+            logger.warning("HubSpot: unable to ensure contact for callback_request_id=%s", callback_request_id)
+            contact_id = ""
+
+        created = client.create(properties, contact_id=contact_id or None)
+        lead_id = created.get("id", "")
+        logger.info("HubSpot: created Lead id=%s for callback_request_id=%s", lead_id, callback_request_id)
+        return lead_id
+    except Exception as exc:
+        logger.exception("HubSpot: create_lead_from_callback_task failed for callback_request_id %s: %s", callback_request_id, exc)
         raise
 
 

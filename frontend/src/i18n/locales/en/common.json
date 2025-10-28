@@ -741,6 +741,24 @@
     "view_quote": "View Quote",
     "none": "You have no approved projects yet."
   },
+  "callback": {
+    "title": "Request a Callback",
+    "open_button": "Request Callback",
+    "company_name": "Company name",
+    "siret": "SIRET",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "email": "Email address",
+    "phone": "Phone number",
+    "role": "Role",
+    "select_role": "Select role",
+    "seller": "Seller",
+    "professional_buyer": "Professional Buyer",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "error": "Failed to submit. Please try again."
+  },
   "documents_section": {
     "title": "Documents (Quotes)",
     "search_placeholder": "Search by project or reference..."

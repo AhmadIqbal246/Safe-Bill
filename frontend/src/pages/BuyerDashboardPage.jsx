@@ -15,11 +15,13 @@ import CompletedProjectsSection from '../components/BuyerDashboard/CompletedProj
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Chat from '../components/mutualComponents/Chat/Chat';
 import { useTranslation } from 'react-i18next';
+import CallbackForm from '../components/mutualComponents/CallbackForm';
 
 export default function BuyerDashboardPage() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [callbackOpen, setCallbackOpen] = React.useState(false);
   const { clientProjects, clientProjectsLoading, clientProjectsError } = useSelector(
     (state) => state.project
   );
@@ -222,6 +224,14 @@ export default function BuyerDashboardPage() {
             >
               {t('buyer_dashboard.view_all_disputes')}
             </button>
+            {user?.role === 'professional-buyer' && (
+              <button
+                onClick={() => setCallbackOpen(true)}
+                className="px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
+              >
+                {t('callback.open_button', 'Request Callback')}
+              </button>
+            )}
           </div>
         </div>
         
@@ -268,6 +278,7 @@ export default function BuyerDashboardPage() {
       
       {/* Chat Component */}
       <Chat />
+      <CallbackForm open={callbackOpen} onClose={() => setCallbackOpen(false)} defaultRole={'professional-buyer'} />
     </>
   );
 }

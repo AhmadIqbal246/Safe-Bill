@@ -1,6 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Feedback, QuoteRequest, ContactMessage
+from .models import Feedback, QuoteRequest, ContactMessage, CallbackRequest
 from hubspot.tasks import (
     create_feedback_task,
     create_contact_message_task,
@@ -8,7 +8,8 @@ from hubspot.tasks import (
 from .serializers import (
     FeedbackSerializer,
     QuoteRequestSerializer,
-    ContactMessageSerializer
+    ContactMessageSerializer,
+    CallbackRequestSerializer,
 )
 from .tasks import (
     send_feedback_admin_notification_task,
@@ -16,6 +17,8 @@ from .tasks import (
     send_quote_request_email_task,
     send_quote_request_confirmation_email_task,
 )
+from hubspot.sync_utils import safe_hubspot_sync
+from hubspot.tasks import create_lead_from_callback_task
 
 
 class FeedbackCreateAPIView(generics.CreateAPIView):
@@ -66,6 +69,54 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class CallbackRequestCreateAPIView(generics.CreateAPIView):
+    queryset = CallbackRequest.objects.all()
+    serializer_class = CallbackRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    'detail': 'Validation failed',
+                    'errors': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Persist request
+            instance = serializer.save()
+
+            # Queue HubSpot Lead creation safely (no blocking)
+            try:
+                safe_hubspot_sync(
+                    create_lead_from_callback_task,
+                    "Create Lead from Callback",
+                    instance.id,
+                    use_transaction_commit=True,
+                )
+            except Exception:
+                # Non-blocking: we don't fail the API if queueing fails
+                pass
+
+            return Response(
+                {
+                    'detail': 'Callback request submitted successfully',
+                    'id': instance.id
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception:
+            return Response(
+                {
+                    'detail': 'Failed to submit callback request. Please try again.'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ContactMessageCreateAPIView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()

@@ -19,6 +19,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
+import CallbackForm from '../mutualComponents/CallbackForm';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const { revenueComparison, revenueComparisonLoading, revenueComparisonError } = useSelector(state => state.payment);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
+  const [callbackOpen, setCallbackOpen] = useState(false);
 
   // Initialize WebSocket connection for real-time notifications
   const { markNotificationRead: wsMarkNotificationRead, markAllNotificationsRead: wsMarkAllNotificationsRead } = useNotificationWebSocket();
@@ -385,8 +387,14 @@ export default function Dashboard() {
   }
 
   return (
+    <>
     <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">{t('dashboard.title')}</h1>
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{t('dashboard.title')}</h1>
+        <button onClick={() => setCallbackOpen(true)} className="px-3 sm:px-4 py-2 bg-[#01257D] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#2346a0] transition-colors cursor-pointer">
+          {t('callback.open_button', 'Request Callback')}
+        </button>
+      </div>
       {/* Responsive layout: mobile-first column, md+: row */}
       <div className="flex flex-col md:flex-row md:items-start gap-4 sm:gap-8">
         {/* Main content column for mobile, left for desktop */}
@@ -585,5 +593,7 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    <CallbackForm open={callbackOpen} onClose={() => setCallbackOpen(false)} defaultRole={'seller'} />
+    </>
   );
 }
