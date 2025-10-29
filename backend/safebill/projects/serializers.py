@@ -459,6 +459,9 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     seller_email = serializers.EmailField(source="user.email", read_only=True)
     buyer_username = serializers.CharField(source="client.username", read_only=True)
     buyer_email = serializers.EmailField(source="client.email", read_only=True)
+    payment_id = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
+    payment_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
@@ -480,6 +483,9 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "seller_email",
             "buyer_username",
             "buyer_email",
+            "payment_id",
+            "payment_status",
+            "payment_date",
         ]
 
     def get_reference_number(self, obj):
@@ -498,3 +504,49 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             .first()
         )
         return latest.completion_date.strftime("%Y-%m-%d %H:%M:%S") if latest else None
+
+    def get_payment_id(self, obj):
+        """Get the Stripe payment ID for this project"""
+        try:
+            from payments.models import Payment
+            payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
+            return payment.stripe_payment_id if payment else None
+        except Exception:
+            return None
+
+    def get_payment_status(self, obj):
+        """Get the payment status for this project"""
+        try:
+            from payments.models import Payment
+            payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
+            
+            # If project is completed, payment should be paid
+            if obj.status == "completed" and payment:
+                # Ensure payment status is consistent with project completion
+                if payment.status == "pending":
+                    # Log this inconsistency for debugging
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Project {obj.id} is completed but payment {payment.id} is still pending. This should not happen.")
+                    # Return "paid" since completed projects imply successful payment
+                    return "paid"
+                return payment.status
+            elif obj.status == "completed" and not payment:
+                # Project is completed but no payment record - this is an error
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Project {obj.id} is completed but has no payment record. This is a data inconsistency.")
+                return "paid"  # Assume paid since project is completed
+            
+            return payment.status if payment else None
+        except Exception:
+            return None
+
+    def get_payment_date(self, obj):
+        """Get the payment date for this project"""
+        try:
+            from payments.models import Payment
+            payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
+            return payment.created_at.strftime("%Y-%m-%d %H:%M:%S") if payment else None
+        except Exception:
+            return None

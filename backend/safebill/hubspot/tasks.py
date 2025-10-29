@@ -23,7 +23,7 @@ Total: 11 clean, organized tasks (reduced from 15+ messy tasks)
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from celery import shared_task
 from celery import chain
@@ -55,9 +55,11 @@ from .services.RevenueService import HubSpotRevenueClient
 from adminpanelApp.models import PlatformRevenue
 from payments.models import Payment
 from django.db.models import Sum
+from django.db import models
 from datetime import datetime
 from .services.ContactMessageService import HubSpotContactMessageClient
 from .services.LeadsService import HubSpotLeadsClient
+from .services.payment_service import PaymentService
 
 
 logger = logging.getLogger(__name__)
@@ -1301,4 +1303,105 @@ def retry_failed_sync_items(self):
         
     except Exception as e:
         logger.error(f"Retry processing failed: {e}", exc_info=True)
+        raise
+
+
+# =============================================================================
+# PAYMENT SYNC TASKS (HUBSPOT PAYMENTS INTEGRATION)
+# =============================================================================
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
+def sync_payment_to_hubspot(self, payment_id: int = None, payment_ids: list = None, hours_back: int = None, project_id: int = None, create_from_project: bool = False) -> Dict[str, Any]:
+    """
+    Unified payment sync task that handles individual, bulk, and recent payment synchronization.
+    
+    This single task can handle:
+    - Individual payment sync (payment_id)
+    - Bulk payment sync (payment_ids list)
+    - Recent payments sync (hours_back)
+    
+    Args:
+        payment_id: Single payment ID to sync
+        payment_ids: List of payment IDs to sync
+        hours_back: Number of hours to look back for recent payments
+        
+    Returns:
+        Dictionary with sync results
+    """
+    logger.info("HubSpot: sync_payment_to_hubspot start - payment_id=%s, payment_ids=%s, hours_back=%s, project_id=%s, create_from_project=%s", 
+                payment_id, payment_ids, hours_back, project_id, create_from_project)
+    
+    try:
+        service = PaymentService()
+        
+        # Project-based creation mode (on project creation)
+        if project_id and create_from_project:
+            logger.info("HubSpot: Project-based payment creation mode for project_id=%s", project_id)
+            project = Project.objects.filter(id=project_id).select_related('user', 'client').first()
+            if not project:
+                logger.warning("HubSpot: Project %s not found for payment creation", project_id)
+                return {"success": [], "failed": [project_id], "total": 1}
+            hubspot_id = service.create_project_payment_record(project)
+            if hubspot_id:
+                logger.info("HubSpot: Created payment record %s for project %s", hubspot_id, project_id)
+                return {"success": [project_id], "failed": [], "total": 1, "hubspot_id": hubspot_id}
+            else:
+                logger.error("HubSpot: Failed to create payment record for project %s", project_id)
+                return {"success": [], "failed": [project_id], "total": 1}
+
+        # Determine which sync mode to use (payment-based)
+        if payment_id:
+            # Single payment sync
+            logger.info("HubSpot: Single payment sync mode for payment_id=%s", payment_id)
+            payment = Payment.objects.filter(id=payment_id).select_related('project', 'project__user', 'project__client').first()
+            if not payment:
+                logger.warning("HubSpot: Payment %s not found", payment_id)
+                return {"success": [], "failed": [payment_id], "total": 1}
+            
+            # Update existing HubSpot record for this project with real payment data
+            result = service.update_payment_record_for_project(payment)
+            if result:
+                logger.info("HubSpot: Single payment sync completed for payment_id=%s", payment_id)
+                return {"success": [payment_id], "failed": [], "total": 1}
+            else:
+                logger.error("HubSpot: Single payment sync failed for payment_id=%s", payment_id)
+                return {"success": [], "failed": [payment_id], "total": 1}
+                
+        elif payment_ids:
+            # Bulk payment sync
+            logger.info("HubSpot: Bulk payment sync mode with %s payments", len(payment_ids))
+            results = service.bulk_sync_payments(payment_ids)
+            logger.info("HubSpot: Bulk payment sync completed: %s success, %s failed", 
+                       len(results["success"]), len(results["failed"]))
+            return results
+            
+        elif hours_back:
+            # Recent payments sync
+            logger.info("HubSpot: Recent payments sync mode (last %s hours)", hours_back)
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            cutoff_time = timezone.now() - timedelta(hours=hours_back)
+            recent_payments = Payment.objects.filter(
+                models.Q(created_at__gte=cutoff_time) | models.Q(updated_at__gte=cutoff_time)
+            ).values_list('id', flat=True)
+            
+            payment_ids_list = list(recent_payments)
+            
+            if not payment_ids_list:
+                logger.info("HubSpot: No recent payments found in the last %s hours", hours_back)
+                return {"success": [], "failed": [], "total": 0}
+            
+            logger.info("HubSpot: Found %s recent payments to sync", len(payment_ids_list))
+            results = service.bulk_sync_payments(payment_ids_list)
+            logger.info("HubSpot: Recent payments sync completed: %s success, %s failed", 
+                       len(results["success"]), len(results["failed"]))
+            return results
+            
+        else:
+            logger.error("HubSpot: No valid sync parameters provided")
+            return {"success": [], "failed": [], "total": 0, "error": "No valid sync parameters"}
+            
+    except Exception as exc:
+        logger.exception("HubSpot: sync_payment_to_hubspot failed: %s", exc)
         raise

@@ -286,6 +286,19 @@ class ProjectCompletionAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Verify payment is completed before marking project as completed
+        from payments.models import Payment
+        payment = Payment.objects.filter(project=project).order_by("-created_at").first()
+        if payment and payment.status != "paid":
+            return Response(
+                {
+                    "detail": "Project cannot be completed. Payment is not yet completed.",
+                    "error_type": "payment_not_completed",
+                    "payment_status": payment.status,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Update status to completed
         project.status = "completed"
         project.save()
@@ -804,8 +817,16 @@ class MilestoneApprovalAPIView(APIView):
                     .exists()
                 )
                 if not has_unapproved and project.status != "completed":
-                    project.status = "completed"
-                    project.save(update_fields=["status"])
+                    # Verify payment is completed before auto-completing project
+                    from payments.models import Payment
+                    payment = Payment.objects.filter(project=project).order_by("-created_at").first()
+                    if payment and payment.status == "paid":
+                        project.status = "completed"
+                        project.save(update_fields=["status"])
+                    elif payment and payment.status != "paid":
+                        logger.warning(f"Project {project.id} has all milestones approved but payment is not completed (status: {payment.status}). Not auto-completing project.")
+                    else:
+                        logger.warning(f"Project {project.id} has all milestones approved but no payment record found. Not auto-completing project.")
                     # Best-effort notifications; do not break flow on failure
                     try:
                         if project.user:
@@ -941,7 +962,7 @@ def seller_receipts(request):
 
     projects = (
         Project.objects.filter(user=user, status="completed")
-        .prefetch_related("milestones", "installments", "quote")
+        .prefetch_related("milestones", "installments", "quote", "payment_set")
         .order_by("-created_at")
     )
     serializer = SellerReceiptProjectSerializer(projects, many=True)

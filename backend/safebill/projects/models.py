@@ -68,6 +68,12 @@ class Project(models.Model):
         default=10.0,
         help_text="Platform fee percentage applied to this project (e.g. 10.0 for 10%)",
     )
+    hubspot_payment_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="HubSpot payment record ID for this project",
+    )
 
     class Meta:
         # Added: prevent self-projects where seller and client are the same user

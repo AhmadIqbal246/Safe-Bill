@@ -295,6 +295,18 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
             use_transaction_commit=True
         )
         logger.info(f"Project {project_id} sync result: {result}")
+        
+        # Enqueue HubSpot payment record creation when project is created
+        if created:
+            try:
+                from .tasks import sync_payment_to_hubspot
+                # Use task to create Payments object record (status: pending)
+                sync_payment_to_hubspot.delay(project_id=project_id, create_from_project=True)
+                logger.info(f"Queued HubSpot payment creation for project {project_id}")
+            except Exception as e:
+                logger.error(f"Failed to queue HubSpot payment creation for project {project_id}: {e}", exc_info=True)
+                # Never block project creation on HubSpot queuing failures
+        
     except Exception as e:
         # Never let signal failures break the main application
         logger.error(f"Project {project_id} signal sync failed: {e}", exc_info=True)

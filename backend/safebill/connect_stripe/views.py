@@ -643,6 +643,13 @@ def stripe_identity_webhook(request):
         payment.webhook_response = event
         payment.save()
 
+        # Update HubSpot Payments record via task (keeps Payments object in sync)
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
+
         # Enqueue HubSpot Revenue monthly sync for payment metrics only
         from hubspot.sync_utils import sync_revenue_to_hubspot
         from django.db import transaction
@@ -820,6 +827,13 @@ def stripe_identity_webhook(request):
         payment.status = "pending"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
         project = Project.objects.get(id=project_id)
         project.status = "pending"
         project.save()
@@ -849,6 +863,13 @@ def stripe_identity_webhook(request):
         payment.status = "failed"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
         project = Project.objects.get(id=project_id)
         project.status = "pending"
         project.save()
