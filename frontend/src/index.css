@@ -118,14 +118,14 @@
 }
 
 /* HubSpot Chat Widget Positioning */
-/* Default: Bottom-left (to avoid conflict with custom chat button at bottom-right) */
+/* Position: Top-Right */
 #hubspot-messages-iframe-container,
 iframe[data-hs-messages-widget] {
   position: fixed !important;
-  bottom: 20px !important;
-  left: 20px !important;
-  right: auto !important;
-  top: auto !important;
+  top: 20px !important;
+  right: 20px !important;
+  bottom: auto !important;
+  left: auto !important;
   z-index: 40 !important;
 }
 
@@ -142,18 +142,18 @@ iframe[data-hs-messages-widget] {
   z-index: 40 !important;
 } */
 
-/* Option 2: Bottom-Left (currently active above) */
-
-/* Option 3: Top-Right */
+/* Option 2: Bottom-Left */
 /* #hubspot-messages-iframe-container,
 iframe[data-hs-messages-widget] {
   position: fixed !important;
-  top: 20px !important;
-  right: 20px !important;
-  bottom: auto !important;
-  left: auto !important;
+  bottom: 20px !important;
+  left: 20px !important;
+  right: auto !important;
+  top: auto !important;
   z-index: 40 !important;
 } */
+
+/* Option 3: Top-Right (currently active above) */
 
 /* Option 4: Top-Left */
 /* #hubspot-messages-iframe-container,
