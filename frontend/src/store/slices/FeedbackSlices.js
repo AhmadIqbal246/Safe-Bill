@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import i18n from '../../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -49,6 +50,9 @@ export const submitCallbackRequest = createAsyncThunk(
       const token = state?.auth?.access;
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
+      // Send user language to backend for localized email handling
+      const lang = (i18n?.language || navigator?.language || 'fr');
+      headers['X-User-Language'] = lang;
 
       const response = await axios.post(
         `${BASE_URL}api/feedback/callback-request/`,

@@ -1,0 +1,23 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ site_name }} - Demande de rappel reçue{% endblock %}
+
+{% block header_subtitle %}Nous avons bien reçu votre demande de rappel{% endblock %}
+
+{% block content %}
+<h2>Merci pour votre demande, {{ first_name }} !</h2>
+
+<p>Nous avons bien reçu votre demande de rappel et notre équipe vous contactera rapidement.</p>
+<p>Pour une aide immédiate ou pour partager plus de détails, vous pouvez nous joindre à tout moment.</p>
+<p>Merci pour votre intérêt pour {{ site_name }}. Nous avons hâte d’échanger avec vous.</p>
+
+<p>Si vous avez d'autres questions, vous pouvez nous contacter via le lien ci-dessous.</p>
+
+<div style="text-align: center; margin: 24px 0; padding: 10px;">
+    <a href="{{ contact_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Nous contacter</a>
+</div>
+
+<p>Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer ce message.</p>
+{% endblock %}
+
+

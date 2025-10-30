@@ -746,7 +746,9 @@
     "cancel": "Annuler",
     "submit": "Envoyer",
     "submitting": "Envoi...",
-    "error": "Échec de l'envoi. Veuillez réessayer."
+    "error": "Échec de l'envoi. Veuillez réessayer.",
+    "success_toast": "Demande de rappel envoyée avec succès !",
+    "error_toast": "Échec de l'envoi de la demande de rappel."
   },
   "documents_section": {
     "title": "Documents (Devis)",

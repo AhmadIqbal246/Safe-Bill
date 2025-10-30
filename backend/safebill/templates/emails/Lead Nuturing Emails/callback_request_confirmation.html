@@ -1,0 +1,26 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ site_name }} - Callback Request Received{% endblock %}
+
+{% block header_subtitle %}We received your callback request{% endblock %}
+
+{% block content %}
+<h2>Thanks for your request, {{ first_name }}!</h2>
+
+<p>We’ve received your callback request and our team will get back to you shortly.</p>
+<p>If you need immediate assistance or want to share more details, you can reach us anytime.</p>
+<p>We appreciate your interest in {{ site_name }} and look forward to speaking with you.</p>
+
+<p>If you have further questions you can contact us through the given link.</p>
+
+<div style="text-align: center; margin: 24px 0;">
+    <a href="{{ contact_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Contact us</a>
+    
+    
+</div>
+
+<p>If this wasn’t you, you can ignore this message.</p>
+{% endblock %}
+
+
+

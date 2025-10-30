@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { submitCallbackRequest, resetFeedbackState } from '../../store/slices/FeedbackSlices';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,20 @@ export default function CallbackForm({ open, onClose, defaultRole }) {
       if (success || error) dispatch(resetFeedbackState());
     }
   }, [open]);
+
+  // Show localized toast notifications on success/error
+  React.useEffect(() => {
+    if (success) {
+      toast.success(t('callback.success_toast', 'Callback request submitted successfully!'));
+    }
+  }, [success, t]);
+
+  React.useEffect(() => {
+    if (error) {
+      const message = typeof error === 'string' ? error : t('callback.error_toast', 'Failed to submit callback request.');
+      toast.error(message);
+    }
+  }, [error, t]);
 
   if (!open) return null;
 

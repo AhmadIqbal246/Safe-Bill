@@ -106,3 +106,26 @@ def send_quote_request_confirmation_email_task(
     except Exception as exc:
         logger.error(f"Error sending quote request confirmation email: {exc}")
         self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3, queue='emails')
+def send_callback_request_confirmation_email_task(
+    self,
+    user_email,
+    first_name,
+    language="fr",
+):
+    """
+    Send a confirmation email to the user who submitted a callback request.
+    """
+    try:
+        result = EmailService.send_callback_request_confirmation(
+            user_email=user_email,
+            first_name=first_name,
+            language=language,
+        )
+        logger.info(f"Callback request confirmation email sent to {user_email}")
+        return result
+    except Exception as exc:
+        logger.error(f"Error sending callback request confirmation email: {exc}")
+        self.retry(exc=exc, countdown=2 ** self.request.retries)

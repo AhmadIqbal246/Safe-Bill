@@ -16,6 +16,7 @@ from .tasks import (
     send_contact_admin_notification_task,
     send_quote_request_email_task,
     send_quote_request_confirmation_email_task,
+    send_callback_request_confirmation_email_task,
 )
 from hubspot.sync_utils import safe_hubspot_sync
 from hubspot.tasks import create_lead_from_callback_task
@@ -89,6 +90,24 @@ class CallbackRequestCreateAPIView(generics.CreateAPIView):
         try:
             # Persist request
             instance = serializer.save()
+
+            # Determine preferred language from headers (consistent with other views)
+            preferred_lang = (
+                request.headers.get("X-User-Language")
+                or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            )
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+
+            # Send confirmation email asynchronously via Celery
+            try:
+                send_callback_request_confirmation_email_task.delay(
+                    user_email=instance.email,
+                    first_name=instance.first_name,
+                    language=language,
+                )
+            except Exception:
+                # Non-blocking: do not fail the API if email queueing fails
+                pass
 
             # Queue HubSpot Lead creation safely (no blocking)
             try:

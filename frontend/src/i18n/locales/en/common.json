@@ -751,7 +751,9 @@
     "cancel": "Cancel",
     "submit": "Submit",
     "submitting": "Submitting...",
-    "error": "Failed to submit. Please try again."
+    "error": "Failed to submit. Please try again.",
+    "success_toast": "Callback request submitted successfully!",
+    "error_toast": "Failed to submit callback request."
   },
   "documents_section": {
     "title": "Documents (Quotes)",

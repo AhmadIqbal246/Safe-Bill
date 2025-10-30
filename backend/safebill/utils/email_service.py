@@ -516,6 +516,37 @@ class EmailService:
         )
 
     @staticmethod
+    def send_callback_request_confirmation(
+        user_email: str,
+        first_name: str,
+        language: str = 'fr',
+    ) -> bool:
+        """
+        Send confirmation email to a user who submitted a callback request.
+        """
+        contact_url = f"{settings.FRONTEND_URL}contact-us"
+
+        context = {
+            "first_name": first_name,
+            "contact_url": contact_url,
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        # Localize subject
+        with translation.override(language):
+            subject = translation.gettext("We received your callback request")
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="Lead Nuturing Emails/callback_request_confirmation",
+            context=context,
+            language=language,
+        )
+
+    @staticmethod
     def send_project_invitation_email(
         client_email: str,
         project_name: str,
