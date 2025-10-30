@@ -1,0 +1,20 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ site_name }} - Discover what you can do{% endblock %}
+
+{% block header_subtitle %}Simple, secure, and transparent{% endblock %}
+
+{% block content %}
+<h2>Bring your next idea to life on {{ site_name }}.</h2>
+
+<p>Create a project in minutes, protect payments in escrow, et keep everyone aligned with milestones.</p>
+<p>Not sure where to start? Browse professionals and pick the right expert.</p>
+
+<div style="text-align: center; margin: 24px 0;">
+  <a href="{{ login_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Log in</a>
+</div>
+
+<p style="text-align:center;">or <a href="{{ find_professionals_url }}" style="color:#1e3a8a; text-decoration:underline;">Find professionals</a></p>
+{% endblock %}
+
+

@@ -701,3 +701,72 @@ class EmailService:
             context=context,
             language=language,
         )
+# Sending email to that user who is not involvced in any project
+    @staticmethod
+    def send_no_project_nurture_email(
+        user_email: str,
+        first_name: str,
+        step: str,
+        language: str = 'fr',
+    ) -> bool:
+        """Send lead nurturing email to users with no projects (day7/day14/day30)."""
+        # Choose CTA based on common flows
+        # Sellers: project creation; Buyers: find professionals; generic dashboard/home as fallback
+        login_url = f"{settings.FRONTEND_URL}login"
+        find_professionals_url = f"{settings.FRONTEND_URL}find-professionals"
+        dashboard_url = f"{settings.FRONTEND_URL}dashboard"
+
+        context = {
+            "first_name": first_name,
+            "login_url": login_url,
+            "find_professionals_url": find_professionals_url,
+            "dashboard_url": dashboard_url,
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            if step == 'day14':
+                subject = translation.gettext("Explore what you can do with Safe Bill")
+                template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day14"
+            elif step == 'day30':
+                subject = translation.gettext("We’re here to help you get started")
+                template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day30"
+            else:
+                subject = translation.gettext("Get started on Safe Bill today")
+                template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day7"
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name=template,
+            context=context,
+            language=language,
+        )
+
+    @staticmethod
+    def send_reengage_login_email(
+        user_email: str,
+        first_name: str,
+        language: str = 'fr',
+    ) -> bool:
+        """Send a one-time re-login reminder email after inactivity."""
+        context = {
+            "first_name": first_name,
+            "login_url": f"{settings.FRONTEND_URL}login",
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            subject = translation.gettext("We miss you at Safe Bill - log in to continue")
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="Lead Nuturing Emails/Relogin emails/reengage_login_day10",
+            context=context,
+            language=language,
+        )

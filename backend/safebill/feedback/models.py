@@ -61,3 +61,21 @@ class CallbackRequest(models.Model):
 
     def __str__(self):
         return f"CallbackRequest {self.id} - {self.company_name} ({self.email})"
+
+
+class EmailLog(models.Model):
+    """Minimal log to avoid duplicate campaign sends and for auditing."""
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='email_logs')
+    campaign_key = models.CharField(max_length=100, db_index=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=30, default='sent')
+    provider_message_id = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'campaign_key', '-sent_at']),
+        ]
+        unique_together = ('user', 'campaign_key', 'sent_at')
+
+    def __str__(self):
+        return f"EmailLog(user={self.user_id}, campaign={self.campaign_key}, sent_at={self.sent_at})"

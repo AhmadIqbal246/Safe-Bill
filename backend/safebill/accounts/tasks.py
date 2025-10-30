@@ -2,7 +2,12 @@ import logging
 from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from datetime import timedelta
+import os
+from django.db.models import Q
 from utils.email_service import EmailService
+from feedback.models import EmailLog
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -122,4 +127,67 @@ def send_password_reset_email_task(self, user_id, reset_url, language='fr'):
 		logger.error(f"Error sending password reset email: {str(exc)}")
 		
 		# Retry with exponential backoff
+		self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3, queue='emails')
+def send_relogin_reminder_email_task(self, user_id, language='fr'):
+	"""
+	Send the one-time re-login reminder email to a user.
+	"""
+	try:
+		user = User.objects.get(pk=user_id)
+		first_name = user.get_full_name() or user.username or (user.email.split('@')[0] if user.email else '')
+		result = EmailService.send_reengage_login_email(
+			user_email=user.email,
+			first_name=first_name,
+			language=language,
+		)
+		if result:
+			EmailLog.objects.get_or_create(user=user, campaign_key='relogin_day10', defaults={'status': 'sent'})
+		return result
+	except Exception as exc:
+		logger.error(f"Error sending re-login reminder email: {exc}")
+		self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3, queue='emails')
+def orchestrate_relogin_reminder_task(self):
+	"""
+	Periodic orchestrator: finds eligible users (inactive for 10 days) and enqueues a
+	ONE-TIME re-login reminder email.
+	Eligibility:
+	- is_active = True
+	- is_email_verified = True
+	- (last_login <= now - 10 days) OR (last_login is NULL and date_joined <= now - 10 days)
+	- NOT already sent campaign 'relogin_day10'
+	"""
+	try:
+		now = timezone.now()
+		# Test-mode support: use minute threshold when RELOGIN_TEST_MODE=true
+		test_mode = (os.environ.get('RELOGIN_TEST_MODE', 'false').lower() == 'true')
+		if test_mode:
+			minutes = int(os.environ.get('RELOGIN_MINUTES', '10'))
+			threshold = now - timedelta(minutes=minutes)
+		else:
+			threshold = now - timedelta(days=10)
+		users = (
+			User.objects.filter(
+				is_active=True,
+				is_email_verified=True,
+			).filter(
+				Q(last_login__lte=threshold) | (Q(last_login__isnull=True) & Q(date_joined__lte=threshold))
+			).exclude(
+				email_logs__campaign_key='relogin_day10'
+			).values('id', 'first_name', 'username')[:1000]
+		)
+
+		for u in users:
+			language = 'fr'
+			send_relogin_reminder_email_task.delay(u['id'], language)
+
+		logger.info("Relogin reminder orchestrator enqueued emails.")
+		return True
+	except Exception as exc:
+		logger.error(f"Error in relogin orchestrator: {exc}")
 		self.retry(exc=exc, countdown=2 ** self.request.retries)

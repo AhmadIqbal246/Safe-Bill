@@ -260,6 +260,8 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    # Update Django's User.last_login on successful token obtain/refresh
+    "UPDATE_LAST_LOGIN": True,
 }
 
 # Note: CHANNEL_LAYERS is already defined above with Redis configuration
@@ -382,6 +384,22 @@ CELERY_BEAT_SCHEDULE = {
         'options': {
             'queue': 'emails',
             'priority': 1,
+        }
+    },
+    'no-project-nurture-orchestrator': {
+        'task': 'feedback.tasks.orchestrate_no_project_nurture_task',
+        'schedule': float(os.environ.get('NO_PROJECT_NURTURE_INTERVAL', 7200.0)),
+        'options': {
+            'queue': 'emails',
+            'priority': 4,
+        }
+    },
+    'relogin-reminder-orchestrator': {
+        'task': 'accounts.tasks.orchestrate_relogin_reminder_task',
+        'schedule': float(os.environ.get('RELOGIN_ORCHESTRATOR_INTERVAL', 7200.0)),
+        'options': {
+            'queue': 'emails',
+            'priority': 4,
         }
     },
 }

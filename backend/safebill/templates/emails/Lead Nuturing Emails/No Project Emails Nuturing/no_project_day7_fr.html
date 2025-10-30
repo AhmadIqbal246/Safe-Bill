@@ -1,0 +1,20 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ site_name }} - Commencez dès aujourd’hui{% endblock %}
+
+{% block header_subtitle %}Gérez vos projets en toute confiance{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ first_name }}, prêt à créer votre premier projet ?</h2>
+
+<p>Ça fait une semaine que vous avez rejoint {{ site_name }}. Créez votre premier projet et gérez-le en toute sécurité avec des paiements par jalons.</p>
+<p>Vous pouvez aussi parcourir les services et trouver des professionnels vérifiés.</p>
+
+<div style="text-align: center; margin: 24px 0;">
+  <a href="{{ login_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Se connecter</a>
+</div>
+
+<p style="text-align:center;">ou <a href="{{ find_professionals_url }}" style="color:#1e3a8a; text-decoration:underline;">Trouver des professionnels</a></p>
+{% endblock %}
+
+
