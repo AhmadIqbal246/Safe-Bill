@@ -8,6 +8,7 @@ import { Provider } from 'react-redux'
 import store from './store/store.js'
 import './i18n/index.js'
 import './utils/axiosSetup.js'
+import './utils/fixHubspotWidgetPosition.js'
 
 createRoot(document.getElementById('root')).render(
     <Provider store={store}>

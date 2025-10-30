@@ -119,13 +119,17 @@
 
 /* HubSpot widget offset to avoid overlapping with in-app chat button */
 #hubspot-messages-iframe-container,
+[id^="hubspot-messages-iframe-container"],
 iframe[data-hs-messages-widget] {
-  bottom: 96px !important; /* raise ~96px from bottom; adjust if needed */
+  bottom: 90px !important; /* sit above 64px FAB + spacing */
+  right: 24px !important;  /* align with FAB right-6 */
+  z-index: 999999 !important; /* ensure visibility */
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   #hubspot-messages-iframe-container,
+  [id^="hubspot-messages-iframe-container"],
   iframe[data-hs-messages-widget] {
-    bottom: 112px !important; /* give a bit more room on mobile */
+    bottom: 160px !important; /* extra room on smaller screens */
   }
 }
