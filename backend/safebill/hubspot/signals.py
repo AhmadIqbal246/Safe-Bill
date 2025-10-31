@@ -229,6 +229,23 @@ def auto_sync_company_to_hubspot(sender, instance, created, **kwargs):
         logger.error(f"Company {business_id} signal sync failed: {e}", exc_info=True)
 
 
+# Capture previous project state to detect client assignment changes
+@receiver(pre_save, sender='projects.Project')
+def capture_project_changes(sender, instance, **kwargs):
+    """Capture project state before save to detect client assignment changes"""
+    if instance.pk:  # Only for existing projects
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            instance._old_client_id = old_instance.client_id if old_instance.client else None
+            instance._old_user_id = old_instance.user_id if old_instance.user else None
+        except sender.DoesNotExist:
+            instance._old_client_id = None
+            instance._old_user_id = None
+    else:
+        instance._old_client_id = None
+        instance._old_user_id = None
+
+
 @receiver(post_save, sender='projects.Project')
 @safe_signal_handler('Project Sync', PROJECT_SIGNALS_ENABLED)
 def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
@@ -306,6 +323,39 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
             except Exception as e:
                 logger.error(f"Failed to queue HubSpot payment creation for project {project_id}: {e}", exc_info=True)
                 # Never block project creation on HubSpot queuing failures
+        
+        # Sync contacts for users involved in the project to update total_projects_count
+        # Only sync when project count actually changes: creation or client assignment changes
+        try:
+            old_client_id = getattr(instance, '_old_client_id', None)
+            current_client_id = instance.client_id if instance.client else None
+            client_changed = (old_client_id != current_client_id)
+            
+            # Sync project owner (seller) when:
+            # 1. Project is newly created (owner gets a new project)
+            # 2. Client assignment changes don't affect owner's count, so we skip for updates unless it's a new project
+            if created and hasattr(instance, 'user') and instance.user:
+                user_id = getattr(instance.user, 'id', None)
+                if user_id:
+                    safe_contact_sync(user_id, "project_created", use_transaction_commit=True)
+                    logger.info(f"Queued contact sync for project owner (user_id={user_id}) after project {project_id} creation")
+            
+            # Sync project client (buyer) when:
+            # 1. Project is newly created AND client is assigned (unlikely but possible)
+            # 2. Client assignment changes (client assigned, reassigned, or removed)
+            if (created or client_changed):
+                # Sync new/current client if assigned
+                if current_client_id:
+                    safe_contact_sync(current_client_id, "project_client_assigned", use_transaction_commit=True)
+                    logger.info(f"Queued contact sync for project client (user_id={current_client_id}) after project {project_id} client assignment")
+                
+                # Sync old client if client was removed or reassigned (count decreased for old client)
+                if old_client_id and old_client_id != current_client_id:
+                    safe_contact_sync(old_client_id, "project_client_removed", use_transaction_commit=True)
+                    logger.info(f"Queued contact sync for previous project client (user_id={old_client_id}) after project {project_id} client removal/reassignment")
+        except Exception as e:
+            # Never block project sync on contact sync failures
+            logger.error(f"Failed to sync contacts after project {project_id} update: {e}", exc_info=True)
         
     except Exception as e:
         # Never let signal failures break the main application
