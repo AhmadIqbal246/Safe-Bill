@@ -1,0 +1,38 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ site_name }} - Votre histoire de succès commence ici{% endblock %}
+
+{% block header_subtitle %}Gagnez la confiance, sécurisez les paiements, grandissez sereinement{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ first_name }}, devenez une success story sur {{ site_name }}.</h2>
+
+<p>Des milliers d’entrepreneurs utilisent {{ site_name }} pour gagner des projets, sécuriser les paiements en escrow et grandir en toute confiance. Voici ce qui fait la différence :</p>
+
+<div class="highlight">
+  <ul style="margin:0; padding-left:18px;">
+    <li><strong>Paiements sécurisés :</strong> les fonds sont protégés en escrow et libérés à la validation des jalons.</li>
+    <li><strong>Jalons clairs :</strong> alignez les attentes et faites avancer le projet sans friction.</li>
+    <li><strong>Confiance accélérée :</strong> un processus professionnel qui rassure vos clients dès le premier jour.</li>
+  </ul>
+  
+</div>
+
+<h3 style="color:#1e3a8a; margin-top:24px;">3 étapes pour votre prochain succès</h3>
+<ol style="margin:0; padding-left:18px; color:#4b5563;">
+  <li>Connectez‑vous à votre compte.</li>
+  <li>Créez un projet clair avec des jalons et des échéances.</li>
+  <li>Invitez votre client et gardez tout sous contrôle au même endroit.</li>
+</ol>
+
+<p style="margin-top:16px;">Que vous démarriez ou que vous passiez à l’échelle, {{ site_name }} vous aide à livrer sereinement et à être payé à temps.</p>
+
+<div style="text-align: center; margin: 24px 0;">
+  <a href="{{ login_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Se connecter</a>
+  
+</div>
+
+<p style="text-align:center;">Vous préférez explorer ? <a href="{{ dashboard_url }}" style="color:#1e3a8a; text-decoration:underline;">Allez sur votre tableau de bord</a> ou <a href="{{ support_email }}" style="color:#1e3a8a; text-decoration:underline;">contactez le support</a>.</p>
+{% endblock %}
+
+

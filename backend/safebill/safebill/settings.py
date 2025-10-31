@@ -402,6 +402,14 @@ CELERY_BEAT_SCHEDULE = {
             'priority': 4,
         }
     },
+    'success-story-orchestrator': {
+        'task': 'accounts.tasks.orchestrate_success_story_emails_task',
+        'schedule': float(os.environ.get('SUCCESS_STORY_ORCHESTRATOR_INTERVAL', 7200.0)),
+        'options': {
+            'queue': 'emails',
+            'priority': 4,
+        }
+    },
 }
 
 # Celery Beat max loop interval

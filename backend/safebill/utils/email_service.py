@@ -770,3 +770,29 @@ class EmailService:
             context=context,
             language=language,
         )
+
+    @staticmethod
+    def send_success_story_email(
+        user_email: str,
+        first_name: str,
+        language: str = 'fr',
+    ) -> bool:
+        """Send the 20-day success story motivation email (localized)."""
+        context = {
+            "first_name": first_name,
+            "login_url": f"{settings.FRONTEND_URL}login",
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            subject = translation.gettext("How others succeeded on Safe Bill — start your story")
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="Lead Nuturing Emails/Success Story Emails/success_story_day20",
+            context=context,
+            language=language,
+        )

@@ -164,13 +164,9 @@ def orchestrate_relogin_reminder_task(self):
 	"""
 	try:
 		now = timezone.now()
-		# Test-mode support: use minute threshold when RELOGIN_TEST_MODE=true
-		test_mode = (os.environ.get('RELOGIN_TEST_MODE', 'false').lower() == 'true')
-		if test_mode:
-			minutes = int(os.environ.get('RELOGIN_MINUTES', '10'))
-			threshold = now - timedelta(minutes=minutes)
-		else:
-			threshold = now - timedelta(days=10)
+		# Inactivity window controlled by env, defaults to 10 days
+		inactivity_days = int(os.environ.get('RELOGIN_INACTIVITY_DAYS', '10'))
+		threshold = now - timedelta(days=inactivity_days)
 		users = (
 			User.objects.filter(
 				is_active=True,
@@ -190,4 +186,46 @@ def orchestrate_relogin_reminder_task(self):
 		return True
 	except Exception as exc:
 		logger.error(f"Error in relogin orchestrator: {exc}")
+		self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3, queue='emails')
+def send_success_story_email_task(self, user_id, language='fr'):
+	"""Send the success story email (one-time)."""
+	try:
+		user = User.objects.get(pk=user_id)
+		first_name = user.get_full_name() or user.username or (user.email.split('@')[0] if user.email else '')
+		result = EmailService.send_success_story_email(
+			user_email=user.email,
+			first_name=first_name,
+			language=language,
+		)
+		if result:
+			EmailLog.objects.get_or_create(user=user, campaign_key='success_story_day20', defaults={'status': 'sent'})
+		return result
+	except Exception as exc:
+		logger.error(f"Error sending success story email: {exc}")
+		self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3, queue='emails')
+def orchestrate_success_story_emails_task(self):
+	"""Select users by signup age and enqueue the success story email once."""
+	try:
+		now = timezone.now()
+		delay_days = int(os.environ.get('SUCCESS_STORY_DELAY_DAYS', '20'))
+		threshold = now - timedelta(days=delay_days)
+		users = (
+			User.objects.filter(is_active=True, is_email_verified=True, date_joined__lte=threshold)
+			.exclude(email_logs__campaign_key='success_story_day20')
+			.values('id')[:1000]
+		)
+		for u in users:
+			user_obj = User.objects.filter(id=u['id']).only('preferred_language').first()
+			language = getattr(user_obj, 'preferred_language', 'fr') or 'fr'
+			send_success_story_email_task.delay(u['id'], language)
+		logger.info("Success story orchestrator enqueued emails.")
+		return True
+	except Exception as exc:
+		logger.error(f"Error in success story orchestrator: {exc}")
 		self.retry(exc=exc, countdown=2 ** self.request.retries)

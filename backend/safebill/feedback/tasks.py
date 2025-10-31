@@ -175,18 +175,16 @@ def orchestrate_no_project_nurture_task(self):
             .filter(is_buyer=False, is_seller=False)
         )
 
-        # Test mode: allow minute-based thresholds via env for safe, reversible testing
-        test_mode = (os.environ.get('NO_PROJECT_NURTURE_TEST_MODE', 'false').lower() == 'true')
-        minutes_overrides = {
-            'day7': int(os.environ.get('NO_PROJECT_NURTURE_MINUTES_DAY7', '4')),
-            'day14': int(os.environ.get('NO_PROJECT_NURTURE_MINUTES_DAY14', '7')),
-            'day30': int(os.environ.get('NO_PROJECT_NURTURE_MINUTES_DAY30', '10')),
+        # Allow day thresholds to be controlled via env in production mode
+        days_overrides = {
+            'day7': int(os.environ.get('NO_PROJECT_NURTURE_DAYS_DAY7', '7')),
+            'day14': int(os.environ.get('NO_PROJECT_NURTURE_DAYS_DAY14', '14')),
+            'day30': int(os.environ.get('NO_PROJECT_NURTURE_DAYS_DAY30', '30')),
         }
 
         def compute_threshold(step: str, min_days: int):
-            if test_mode:
-                return now - timedelta(minutes=minutes_overrides.get(step, 5))
-            return now - timedelta(days=min_days)
+            # Use env-controlled day thresholds (fallback to provided defaults)
+            return now - timedelta(days=days_overrides.get(step, min_days))
 
         def enqueue_for(step: str, min_days: int):
             threshold = compute_threshold(step, min_days)
