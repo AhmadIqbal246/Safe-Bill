@@ -272,16 +272,24 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # SMTP: smtp.hostinger.com
 # Port: 465 (SSL) or 587 (TLS)
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.hostinger.com")
-EMAIL_PORT = int(env("EMAIL_PORT", default=465))  # Using SSL port (465)
-EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False, cast=bool)
-EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=True, cast=bool)  # SSL enabled for port 465
+EMAIL_PORT = int(env("EMAIL_PORT", default=587))  # Changed to TLS port (587) - more reliable than SSL on 465
+
+# Email security configuration
+# Note: EMAIL_USE_TLS and EMAIL_USE_SSL are mutually exclusive in Django
+# For port 465, use SSL. For port 587, use TLS.
+# Most modern SMTP servers (including Hostinger) work better with TLS on port 587
+# EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False, cast=bool)  # Commented out to prevent conflict with EMAIL_USE_SSL
+EMAIL_USE_TLS = True  # Use TLS for port 587 (STARTTLS)
+
+# EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=True, cast=bool)  # Commented out - using TLS instead
+EMAIL_USE_SSL = False  # Disable SSL since we're using TLS on port 587
 EMAIL_TIMEOUT = 60
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
 # Hostinger email connection settings
-EMAIL_SSL_CERTFILE = None
-EMAIL_SSL_KEYFILE = None
+# EMAIL_SSL_CERTFILE = None
+# EMAIL_SSL_KEYFILE = None
 FRONTEND_URL = env("FRONTEND_URL")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 SIRET_VALIDATION_ACCESS_TOKEN = env("SIRET_VALIDATION_ACCESS_TOKEN")
