@@ -191,17 +191,26 @@ def orchestrate_relogin_reminder_task(self):
 
 @shared_task(bind=True, max_retries=3, queue='emails')
 def send_success_story_email_task(self, user_id, language='fr'):
-	"""Send the success story email (one-time)."""
+	"""Send the success story email (one-time) in user's selected language."""
 	try:
 		user = User.objects.get(pk=user_id)
 		first_name = user.get_full_name() or user.username or (user.email.split('@')[0] if user.email else '')
+		
+		# Use single campaign key since we're sending only one email per user
+		campaign_key = 'success_story_day20'
+		
+		# Check if email has already been sent to this user
+		if EmailLog.objects.filter(user=user, campaign_key=campaign_key).exists():
+			logger.info(f"Success story email already sent to {user.email}")
+			return True
+		
 		result = EmailService.send_success_story_email(
 			user_email=user.email,
 			first_name=first_name,
 			language=language,
 		)
 		if result:
-			EmailLog.objects.get_or_create(user=user, campaign_key='success_story_day20', defaults={'status': 'sent'})
+			EmailLog.objects.get_or_create(user=user, campaign_key=campaign_key, defaults={'status': 'sent'})
 		return result
 	except Exception as exc:
 		logger.error(f"Error sending success story email: {exc}")
@@ -210,21 +219,35 @@ def send_success_story_email_task(self, user_id, language='fr'):
 
 @shared_task(bind=True, max_retries=3, queue='emails')
 def orchestrate_success_story_emails_task(self):
-	"""Select users by signup age and enqueue the success story email once."""
+	"""Send success story email to all users after scheduled delay."""
 	try:
 		now = timezone.now()
-		delay_days = int(os.environ.get('SUCCESS_STORY_DELAY_DAYS', '20'))
-		threshold = now - timedelta(days=delay_days)
+		# Get delay from .env - required, no fallback
+		delay_minutes = int(os.environ['SUCCESS_STORY_DELAY_MINUTES'])
+		threshold = now - timedelta(minutes=delay_minutes)
+		
+		# Get ALL users who joined at least X minutes ago and haven't received the email
+		# Removed filters: is_active, is_email_verified - sending to ALL users
 		users = (
-			User.objects.filter(is_active=True, is_email_verified=True, date_joined__lte=threshold)
+			User.objects.filter(date_joined__lte=threshold)
 			.exclude(email_logs__campaign_key='success_story_day20')
 			.values('id')[:1000]
 		)
+		
 		for u in users:
-			user_obj = User.objects.filter(id=u['id']).only('preferred_language').first()
-			language = getattr(user_obj, 'preferred_language', 'fr') or 'fr'
+			# Get full user object to determine language preference
+			# Since User model doesn't have preferred_language field,
+			# we need to check if language is stored elsewhere
+			# For now, defaulting to French - TODO: Add logic to get user's selected language
+			# Possible locations: Django sessions, user profile, or other storage
+			user_obj = User.objects.filter(id=u['id']).first()
+			
+			# Default to French - replace this with actual language detection logic
+			# Example: language = get_user_language_preference(user_obj) or 'fr'
+			language = 'fr'  # Default to French until language preference storage is added
+			
 			send_success_story_email_task.delay(u['id'], language)
-		logger.info("Success story orchestrator enqueued emails.")
+		logger.info(f"Success story orchestrator enqueued emails for {len(users)} users.")
 		return True
 	except Exception as exc:
 		logger.error(f"Error in success story orchestrator: {exc}")

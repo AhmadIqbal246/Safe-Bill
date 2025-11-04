@@ -267,32 +267,25 @@ SIMPLE_JWT = {
 
 # Note: CHANNEL_LAYERS is already defined above with Redis configuration
 
-# Email backend for development - Hostinger Email Configuration
+# Email backend - Hostinger Email Configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # Hostinger SMTP settings for safebill.fr domain
-# SMTP: smtp.hostinger.com
-# Port: 465 (SSL) or 587 (TLS)
+# SMTP Server: smtp.hostinger.com
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.hostinger.com")
-EMAIL_PORT = int(env("EMAIL_PORT", default=587))  # Changed to TLS port (587) - more reliable than SSL on 465
+EMAIL_PORT = int(env("EMAIL_PORT", default=587))
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+# Connection timeout and retry settings
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=60)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "contact@safebill.fr")
+# Server email (for error messages)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-# Email security configuration
-# Note: EMAIL_USE_TLS and EMAIL_USE_SSL are mutually exclusive in Django
-# For port 465, use SSL. For port 587, use TLS.
-# Most modern SMTP servers (including Hostinger) work better with TLS on port 587
-# EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=False, cast=bool)  # Commented out to prevent conflict with EMAIL_USE_SSL
-EMAIL_USE_TLS = True  # Use TLS for port 587 (STARTTLS)
-
-# EMAIL_USE_SSL = env("EMAIL_USE_SSL", default=True, cast=bool)  # Commented out - using TLS instead
-EMAIL_USE_SSL = False  # Disable SSL since we're using TLS on port 587
-EMAIL_TIMEOUT = 60
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
-
-# Hostinger email connection settings
-# EMAIL_SSL_CERTFILE = None
-# EMAIL_SSL_KEYFILE = None
+# Additional email settings for better deliverability
+EMAIL_USE_LOCALTIME = False
 FRONTEND_URL = env("FRONTEND_URL")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 SIRET_VALIDATION_ACCESS_TOKEN = env("SIRET_VALIDATION_ACCESS_TOKEN")
 STRIPE_API_KEY = env("STRIPE_API_KEY")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
@@ -415,7 +408,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'success-story-orchestrator': {
         'task': 'accounts.tasks.orchestrate_success_story_emails_task',
-        'schedule': float(os.environ.get('SUCCESS_STORY_ORCHESTRATOR_INTERVAL', 7200.0)),
+        'schedule': float(os.environ['SUCCESS_STORY_ORCHESTRATOR_INTERVAL']),
         'options': {
             'queue': 'emails',
             'priority': 4,
