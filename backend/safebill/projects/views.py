@@ -34,6 +34,8 @@ from django.db import transaction
 # HubSpot syncing is now handled automatically by Django signals
 # No need to manually import sync functions
 from hubspot.sync_utils import sync_project_to_hubspot
+from subscription.models import Subscription
+from payments.models import Payment
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,26 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         has_seller = getattr(user, "role", None) == "seller"
         if not has_seller:
             raise PermissionDenied("Only users with seller role can create projects.")
+
+        # Membership gate: allow first project without membership; require active membership thereafter
+        # Count distinct paid projects for this seller
+        paid_projects_count = (
+            Payment.objects.filter(project__user=user, status="paid")
+            .values("project")
+            .distinct()
+            .count()
+        )
+        if paid_projects_count >= 1:
+            sub = Subscription.objects.filter(user=user).first()
+            is_active_member = bool(sub and sub.membership_active)
+            if not is_active_member:
+                return Response(
+                    {
+                        "detail": "Subscription required to create additional projects.",
+                        "code": "subscription_required",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Extract and process the form data
         data = {}

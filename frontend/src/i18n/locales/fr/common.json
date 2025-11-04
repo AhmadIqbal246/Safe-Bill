@@ -1798,4 +1798,18 @@
     "password_required": "Le mot de passe est requis",
     "confirm_password_required": "La confirmation du mot de passe est requise"
   }
+  ,
+  "subscription_card": {
+    "title": "Activez votre abonnement",
+    "subtitle": "Débloquez la création de projets pour les 30 prochains jours",
+    "plan_title": "Abonnement à 3 €/mois",
+    "feature_create_more": "Créez de nouveaux projets au-delà du premier",
+    "feature_auto_renews": "Renouvellement mensuel automatique ; résiliation à tout moment",
+    "feature_realtime": "Mises à jour du statut en temps réel après le paiement",
+    "cta": "Activer pour 3 €/mois",
+    "membership_required": "Abonnement requis pour continuer à créer des projets.",
+    "secure_payment": "Paiement sécurisé via Stripe. Vous serez redirigé pour finaliser votre abonnement.",
+    "status": "Statut :",
+    "current_period_ends": "La période en cours se termine le :"
+  }
 }

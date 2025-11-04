@@ -1850,4 +1850,18 @@
     "password_required": "Password is required",
     "confirm_password_required": "Confirm password is required"
   }
+  ,
+  "subscription_card": {
+    "title": "Activate your membership",
+    "subtitle": "Unlock project creation for the next 30 days",
+    "plan_title": "€3/month membership",
+    "feature_create_more": "Create new projects beyond your first one",
+    "feature_auto_renews": "Auto-renews monthly; cancel anytime",
+    "feature_realtime": "Status updates in real-time after payment",
+    "cta": "Activate for €3/month",
+    "membership_required": "Membership required to continue creating projects.",
+    "secure_payment": "Secure payment via Stripe. You'll be redirected to complete your subscription.",
+    "status": "Status:",
+    "current_period_ends": "Current period ends:"
+  }
 }

@@ -33,6 +33,7 @@ urlpatterns = [
     path("api/connect-stripe/", include("connect_stripe.urls")),
     path("api/payments/", include("payments.urls")),
     path("api/hubspot/", include("hubspot.urls")),
+    path("api/subscription/", include("subscription.urls")),
     # Add other app urls here
 ]
 

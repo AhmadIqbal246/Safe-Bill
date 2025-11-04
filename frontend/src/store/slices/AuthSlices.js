@@ -331,7 +331,38 @@ const authSlice = createSlice({
         state.accountDeletion.deletionLoading = false;
         state.accountDeletion.deletionError = action.payload;
         state.accountDeletion.deletionSuccess = false;
-      });
+      })
+      // Sync subscription data to user object (must be after all addCase calls)
+      .addMatcher(
+        (action) => action.type === 'subscription/fetchSubscriptionStatus/fulfilled',
+        (state, action) => {
+          if (state.user && action.payload) {
+            const updatedUser = {
+              ...state.user,
+              membership_active: action.payload.membership_active || false,
+              subscription_status: action.payload.status || "",
+              subscription_current_period_end: action.payload.current_period_end || null,
+            };
+            state.user = updatedUser;
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type === 'subscription/fetchSubscriptionEligibility/fulfilled',
+        (state, action) => {
+          if (state.user && action.payload) {
+            const updatedUser = {
+              ...state.user,
+              membership_active: action.payload.membership_active || false,
+              subscription_status: action.payload.status || "",
+              subscription_current_period_end: action.payload.current_period_end || null,
+            };
+            state.user = updatedUser;
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      );
   },
 });
 

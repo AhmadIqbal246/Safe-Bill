@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
+import { fetchSubscriptionEligibility } from '../../store/slices/SubscriptionSlice';
 import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SubscriptionCard from '../RegisterComponents/SellerReg/SubscriptionCard';
 
 const paymentConfigs = [
   [
@@ -27,6 +29,8 @@ export default function ProjectCreation() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.project);
+  const eligibility = useSelector((state) => state.subscription.eligibility);
+  const eligibilityLoading = useSelector((state) => state.subscription.eligibilityLoading);
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
@@ -89,6 +93,11 @@ export default function ProjectCreation() {
     setEditingIndex(null);
   }, [installments]);
 
+  // Fetch subscription eligibility on mount
+  useEffect(() => {
+    dispatch(fetchSubscriptionEligibility());
+  }, [dispatch]);
+
   const handleEdit = (idx) => {
     setEditingIndex(idx);
     setEditRow({ ...installmentRows[idx] });
@@ -125,6 +134,11 @@ export default function ProjectCreation() {
     e.preventDefault();
     if (!projectName || !clientEmail || !quoteFile) {
       toast.error(t('project_creation.fill_all_fields'));
+      return;
+    }
+    // Check subscription eligibility before submitting
+    if (eligibility?.needs_subscription && !eligibility?.membership_active) {
+      toast.error('Please activate your membership to create additional projects.');
       return;
     }
     const selectedConfig = installmentRows.map(row => ({
@@ -214,10 +228,19 @@ export default function ProjectCreation() {
       setClientEmail('');
       setQuoteFile(null);
       dispatch(fetchNotifications());
+      // Refresh eligibility after successful project creation
+      dispatch(fetchSubscriptionEligibility());
       navigate('/my-quotes');
     } else if (error) {
-      const message = normalizeError(error);
-      toast.error(message || t('common.unexpected_error'));
+      const errData = error?.response?.data || error;
+      const code = errData?.code || errData?.detail;
+      if (code === 'subscription_required' || (typeof code === 'string' && code.includes('subscription'))) {
+        toast.error('Subscription required to create additional projects. Please activate your membership.');
+        dispatch(fetchSubscriptionEligibility());
+      } else {
+        const message = normalizeError(error);
+        toast.error(message || t('common.unexpected_error'));
+      }
       dispatch(resetProjectState());
     }
   }, [success, error, dispatch, t, navigate, normalizeError]);
@@ -225,6 +248,13 @@ export default function ProjectCreation() {
   return (
     <div className="max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
       <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">{t('project_creation.title')}</h1>
+
+      {/* Subscription Card - shown when needs_subscription is true */}
+      {eligibility?.needs_subscription && !eligibility?.membership_active && (
+        <div className="mb-6 sm:mb-8">
+          <SubscriptionCard />
+        </div>
+      )}
 
       {/* Project Name Section */}
       <div className="mb-6 sm:mb-10">
