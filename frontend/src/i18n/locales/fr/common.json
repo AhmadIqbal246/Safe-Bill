@@ -1811,5 +1811,11 @@
     "secure_payment": "Paiement sécurisé via Stripe. Vous serez redirigé pour finaliser votre abonnement.",
     "status": "Statut :",
     "current_period_ends": "La période en cours se termine le :"
+  },
+  "subscription": {
+    "errors": {
+      "precheck": "Veuillez activer votre abonnement pour créer des projets supplémentaires.",
+      "required_backend": "Abonnement requis pour créer des projets supplémentaires. Veuillez activer votre abonnement."
+    }
   }
 }

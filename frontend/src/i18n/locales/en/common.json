@@ -1863,5 +1863,11 @@
     "secure_payment": "Secure payment via Stripe. You'll be redirected to complete your subscription.",
     "status": "Status:",
     "current_period_ends": "Current period ends:"
+  },
+  "subscription": {
+    "errors": {
+      "precheck": "Please activate your membership to create additional projects.",
+      "required_backend": "Subscription required to create additional projects. Please activate your membership."
+    }
   }
 }

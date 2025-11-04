@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from datetime import datetime, timezone as dt_timezone
 
 from subscription.models import Subscription
 
@@ -61,14 +62,28 @@ class Command(BaseCommand):
         s = stripe.Subscription.retrieve(stripe_subscription_id)
         status = getattr(s, "status", "")
 
-        # Parse current_period_end
+        # Parse current_period_end (supports flexible billing mode)
         current_period_end = None
+        # Try subscription-level first (classic mode)
         ts = getattr(s, "current_period_end", None)
         if ts:
             if isinstance(ts, (int, float)):
-                current_period_end = timezone.datetime.fromtimestamp(ts, tz=timezone.utc)
+                current_period_end = datetime.fromtimestamp(ts, tz=dt_timezone.utc)
             else:
                 current_period_end = ts
+        else:
+            # Fallback to subscription item (flexible billing mode)
+            # Access items as dict key, not attribute (to avoid Python dict.items() method)
+            if "items" in s:
+                items = s["items"]
+                if items and isinstance(items, dict) and items.get("data"):
+                    item = items["data"][0]
+                    ts = item.get("current_period_end")
+                    if ts:
+                        if isinstance(ts, (int, float)):
+                            current_period_end = datetime.fromtimestamp(ts, tz=dt_timezone.utc)
+                        else:
+                            current_period_end = ts
 
         sub.status = status
         if current_period_end:

@@ -138,7 +138,7 @@ export default function ProjectCreation() {
     }
     // Check subscription eligibility before submitting
     if (eligibility?.needs_subscription && !eligibility?.membership_active) {
-      toast.error('Please activate your membership to create additional projects.');
+      toast.error(t('subscription.errors.precheck'));
       return;
     }
     const selectedConfig = installmentRows.map(row => ({
@@ -235,7 +235,7 @@ export default function ProjectCreation() {
       const errData = error?.response?.data || error;
       const code = errData?.code || errData?.detail;
       if (code === 'subscription_required' || (typeof code === 'string' && code.includes('subscription'))) {
-        toast.error('Subscription required to create additional projects. Please activate your membership.');
+        toast.error(t('subscription.errors.required_backend'));
         dispatch(fetchSubscriptionEligibility());
       } else {
         const message = normalizeError(error);

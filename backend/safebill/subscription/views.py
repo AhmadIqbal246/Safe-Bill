@@ -17,6 +17,42 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+def extract_current_period_end(sub_obj):
+    """
+    Extract current_period_end from Stripe subscription object.
+    Supports both classic and flexible billing modes.
+    In flexible mode, current_period_end is in items.data[0].current_period_end
+    """
+    # Try subscription-level first (classic mode)
+    cpe = getattr(sub_obj, "current_period_end", None)
+    if cpe:
+        if isinstance(cpe, (int, float)):
+            try:
+                return datetime.fromtimestamp(cpe, tz=dt_timezone.utc)
+            except (ValueError, TypeError, OSError) as e:
+                logger.error(f"Error parsing current_period_end from subscription: {e}, value: {cpe}")
+        else:
+            return cpe
+    
+    # Fallback to subscription item (flexible billing mode)
+    # Access items as dict key, not attribute (to avoid Python dict.items() method)
+    if "items" in sub_obj:
+        items = sub_obj["items"]
+        if items and isinstance(items, dict) and items.get("data"):
+            item = items["data"][0]
+            item_cpe = item.get("current_period_end")
+            if item_cpe:
+                if isinstance(item_cpe, (int, float)):
+                    try:
+                        return datetime.fromtimestamp(item_cpe, tz=dt_timezone.utc)
+                    except (ValueError, TypeError, OSError) as e:
+                        logger.error(f"Error parsing current_period_end from subscription item: {e}, value: {item_cpe}")
+                else:
+                    return item_cpe
+    
+    return None
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def subscribe(request):
@@ -155,19 +191,8 @@ def subscription_webhook(request):
                 sub_obj = stripe.Subscription.retrieve(subscription_id)
                 status = sub_obj.status if hasattr(sub_obj, "status") else "active"
                 
-                # Get current_period_end from Stripe subscription object
-                cpe = None
-                if hasattr(sub_obj, "current_period_end") and sub_obj.current_period_end:
-                    try:
-                        # Stripe returns Unix timestamp as integer
-                        if isinstance(sub_obj.current_period_end, (int, float)):
-                            cpe = datetime.fromtimestamp(sub_obj.current_period_end, tz=dt_timezone.utc)
-                        else:
-                            # If it's already a datetime-like object
-                            cpe = sub_obj.current_period_end
-                    except (ValueError, TypeError, OSError) as e:
-                        logger.error(f"Error parsing current_period_end: {e}, value: {sub_obj.current_period_end}")
-                        cpe = None
+                # Get current_period_end from Stripe subscription object (supports flexible billing mode)
+                cpe = extract_current_period_end(sub_obj)
                 
                 logger.info(f"Subscription {subscription_id} - status: {status}, current_period_end: {cpe}")
                 
@@ -199,16 +224,7 @@ def subscription_webhook(request):
             try:
                 sub_obj = stripe.Subscription.retrieve(subscription_id)
                 status = sub_obj.status if hasattr(sub_obj, "status") else "active"
-                cpe = None
-                if hasattr(sub_obj, "current_period_end") and sub_obj.current_period_end:
-                    try:
-                        if isinstance(sub_obj.current_period_end, (int, float)):
-                            cpe = datetime.fromtimestamp(sub_obj.current_period_end, tz=dt_timezone.utc)
-                        else:
-                            cpe = sub_obj.current_period_end
-                    except (ValueError, TypeError, OSError) as e:
-                        logger.error(f"Error parsing current_period_end in invoice.payment_succeeded: {e}")
-                        cpe = None
+                cpe = extract_current_period_end(sub_obj)
                 
                 if cpe:
                     Subscription.objects.filter(stripe_subscription_id=subscription_id).update(
@@ -244,7 +260,7 @@ def subscription_webhook(request):
             customer_id = data_object.get("customer")
             status = data_object.get("status", "active")
             
-            # Get current_period_end from event data
+            # Get current_period_end from event data (try subscription-level first, then items)
             cpe = None
             current_period_end = data_object.get("current_period_end")
             if current_period_end:
@@ -256,6 +272,21 @@ def subscription_webhook(request):
                 except (ValueError, TypeError, OSError) as e:
                     logger.error(f"Error parsing current_period_end in customer.subscription.created: {e}")
                     cpe = None
+            
+            # If not in event data, check items (flexible billing mode)
+            if not cpe:
+                items = data_object.get("items")
+                if items and isinstance(items, dict) and items.get("data"):
+                    item = items["data"][0]
+                    item_cpe = item.get("current_period_end")
+                    if item_cpe:
+                        try:
+                            if isinstance(item_cpe, (int, float)):
+                                cpe = datetime.fromtimestamp(item_cpe, tz=dt_timezone.utc)
+                            else:
+                                cpe = item_cpe
+                        except (ValueError, TypeError, OSError) as e:
+                            logger.error(f"Error parsing current_period_end from event items in customer.subscription.created: {e}")
             
             # Try to find user by customer_id
             try:
@@ -279,7 +310,7 @@ def subscription_webhook(request):
             status = data_object.get("status", "")
             deactivate = status in ["canceled", "unpaid", "incomplete_expired"]
             
-            # Get current_period_end from event data
+            # Get current_period_end from event data (try subscription-level first, then items)
             cpe = None
             current_period_end = data_object.get("current_period_end")
             if current_period_end:
@@ -292,18 +323,26 @@ def subscription_webhook(request):
                     logger.error(f"Error parsing current_period_end in customer.subscription.updated: {e}, value: {current_period_end}")
                     cpe = None
             
+            # If not in event data, check items (flexible billing mode)
+            if not cpe:
+                items = data_object.get("items")
+                if items and isinstance(items, dict) and items.get("data"):
+                    item = items["data"][0]
+                    item_cpe = item.get("current_period_end")
+                    if item_cpe:
+                        try:
+                            if isinstance(item_cpe, (int, float)):
+                                cpe = datetime.fromtimestamp(item_cpe, tz=dt_timezone.utc)
+                            else:
+                                cpe = item_cpe
+                        except (ValueError, TypeError, OSError) as e:
+                            logger.error(f"Error parsing current_period_end from event items: {e}, value: {item_cpe}")
+            
             # If current_period_end is not in event data, retrieve subscription
             if not cpe:
                 try:
                     sub_obj = stripe.Subscription.retrieve(subscription_id)
-                    if hasattr(sub_obj, "current_period_end") and sub_obj.current_period_end:
-                        try:
-                            if isinstance(sub_obj.current_period_end, (int, float)):
-                                cpe = datetime.fromtimestamp(sub_obj.current_period_end, tz=dt_timezone.utc)
-                            else:
-                                cpe = sub_obj.current_period_end
-                        except (ValueError, TypeError, OSError) as e:
-                            logger.error(f"Error parsing current_period_end from retrieved subscription: {e}")
+                    cpe = extract_current_period_end(sub_obj)
                 except stripe.error.StripeError as e:
                     logger.error(f"Stripe error retrieving subscription {subscription_id}: {e}")
             
