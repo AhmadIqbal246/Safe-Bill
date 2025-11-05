@@ -7,6 +7,7 @@ import os
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Exists, OuterRef
+from django.core.mail import get_connection
 from django.contrib.auth import get_user_model
 from projects.models import Project
 from .models import EmailLog
@@ -139,28 +140,73 @@ def send_callback_request_confirmation_email_task(
 
 
 @shared_task(bind=True, max_retries=3, queue='emails')
-def send_no_project_nurture_email_task(self, user_id, first_name, step, language='fr'):
+def send_batch_no_project_nurture_emails_task(self, step, user_ids, batch_number=0):
+    """Send no-project nurture emails in batch using a shared SMTP connection."""
+    connection = None
+    successful = 0
+    failed = 0
+    skipped = 0
+
     try:
-        user_email = get_user_model().objects.filter(id=user_id).values_list('email', flat=True).first()
-        if not user_email:
-            return False
-        result = EmailService.send_no_project_nurture_email(
-            user_email=user_email,
-            first_name=first_name or '',
-            step=step,
-            language=language,
+        connection = get_connection()
+        connection.open()
+        logger.info(f"No-project {step} batch {batch_number}: Opened SMTP connection for batch of {len(user_ids)} users")
+
+        User = get_user_model()
+        for user_id in user_ids:
+            try:
+                user = User.objects.get(pk=user_id)
+                user_email = user.email
+                first_name = user.get_full_name() or user.username or ''
+
+                # Skip duplicates
+                if EmailLog.objects.filter(user=user, campaign_key=f'no_project_{step}').exists():
+                    skipped += 1
+                    continue
+
+                # Send with shared connection
+                result = EmailService.send_no_project_nurture_email(
+                    user_email=user_email,
+                    first_name=first_name,
+                    step=step,
+                    language='fr',
+                    connection=connection,
+                )
+                if result:
+                    EmailLog.objects.create(user_id=user_id, campaign_key=f'no_project_{step}', status='sent')
+                    successful += 1
+                else:
+                    failed += 1
+
+                delay_seconds = float(os.environ.get('NO_PROJECT_BATCH_DELAY_SECONDS', '0.5'))
+                import time
+                time.sleep(delay_seconds)
+
+            except Exception as e:
+                logger.error(f"No-project {step} batch {batch_number}: Error sending to user {user_id}: {e}")
+                failed += 1
+
+        logger.info(
+            f"No-project {step} batch {batch_number}: Completed sending to {len(user_ids)} users "
+            f"(successful: {successful}, failed: {failed}, skipped: {skipped})"
         )
-        if result:
-            EmailLog.objects.create(user_id=user_id, campaign_key=f'no_project_{step}', status='sent')
-        return result
+        return {'successful': successful, 'failed': failed, 'skipped': skipped, 'total': len(user_ids)}
+
     except Exception as exc:
-        logger.error(f"Error sending no-project nurture email: {exc}")
+        logger.error(f"No-project {step} batch {batch_number}: Error in batch processing: {exc}")
         self.retry(exc=exc, countdown=2 ** self.request.retries)
+    finally:
+        if connection:
+            try:
+                connection.close()
+                logger.info(f"No-project {step} batch {batch_number}: Closed SMTP connection")
+            except Exception as e:
+                logger.error(f"No-project {step} batch {batch_number}: Error closing connection: {e}")
 
 
 @shared_task(bind=True, max_retries=3, queue='emails')
 def orchestrate_no_project_nurture_task(self):
-    """Runs every ~2h. Selects users at 7/14/30 days with no projects and enqueues emails."""
+    """Select users at minute-based thresholds (7/14/30 equivalents) and enqueue batch emails."""
     try:
         User = get_user_model()
         now = timezone.now()
@@ -175,36 +221,72 @@ def orchestrate_no_project_nurture_task(self):
             .filter(is_buyer=False, is_seller=False)
         )
 
-        # Allow day thresholds to be controlled via env in production mode
-        days_overrides = {
-            'day7': int(os.environ.get('NO_PROJECT_NURTURE_DAYS_DAY7', '7')),
-            'day14': int(os.environ.get('NO_PROJECT_NURTURE_DAYS_DAY14', '14')),
-            'day30': int(os.environ.get('NO_PROJECT_NURTURE_DAYS_DAY30', '30')),
+        # REQUIRED minute thresholds from env (no fallbacks)
+        minute_overrides = {
+            'day7': int(os.environ['NO_PROJECT_MINUTES_DAY7']),
+            'day14': int(os.environ['NO_PROJECT_MINUTES_DAY14']),
+            'day30': int(os.environ['NO_PROJECT_MINUTES_DAY30']),
         }
 
-        def compute_threshold(step: str, min_days: int):
-            # Use env-controlled day thresholds (fallback to provided defaults)
-            return now - timedelta(days=days_overrides.get(step, min_days))
+        def compute_threshold(step: str):
+            return now - timedelta(minutes=minute_overrides[step])
 
-        def enqueue_for(step: str, min_days: int):
-            threshold = compute_threshold(step, min_days)
+        def enqueue_for(step: str):
+            threshold = compute_threshold(step)
             users = (
                 base_qs.filter(date_joined__lte=threshold)
                 .exclude(email_logs__campaign_key=f'no_project_{step}')
-                .values('id', 'first_name', 'username')[:500]
+                .values('id')[:1000]
             )
-            for u in users:
-                first_name = u.get('first_name') or u.get('username') or ''
-                # Determine language fallback (store later if available)
-                language = 'fr'
-                send_no_project_nurture_email_task.delay(u['id'], first_name, step, language)
+            users_list = list(users)
+            total = len(users_list)
+            if total == 0:
+                logger.info(f"No-project {step}: No eligible users found")
+                return
+            batch_size = int(os.environ.get('NO_PROJECT_BATCH_SIZE', '50'))
+            batch_number = 0
+            for i in range(0, total, batch_size):
+                chunk = users_list[i:i+batch_size]
+                user_ids = [u['id'] for u in chunk]
+                batch_number += 1
+                send_batch_no_project_nurture_emails_task.delay(step, user_ids, batch_number)
+                logger.info(f"No-project {step}: Queued batch {batch_number} with {len(user_ids)} users")
 
-        enqueue_for('day7', 7)
-        enqueue_for('day14', 14)
-        enqueue_for('day30', 30)
+        enqueue_for('day7')
+        enqueue_for('day14')
+        enqueue_for('day30')
 
         logger.info("No-project nurture orchestrator enqueued emails.")
         return True
     except Exception as exc:
         logger.error(f"Error in orchestrator: {exc}")
+        self.retry(exc=exc, countdown=2 ** self.request.retries)
+
+
+@shared_task(bind=True, max_retries=3, queue='emails')
+def cleanup_old_email_logs_task(self):
+    """
+    Clean up old EmailLog entries for all email campaigns.
+    Deletes ALL logs older than the retention period (configurable via .env).
+    This allows monthly campaigns to restart for users.
+    """
+    try:
+        # Get retention period from .env (in minutes), default to 43200 minutes (31 days)
+        retention_minutes = int(os.environ.get('EMAIL_LOG_RETENTION_MINUTES', '43200'))
+        cutoff_date = timezone.now() - timedelta(minutes=retention_minutes)
+        
+        # Delete ALL old logs (not just success_story_day20 - all campaigns)
+        deleted_count = EmailLog.objects.filter(
+            sent_at__lt=cutoff_date
+        ).delete()[0]
+        
+        logger.info(
+            f"Email log cleanup: Deleted {deleted_count} old log entries "
+            f"(older than {retention_minutes} minutes / {retention_minutes / 1440:.1f} days)"
+        )
+        
+        return {'deleted_count': deleted_count}
+        
+    except Exception as exc:
+        logger.error(f"Error in email log cleanup: {exc}")
         self.retry(exc=exc, countdown=2 ** self.request.retries)

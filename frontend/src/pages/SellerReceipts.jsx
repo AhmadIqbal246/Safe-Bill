@@ -431,9 +431,6 @@ export default function SellerReceipts() {
                       {t('receipts.vat')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('receipts.payment_id')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {t('receipts.status')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -467,9 +464,7 @@ export default function SellerReceipts() {
                           <div>€{vatAmount.toLocaleString()}</div>
                           <div className="text-xs">({vatRate.toFixed(1)}%)</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                          {receipt.payment_id ? receipt.payment_id.substring(0, 10) + '...' : '-'}
-                        </td>
+                        
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getStatusBadge(receipt.payment_status)}
                         </td>
@@ -523,10 +518,7 @@ export default function SellerReceipts() {
                         <span className="text-gray-500">{t('receipts.vat')}:</span>
                         <div className="font-medium">€{vatAmount.toLocaleString()} ({vatRate.toFixed(1)}%)</div>
                       </div>
-                      <div>
-                        <span className="text-gray-500">{t('receipts.payment_id')}:</span>
-                        <div className="font-mono text-xs">{receipt.payment_id ? receipt.payment_id.substring(0, 10) + '...' : '-'}</div>
-                      </div>
+                      
                       <div>
                         <span className="text-gray-500">{t('receipts.net_amount')}:</span>
                         <div className="font-medium text-green-600">€{finalAmount.toLocaleString()}</div>

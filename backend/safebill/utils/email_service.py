@@ -64,6 +64,7 @@ class EmailService:
         from_email: Optional[str] = None,
         fail_silently: bool = False,
         language: str = "fr",
+        connection=None,
     ) -> bool:
         """
         Send an HTML email using Django templates.
@@ -76,6 +77,7 @@ class EmailService:
             from_email: Sender email address (defaults to
             settings.DEFAULT_FROM_EMAIL)
             fail_silently: Whether to fail silently on errors
+            connection: Optional SMTP connection to reuse (for batch emails)
 
         Returns:
             bool: True if email was sent successfully, False otherwise
@@ -107,13 +109,22 @@ class EmailService:
             # Create plain text version by stripping HTML tags
             text_content = strip_tags(html_content)
 
-            # Create email message
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
-                from_email=from_email,
-                to=recipient_list,
-            )
+            # Create email message (attach provided SMTP connection if any)
+            if connection:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_content,
+                    from_email=from_email,
+                    to=recipient_list,
+                    connection=connection,
+                )
+            else:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_content,
+                    from_email=from_email,
+                    to=recipient_list,
+                )
 
             # Attach HTML version with proper MIME type
             msg.attach_alternative(html_content, "text/html; charset=UTF-8")
@@ -125,7 +136,8 @@ class EmailService:
                 "X-MSMail-Priority": "Normal",
             }
 
-            # Send email
+            # Send email (EmailMessage.send does not accept a 'connection' kwarg)
+            # When a connection is provided above, it's attached on the message instance
             msg.send(fail_silently=fail_silently)
 
             logger.info(
@@ -708,6 +720,7 @@ class EmailService:
         first_name: str,
         step: str,
         language: str = 'fr',
+        connection=None,
     ) -> bool:
         """Send lead nurturing email to users with no projects (day7/day14/day30)."""
         # Choose CTA based on common flows
@@ -743,6 +756,7 @@ class EmailService:
             template_name=template,
             context=context,
             language=language,
+            connection=connection,
         )
 
     @staticmethod
@@ -750,6 +764,7 @@ class EmailService:
         user_email: str,
         first_name: str,
         language: str = 'fr',
+        connection=None,
     ) -> bool:
         """Send a one-time re-login reminder email after inactivity."""
         context = {
@@ -769,6 +784,7 @@ class EmailService:
             template_name="Lead Nuturing Emails/Relogin emails/reengage_login_day10",
             context=context,
             language=language,
+            connection=connection,
         )
 
     @staticmethod
@@ -776,6 +792,7 @@ class EmailService:
         user_email: str,
         first_name: str,
         language: str = 'fr',
+        connection=None,
     ) -> bool:
         """Send the 20-day success story motivation email (localized)."""
         context = {
@@ -795,4 +812,5 @@ class EmailService:
             template_name="Lead Nuturing Emails/Success Story Emails/success_story_day20",
             context=context,
             language=language,
+            connection=connection,
         )

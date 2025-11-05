@@ -392,7 +392,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'no-project-nurture-orchestrator': {
         'task': 'feedback.tasks.orchestrate_no_project_nurture_task',
-        'schedule': float(os.environ.get('NO_PROJECT_NURTURE_INTERVAL', 7200.0)),
+        'schedule': float(os.environ['NO_PROJECT_ORCHESTRATOR_INTERVAL']),
         'options': {
             'queue': 'emails',
             'priority': 4,
@@ -400,7 +400,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'relogin-reminder-orchestrator': {
         'task': 'accounts.tasks.orchestrate_relogin_reminder_task',
-        'schedule': float(os.environ.get('RELOGIN_ORCHESTRATOR_INTERVAL', 7200.0)),
+        'schedule': float(os.environ['RELOGIN_ORCHESTRATOR_INTERVAL']),
         'options': {
             'queue': 'emails',
             'priority': 4,
@@ -412,6 +412,14 @@ CELERY_BEAT_SCHEDULE = {
         'options': {
             'queue': 'emails',
             'priority': 4,
+        }
+    },
+    'cleanup-old-email-logs': {
+        'task': 'feedback.tasks.cleanup_old_email_logs_task',
+        'schedule': float(os.environ.get('EMAIL_LOG_CLEANUP_INTERVAL', '86400.0')),  # Default: daily (24 hours)
+        'options': {
+            'queue': 'emails',
+            'priority': 1,
         }
     },
 }
