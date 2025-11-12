@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import LoginBg from "../../../assets/Circle Background/login-removed-bg.jpg";
 
 import {
   businessActivityStructure,
@@ -478,12 +479,17 @@ export default function SellerRegisterFlow({role = "seller"}) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="relative min-h-screen py-8">
+      {/* Full-page background layer (does not affect layout) */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8">
+        <div className="bg-[#FFFFFF] rounded-[20px] shadow-sm p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-[#111827] mb-2">
+            <h1 className="text-2xl font-semibold text-[#2E78A6] mb-2">
               {getTitle()}
             </h1>
             <p className="text-[#111827]">
@@ -1341,7 +1347,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
             <button
               onClick={handleSubmit}
-              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#01257D] text-white hover:bg-[#2346a0] ${
+              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#2E78A6] text-white hover:bg-[#256a94] ${
                 loading ? "opacity-80" : ""
               }`}
               disabled={loading}

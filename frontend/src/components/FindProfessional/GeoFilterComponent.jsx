@@ -183,6 +183,11 @@ export default function GeoFilterComponent() {
   return (
     <section className="w-full flex justify-center py-8 px-4 bg-white">
       <div className="bg-white rounded-xl shadow-md p-2 max-w-3xl w-full flex flex-col items-center">
+        {/* Heading */}
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <span className="text-[#3535AA]">Map</span>
+          <span className="text-[#8989C9]"> Pro</span>
+        </h2>
         {/* Quick search restricted to supported service areas */}
         <div className="w-full max-w-md mb-3 relative">
           <input
@@ -234,7 +239,7 @@ export default function GeoFilterComponent() {
         
         <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full max-w-md">
           <div className="text-sm text-gray-600 mb-1">{t('geo_filter.selected_location')}</div>
-          <div className="text-center text-[#01257D] font-medium">
+          <div className="text-center text-[#2E78A6] font-medium">
             {isGeocoding ? (
               <span className="text-gray-500">Finding address...</span>
             ) : (

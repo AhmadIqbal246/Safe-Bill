@@ -16,6 +16,7 @@ import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Chat from '../components/mutualComponents/Chat/Chat';
 import { useTranslation } from 'react-i18next';
 import CallbackForm from '../components/mutualComponents/CallbackForm';
+import loginRemovedBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function BuyerDashboardPage() {
   const { t } = useTranslation();
@@ -205,7 +206,15 @@ export default function BuyerDashboardPage() {
   return (
     <>
       <SafeBillHeader />
-      <div className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto">
+      <div 
+        className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto"
+        style={{
+          backgroundImage: `url(${loginRemovedBg})`,
+          backgroundSize: '100%',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'top'
+        }}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
           <div>
             <h2 className="text-2xl sm:text-3xl font-semibold mb-1">{t('buyer_dashboard.title')}</h2>
@@ -224,14 +233,6 @@ export default function BuyerDashboardPage() {
             >
               {t('buyer_dashboard.view_all_disputes')}
             </button>
-            {user?.role === 'professional-buyer' && (
-              <button
-                onClick={() => setCallbackOpen(true)}
-                className="px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
-              >
-                {t('callback.open_button', 'Request Callback')}
-              </button>
-            )}
           </div>
         </div>
         

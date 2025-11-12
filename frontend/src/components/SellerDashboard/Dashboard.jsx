@@ -20,6 +20,7 @@ import {
   Tooltip,
 } from 'recharts';
 import CallbackForm from '../mutualComponents/CallbackForm';
+import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -165,8 +166,14 @@ export default function Dashboard() {
   // Show loading state for the entire dashboard
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">{t('dashboard.title')}</h1>
+      <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="w-full max-w-7xl mx-auto relative z-10 py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#2E78A6] mb-4 sm:mb-6">{t('dashboard.title')}</h1>
         
         {/* Loading Overview Section */}
         <div className="flex flex-col gap-2 min-w-0 w-full mb-4 sm:mb-6">
@@ -260,14 +267,21 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   // Show error state for the entire dashboard
   if (error) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">{t('dashboard.title')}</h1>
+      <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="w-full max-w-7xl mx-auto relative z-10 py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#2E78A6] mb-4 sm:mb-6">{t('dashboard.title')}</h1>
         
         {/* Error Message */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8 text-center">
@@ -287,6 +301,7 @@ export default function Dashboard() {
             {t('dashboard.try_again')}
           </button>
         </div>
+      </div>
       </div>
     );
   }
@@ -388,10 +403,16 @@ export default function Dashboard() {
 
   return (
     <>
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="w-full max-w-7xl mx-auto relative z-10 py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
       <div className="flex items-center justify-between mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{t('dashboard.title')}</h1>
-        <button onClick={() => setCallbackOpen(true)} className="px-3 sm:px-4 py-2 bg-[#01257D] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#2346a0] transition-colors cursor-pointer">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#2E78A6]">{t('dashboard.title')}</h1>
+        <button onClick={() => setCallbackOpen(true)} className="px-3 sm:px-4 py-2 bg-[#2E78A6] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#256a94] transition-colors cursor-pointer">
           {t('callback.open_button', 'Request Callback')}
         </button>
       </div>
@@ -404,7 +425,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
               <h2 className="text-base sm:text-lg font-bold mb-2 sm:mb-0">{t('dashboard.overview')}</h2>
               <div className="flex gap-2">
-                <button onClick={() => navigate('/project-creation')} className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#2346a0] transition-colors cursor-pointer">{t('dashboard.new_quote')}</button>
+                <button onClick={() => navigate('/project-creation')} className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#256a94] transition-colors cursor-pointer">{t('dashboard.new_quote')}</button>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4 min-w-0 w-full">
@@ -430,7 +451,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   <button 
-                    className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
+                    className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded font-semibold text-xs hover:bg-[#256a94] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
                     onClick={() => navigate(card.btnNavigate)}
                     disabled={card.loading}
                   >
@@ -505,7 +526,7 @@ export default function Dashboard() {
             </div>
             
             <button 
-              className="w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-full font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer"
+              className="w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded-full font-semibold text-xs hover:bg-[#256a94] transition-colors cursor-pointer"
               onClick={() => navigate('/my-quotes')}
             >
               {t('dashboard.view_all_projects')}
@@ -557,7 +578,7 @@ export default function Dashboard() {
             </div>
             <div className="flex justify-end mt-3 sm:mt-4">
               <button
-                className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-xs sm:text-sm cursor-pointer"
+                className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded-lg font-semibold hover:bg-[#256a94] transition-colors text-xs sm:text-sm cursor-pointer"
                 onClick={() => navigate('/my-quotes')}
               >
                 {t('dashboard.view_all_projects')}
@@ -591,6 +612,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
     <CallbackForm open={callbackOpen} onClose={() => setCallbackOpen(false)} defaultRole={'seller'} />

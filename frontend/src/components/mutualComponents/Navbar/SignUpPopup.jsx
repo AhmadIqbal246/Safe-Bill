@@ -64,10 +64,10 @@ export default function SignUpPopup({ isOpen, onClose }) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-[30px] bg-white shadow-xl transition-all">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <Dialog.Title as="h2" className="text-xl font-semibold text-gray-900">
+                  <Dialog.Title as="h2" className="text-xl font-semibold text-[#2E78A6]">
                     {t('signup_popup.title')}
                   </Dialog.Title>
                   <button

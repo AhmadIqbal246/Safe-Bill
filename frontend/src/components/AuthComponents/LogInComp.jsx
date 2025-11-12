@@ -5,6 +5,7 @@ import { loginUser, resetAuthState } from "../../store/slices/AuthSlices";
 import { toast } from "react-toastify";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import LoginBg from "../../assets/Circle Background/login-bg.jpg";
 
 export default function LogInComp() {
   const { t } = useTranslation();
@@ -130,14 +131,20 @@ export default function LogInComp() {
   }, [success, error, user, dispatch, navigate, redirectUrl, t]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <div className="bg-white rounded-lg shadow-sm p-8 w-full max-w-md border border-gray-200">
+    <div className="relative min-h-screen">
+      {/* Full-page background layer (does not affect layout) */}
+      <div
+        className="absolute inset-0 -z-10 bg-center bg-no-repeat bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="bg-white rounded-lg shadow-sm p-8 w-full max-w-md border border-gray-200">
         <div className="flex justify-center -mt-14 mb-4">
           <div className="bg-[#01257D] rounded-full p-5 flex items-center justify-center">
             <Mail className="text-white w-10 h-10" />
           </div>
         </div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2 text-center">{t("login.sign_in_to_account")}</h2>
+        <h2 className="text-2xl font-semibold text-[#2E78A6] mb-2 text-center">{t("login.sign_in_to_account")}</h2>
         <form className="space-y-6 mt-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t("login.email_address")}</label>
@@ -191,7 +198,7 @@ export default function LogInComp() {
           </div>
           <button
             type="submit"
-            className="w-full px-6 py-2 text-sm font-medium text-white bg-[#01257D] rounded-md transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#01257D] cursor-pointer"
+            className="w-full px-6 py-2 text-sm font-medium text-white bg-[#2E78A6] rounded-md transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#2E78A6] cursor-pointer"
             disabled={loading}
           >
             {loading ? (
@@ -207,6 +214,7 @@ export default function LogInComp() {
             )}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

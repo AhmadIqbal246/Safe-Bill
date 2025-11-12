@@ -372,7 +372,7 @@ export default function SafeBillHeader({
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     onClick={() => user.role !== 'seller' && handleToggleRole()}
-                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${
                       user.role === 'seller'
                         ? 'bg-[#01257D] text-white shadow-sm'
                         : 'text-gray-600 hover:text-gray-800'
@@ -382,7 +382,7 @@ export default function SafeBillHeader({
                   </button>
                   <button
                     onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
-                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${
                       user.role === 'professional-buyer'
                         ? 'bg-[#01257D] text-white shadow-sm'
                         : 'text-gray-600 hover:text-gray-800'
@@ -395,28 +395,29 @@ export default function SafeBillHeader({
             )}
 
             {/* Language Switcher */}
-            <div className="flex items-center gap-1 mr-2">
-              <button
-                onClick={() => changeLanguage("en")}
-                className={`px-2 py-1 text-xs rounded-md border ${
-                  i18n.language.startsWith("en")
-                    ? "bg-[#01257D] text-white border-[#01257D]"
-                    : "border-gray-300 text-gray-700"
-                } cursor-pointer`}
-                title="English"
-              >
-                EN
-              </button>
+            <div className="flex items-center mr-2 border border-transparent rounded-md bg-white px-2 py-1">
               <button
                 onClick={() => changeLanguage("fr")}
-                className={`px-2 py-1 text-xs rounded-md border ${
+                className={`text-xs cursor-pointer ${
                   i18n.language.startsWith("fr")
-                    ? "bg-[#01257D] text-white border-[#01257D]"
-                    : "border-gray-300 text-gray-700"
-                } cursor-pointer`}
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                }`}
                 title="Français"
               >
                 FR
+              </button>
+              <span className="text-xs text-[#01257D] mx-2 font-bold">|</span>
+              <button
+                onClick={() => changeLanguage("en")}
+                className={`text-xs cursor-pointer ${
+                  i18n.language.startsWith("en")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                }`}
+                title="English"
+              >
+                ENG
               </button>
             </div>
             {isSignedIn ? (
@@ -522,13 +523,13 @@ export default function SafeBillHeader({
                 {/* Sign In and Join Now Buttons */}
                 <button
                   onClick={onSignIn}
-                  className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  className="px-6 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-[15px] transition-colors cursor-pointer"
                 >
                   <Link to="/login">{t("navbar.sign_in")}</Link>
                 </button>
                 <button
                   onClick={() => setIsSignUpPopupOpen(true)}
-                  className="px-4 py-2 text-sm font-medium text_white text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
+                  className="px-6 py-2 text-sm font-medium text_white text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-[15px] transition-colors cursor-pointer"
                 >
                   {t("navbar.sign_up")}
                 </button>
@@ -570,28 +571,29 @@ export default function SafeBillHeader({
               )}
 
               {/* Language Switcher - Mobile */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => changeLanguage("en")}
-                  className={`px-2 py-1 text-xs rounded-md border ${
-                    i18n.language.startsWith("en")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
-                  title="English"
-                >
-                  EN
-                </button>
+              <div className="flex items-center border border-transparent rounded-md bg-white px-2 py-1">
                 <button
                   onClick={() => changeLanguage("fr")}
-                  className={`px-2 py-1 text-xs rounded-md border ${
+                  className={`text-xs cursor-pointer ${
                     i18n.language.startsWith("fr")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
+                      ? "text-[#01257D] font-bold"
+                      : "text-gray-400 font-bold"
+                  }`}
                   title="Français"
                 >
                   FR
+                </button>
+                <span className="text-xs text-[#01257D] mx-2 font-bold">|</span>
+                <button
+                  onClick={() => changeLanguage("en")}
+                  className={`text-xs cursor-pointer ${
+                    i18n.language.startsWith("en")
+                      ? "text-[#01257D] font-bold"
+                      : "text-gray-400 font-bold"
+                  }`}
+                  title="English"
+                >
+                  ENG
                 </button>
               </div>
               {isSignedIn ? (
@@ -814,26 +816,27 @@ export default function SafeBillHeader({
               )}
 
               {/* Language Switcher - Mobile in menu */}
-              <div className="flex items-center gap-2 px-3 py-2">
-                <button
-                  onClick={() => changeLanguage("en")}
-                  className={`px-3 py-1 text-xs rounded-md border ${
-                    i18n.language.startsWith("en")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
-                >
-                  English
-                </button>
+              <div className="flex items-center border border-transparent rounded-md bg-white px-3 py-1 mx-3">
                 <button
                   onClick={() => changeLanguage("fr")}
-                  className={`px-3 py-1 text-xs rounded-md border ${
+                  className={`text-xs cursor-pointer ${
                     i18n.language.startsWith("fr")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
+                      ? "text-[#01257D] font-bold"
+                      : "text-gray-400 font-bold"
+                  }`}
                 >
-                  Français
+                  FR
+                </button>
+                <span className="text-xs text-[#01257D] mx-3 font-bold">|</span>
+                <button
+                  onClick={() => changeLanguage("en")}
+                  className={`text-xs cursor-pointer ${
+                    i18n.language.startsWith("en")
+                      ? "text-[#01257D] font-bold"
+                      : "text-gray-400 font-bold"
+                  }`}
+                >
+                  ENG
                 </button>
               </div>
 

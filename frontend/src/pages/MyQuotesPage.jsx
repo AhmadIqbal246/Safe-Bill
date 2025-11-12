@@ -4,7 +4,7 @@ import QuoteManagement from '../components/Quotes/QuoteManagement';
 
 export default function MyQuotesPage() {
   return (
-    <MainLayout>
+    <MainLayout mainBackgroundClass="bg-transparent">
       <QuoteManagement />
     </MainLayout>
   );

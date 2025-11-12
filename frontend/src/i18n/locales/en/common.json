@@ -136,6 +136,7 @@
   },
   "homepage": {
     "hero_title": "Trusted platform for your projects",
+    "hero_subtitle_line": "Find the perfect professional!",
     "hero_subtitle": "Secure payments, transparent tracking, mediation included",
     "service_label": "What service do you need?",
     "location_label": "Location",
@@ -149,7 +150,7 @@
     "hour": "hour",
     "reviews": "reviews",
     "kyc_verified": "KYC Verified",
-    "features_title": "Features",
+    "features_title": "Features Included",
     "secure_payment_title": "Secure payment",
     "secure_payment_desc": "Pay safely on our platform with full encryption and protection for every transaction.",
     "real_time_tracking_title": "Real-time tracking",
@@ -161,7 +162,18 @@
     "browse_categories_title": "Browse Categories",
     "browse_categories_desc": "Explore all available services and find the perfect professional for your needs.",
     "dispute_resolution_title": "Dispute Resolution",
-    "dispute_resolution_desc": "Get peace of mind with our built-in mediation system to resolve any project disputes fairly."
+    "dispute_resolution_desc": "Get peace of mind with our built-in mediation system to resolve any project disputes fairly.",
+    "how_it_works_title": "How it works?",
+    "how_it_works_step1": "The service provider enters their quote on the platform and sends it to their client",
+    "how_it_works_step2": "If the client validates the project, they must pay the amount of the quote",
+    "how_it_works_step3": "The amount of the quote remains in escrow until the end of the project",
+    "how_it_works_step4": "Once the project is finished, the seller can request the release of the escrowed amount via the platform",
+    "why_choose_title": "Why choose Safe Bill?",
+    "why_choose_benefit1": "Safe Bill has the particularity of being able to release staggered payments.",
+    "why_choose_benefit2": "Each release of amount is made by the buyer who validates the step of the transaction process.",
+    "why_choose_benefit3": "Everyone is secure.",
+    "why_choose_benefit4": "The seller is sure to be paid.",
+    "why_choose_benefit5": "The buyer keeps control over the transaction and only pays if satisfied."
   },
   "professional_detail": {
     "professional_services": "Professional Services",
@@ -1525,6 +1537,10 @@
     "click_to_select": "Click on the map to select a location"
   },
   "find_professional": {
+    "hero_line1": "Find",
+    "hero_line2_part1": "a",
+    "hero_line2_part2": "professional",
+    "hero_line3": "near you!",
     "find_local": "Find local professionals",
     "service_type": "Service type",
     "area": "Area",

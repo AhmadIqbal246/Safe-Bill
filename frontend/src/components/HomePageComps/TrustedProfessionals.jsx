@@ -85,9 +85,9 @@ export default function TrustedProfessionals() {
   }, [sellers]);
 
   return (
-    <section className="w-full bg-white py-14 px-4 border-t border-[#01257D]">
-      <h2 className="text-2xl md:text-3xl font-semibold text-[#111827] text-center mb-2">{t('homepage.trusted_professionals_title')}</h2>
-      <p className="text-base md:text-lg text-[#96C2DB] text-center mb-10">{t('homepage.trusted_professionals_subtitle')}</p>
+    <section className="w-full py-14 px-4 border-t border-[#01257D]" style={{ backgroundColor: '#E8E8F5' }}>
+      <h2 className="text-3xl md:text-4xl font-semibold text-[#2E78A6] text-center mb-2">{t('homepage.trusted_professionals_title')}</h2>
+      <p className="text-base md:text-lg text-black text-center mb-10">{t('homepage.trusted_professionals_subtitle')}</p>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
         {(featured.length > 0 ? featured : []).map((pro) => {
@@ -123,7 +123,7 @@ export default function TrustedProfessionals() {
       </div>
 
       <div className="flex justify-center">
-        <Link to="/find-professionals" className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md shadow-sm hover:bg-[#2346a0] transition-colors text-base inline-block">{t('actions.view_all_professionals')}</Link>
+        <Link to="/find-professionals" className="px-8 py-2 bg-[#2E78A6] text-white font-semibold rounded-[15px] shadow-sm hover:bg-[#256699] transition-colors text-base inline-block">{t('actions.view_all_professionals')}</Link>
       </div>
     </section>
   );

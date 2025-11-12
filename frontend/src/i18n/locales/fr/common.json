@@ -7,8 +7,8 @@
     "contact": "Contact",
     "find_professionals": "Trouver des professionnels",
     "for_professionals": "Pour les professionnels",
-    "sign_in": "Se connecter",
-    "sign_up": "S'inscrire",
+    "sign_in": "SE CONNECTER",
+    "sign_up": "S'INSCRIRE",
     "sign_out": "Se déconnecter",
     "settings": "Paramètres",
     "billing": "Facturation",
@@ -137,6 +137,7 @@
   },
   "homepage": {
     "hero_title": "Plateforme de confiance pour vos projets",
+    "hero_subtitle_line": "Trouvez le professionnel parfait !",
     "hero_subtitle": "Paiements sécurisés, suivi transparent, médiation incluse",
     "service_label": "De quel service avez-vous besoin ?",
     "location_label": "Localisation",
@@ -150,7 +151,7 @@
     "hour": "heure",
     "reviews": "avis",
     "kyc_verified": "KYC Vérifié",
-    "features_title": "Fonctionnalités",
+    "features_title": "Les fonctionnalités incluses",
     "secure_payment_title": "Paiement sécurisé",
     "secure_payment_desc": "Payez en toute sécurité sur notre plateforme avec un chiffrement complet et une protection pour chaque transaction.",
     "real_time_tracking_title": "Suivi en temps réel",
@@ -162,7 +163,18 @@
     "browse_categories_title": "Parcourir les Catégories",
     "browse_categories_desc": "Explorez tous les services disponibles et trouvez le professionnel parfait pour vos besoins.",
     "dispute_resolution_title": "Résolution de Litiges",
-    "dispute_resolution_desc": "Ayez l'esprit tranquille avec notre système de médiation intégré pour résoudre équitablement tout litige de projet."
+    "dispute_resolution_desc": "Ayez l'esprit tranquille avec notre système de médiation intégré pour résoudre équitablement tout litige de projet.",
+    "how_it_works_title": "Comment ça marche ?",
+    "how_it_works_step1": "Le prestataire entre son devis sur la plateforme et l'envoie à son client",
+    "how_it_works_step2": "Si le client valide le projet, il doit payer le montant du devis",
+    "how_it_works_step3": "Le montant du devis reste en séquestre jusqu'à la fin du projet",
+    "how_it_works_step4": "Une fois le projet terminé le vendeur peut demander via la plateforme à la libération de la somme séquestrée",
+    "why_choose_title": "Pourquoi passer par Safe Bill ?",
+    "why_choose_benefit1": "Safe Bill a la particularité de pouvoir libérer des paiements échelonnés.",
+    "why_choose_benefit2": "Chaque libération de montant est effectué par l'acheteur qui valide l'étape du processus de la transaction.",
+    "why_choose_benefit3": "Tout le monde est sécurisé.",
+    "why_choose_benefit4": "Le vendeur est sûr d'être payé.",
+    "why_choose_benefit5": "L'acheteur garde le contrôle sur la transaction et ne paie que s'il est satisfait."
   },
   "professional_detail": {
     "professional_services": "Services Professionnels",
@@ -1477,6 +1489,10 @@
     "click_to_select": "Cliquez sur la carte pour sélectionner un emplacement"
   },
   "find_professional": {
+    "hero_line1": "Trouvez",
+    "hero_line2_part1": "un",
+    "hero_line2_part2": "professionnel",
+    "hero_line3": "près de chez vous !",
     "find_local": "Trouver des professionnels locaux",
     "service_type": "Type de service",
     "area": "Zone",
