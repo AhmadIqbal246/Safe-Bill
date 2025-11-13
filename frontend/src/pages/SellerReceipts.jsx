@@ -5,6 +5,7 @@ import Loader from '../components/common/Loader';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import Logo from '../assets/Safe_Bill_Dark.png';
+import loginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -322,11 +323,17 @@ export default function SellerReceipts() {
   }
 
   return (
-      <MainLayout title={t('receipts.title')}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <>
+      {/* Scrollable Background Image Layer - covers entire viewport */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-cover"
+        style={{ backgroundImage: `url(${loginBg})` }}
+      />
+      <MainLayout title={t('receipts.title')} mainBackgroundClass="">
+        <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">{t('receipts.title')}</h1>
+          <h1 className="text-2xl font-bold text-[#2E78A6]">{t('receipts.title')}</h1>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="w-full sm:w-80">
               <input
@@ -680,5 +687,6 @@ export default function SellerReceipts() {
               })}
         </div>
       </MainLayout>
+    </>
   );
 }

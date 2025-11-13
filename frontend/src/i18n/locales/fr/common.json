@@ -1598,7 +1598,7 @@
     "milestone_description_title": "Description du Acompte"
   },
   "receipts": {
-    "title": "Reçus",
+    "title": "Factures",
     "search_placeholder": "Rechercher par nom du projet",
     "no_completed": "Aucun projet terminé.",
     "loading": "Chargement...",

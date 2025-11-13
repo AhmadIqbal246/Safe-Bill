@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import SubscriptionCard from '../RegisterComponents/SellerReg/SubscriptionCard';
+import HomeDashboardBg from '../../assets/Circle Background/home-dashboard-bg1.png';
 
 const paymentConfigs = [
   [
@@ -246,8 +247,14 @@ export default function ProjectCreation() {
   }, [success, error, dispatch, t, navigate, normalizeError]);
 
   return (
-    <div className="max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
-      <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">{t('project_creation.title')}</h1>
+    <div className="relative -m-6 min-h-screen">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${HomeDashboardBg})` }}
+      />
+      <div className="max-w-5xl mx-auto relative z-10 py-4 sm:py-10 px-2 sm:px-4">
+        <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8 text-[#2E78A6]">{t('project_creation.title')}</h1>
 
       {/* Subscription Card - shown when needs_subscription is true */}
       {eligibility?.needs_subscription && !eligibility?.membership_active && (
@@ -283,7 +290,7 @@ export default function ProjectCreation() {
           />
           <button
             type="button"
-            className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer text-sm sm:text-base"
+            className="px-4 sm:px-6 py-2 bg-[#2E78A6] text-white rounded-md font-semibold hover:bg-[#256a94] transition-colors cursor-pointer text-sm sm:text-base"
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
           >
             {quoteFile ? t('project_creation.change_file') : t('project_creation.upload')}
@@ -458,12 +465,13 @@ export default function ProjectCreation() {
           />
           <button
             type="submit"
-            className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors w-full sm:w-auto cursor-pointer text-sm sm:text-base"
+            className="px-4 sm:px-6 py-2 bg-[#2E78A6] text-white rounded-md font-semibold hover:bg-[#256a94] transition-colors w-full sm:w-auto cursor-pointer text-sm sm:text-base"
             disabled={loading}
           >
             {loading ? t('project_creation.sending') : t('project_creation.send_payment_invitation')}
           </button>
         </form>
+      </div>
       </div>
     </div>
   );

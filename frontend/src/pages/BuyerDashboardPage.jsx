@@ -207,12 +207,9 @@ export default function BuyerDashboardPage() {
     <>
       <SafeBillHeader />
       <div 
-        className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto"
+        className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto bg-top bg-no-repeat bg-contain"
         style={{
-          backgroundImage: `url(${loginRemovedBg})`,
-          backgroundSize: '100%',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'top'
+          backgroundImage: `url(${loginRemovedBg})`
         }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
@@ -223,13 +220,13 @@ export default function BuyerDashboardPage() {
           <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
             <button 
               onClick={() => navigate('/accept-project-invite')}
-              className="px-6 py-3 bg-[#10B981] text-white rounded-lg hover:bg-[#059669] transition-colors font-medium cursor-pointer"
+              className="px-6 py-3 bg-[#B0B0DB] text-white rounded-lg hover:bg-[#9a9ac7] transition-colors font-medium cursor-pointer"
             >
               {t('buyer_dashboard.accept_project_invite')}
             </button>
             <button 
               onClick={() => navigate('/disputes')}
-              className="px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
+              className="px-6 py-3 bg-[#2E78A6] text-white rounded-lg hover:bg-[#256a94] transition-colors font-medium cursor-pointer"
             >
               {t('buyer_dashboard.view_all_disputes')}
             </button>
@@ -271,7 +268,7 @@ export default function BuyerDashboardPage() {
 
         
         <div className="flex justify-center mt-8 sm:mt-10">
-          <button className="bg-[#153A7D] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#1a4086] transition-colors" onClick={() => navigate('/contact-us')}>
+          <button className="bg-[#2E78A6] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#256a94] transition-colors" onClick={() => navigate('/contact-us')}>
             {t('buyer_dashboard.contact_support')}
           </button>
         </div>

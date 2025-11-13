@@ -97,7 +97,7 @@ export default function SubscriptionCard() {
                 type="button"
                 onClick={handleSubscribe}
                 disabled={checkoutLoading}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 rounded-md bg-[#01257D] hover:bg-[#2346a0] text-white font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#01257D] disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 sm:px-6 py-2.5 sm:py-3 rounded-md bg-[#2E78A6] hover:bg-[#256a94] cursor-pointer text-white font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2E78A6] disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {checkoutLoading ? "Redirecting…" : t('subscription_card.cta')}
               </button>

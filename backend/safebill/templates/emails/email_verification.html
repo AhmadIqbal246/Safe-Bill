@@ -5,31 +5,31 @@
 {% block header_subtitle %}Email Verification Required{% endblock %}
 
 {% block content %}
-<h2>Verify Your Email Address</h2>
+<h2 style="color: #3535AA;">Verify Your Email Address</h2>
 
-<p>Hello {{ user_name }}!</p>
+<p>Hello {{ first_name }}!</p>
 
 <p>Welcome to {{ site_name }}! To complete your registration{% if user_type %} as a {{ user_type }}{% endif %}, please verify your email address using one of the methods below:</p>
 
 <!-- Method 1: Click the button -->
 <div style="text-align: center; margin: 30px 0;">
-    <a href="{{ verification_url }}" class="btn">Verify Email Address</a>
+    <a href="{{ verification_url }}" class="btn" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Verify Email Address</a>
 </div>
 
 <!-- Method 2: Manual verification code -->
-<div class="highlight">
+<div class="highlight" style="background-color: #eff6ff; border-left: 4px solid #3535AA; padding: 16px; margin: 20px 0; border-radius: 4px;">
     <p><strong>Alternative Method:</strong> You can also verify your email by entering this verification code on our website:</p>
-    <div style="background-color: #f8f9fa; padding: 16px; border-radius: 6px; text-align: center; margin: 16px 0;">
-        <p style="font-family: monospace; font-size: 18px; font-weight: bold; color: #1e3a8a; margin: 0; letter-spacing: 2px;">
+    <div style="background-color: #f8f9fa; padding: 16px; border-radius: 6px; text-align: center; margin: 16px 0; border: 2px solid #3535AA;">
+        <p style="font-family: monospace; font-size: 18px; font-weight: bold; color: #3535AA; margin: 0; letter-spacing: 2px;">
             {{ verification_code|default:"Click the button above" }}
         </p>
     </div>
     <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0;">
-        Go to: <a href="{{ frontend_verification_url }}" style="color: #3b82f6;">{{ frontend_verification_url }}</a>
+        Go to: <a href="{{ frontend_verification_url }}" style="color: #3535AA;">{{ frontend_verification_url }}</a>
     </p>
 </div>
 
-<div class="highlight">
+<div class="highlight" style="background-color: #eff6ff; border-left: 4px solid #3535AA; padding: 16px; margin: 20px 0; border-radius: 4px;">
     <p><strong>Important:</strong> This verification link and code will expire in 24 hours for security reasons.</p>
 </div>
 

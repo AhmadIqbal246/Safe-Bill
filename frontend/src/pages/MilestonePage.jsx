@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Dialog } from '@headlessui/react';
 import { toast } from 'react-toastify';
 import { Edit, Upload, Cloud } from 'lucide-react';
+import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function MilestonePage() {
   const { t, i18n } = useTranslation();
@@ -269,7 +270,7 @@ export default function MilestonePage() {
       const isSubmitting = submittingMilestoneId === milestone.id;
       return (
         <button
-          className="px-3 py-1 bg-[#01257D] text-white rounded-md font-medium hover:bg-[#2346a0] transition-colors text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 bg-[#2E78A6] text-white rounded-md font-medium hover:bg-[#256a94] transition-colors text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
           onClick={() => handleSubmitForApproval(milestone)}
         >
@@ -284,7 +285,13 @@ export default function MilestonePage() {
   return (
     <>
     <SafeBillHeader/>
-    <div className="max-w-3xl mx-auto py-8 px-4">
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="max-w-3xl mx-auto relative z-10 py-8 px-4">
 
       <button
         className="mb-6 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 cursor-pointer"
@@ -292,7 +299,7 @@ export default function MilestonePage() {
       >
         ← {t('milestones.back_to_projects')}
       </button>
-      <h2 className="text-2xl md:text-3xl font-bold mb-6">{t('milestones.page_title')}: <span className="text-[#01257D]">{project?.name}</span></h2>
+      <h2 className="text-2xl md:text-3xl font-bold mb-6"><span className="text-[#2E78A6]">{t('milestones.page_title')}:</span> <span className="text-[#01257D]">{project?.name}</span></h2>
       {milestonesLoading ? (
         <div className="py-12 text-center text-gray-400">{t('milestones.loading')}</div>
       ) : milestonesError ? (
@@ -666,6 +673,7 @@ export default function MilestonePage() {
           </Dialog.Panel>
         </div>
       </Dialog>
+      </div>
     </div>
     </>
   );

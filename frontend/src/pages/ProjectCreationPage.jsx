@@ -4,8 +4,8 @@ import MainLayout from '../components/Layout/MainLayout'
 
 export default function ProjectCreationPage() {
   return (
-    <MainLayout>
-    <ProjectCreation/>  
+    <MainLayout mainBackgroundClass="bg-transparent">
+      <ProjectCreation/>  
     </MainLayout>
   )
 }

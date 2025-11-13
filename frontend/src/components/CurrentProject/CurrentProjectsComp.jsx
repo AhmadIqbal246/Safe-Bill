@@ -5,6 +5,7 @@ import { fetchProjects } from '../../store/slices/ProjectSlice';
 import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDialogue';
 import { useTranslation } from 'react-i18next';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
+import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 export default function CurrentProjectsComp() {
   const { t } = useTranslation();
@@ -43,15 +44,21 @@ export default function CurrentProjectsComp() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <h2 className="text-2xl md:text-3xl font-bold mb-6">{t('current_projects.in_progress_title')}</h2>
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="max-w-4xl mx-auto relative z-10 py-8 px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-[#2E78A6]">{t('current_projects.in_progress_title')}</h2>
       
       {/* Search Bar */}
       <div className="mb-6 flex justify-start sm:justify-center">
         <input
           type="text"
           placeholder={t('current_projects.search_placeholder')}
-          className="w-[100%] sm:w-full px-3 py-3 rounded-md border border-gray-200 bg-[#E6F0FA] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+          className="w-[100%] sm:w-full px-3 py-3 rounded-md border border-gray-200 bg-[#C1E7FF] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -63,7 +70,7 @@ export default function CurrentProjectsComp() {
       ) : error ? (
         <div className="py-12 text-center text-red-500">{typeof error === 'string' ? error : t('current_projects.failed_load_projects')}</div>
       ) : currentProject ? (
-        <div className="bg-[#E6F4FF] rounded-lg p-6 mb-8 flex flex-col gap-4">
+        <div className="bg-[#C1E7FF] rounded-lg p-6 mb-8 flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
               <div className="text-lg font-semibold text-[#01257D]">{currentProject.name}</div>
@@ -74,7 +81,7 @@ export default function CurrentProjectsComp() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 mt-2 md:mt-0">
               <button
-                className="px-4 py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-sm cursor-pointer"
+                className="px-4 py-2 bg-[#2E78A6] text-white rounded-lg font-semibold hover:bg-[#256a94] transition-colors text-sm cursor-pointer"
                 onClick={() => handleViewDetails(currentProject)}
               >
                 {t('current_projects.view_details')}
@@ -162,6 +169,7 @@ export default function CurrentProjectsComp() {
         onClose={() => setDialogOpen(false)}
         project={dialogProject}
       />
+      </div>
     </div>
   );
 }

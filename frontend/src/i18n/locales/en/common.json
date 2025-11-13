@@ -1650,7 +1650,7 @@
     "milestone_description_title": "Milestone Description"
   },
   "receipts": {
-    "title": "Receipts",
+    "title": "Invoices",
     "search_placeholder": "Search by project name",
     "no_completed": "No completed projects.",
     "loading": "Loading...",
