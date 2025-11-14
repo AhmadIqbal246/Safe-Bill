@@ -206,27 +206,28 @@ export default function BuyerDashboardPage() {
   return (
     <>
       <SafeBillHeader />
-      <div 
-        className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto bg-top bg-no-repeat bg-contain"
-        style={{
-          backgroundImage: `url(${loginRemovedBg})`
-        }}
-      >
+      <div className="relative -m-6 min-h-screen">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-[length:100%]"
+          style={{ backgroundImage: `url(${loginRemovedBg})` }}
+        />
+        <div className="p-4 sm:p-8 min-h-screen w-full max-w-7xl mx-auto relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
-          <div>
+          <div className="ml-6 mt-2 sm:ml-0 sm:mt-0">
             <h2 className="text-2xl sm:text-3xl font-semibold mb-1">{t('buyer_dashboard.title')}</h2>
             <div className="text-gray-500">{t('buyer_dashboard.subtitle')}</div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 mt-4 sm:mt-0">
             <button 
               onClick={() => navigate('/accept-project-invite')}
-              className="px-6 py-3 bg-[#B0B0DB] text-white rounded-lg hover:bg-[#9a9ac7] transition-colors font-medium cursor-pointer"
+              className="px-6 py-3 bg-[#B0B0DB] text-white rounded-lg hover:bg-[#9a9ac7] transition-colors font-medium cursor-pointer w-[70%] sm:w-auto"
             >
               {t('buyer_dashboard.accept_project_invite')}
             </button>
             <button 
               onClick={() => navigate('/disputes')}
-              className="px-6 py-3 bg-[#2E78A6] text-white rounded-lg hover:bg-[#256a94] transition-colors font-medium cursor-pointer"
+              className="px-6 py-3 bg-[#2E78A6] text-white rounded-lg hover:bg-[#256a94] transition-colors font-medium cursor-pointer w-[70%] sm:w-auto"
             >
               {t('buyer_dashboard.view_all_disputes')}
             </button>
@@ -271,6 +272,7 @@ export default function BuyerDashboardPage() {
           <button className="bg-[#2E78A6] text-white border-none rounded-lg px-6 sm:px-8 py-3 font-medium text-sm sm:text-base cursor-pointer hover:bg-[#256a94] transition-colors" onClick={() => navigate('/contact-us')}>
             {t('buyer_dashboard.contact_support')}
           </button>
+        </div>
         </div>
       </div>
       

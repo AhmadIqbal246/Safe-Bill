@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import SubscriptionCard from '../RegisterComponents/SellerReg/SubscriptionCard';
-import HomeDashboardBg from '../../assets/Circle Background/home-dashboard-bg1.png';
+import loginRemovedBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 const paymentConfigs = [
   [
@@ -250,8 +250,8 @@ export default function ProjectCreation() {
     <div className="relative -m-6 min-h-screen">
       {/* Full-page background layer */}
       <div
-        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
-        style={{ backgroundImage: `url(${HomeDashboardBg})` }}
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-[length:100%]"
+        style={{ backgroundImage: `url(${loginRemovedBg})` }}
       />
       <div className="max-w-5xl mx-auto relative z-10 py-4 sm:py-10 px-2 sm:px-4">
         <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8 text-[#2E78A6]">{t('project_creation.title')}</h1>
