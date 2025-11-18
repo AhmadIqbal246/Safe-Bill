@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import SafeBillHeader from './Navbar/Navbar';
 import Footer from './Footer';
 import { useTranslation } from 'react-i18next';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { submitContactMessage, resetFeedbackState } from '../../store/slices/FeedbackSlices';
 import ContactBg from '../../assets/Circle Background/contact-us-bg.jpg';
 
-const Email = import.meta.env.VITE_SAFE_BILL_EMAIL || 'safe.bill.office@gmail.com';
-const PhoneNumber = import.meta.env.VITE_SAFE_BILL_PHONE_NUMBER || '+0 00 000 0000';
-const AddressLine = import.meta.env.VITE_SAFE_BILL_ADDRESS || '123 Safe Bill Street Suite 100, Business City, 90210';
+const Email = import.meta.env.VITE_SAFE_BILL_EMAIL || 'contact@safebill.fr';
+const AddressLine = import.meta.env.VITE_SAFE_BILL_ADDRESS || 'Safe Bill 66 avenue des Champs Elysées 75008 Paris';
 export default function ContactUs() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -106,13 +105,6 @@ export default function ContactUs() {
                   <div className="text-sm sm:text-base text-gray-700">
                     <p className="font-medium">{t('contact_us.email_label')}</p>
                     <p>{Email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Phone className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
-                  <div className="text-sm sm:text-base text-gray-700">
-                    <p className="font-medium">{t('contact_us.phone_label')}</p>
-                    <p>{PhoneNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">

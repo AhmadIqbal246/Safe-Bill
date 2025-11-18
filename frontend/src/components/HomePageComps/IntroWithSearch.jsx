@@ -76,23 +76,23 @@ export default function IntroWithSearch() {
   const getHeroTitleParts = () => {
     const title = t('homepage.hero_title');
     // Split the title to apply different colors
-    // Pattern: "Plateforme de confiance pour vos projets" or "Trusted platform for your projects"
-    if (title.includes('de confiance')) {
+    // Pattern: "La confiance au cœur de vos projets" or "Trust at the heart of your projects"
+    if (title.includes('au cœur')) {
       // French version
-      const parts = title.split(' de confiance ');
+      const parts = title.split(' au cœur ');
       return {
-        part1: parts[0] + ' ', // "Plateforme "
-        part2: 'de confiance', // "de confiance"
-        part3: ' ' + parts[1] // " pour vos projets"
+        part1: parts[0] + ' ', // "La confiance "
+        part2: 'au cœur', // "au cœur"
+        part3: ' ' + parts[1] // " de vos projets"
       };
     } else {
-      // English version - split at "platform"
-      const parts = title.split(' platform ');
+      // English version - split at "at the heart"
+      const parts = title.split(' at the heart ');
       if (parts.length === 2) {
         return {
-          part1: parts[0] + ' ', // "Trusted "
-          part2: 'platform', // "platform"
-          part3: ' ' + parts[1] // " for your projects"
+          part1: parts[0] + ' ', // "Trust "
+          part2: 'at the heart', // "at the heart"
+          part3: ' ' + parts[1] // " of your projects"
         };
       }
       // Fallback if pattern doesn't match

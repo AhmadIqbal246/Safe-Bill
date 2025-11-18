@@ -91,7 +91,7 @@
     "total_payment_required": "Total Payment Required",
     "project_amount": "Project Amount",
     "vat": "VAT",
-    "agree_terms": "I agree to the terms and conditions of this project and payment schedule.",
+    "agree_terms": "By checking this box, I commit to completing the project and waive my right of withdrawal",
     "processing_payment": "Processing Payment",
     "processing_payment_wait": "Processing your payment, please wait...",
     "payment_status": "Payment Status",
@@ -135,7 +135,7 @@
     "socials": "Socials"
   },
   "homepage": {
-    "hero_title": "Trusted platform for your projects",
+    "hero_title": "Trust at the heart of your projects",
     "hero_subtitle_line": "Find the perfect professional!",
     "hero_subtitle": "Secure payments, transparent tracking, mediation included",
     "service_label": "What service do you need?",

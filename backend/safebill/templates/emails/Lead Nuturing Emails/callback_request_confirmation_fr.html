@@ -5,19 +5,72 @@
 {% block header_subtitle %}Nous avons bien reçu votre demande de rappel{% endblock %}
 
 {% block content %}
-<h2>Merci pour votre demande, {{ first_name }} !</h2>
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Merci pour votre demande !
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Notre équipe vous recontactera très bientôt
+        </p>
+    </div>
 
-<p>Nous avons bien reçu votre demande de rappel et notre équipe vous contactera rapidement.</p>
-<p>Pour une aide immédiate ou pour partager plus de détails, vous pouvez nous joindre à tout moment.</p>
-<p>Merci pour votre intérêt pour {{ site_name }}. Nous avons hâte d’échanger avec vous.</p>
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Bonjour {{ first_name }} ! 👋
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 16px 0 0 0;">
+            Nous avons bien reçu votre demande de rappel et un membre de notre équipe vous contactera dès que possible.
+        </p>
+    </div>
 
-<p>Si vous avez d'autres questions, vous pouvez nous contacter via le lien ci-dessous.</p>
+    <!-- Request Confirmation -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">
+            📞 Ce qui va se passer
+        </h3>
+        <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0;">
+            Nous vous appellerons ou vous enverrons un email pour comprendre vos besoins et vous guider sur {{ site_name }}.
+        </p>
+    </div>
 
-<div style="text-align: center; margin: 24px 0; padding: 10px;">
-    <a href="{{ contact_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Nous contacter</a>
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ contact_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Nous contacter
+        </a>
+    </div>
+
+    <!-- Helpful Info -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">
+            ℹ️ Besoin d'aide supplémentaire ?
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Partagez plus d’informations en répondant à cet email ou via le lien de contact ci-dessus.
+        </p>
+    </div>
+
+    <!-- Security Notice -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">
+            🔐 Vous n’êtes pas à l’origine de cette demande ?
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Ignorez simplement ce message ou contactez notre équipe support pour toute question.
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Merci pour votre confiance en {{ site_name }}.<br>
+            À très bientôt !
+        </p>
+    </div>
 </div>
-
-<p>Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer ce message.</p>
 {% endblock %}
 
 

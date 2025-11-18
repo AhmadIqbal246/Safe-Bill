@@ -5,34 +5,66 @@
 {% block header_subtitle %}Build trust, get paid securely, grow steadily{% endblock %}
 
 {% block content %}
-<h2>Hi {{ first_name }}, become a success story on {{ site_name }}.</h2>
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Your success story starts here
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Thousands of entrepreneurs scale their work with {{ site_name }}
+        </p>
+    </div>
 
-<p>Thousands of entrepreneurs use {{ site_name }} to win projects, protect payments in escrow, and grow with confidence. Here’s what makes the difference:</p>
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Hi {{ first_name }}! 👋
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 16px 0 0 0;">
+            Win better projects, keep payments secure, and deliver confidently with milestone-based workflows.
+        </p>
+    </div>
 
-<div class="highlight">
-  <ul style="margin:0; padding-left:18px;">
-    <li><strong>Secure payments:</strong> funds are held safely in escrow and released on approved milestones.</li>
-    <li><strong>Crystal‑clear milestones:</strong> align expectations and keep projects moving without friction.</li>
-    <li><strong>Faster trust‑building:</strong> a professional workflow that reassures your clients from day one.</li>
-  </ul>
-  
+    <!-- Success Pillars -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🌟 What top performers do
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #3535AA; font-size: 16px; line-height: 1.8;">
+            <li><strong>Secure payments:</strong> funds stay in escrow until milestones are approved</li>
+            <li><strong>Clarity at every step:</strong> files, comments, and approvals live in one place</li>
+            <li><strong>Trust on day one:</strong> a professional experience clients love</li>
+        </ul>
+    </div>
+
+    <!-- Steps -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🧭 Three steps to your next win
+        </h3>
+        <ol style="margin: 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+            <li>Log in to your account</li>
+            <li>Create a project with clear milestones</li>
+            <li>Invite your client and keep everything on track</li>
+        </ol>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ login_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Log in & keep growing
+        </a>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Prefer to explore first? <a href="{{ dashboard_url }}" style="color: #3535AA; text-decoration: underline;">Visit your dashboard</a> or email us at <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+    </div>
 </div>
-
-<h3 style="color:#1e3a8a; margin-top:24px;">3 steps to your next win</h3>
-<ol style="margin:0; padding-left:18px; color:#4b5563;">
-  <li>Log in to your account.</li>
-  <li>Create a clear project with milestones and timelines.</li>
-  <li>Invite your client and keep everything on track in one place.</li>
-</ol>
-
-<p style="margin-top:16px;">Whether you’re just starting out or scaling up, {{ site_name }} helps you deliver confidently and get paid on time.</p>
-
-<div style="text-align: center; margin: 24px 0;">
-  <a href="{{ login_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Log in</a>
-  
-</div>
-
-<p style="text-align:center;">Prefer to explore first? <a href="{{ dashboard_url }}" style="color:#1e3a8a; text-decoration:underline;">Visit your dashboard</a> or <a href="{{ support_email }}" style="color:#1e3a8a; text-decoration:underline;">contact support</a>.</p>
 {% endblock %}
+
 
 

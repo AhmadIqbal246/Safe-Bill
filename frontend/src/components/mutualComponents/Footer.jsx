@@ -1,11 +1,11 @@
 import React from 'react';
-import { Mail, Phone, Facebook, Instagram } from 'lucide-react';
+import { Mail, MapPin, Facebook, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Logo from '../../assets/Safe_Bill_Dark.png';
 
-const Email = import.meta.env.VITE_SAFE_BILL_EMAIL || 'safe.bill.office@gmail.com';
-const PhoneNumber = import.meta.env.VITE_SAFE_BILL_PHONE_NUMBER || '+0 00 000 0000';
+const Email = 'contact@safebill.fr';
+const Address = 'Safe Bill 66 avenue des Champs Elysées 75008 Paris';
 export default function Footer() {
   const { t } = useTranslation();
 
@@ -62,10 +62,10 @@ export default function Footer() {
             <Mail className="w-5 h-5" />
             {Email}
           </a>
-          <a href={`tel:${PhoneNumber.replace(/\\s+/g, '')}`} className="flex items-center gap-2 text-white">
-            <Phone className="w-5 h-5" />
-            {PhoneNumber}
-          </a>
+          <div className="flex items-center gap-2 text-white">
+            <MapPin className="w-5 h-5" />
+            {Address}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-white mr-2">{t('footer.socials')}</span>

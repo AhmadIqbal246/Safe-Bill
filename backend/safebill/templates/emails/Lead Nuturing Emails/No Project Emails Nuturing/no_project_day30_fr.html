@@ -5,15 +5,56 @@
 {% block header_subtitle %}Commencez maintenant en toute confiance{% endblock %}
 
 {% block content %}
-<h2>Besoin d’un coup de pouce pour démarrer ?</h2>
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Besoin d’un coup de pouce pour démarrer ?
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Nous sommes là pour vous aider à lancer en toute sérénité
+        </p>
+    </div>
 
-<p>Notre équipe est disponible si vous avez des questions. Lancez un projet maintenant ou explorez des professionnels pour avancer.</p>
+    <!-- Support Message -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Cela fait un mois que vous avez rejoint {{ site_name }}. Que vous soyez prêt à lancer un projet ou encore en réflexion, nous pouvons vous accompagner.
+        </p>
+    </div>
 
-<div style="text-align: center; margin: 24px 0;">
-  <a href="{{ login_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Se connecter</a>
+    <!-- Support Options -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🤝 Ce que nous pouvons faire pour vous
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #3535AA; font-size: 16px; line-height: 1.8;">
+            <li>Configurer votre projet et vos jalons</li>
+            <li>Vous mettre en relation avec des professionnels vérifiés</li>
+            <li>Répondre à toutes vos questions sur les paiements ou le workflow</li>
+        </ul>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ login_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Se connecter pour démarrer
+        </a>
+    </div>
+
+    <!-- Secondary CTA -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Vous préférez explorer ? <a href="{{ find_professionals_url }}" style="color: #3535AA; text-decoration: underline;">Découvrez nos professionnels vérifiés</a> ou consultez votre <a href="{{ dashboard_url }}" style="color: #3535AA; text-decoration: underline;">tableau de bord</a>.
+        </p>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Besoin d’aide ? Contactez-nous à <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+    </div>
 </div>
-
-<p style="text-align:center;">ou <a href="{{ find_professionals_url }}" style="color:#1e3a8a; text-decoration:underline;">Trouver des professionnels</a></p>
 {% endblock %}
-
 

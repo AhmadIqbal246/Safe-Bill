@@ -5,16 +5,53 @@
 {% block header_subtitle %}Gérez vos projets en toute confiance{% endblock %}
 
 {% block content %}
-<h2>Bonjour {{ first_name }}, prêt à créer votre premier projet ?</h2>
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Lancez votre premier projet
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Cela fait une semaine — faisons avancer vos idées
+        </p>
+    </div>
 
-<p>Ça fait une semaine que vous avez rejoint {{ site_name }}. Créez votre premier projet et gérez-le en toute sécurité avec des paiements par jalons.</p>
-<p>Vous pouvez aussi parcourir les services et trouver des professionnels vérifiés.</p>
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Bonjour {{ first_name }} ! 👋
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 16px 0 0 0;">
+            Créez votre premier projet sur {{ site_name }}, sécurisez vos paiements en escrow et avancez par jalons.
+        </p>
+    </div>
 
-<div style="text-align: center; margin: 24px 0;">
-  <a href="{{ login_url }}" class="btn" style="background-color:#1e3a8a;color:#ffffff !important;padding:12px 24px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.15);">Se connecter</a>
+    <!-- Benefits -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🚀 Pourquoi commencer maintenant ?
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #3535AA; font-size: 16px; line-height: 1.8;">
+            <li>Planifiez vos étapes avec des jalons approuvés</li>
+            <li>Sécurisez les paiements jusqu’à validation</li>
+            <li>Travaillez avec des échéances transparentes</li>
+        </ul>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ login_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Se connecter & créer
+        </a>
+    </div>
+
+    <!-- Explore Option -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; text-align: center;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Vous préférez explorer d’abord ? <a href="{{ find_professionals_url }}" style="color: #3535AA; text-decoration: underline;">Parcourez nos professionnels vérifiés</a> à tout moment.
+        </p>
+    </div>
 </div>
-
-<p style="text-align:center;">ou <a href="{{ find_professionals_url }}" style="color:#1e3a8a; text-decoration:underline;">Trouver des professionnels</a></p>
 {% endblock %}
 
 

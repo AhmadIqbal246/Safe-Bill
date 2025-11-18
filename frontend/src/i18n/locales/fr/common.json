@@ -91,7 +91,7 @@
     "total_payment_required": "Paiement Total Requis",
     "project_amount": "Montant du Projet",
     "vat": "TVA",
-    "agree_terms": "J'accepte les termes et conditions de ce projet et du calendrier de paiement.",
+    "agree_terms": "En cochant cette case, je m'engage à terminer le projet et renonce à mon droit de rétractation",
     "processing_payment": "Traitement du Paiement",
     "processing_payment_wait": "Traitement de votre paiement, veuillez patienter...",
     "payment_status": "Statut du Paiement",
@@ -136,7 +136,7 @@
     "socials": "Réseaux sociaux"
   },
   "homepage": {
-    "hero_title": "Plateforme de confiance pour vos projets",
+    "hero_title": "La confiance au cœur de vos projets",
     "hero_subtitle_line": "Trouvez le professionnel parfait !",
     "hero_subtitle": "Paiements sécurisés, suivi transparent, médiation incluse",
     "service_label": "De quel service avez-vous besoin ?",

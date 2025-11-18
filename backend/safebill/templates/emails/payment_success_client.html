@@ -5,17 +5,79 @@
 {% block header_subtitle %}Payment Confirmation{% endblock %}
 
 {% block content %}
-<h2>Payment Successful</h2>
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Payment Successful
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Your payment has been confirmed
+        </p>
+    </div>
 
-<p>Hello {{ first_name }},</p>
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Hello {{ first_name }}! 👋
+        </p>
+    </div>
 
-<div class="success">
-  <p>We have received your payment of <strong>{{ amount }}</strong> for the project <strong>{{ project_name }}</strong>.</p>
-  <p>Your project is now moving forward. You can review the status and details from your dashboard.</p>
-  <div style="text-align: center; margin: 20px 0;">
-    <a href="{{ dashboard_url }}" class="btn">Go to Dashboard</a>
-  </div>
-  <p style="margin: 0;">If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
-  <div class="divider"></div>
-  <p style="margin: 0; color:#6b7280; font-size: 14px;">This message was sent by {{ site_name }}.</p>
+    <!-- Success Message - Blue Background -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center;">
+        <h2 style="color: #3535AA; font-size: 20px; font-weight: 600; margin: 0 0 15px 0;">
+            ✅ Payment Received
+        </h2>
+        <p style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">
+            {{ amount }}
+        </p>
+        <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+            We have successfully received your payment for the project <strong>{{ project_name }}</strong>.
+        </p>
+        <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0;">
+            Your project is now moving forward!
+        </p>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ dashboard_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Go to Dashboard
+        </a>
+    </div>
+
+    <!-- Project Details - Gray Background -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            📋 Project Details
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
+            <strong>Project:</strong> {{ project_name }}
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
+            <strong>Amount:</strong> {{ amount }}
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            You can review the status and details from your dashboard at any time.
+        </p>
+    </div>
+
+    <!-- Support - Gray Background -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            💬 Need Help?
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            If you have any questions about this payment, please contact us at <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Best regards,<br>
+            The {{ site_name }} Team
+        </p>
+    </div>
+</div>
 {% endblock %}
