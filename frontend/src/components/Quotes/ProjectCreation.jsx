@@ -12,16 +12,16 @@ import loginRemovedBg from '../../assets/Circle Background/login-removed-bg.jpg'
 
 const paymentConfigs = [
   [
-    { amount: '€1000', step: 'Quote Acceptance', desc: 'Full payment upon quote acceptance.' },
+    { amount: '€1000', step: 'Step 1', desc: 'Full payment upon quote acceptance.' },
   ],
   [
-    { amount: '€600', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€400', step: 'Project Completion', desc: 'Final payment upon project completion.' },
+    { amount: '€600', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€400', step: 'Step 3', desc: 'Final payment upon project completion.' },
   ],
   [
-    { amount: '€500', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€300', step: 'Project Start', desc: 'Payment due at the start of the project.' },
-    { amount: '€200', step: 'Project Completion', desc: 'Final payment upon project completion.' },
+    { amount: '€500', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€300', step: 'Step 2', desc: 'Payment due at the start of the project.' },
+    { amount: '€200', step: 'Step 3', desc: 'Final payment upon project completion.' },
   ],
 ];
 
@@ -110,7 +110,7 @@ export default function ProjectCreation() {
 
   const handleEditSave = (idx) => {
     const updated = [...installmentRows];
-    updated[idx] = { ...editRow };
+    updated[idx] = { ...editRow, step: installmentRows[idx].step };
     setInstallmentRows(updated);
     setEditingIndex(null);
   };
@@ -362,14 +362,8 @@ export default function ProjectCreation() {
                           className="w-16 sm:w-20 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
-                        <input
-                          type="text"
-                          name="step"
-                          value={editRow.step}
-                          onChange={handleEditChange}
-                          className="w-24 sm:w-32 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
-                        />
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-700">
+                        {milestone.step}
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input

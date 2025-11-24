@@ -223,7 +223,7 @@ def orchestrate_no_project_nurture_task(self):
 
         # REQUIRED minute thresholds from env (no fallbacks)
         minute_overrides = {
-            'day7': int(os.environ['NO_PROJECT_MINUTES_DAY7']),
+            # 'day7': int(os.environ['NO_PROJECT_MINUTES_DAY7']),  # temporarily disabled
             'day14': int(os.environ['NO_PROJECT_MINUTES_DAY14']),
             'day30': int(os.environ['NO_PROJECT_MINUTES_DAY30']),
         }
@@ -252,7 +252,7 @@ def orchestrate_no_project_nurture_task(self):
                 send_batch_no_project_nurture_emails_task.delay(step, user_ids, batch_number)
                 logger.info(f"No-project {step}: Queued batch {batch_number} with {len(user_ids)} users")
 
-        enqueue_for('day7')
+        # enqueue_for('day7')  # temporarily disabled
         enqueue_for('day14')
         enqueue_for('day30')
 

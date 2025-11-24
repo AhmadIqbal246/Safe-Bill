@@ -747,8 +747,10 @@ class EmailService:
                 subject = translation.gettext("We’re here to help you get started")
                 template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day30"
             else:
-                subject = translation.gettext("Get started on Safe Bill today")
-                template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day7"
+                logger.info("Day 7 no-project nurture email temporarily disabled; skipping send")
+                return False
+                # subject = translation.gettext("Get started on Safe Bill today")
+                # template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day7"
 
         return EmailService.send_email(
             subject=subject,

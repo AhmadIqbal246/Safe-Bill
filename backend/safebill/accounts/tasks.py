@@ -263,88 +263,100 @@ def send_batch_success_story_emails_task(self, user_ids, batch_number=0):
 		user_ids: List of user IDs to send emails to
 		batch_number: Batch number for logging purposes
 	"""
-	campaign_key = 'success_story_day20'
-	connection = None
-	successful = 0
-	failed = 0
-	skipped = 0
-	
-	try:
-		# Get SMTP connection (Django caches it)
-		connection = get_connection()
-		
-		# Open connection once (authenticates once for entire batch)
-		connection.open()
-		logger.info(f"Success story email batch {batch_number}: Opened SMTP connection for batch of {len(user_ids)} users")
-		
-		# Send emails to all users in batch using the same connection
-		for user_id in user_ids:
-			try:
-				user = User.objects.get(pk=user_id)
-				first_name = user.get_full_name() or user.username or (user.email.split('@')[0] if user.email else '')
-				
-				# Check if email has already been sent to this user (duplicate prevention)
-				if EmailLog.objects.filter(user=user, campaign_key=campaign_key).exists():
-					skipped += 1
-					continue
-				
-				# Default to French - replace this with actual language detection logic
-				language = 'fr'
-				
-				# Send email using shared connection
-				result = EmailService.send_success_story_email(
-					user_email=user.email,
-					first_name=first_name,
-					language=language,
-					connection=connection,  # Reuse connection
-				)
-				
-				if result:
-					# Log email send immediately
-					EmailLog.objects.get_or_create(
-						user=user,
-						campaign_key=campaign_key,
-						defaults={'status': 'sent'}
-					)
-					successful += 1
-				else:
-					failed += 1
-				
-				# Delay between emails to prevent rate limiting (configurable via .env)
-				# Default: 0.3 seconds (300ms) - safer than 0.1s for SMTP servers
-				delay_seconds = float(os.environ.get('EMAIL_BATCH_DELAY_SECONDS', '0.3'))
-				time.sleep(delay_seconds)
-				
-			except User.DoesNotExist:
-				logger.warning(f"Success story email batch {batch_number}: User {user_id} not found")
-				failed += 1
-			except Exception as e:
-				logger.error(f"Success story email batch {batch_number}: Error sending to user {user_id}: {e}")
-				failed += 1
-		
-		logger.info(
-			f"Success story email batch {batch_number}: Completed sending to {len(user_ids)} users "
-			f"(successful: {successful}, failed: {failed}, skipped: {skipped})"
-		)
-		
-		return {
-			'successful': successful,
-			'failed': failed,
-			'skipped': skipped,
-			'total': len(user_ids)
-		}
-		
-	except Exception as exc:
-		logger.error(f"Success story email batch {batch_number}: Error in batch processing: {exc}")
-		self.retry(exc=exc, countdown=2 ** self.request.retries)
-	finally:
-		# Always close connection
-		if connection:
-			try:
-				connection.close()
-				logger.info(f"Success story email batch {batch_number}: Closed SMTP connection")
-			except Exception as e:
-				logger.error(f"Success story email batch {batch_number}: Error closing connection: {e}")
+	logger.info(
+		f"Success story email batch {batch_number}: sending temporarily disabled; "
+		f"skipping {len(user_ids)} users"
+	)
+	return {
+		'successful': 0,
+		'failed': 0,
+		'skipped': len(user_ids),
+		'total': len(user_ids)
+	}
+
+	# --- Original implementation retained for future re-enable ---
+	# campaign_key = 'success_story_day20'
+	# connection = None
+	# successful = 0
+	# failed = 0
+	# skipped = 0
+	#
+	# try:
+	# 	# Get SMTP connection (Django caches it)
+	# 	connection = get_connection()
+	#
+	# 	# Open connection once (authenticates once for entire batch)
+	# 	connection.open()
+	# 	logger.info(f"Success story email batch {batch_number}: Opened SMTP connection for batch of {len(user_ids)} users")
+	#
+	# 	# Send emails to all users in batch using the same connection
+	# 	for user_id in user_ids:
+	# 		try:
+	# 			user = User.objects.get(pk=user_id)
+	# 			first_name = user.get_full_name() or user.username or (user.email.split('@')[0] if user.email else '')
+	#
+	# 			# Check if email has already been sent to this user (duplicate prevention)
+	# 			if EmailLog.objects.filter(user=user, campaign_key=campaign_key).exists():
+	# 				skipped += 1
+	# 				continue
+	#
+	# 			# Default to French - replace this with actual language detection logic
+	# 			language = 'fr'
+	#
+	# 			# Send email using shared connection
+	# 			result = EmailService.send_success_story_email(
+	# 				user_email=user.email,
+	# 				first_name=first_name,
+	# 				language=language,
+	# 				connection=connection,  # Reuse connection
+	# 			)
+	#
+	# 			if result:
+	# 				# Log email send immediately
+	# 				EmailLog.objects.get_or_create(
+	# 					user=user,
+	# 					campaign_key=campaign_key,
+	# 					defaults={'status': 'sent'}
+	# 				)
+	# 				successful += 1
+	# 			else:
+	# 				failed += 1
+	#
+	# 			# Delay between emails to prevent rate limiting (configurable via .env)
+	# 			# Default: 0.3 seconds (300ms) - safer than 0.1s for SMTP servers
+	# 			delay_seconds = float(os.environ.get('EMAIL_BATCH_DELAY_SECONDS', '0.3'))
+	# 			time.sleep(delay_seconds)
+	#
+	# 		except User.DoesNotExist:
+	# 			logger.warning(f"Success story email batch {batch_number}: User {user_id} not found")
+	# 			failed += 1
+	# 		except Exception as e:
+	# 			logger.error(f"Success story email batch {batch_number}: Error sending to user {user_id}: {e}")
+	# 			failed += 1
+	#
+	# 	logger.info(
+	# 		f"Success story email batch {batch_number}: Completed sending to {len(user_ids)} users "
+	# 		f"(successful: {successful}, failed: {failed}, skipped: {skipped})"
+	# 	)
+	#
+	# 	return {
+	# 		'successful': successful,
+	# 		'failed': failed,
+	# 		'skipped': skipped,
+	# 		'total': len(user_ids)
+	# 	}
+	#
+	# except Exception as exc:
+	# 	logger.error(f"Success story email batch {batch_number}: Error in batch processing: {exc}")
+	# 	self.retry(exc=exc, countdown=2 ** self.request.retries)
+	# finally:
+	# 	# Always close connection
+	# 	if connection:
+	# 		try:
+	# 			connection.close()
+	# 			logger.info(f"Success story email batch {batch_number}: Closed SMTP connection")
+	# 		except Exception as e:
+	# 			logger.error(f"Success story email batch {batch_number}: Error closing connection: {e}")
 
 
 @shared_task(bind=True, max_retries=3, queue='emails')
@@ -353,48 +365,52 @@ def orchestrate_success_story_emails_task(self):
 	Orchestrates sending success story emails to all eligible users.
 	Groups users into batches and queues batch tasks for processing.
 	"""
-	try:
-		now = timezone.now()
-		# Get delay from .env - required, no fallback
-		delay_minutes = int(os.environ['SUCCESS_STORY_DELAY_MINUTES'])
-		threshold = now - timedelta(minutes=delay_minutes)
-		
-		# Get batch size from .env, default to 50
-		batch_size = int(os.environ.get('SUCCESS_STORY_BATCH_SIZE', '50'))
-		
-		# Get ALL users who joined at least X minutes ago and haven't received the email
-		# Removed filters: is_active, is_email_verified - sending to ALL users
-		users = (
-			User.objects.filter(date_joined__lte=threshold)
-			.exclude(email_logs__campaign_key='success_story_day20')
-			.values('id')[:1000]
-		)
-		
-		users_list = list(users)
-		total_users = len(users_list)
-		
-		if total_users == 0:
-			logger.info("Success story orchestrator: No eligible users found")
-			return True
-		
-		# Create batches
-		batch_number = 0
-		for i in range(0, total_users, batch_size):
-			batch = users_list[i:i+batch_size]
-			user_ids = [u['id'] for u in batch]
-			batch_number += 1
-			
-			# Queue batch task
-			send_batch_success_story_emails_task.delay(user_ids, batch_number)
-			logger.info(f"Success story orchestrator: Queued batch {batch_number} with {len(user_ids)} users")
-		
-		logger.info(
-			f"Success story orchestrator: Queued {batch_number} batches "
-			f"for {total_users} eligible users (batch size: {batch_size})"
-		)
-		return True
-		
-	except Exception as exc:
-		logger.error(f"Error in success story orchestrator: {exc}")
-		self.retry(exc=exc, countdown=2 ** self.request.retries)
+	logger.info("Success story orchestrator temporarily disabled; no batches queued")
+	return True
+
+	# --- Original implementation retained for future re-enable ---
+	# try:
+	# 	now = timezone.now()
+	# 	# Get delay from .env - required, no fallback
+	# 	delay_minutes = int(os.environ['SUCCESS_STORY_DELAY_MINUTES'])
+	# 	threshold = now - timedelta(minutes=delay_minutes)
+	#
+	# 	# Get batch size from .env, default to 50
+	# 	batch_size = int(os.environ.get('SUCCESS_STORY_BATCH_SIZE', '50'))
+	#
+	# 	# Get ALL users who joined at least X minutes ago and haven't received the email
+	# 	# Removed filters: is_active, is_email_verified - sending to ALL users
+	# 	users = (
+	# 		User.objects.filter(date_joined__lte=threshold)
+	# 		.exclude(email_logs__campaign_key='success_story_day20')
+	# 		.values('id')[:1000]
+	# 	)
+	#
+	# 	users_list = list(users)
+	# 	total_users = len(users_list)
+	#
+	# 	if total_users == 0:
+	# 		logger.info("Success story orchestrator: No eligible users found")
+	# 		return True
+	#
+	# 	# Create batches
+	# 	batch_number = 0
+	# 	for i in range(0, total_users, batch_size):
+	# 		batch = users_list[i:i+batch_size]
+	# 		user_ids = [u['id'] for u in batch]
+	# 		batch_number += 1
+	#
+	# 		# Queue batch task
+	# 		send_batch_success_story_emails_task.delay(user_ids, batch_number)
+	# 		logger.info(f"Success story orchestrator: Queued batch {batch_number} with {len(user_ids)} users")
+	#
+	# 	logger.info(
+	# 		f"Success story orchestrator: Queued {batch_number} batches "
+	# 		f"for {total_users} eligible users (batch size: {batch_size})"
+	# 	)
+	# 	return True
+	#
+	# except Exception as exc:
+	# 	logger.error(f"Error in success story orchestrator: {exc}")
+	# 	self.retry(exc=exc, countdown=2 ** self.request.retries)
 
