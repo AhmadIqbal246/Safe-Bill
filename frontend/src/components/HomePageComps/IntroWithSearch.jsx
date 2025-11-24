@@ -149,7 +149,7 @@ export default function IntroWithSearch() {
       </div>
 
       {/* Search Bar - Positioned in Lower Middle Area */}
-      <div ref={searchBarRef} className="absolute bottom-3 md:bottom-12 lg:bottom-60 left-0 right-30 z-30 w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 search-bar-container">
+      <div ref={searchBarRef} className="absolute bottom-[-12px] md:bottom-12 lg:bottom-60 left-0 right-30 z-30 w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 search-bar-container">
         <div className="bg-white rounded-[20px] shadow-lg p-2 md:p-5 lg:p-6 flex flex-col md:flex-row items-stretch gap-3 md:gap-4 relative border border-[#8989C9] mb-4 md:mb-0 lg:mb-0">
           <div className="flex-1 flex flex-col min-w-0">
             <label className="text-sm font-medium text-gray-700 mb-2">{t('homepage.service_label')}</label>

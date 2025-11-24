@@ -57,7 +57,7 @@ const ChatButton = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="chat-fab-anchor fixed z-50">
       <button
         onClick={handleClick}
         className="relative bg-[#01257D] hover:bg-[#2346a0] text-white rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group"

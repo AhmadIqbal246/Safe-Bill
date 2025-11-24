@@ -137,7 +137,7 @@ export default function LogInComp() {
         className="absolute inset-0 -z-10 bg-center bg-no-repeat bg-cover"
         style={{ backgroundImage: `url(${LoginBg})` }}
       />
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] pt-12 md:pt-16 lg:pt-20">
         <div className="bg-white rounded-lg shadow-sm p-8 w-full max-w-md border border-gray-200">
         <div className="flex justify-center -mt-14 mb-4">
           <div className="bg-[#01257D] rounded-full p-5 flex items-center justify-center">
@@ -198,7 +198,7 @@ export default function LogInComp() {
           </div>
           <button
             type="submit"
-            className="w-full px-6 py-2 text-sm font-medium text-white bg-[#2E78A6] rounded-md transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#2E78A6] cursor-pointer"
+            className="w-full px-6 py-2 text-sm font-medium text-white bg-[#2E78A6] rounded-[12px] transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#2E78A6] cursor-pointer"
             disabled={loading}
           >
             {loading ? (

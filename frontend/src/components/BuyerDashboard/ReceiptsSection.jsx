@@ -381,9 +381,6 @@ export default function ReceiptsSection() {
                     {t('receipts.vat')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('receipts.payment_id')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('receipts.status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -413,9 +410,6 @@ export default function ReceiptsSection() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div>€{vatAmount.toLocaleString()}</div>
                         <div className="text-xs">({vatRate.toFixed(1)}%)</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                        {project.payment_id ? project.payment_id.substring(0, 10) + '...' : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(project.payment_status)}
@@ -468,10 +462,6 @@ export default function ReceiptsSection() {
                     <div>
                       <span className="text-gray-500">{t('receipts.vat')}:</span>
                       <div className="font-medium">€{vatAmount.toLocaleString()} ({vatRate.toFixed(1)}%)</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">{t('receipts.payment_id')}:</span>
-                      <div className="font-mono text-xs">{project.payment_id ? project.payment_id.substring(0, 10) + '...' : '-'}</div>
                     </div>
                     <div>
                       <span className="text-gray-500">{t('receipts.net_amount')}:</span>

@@ -457,8 +457,14 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     completion_date = serializers.SerializerMethodField()
     seller_username = serializers.CharField(source="user.username", read_only=True)
     seller_email = serializers.EmailField(source="user.email", read_only=True)
+    seller_address = serializers.SerializerMethodField()
+    seller_siret = serializers.SerializerMethodField()
+    seller_company = serializers.SerializerMethodField()
+    seller_phone = serializers.SerializerMethodField()
     buyer_username = serializers.CharField(source="client.username", read_only=True)
     buyer_email = serializers.EmailField(source="client.email", read_only=True)
+    buyer_full_name = serializers.SerializerMethodField()
+    buyer_address = serializers.SerializerMethodField()
     payment_id = serializers.SerializerMethodField()
     payment_status = serializers.SerializerMethodField()
     payment_date = serializers.SerializerMethodField()
@@ -481,8 +487,14 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "platform_fee_percentage",
             "seller_username",
             "seller_email",
+            "seller_address",
+            "seller_siret",
+            "seller_company",
+            "seller_phone",
             "buyer_username",
             "buyer_email",
+            "buyer_full_name",
+            "buyer_address",
             "payment_id",
             "payment_status",
             "payment_date",
@@ -548,5 +560,68 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             from payments.models import Payment
             payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
             return payment.created_at.strftime("%Y-%m-%d %H:%M:%S") if payment else None
+        except Exception:
+            return None
+
+    def get_seller_address(self, obj):
+        """Get seller's address from business detail"""
+        try:
+            if hasattr(obj.user, 'business_detail') and obj.user.business_detail:
+                return obj.user.business_detail.full_address
+            return None
+        except Exception:
+            return None
+
+    def get_seller_siret(self, obj):
+        """Get seller's SIRET number from business detail"""
+        try:
+            if hasattr(obj.user, 'business_detail') and obj.user.business_detail:
+                return obj.user.business_detail.siret_number
+            return None
+        except Exception:
+            return None
+
+    def get_buyer_address(self, obj):
+        """Get buyer's address from buyer_profile or business_detail"""
+        try:
+            if obj.client:
+                # Try buyer_profile first (for individual buyers)
+                if hasattr(obj.client, 'buyer_profile') and obj.client.buyer_profile:
+                    return obj.client.buyer_profile.address
+                # Try business_detail (for professional buyers)
+                elif hasattr(obj.client, 'business_detail') and obj.client.business_detail:
+                    return obj.client.business_detail.full_address
+            return None
+        except Exception:
+            return None
+
+    def get_seller_company(self, obj):
+        """Return the seller's company name if available"""
+        try:
+            if hasattr(obj.user, "business_detail") and obj.user.business_detail:
+                return obj.user.business_detail.company_name
+            return obj.user.username
+        except Exception:
+            return obj.user.username
+
+    def get_seller_phone(self, obj):
+        """Return the seller's phone number"""
+        try:
+            return obj.user.phone_number
+        except Exception:
+            return None
+
+    def get_buyer_full_name(self, obj):
+        """Return buyer full name preferring buyer profile names"""
+        try:
+            if obj.client:
+                profile = getattr(obj.client, "buyer_profile", None)
+                if profile and (profile.first_name or profile.last_name):
+                    first = profile.first_name or ""
+                    last = profile.last_name or ""
+                    full = f"{first} {last}".strip()
+                    return full or obj.client.username
+                return obj.client.username
+            return None
         except Exception:
             return None

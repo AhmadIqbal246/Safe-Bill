@@ -985,6 +985,7 @@ def seller_receipts(request):
     projects = (
         Project.objects.filter(user=user, status="completed")
         .prefetch_related("milestones", "installments", "quote", "payment_set")
+        .select_related("user__business_detail", "client__business_detail", "client__buyer_profile")
         .order_by("-created_at")
     )
     serializer = SellerReceiptProjectSerializer(projects, many=True)
@@ -1005,7 +1006,8 @@ def buyer_receipts(request):
 
     projects = (
         Project.objects.filter(client=user, status="completed")
-        .prefetch_related("milestones", "installments", "quote")
+        .prefetch_related("milestones", "installments", "quote", "payment_set")
+        .select_related("user__business_detail", "client__business_detail", "client__buyer_profile")
         .order_by("-created_at")
     )
     serializer = SellerReceiptProjectSerializer(projects, many=True)

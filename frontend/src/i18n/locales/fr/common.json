@@ -15,7 +15,8 @@
     "no_unread_notifications": "Aucune notification non lue.",
     "how_to_accept_project_invite": "Comment accepter un invité de projet",
     "seller": "Vendeur",
-    "pro_buyer": "Acheteur Pro",
+    "pro_buyer": "Acheteur",
+    "dashboard": "Tableau de bord",
     "delete_my_account": "Supprimer mon compte"
   },
   "actions": {
@@ -1678,7 +1679,16 @@
     "name": "Nom",
     "completed_at": "Terminé le",
     "generated_by": "Généré par Safe Bill",
-    "receipts": "reçus"
+    "receipts": "reçus",
+    "seller_info": "Informations vendeur",
+    "buyer_info": "Informations acheteur",
+    "address": "Adresse",
+    "siret": "SIRET",
+    "amount_with_vat": "Montant TTC",
+    "platform_fees": "Frais de plateforme",
+    "seller_invoice": "Facture vendeur",
+    "paid": "Payé",
+    "completed_at": "Terminé le"
   },
   "not_found": {
     "page_not_found": "La page que vous recherchez n'existe pas.",

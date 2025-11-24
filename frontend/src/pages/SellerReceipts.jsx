@@ -7,6 +7,12 @@ import { useTranslation } from 'react-i18next';
 import Logo from '../assets/Safe_Bill_Dark.png';
 import loginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
+const SAFE_BILL_INFO = {
+  name: 'Safe Bill',
+  email: import.meta.env.VITE_SAFE_BILL_EMAIL || 'contact@safebill.fr',
+  address: import.meta.env.VITE_SAFE_BILL_ADDRESS || 'Safe Bill 66 avenue des Champs Elysées 75008 Paris',
+};
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function SellerReceipts() {
@@ -595,19 +601,42 @@ export default function SellerReceipts() {
 
         {/* Hidden PDF Elements */}
         {paged.map((receipt) => {
-          const { total, vatRate, vatAmount, finalAmount } = calcTotals(receipt);
+          const { total, vatRate, vatAmount, finalAmount, amountIncludingVat, platformFeeWithVat } = calcTotals(receipt);
+          const phoneLabel = t('receipts.phone_label', { defaultValue: 'Phone' });
           
           return (
             <div key={`pdf-${receipt.id}-${receipt.receiptType}`} className="hidden">
               {/* Seller Receipt PDF */}
               <div id={`receipt-${receipt.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200" style={{ background: '#ffffff' }}>
-                        <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
-                            <div className="flex items-center gap-3">
+                {/* Header with Seller and Buyer Info */}
+                <div className="mb-4">
+                  <div className="flex items-start justify-between mb-3">
+                    {/* Seller Info - Left Side */}
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-center gap-3 mb-2">
                             <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
                           </div>
-                          <div className="text-xs text-gray-500">{t('receipts.seller_copy')}</div>
+                      <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_info')}</div>
+                      <div className="text-sm text-gray-900 font-medium">{receipt.seller_username || '-'}</div>
+                      <div className="text-xs text-gray-600 mt-1">{receipt.seller_email || '-'}</div>
+                      <div className="text-xs text-gray-600 mt-1">{t('receipts.address')}: {receipt.seller_address || '-'}</div>
+                      <div className="text-xs text-gray-600 mt-1">{t('receipts.siret')}: {receipt.seller_siret || '-'}</div>
                         </div>
 
+                    {/* Buyer Info and Invoice Title - Right Side */}
+                    <div className="flex-1 pl-4 text-right">
+                      <div className="text-xs font-semibold text-gray-700 mb-2">{t('receipts.seller_invoice')}</div>
+                      <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.buyer_info')}</div>
+                      <div className="text-sm text-gray-900 font-medium">{receipt.buyer_username || '-'}</div>
+                      <div className="text-xs text-gray-600 mt-1">{receipt.buyer_email || '-'}</div>
+                      <div className="text-xs text-gray-600 mt-1">{t('receipts.address')}: {receipt.buyer_address || '-'}</div>
+                    </div>
+                  </div>
+                  {/* Blue horizontal line */}
+                  <div className="border-t-2" style={{ borderColor: '#01257D' }}></div>
+                </div>
+
+                {/* Project Details */}
                         <div className="mb-5">
                   <div className="text-lg font-semibold text-gray-900">{receipt.name}</div>
                   <div className="text-xs text-gray-500">{t('receipts.ref')} {receipt.reference_number || '-'}</div>
@@ -617,21 +646,26 @@ export default function SellerReceipts() {
                   <div className="text-xs text-gray-500">{t('receipts.buyer_label')}: {receipt.buyer_username || '-'} ({receipt.buyer_email || '-'})</div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-6">
+                {/* Cost Summary with Platform Fees Deduction */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-sm mb-6">
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
                             <div className="text-gray-500">{t('receipts.total')}</div>
                             <div className="text-base font-semibold">€{total.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">VAT ({vatRate.toFixed(1)}%)</div>
+                    <div className="text-gray-500">{t('receipts.vat')} ({vatRate.toFixed(1)}%)</div>
                             <div className="text-base font-semibold">+€{vatAmount.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">Amount with VAT</div>
-                    <div className="text-base font-semibold">€{(total + vatAmount).toLocaleString()}</div>
+                    <div className="text-gray-500">{t('receipts.amount_with_vat')}</div>
+                    <div className="text-base font-semibold">€{amountIncludingVat.toLocaleString()}</div>
                           </div>
                           <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-                            <div className="text-gray-500">{t('receipts.seller_receives')}</div>
+                    <div className="text-gray-500">{t('receipts.platform_fees')}</div>
+                    <div className="text-base font-semibold text-orange-700">-€{platformFeeWithVat.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-md p-3 border border-gray-200" style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac' }}>
+                    <div className="text-gray-500">{t('receipts.seller_invoice')}</div>
                             <div className="text-base font-semibold text-green-700">€{finalAmount.toLocaleString()}</div>
                           </div>
                         </div>
@@ -647,8 +681,24 @@ export default function SellerReceipts() {
                 <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
                   <div className="flex items-center gap-3">
                     <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
+                    <div className="text-sm font-semibold text-gray-900">{SAFE_BILL_INFO.name}</div>
                   </div>
-                  <div className="text-xs text-gray-500">{t('receipts.platform_invoice')}</div>
+                  <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('receipts.platform_invoice')}</div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-4 mb-4 border-b border-gray-200">
+                  <div className="flex-1 text-xs text-gray-600">
+                    <div className="text-sm font-semibold text-gray-900 mb-1">{SAFE_BILL_INFO.name}</div>
+                    <div>{SAFE_BILL_INFO.email}</div>
+                    <div className="mt-0.5">{SAFE_BILL_INFO.address}</div>
+                  </div>
+                  <div className="flex-1 text-xs text-gray-600 text-left sm:text-right">
+                    <div className="text-sm font-semibold text-gray-900 mb-1">{receipt.seller_username || '-'}</div>
+                    <div>{receipt.seller_email || '-'}</div>
+                    <div className="mt-0.5">{receipt.seller_address || '-'}</div>
+                    <div className="mt-0.5">{receipt.seller_siret ? `SIRET: ${receipt.seller_siret}` : 'SIRET: -'}</div>
+                    <div className="mt-0.5">{receipt.seller_phone ? `${phoneLabel}: ${receipt.seller_phone}` : `${phoneLabel}: -`}</div>
+                  </div>
                 </div>
 
                 <div className="mb-5">
