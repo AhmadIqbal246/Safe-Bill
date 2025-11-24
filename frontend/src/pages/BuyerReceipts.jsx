@@ -239,20 +239,46 @@ export default function BuyerReceipts() {
 
                   {/* Hidden printable area for PDF */}
                   <div id={`receipt-buyer-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200" style={{ display: expands[p.id] || false ? 'block' : 'none' }}>
-                    {/* Header */}
-                    <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+                    {/* Header with Logo */}
+                    <div className="flex items-center justify-between pt-4 pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
                       <div className="flex items-center gap-3">
                         <div className="text-xl font-bold text-[#01257D]">SafeBill</div>
                       </div>
                       <div className="text-xs text-gray-500">Buyer copy</div>
                     </div>
 
+                    {/* Seller and Buyer Info */}
+                    <div className="flex items-start justify-between mb-4">
+                      {/* Seller Info - Top Left */}
+                      <div className="flex-1 pr-4">
+                        <div className="text-xs font-semibold text-gray-700 mb-1">Seller Information</div>
+                        <div className="text-xs text-gray-600 space-y-0.5">
+                          {p.seller_username && <div>{p.seller_username}</div>}
+                          {p.seller_email && <div>{p.seller_email}</div>}
+                          {p.seller_address && <div>{p.seller_address}</div>}
+                          {p.seller_phone && <div>Phone: {p.seller_phone}</div>}
+                          {p.seller_siret && <div>SIRET: {p.seller_siret}</div>}
+                        </div>
+                      </div>
+                      
+                      {/* Buyer Info - Top Right */}
+                      <div className="flex-1 pl-4 text-right">
+                        <div className="text-xs font-semibold text-gray-700 mb-1">Buyer Information</div>
+                        <div className="text-xs text-gray-600 space-y-0.5">
+                          {p.buyer_full_name && <div>{p.buyer_full_name}</div>}
+                          {!p.buyer_full_name && p.buyer_username && <div>{p.buyer_username}</div>}
+                          {p.buyer_email && <div>{p.buyer_email}</div>}
+                          {p.buyer_address && <div>{p.buyer_address}</div>}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Project info */}
                     <div className="mb-5">
                       <div className="text-lg font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
-                      <div className="text-xs text-gray-500">Start: {p.created_at}</div>
-                      <div className="text-xs text-gray-500 mt-1">VAT: {vatPct.toFixed(1)}%</div>
+                      <div className="text-xs text-gray-500">Réf: {p.reference_number || '-'}</div>
+                      <div className="text-xs text-gray-500">Début: {p.created_at}</div>
+                      <div className="text-xs text-gray-500 mt-1">TVA: {vatPct.toFixed(1)}%</div>
                     </div>
 
                     {/* Summary boxes */}

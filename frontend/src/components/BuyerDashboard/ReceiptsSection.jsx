@@ -520,12 +520,38 @@ export default function ReceiptsSection() {
         return (
           <div key={`pdf-${project.id}`} id={`buyer-receipt-${project.id}`} className="hidden">
             <div className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200">
-              {/* Header */}
-              <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+              {/* Header with Logo */}
+              <div className="flex items-center justify-between pt-4 pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
                 <div className="flex items-center gap-3">
                   <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
                 </div>
                 <div className="text-xs text-gray-500">{t('receipts.buyer_copy')}</div>
+              </div>
+
+              {/* Seller and Buyer Info */}
+              <div className="flex items-start justify-between mb-4">
+                {/* Seller Info - Top Left */}
+                <div className="flex-1 pr-4">
+                  <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_information')}</div>
+                  <div className="text-xs text-gray-600 space-y-0.5">
+                    {project.seller_username && <div>{project.seller_username}</div>}
+                    {project.seller_email && <div>{project.seller_email}</div>}
+                    {project.seller_address && <div>{project.seller_address}</div>}
+                    {project.seller_phone && <div>{t('receipts.phone')}: {project.seller_phone}</div>}
+                    {project.seller_siret && <div>{t('receipts.siret')}: {project.seller_siret}</div>}
+                  </div>
+                </div>
+                
+                {/* Buyer Info - Top Right */}
+                <div className="flex-1 pl-4 text-right">
+                  <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.buyer_information')}</div>
+                  <div className="text-xs text-gray-600 space-y-0.5">
+                    {project.buyer_full_name && <div>{project.buyer_full_name}</div>}
+                    {!project.buyer_full_name && project.buyer_username && <div>{project.buyer_username}</div>}
+                    {project.buyer_email && <div>{project.buyer_email}</div>}
+                    {project.buyer_address && <div>{project.buyer_address}</div>}
+                  </div>
+                </div>
               </div>
 
               {/* Project info */}

@@ -608,32 +608,38 @@ export default function SellerReceipts() {
             <div key={`pdf-${receipt.id}-${receipt.receiptType}`} className="hidden">
               {/* Seller Receipt PDF */}
               <div id={`receipt-${receipt.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200" style={{ background: '#ffffff' }}>
-                {/* Header with Seller and Buyer Info */}
-                <div className="mb-4">
-                  <div className="flex items-start justify-between mb-3">
-                    {/* Seller Info - Left Side */}
-                    <div className="flex-1 pr-4">
-                      <div className="flex items-center gap-3 mb-2">
-                            <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
-                          </div>
-                      <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_info')}</div>
-                      <div className="text-sm text-gray-900 font-medium">{receipt.seller_username || '-'}</div>
-                      <div className="text-xs text-gray-600 mt-1">{receipt.seller_email || '-'}</div>
-                      <div className="text-xs text-gray-600 mt-1">{t('receipts.address')}: {receipt.seller_address || '-'}</div>
-                      <div className="text-xs text-gray-600 mt-1">{t('receipts.siret')}: {receipt.seller_siret || '-'}</div>
-                        </div>
+                {/* Header with Logo */}
+                <div className="flex items-center justify-between pt-4 pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+                  <div className="flex items-center gap-3">
+                    <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
+                  </div>
+                  <div className="text-xs text-gray-500">{t('receipts.seller_invoice')}</div>
+                </div>
 
-                    {/* Buyer Info and Invoice Title - Right Side */}
-                    <div className="flex-1 pl-4 text-right">
-                      <div className="text-xs font-semibold text-gray-700 mb-2">{t('receipts.seller_invoice')}</div>
-                      <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.buyer_info')}</div>
-                      <div className="text-sm text-gray-900 font-medium">{receipt.buyer_username || '-'}</div>
-                      <div className="text-xs text-gray-600 mt-1">{receipt.buyer_email || '-'}</div>
-                      <div className="text-xs text-gray-600 mt-1">{t('receipts.address')}: {receipt.buyer_address || '-'}</div>
+                {/* Seller and Buyer Info */}
+                <div className="flex items-start justify-between mb-4">
+                  {/* Seller Info - Left Side */}
+                  <div className="flex-1 pr-4">
+                    <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_information')}</div>
+                    <div className="text-xs text-gray-600 space-y-0.5">
+                      {receipt.seller_username && <div>{receipt.seller_username}</div>}
+                      {receipt.seller_email && <div>{receipt.seller_email}</div>}
+                      {receipt.seller_address && <div>{receipt.seller_address}</div>}
+                      {receipt.seller_phone && <div>{t('receipts.phone')}: {receipt.seller_phone}</div>}
+                      {receipt.seller_siret && <div>{t('receipts.siret')}: {receipt.seller_siret}</div>}
                     </div>
                   </div>
-                  {/* Blue horizontal line */}
-                  <div className="border-t-2" style={{ borderColor: '#01257D' }}></div>
+
+                  {/* Buyer Info - Right Side */}
+                  <div className="flex-1 pl-4 text-right">
+                    <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.buyer_information')}</div>
+                    <div className="text-xs text-gray-600 space-y-0.5">
+                      {receipt.buyer_full_name && <div>{receipt.buyer_full_name}</div>}
+                      {!receipt.buyer_full_name && receipt.buyer_username && <div>{receipt.buyer_username}</div>}
+                      {receipt.buyer_email && <div>{receipt.buyer_email}</div>}
+                      {receipt.buyer_address && <div>{receipt.buyer_address}</div>}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Project Details */}
@@ -681,7 +687,6 @@ export default function SellerReceipts() {
                 <div className="flex items-center justify-between pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
                   <div className="flex items-center gap-3">
                     <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
-                    <div className="text-sm font-semibold text-gray-900">{SAFE_BILL_INFO.name}</div>
                   </div>
                   <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('receipts.platform_invoice')}</div>
                 </div>
@@ -693,6 +698,7 @@ export default function SellerReceipts() {
                     <div className="mt-0.5">{SAFE_BILL_INFO.address}</div>
                   </div>
                   <div className="flex-1 text-xs text-gray-600 text-left sm:text-right">
+                    <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_information')}</div>
                     <div className="text-sm font-semibold text-gray-900 mb-1">{receipt.seller_username || '-'}</div>
                     <div>{receipt.seller_email || '-'}</div>
                     <div className="mt-0.5">{receipt.seller_address || '-'}</div>
