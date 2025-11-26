@@ -27,6 +27,33 @@ class QuoteSerializer(serializers.ModelSerializer):
         model = Quote
         fields = ["file", "reference_number"]
 
+    def validate_file(self, value):
+        """
+        Validate that the uploaded file is either a PDF or an image.
+        """
+        if value:
+            # Check file extension
+            allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.webp']
+            file_name = value.name.lower()
+            if not any(file_name.endswith(ext) for ext in allowed_extensions):
+                raise serializers.ValidationError(
+                    "Only PDF and image files (JPEG, PNG, WEBP) are allowed."
+                )
+            # Check MIME type if available
+            if hasattr(value, 'content_type'):
+                allowed_types = [
+                    'application/pdf',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/webp'
+                ]
+                if value.content_type not in allowed_types:
+                    raise serializers.ValidationError(
+                        "Only PDF and image files (JPEG, PNG, WEBP) are allowed."
+                    )
+        return value
+
 
 class MilestoneSerializer(serializers.ModelSerializer):
     created_date = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)

@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Optional, Dict, Any
 
 import requests
@@ -116,13 +117,50 @@ def build_company_properties(bd) -> Dict[str, Any]:
             return ",".join(map(str, value))
         return value or ""
 
+    def parse_address_components(full_address: str) -> Dict[str, str]:
+        """Attempt to split the stored full address into street, postal code, and city."""
+        components = {"street": "", "postal_code": "", "city": ""}
+        if not isinstance(full_address, str):
+            return components
+
+        parts = [part.strip() for part in full_address.split(",") if part.strip()]
+        if parts:
+            components["street"] = parts[0]
+
+        # Heuristic: payload is usually "street, postal, city"
+        if len(parts) >= 2:
+            potential_postal = parts[1]
+            digits_only = potential_postal.replace(" ", "")
+            if digits_only.isdigit():
+                components["postal_code"] = potential_postal
+                if len(parts) >= 3:
+                    components["city"] = parts[2]
+            else:
+                components["city"] = potential_postal
+        if not components["city"] and len(parts) >= 3:
+            components["city"] = parts[-1]
+
+        if not components["postal_code"]:
+            match = re.search(r"\b\d{4,6}\b", full_address)
+            if match:
+                components["postal_code"] = match.group(0)
+
+        return components
+
+    full_address = getattr(bd, "full_address", "") or ""
+    address_parts = parse_address_components(full_address)
+    user = getattr(bd, "user", None)
+
     return {
         "name": getattr(bd, "company_name", "") or "",
-        "address": getattr(bd, "full_address", "") or "",
+        "address": address_parts.get("street") or full_address,
+        "city": address_parts.get("city", ""),
+        "zip": address_parts.get("postal_code", ""),
+        "phone": getattr(user, "phone_number", "") or "",
         "siret_number": getattr(bd, "siret_number", "") or "",
         "type_of_activity": getattr(bd, "type_of_activity", "") or "",
         # Company email (create Company property: Label "Email", Internal name "company_email")
-        "company_email": getattr(getattr(bd, "user", None), "email", "") or "",
+        "company_email": getattr(user, "email", "") or "",
         # Keep service_areas only if you created this property in HubSpot
         # Remove below line if you didn't create it there
         "service_areas": join_list(getattr(bd, "selected_service_areas", [])),

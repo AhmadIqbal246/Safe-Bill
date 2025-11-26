@@ -9,6 +9,7 @@ import { Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import SubscriptionCard from '../RegisterComponents/SellerReg/SubscriptionCard';
 import loginRemovedBg from '../../assets/Circle Background/login-removed-bg.jpg';
+import QuoteUploadModal from './QuoteUploadModal';
 
 const paymentConfigs = [
   [
@@ -38,6 +39,7 @@ export default function ProjectCreation() {
   const [vatRate, setVatRate] = useState('20.0');
   const [quoteFile, setQuoteFile] = useState(null);
   const [fileError, setFileError] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const fileInputRef = useRef(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editRow, setEditRow] = useState({ amount: '', step: '', desc: '' });
@@ -122,8 +124,23 @@ export default function ProjectCreation() {
   const handleFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      setFileError(t('project_creation.only_pdf_allowed'));
+    // Allow PDF and image files
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError(t('project_creation.invalid_file_type'));
+      setQuoteFile(null);
+      return;
+    }
+    setFileError('');
+    setQuoteFile(file);
+  };
+
+  const handleFileSelect = (file) => {
+    if (!file) return;
+    // Allow PDF and image files
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError(t('project_creation.invalid_file_type'));
       setQuoteFile(null);
       return;
     }
@@ -283,7 +300,7 @@ export default function ProjectCreation() {
           <div className="text-gray-500 mb-3 sm:mb-4 text-center text-xs sm:text-sm">{t('project_creation.drag_drop_message')}</div>
           <input
             type="file"
-            accept="application/pdf"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
             className="hidden"
             ref={fileInputRef}
             onChange={handleFileChange}
@@ -291,7 +308,7 @@ export default function ProjectCreation() {
           <button
             type="button"
             className="px-4 sm:px-6 py-2 bg-[#2E78A6] text-white rounded-md font-semibold hover:bg-[#256a94] transition-colors cursor-pointer text-sm sm:text-base"
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            onClick={() => setShowUploadModal(true)}
           >
             {quoteFile ? t('project_creation.change_file') : t('project_creation.upload')}
           </button>
@@ -319,6 +336,13 @@ export default function ProjectCreation() {
           )}
         </div>
       </div>
+
+      {/* Quote Upload Modal */}
+      <QuoteUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onFileSelect={handleFileSelect}
+      />
 
       {/* Payment Configuration */}
       <div className="mb-6 sm:mb-10">

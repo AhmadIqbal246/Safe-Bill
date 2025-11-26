@@ -16,7 +16,7 @@ import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Chat from '../components/mutualComponents/Chat/Chat';
 import { useTranslation } from 'react-i18next';
 import CallbackForm from '../components/mutualComponents/CallbackForm';
-import loginRemovedBg from '../assets/Circle Background/login-removed-bg.jpg';
+import loginRemovedBg from '../assets/Circle Background/buyer-dashboard-bg.png';
 
 export default function BuyerDashboardPage() {
   const { t } = useTranslation();
