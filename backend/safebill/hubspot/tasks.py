@@ -390,7 +390,13 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
         # Do not manage HubSpot pipeline/stages; rely only on custom properties
         dealstage_id = None
         props = build_deal_properties(project, None, None)
-        logger.info("HubSpot: built deal props for project %s -> name=%s, stage_id=%s", project.id, props.get("dealname"), props.get("dealstage"))
+        logger.info(
+            "HubSpot: built deal props for project %s -> name=%s, stage_id=%s, total_amount=%s",
+            project.id,
+            props.get("dealname"),
+            props.get("dealstage"),
+            props.get("amount"),
+        )
 
         try:
             existing = client.search_deal_by_project_id(str(project.id))
