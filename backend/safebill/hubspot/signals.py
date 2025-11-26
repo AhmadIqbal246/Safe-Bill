@@ -301,17 +301,20 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
     # Simple emoji indicator when signal fires
     print("💼 Django signal fired - Project sync")
     
-    reason = "signal_project_created" if created else "signal_project_updated"
-    logger.info(f"Auto-syncing project {project_id} to HubSpot via signal ({reason})")
-    
     try:
-        # Use immediate execution for maximum reliability (no transaction dependency)
-        result = sync_project_to_hubspot(
-            project_id=project_id,
-            reason=reason,
-            use_transaction_commit=True
-        )
-        logger.info(f"Project {project_id} sync result: {result}")
+        # For newly created projects, initial HubSpot deal sync is triggered
+        # explicitly AFTER installments are created (in ProjectCreateSerializer)
+        # to avoid race conditions where only partial installments exist.
+        if not created:
+            reason = "signal_project_updated"
+            logger.info(f"Auto-syncing project {project_id} to HubSpot via signal ({reason})")
+            # Use immediate execution for maximum reliability (no transaction dependency)
+            result = sync_project_to_hubspot(
+                project_id=project_id,
+                reason=reason,
+                use_transaction_commit=True
+            )
+            logger.info(f"Project {project_id} sync result: {result}")
         
         # Enqueue HubSpot payment record creation when project is created
         if created:

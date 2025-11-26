@@ -13,6 +13,10 @@ from notifications.services import NotificationService
 from django.db.models import Sum
 from .tasks import send_project_invitation_email_task
 from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
+
 # HubSpot syncing is now handled automatically by Django signals
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -282,7 +286,7 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         for inst in installments_data:
             # Create the payment installment
             installment = PaymentInstallment.objects.create(project=project, **inst)
-
+    
             # Create milestone based on the installment
             ms = Milestone.objects.create(
                 project=project,
@@ -294,9 +298,18 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
                 # Other fields will be empty and can be edited later
             )
             created_milestones.append(ms.id)
-
-        # HubSpot sync now handled automatically by Django signals
-        # Project and milestone creation will trigger sync signals automatically
+    
+        # Trigger initial HubSpot deal sync AFTER installments are created
+        # to ensure the full project amount is available for the deal.
+        try:
+            from hubspot.sync_utils import sync_project_to_hubspot
+            sync_result = sync_project_to_hubspot(
+                project_id=project.id,
+                reason="project_created",
+            )
+            logger.info(f"Project {project.id} initial HubSpot sync result: {sync_result}")
+        except Exception as e:
+            logger.error(f"Failed to trigger initial HubSpot sync for project {project.id}: {e}")
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
@@ -319,9 +332,6 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             )
         except Exception as e:
             # Log the error but don't fail project creation
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.error(
                 f"Failed to send project invitation email to "
                 f"{project.client_email}: {str(e)}"
