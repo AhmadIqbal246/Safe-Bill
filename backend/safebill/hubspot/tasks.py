@@ -283,10 +283,13 @@ def sync_company_task(self, business_detail_id: int = None, queue_item_id: int =
                 link.save(update_fields=["status", "last_error", "last_synced_at"])
             return data.get("id")
 
-        # No stored ID: search by siret, then by name (fallback) to avoid duplicates
+        # No stored ID: search by SIRET, then by domain, then by name (fallback) to avoid duplicates
         existing = None
         if props.get("siret_number"):
             existing = client.search_company_by_siret(props.get("siret_number"))
+        # Reuse HubSpot's auto-created domain company if it exists
+        if not existing and props.get("domain"):
+            existing = client.search_company_by_domain(props.get("domain"))
         if not existing and props.get("name"):
             existing = client.search_company_by_name(props.get("name"))
         if existing:
@@ -320,6 +323,64 @@ def sync_company_task(self, business_detail_id: int = None, queue_item_id: int =
                     link.status = "success"
                     link.last_error = ""
                     link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
+
+            # Best-effort association between this company and the user's HubSpot contact
+            try:
+                user = getattr(bd, "user", None)
+                if user:
+                    contact_link = HubSpotContactLink.objects.filter(user=user).first()
+                    contact_id = contact_link.hubspot_id if contact_link else None
+
+                    if contact_id:
+                        logger.info(
+                            "HubSpot: associating company id=%s with contact id=%s for user_id=%s",
+                            hubspot_id,
+                            contact_id,
+                            getattr(user, "id", None),
+                        )
+                        # Associate this contact with the real company
+                        client.associate_contact_company(contact_id, hubspot_id)
+
+                        # Cleanup: detach contact from placeholder companies (no name/SIRET)
+                        try:
+                            assoc_data = client.get_contact_companies(contact_id)
+                            # v4 response structure: results -> [ { toObjectId, ... }, ... ]
+                            assoc_results = assoc_data.get("results", []) if isinstance(assoc_data, dict) else []
+                            for assoc in assoc_results:
+                                company_id = (
+                                    assoc.get("toObjectId")
+                                    or assoc.get("toObjectId", None)
+                                )
+                                if not company_id or str(company_id) == str(hubspot_id):
+                                    continue
+
+                                company_obj = client.get_company(str(company_id))
+                                props = (company_obj or {}).get("properties", {}) if isinstance(company_obj, dict) else {}
+                                name_val = (props.get("name") or "").strip()
+                                siret_val = (props.get("siret_number") or "").strip()
+
+                                # Treat companies with no name and no SIRET as HubSpot's blank placeholders
+                                if not name_val and not siret_val:
+                                    logger.info(
+                                        "HubSpot: disassociating contact %s from placeholder company id=%s",
+                                        contact_id,
+                                        company_id,
+                                    )
+                                    client.disassociate_contact_company(contact_id, str(company_id))
+                        except Exception as cleanup_exc:
+                            logger.exception(
+                                "HubSpot: failed placeholder company cleanup for contact %s: %s",
+                                contact_id,
+                                cleanup_exc,
+                            )
+            except Exception as assoc_exc:
+                # Never fail the whole sync because association failed
+                logger.exception(
+                    "HubSpot: failed to associate company %s with contact for business_detail %s: %s",
+                    hubspot_id,
+                    business_detail_id,
+                    assoc_exc,
+                )
 
         # Update queue item status if in queue mode
         if queue_item_id:
