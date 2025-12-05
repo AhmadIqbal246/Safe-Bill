@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, Eye, Database, Users, Mail, Phone, MapPin } from 'lucide-react';
+import { Shield, Lock, Eye, Database, Users, Mail, MapPin } from 'lucide-react';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { useTranslation } from 'react-i18next';
 
@@ -275,10 +275,6 @@ export default function PrivacyPolicyPage() {
                   <div className="flex items-center space-x-3">
                     <Mail className="w-5 h-5" />
                     <span>{t('privacy_policy.contact.email')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5" />
-                    <span>{t('privacy_policy.contact.phone')}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <MapPin className="w-5 h-5" />

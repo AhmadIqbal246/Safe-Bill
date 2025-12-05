@@ -255,6 +255,7 @@ export default function BuyerReceipts() {
                         <div className="text-xs text-gray-600 space-y-0.5">
                           {p.seller_username && <div>{p.seller_username}</div>}
                           {p.seller_email && <div>{p.seller_email}</div>}
+                          {p.seller_company && <div>{p.seller_company}</div>}
                           {p.seller_address && <div>{p.seller_address}</div>}
                           {p.seller_phone && <div>Phone: {p.seller_phone}</div>}
                           {p.seller_siret && <div>SIRET: {p.seller_siret}</div>}

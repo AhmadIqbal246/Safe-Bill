@@ -22,25 +22,7 @@
             Bonjour {{ first_name }} ! 👋
         </p>
         <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">
-            Bienvenue sur {{ site_name }} ! Pour terminer votre inscription{% if user_type %} en tant que {{ user_type }}{% endif %}, veuillez vérifier votre adresse email en utilisant l'une des méthodes ci-dessous.
-        </p>
-    </div>
-
-    <!-- Verification Code Box - Blue Background -->
-    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center;">
-        <h2 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
-            🔑 Votre Code de Vérification
-        </h2>
-        <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-            Copiez ce code et utilisez-le sur notre site web pour vérifier votre email :
-        </p>
-        <div style="background: #ffffff; border: 2px dashed #3535AA; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: inline-block;">
-            <p style="color: #3535AA; font-size: 18px; font-family: monospace; font-weight: 600; margin: 0; letter-spacing: 1px;">
-                {{ verification_code|default:"Cliquez sur le bouton ci-dessous" }}
-            </p>
-        </div>
-        <p style="color: #3535AA; font-size: 14px; line-height: 1.6; margin: 0;">
-            <strong>Accès Rapide :</strong> Allez à : <a href="{{ frontend_verification_url }}" style="color: #3535AA; text-decoration: underline;">{{ frontend_verification_url }}</a>
+            Bienvenue sur {{ site_name }} ! Pour terminer votre inscription, veuillez vérifier votre adresse email en utilisant l'une des méthodes ci-dessous.
         </p>
     </div>
 

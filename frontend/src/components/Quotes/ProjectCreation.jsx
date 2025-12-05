@@ -11,18 +11,18 @@ import SubscriptionCard from '../RegisterComponents/SellerReg/SubscriptionCard';
 import loginRemovedBg from '../../assets/Circle Background/login-removed-bg.jpg';
 import QuoteUploadModal from './QuoteUploadModal';
 
-const paymentConfigs = [
+const getPaymentConfigs = (t) => [
   [
-    { amount: '€1000', step: 'Step 1', desc: 'Full payment upon quote acceptance.' },
+    { amount: '€1000', step: 'step_1', desc: 'Full payment upon quote acceptance.' },
   ],
   [
-    { amount: '€600', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€400', step: 'Step 3', desc: 'Final payment upon project completion.' },
+    { amount: '€600', step: 'step_1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€400', step: 'step_2', desc: 'Final payment upon project completion.' },
   ],
   [
-    { amount: '€500', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€300', step: 'Step 2', desc: 'Payment due at the start of the project.' },
-    { amount: '€200', step: 'Step 3', desc: 'Final payment upon project completion.' },
+    { amount: '€500', step: 'step_1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€300', step: 'step_2', desc: 'Payment due at the start of the project.' },
+    { amount: '€200', step: 'step_3', desc: 'Final payment upon project completion.' },
   ],
 ];
 
@@ -44,7 +44,7 @@ export default function ProjectCreation() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editRow, setEditRow] = useState({ amount: '', step: '', desc: '' });
   const [installmentRows, setInstallmentRows] = useState(
-    paymentConfigs[installments - 1].map(row => ({ ...row }))
+    getPaymentConfigs(t)[installments - 1].map(row => ({ ...row }))
   );
 
   // Calculate platform fee percentage based on total project amount (tiered system)
@@ -92,9 +92,9 @@ export default function ProjectCreation() {
 
   // Update rows when installments count changes
   React.useEffect(() => {
-    setInstallmentRows(paymentConfigs[installments - 1].map(row => ({ ...row })));
+    setInstallmentRows(getPaymentConfigs(t)[installments - 1].map(row => ({ ...row })));
     setEditingIndex(null);
-  }, [installments]);
+  }, [installments, t]);
 
   // Fetch subscription eligibility on mount
   useEffect(() => {
@@ -387,7 +387,7 @@ export default function ProjectCreation() {
                         />
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-700">
-                        {milestone.step}
+                        {t(`project_creation.${milestone.step}`)}
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input
@@ -418,7 +418,7 @@ export default function ProjectCreation() {
                   ) : (
                     <>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium">€{milestone.amount.toLocaleString()}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{milestone.step}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{t(`project_creation.${milestone.step}`)}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{milestone.desc}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-€{(milestone.platformFee).toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">€{milestone.netAmount.toLocaleString()}</td>

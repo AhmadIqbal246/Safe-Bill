@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { businessActivityStructure, serviceAreaOptions } from "../../constants/registerationTypes";
 import { useTranslation } from 'react-i18next';
 import homeDashboardBg from "../../assets/Circle Background/home-dashboard-bg1.png";
-import groupImage from "../../assets/Circle Background/How_To_Keep_Your_Best_Employees-removebg-preview.png";
+import groupImage from "../../assets/Circle Background/How_To_Keep_Your_Best_Employees-removebg-preview.jpg";
 
 // Create a flattened array of service type options with both id and label
 const serviceTypeOptions = businessActivityStructure.map(option => ({

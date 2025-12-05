@@ -175,7 +175,6 @@ export default function SafeBillHeader({
 
   const navItems = isSignedIn ? signedInNavItems : signedOutNavItems;
   const pricingLabel = i18n.language.startsWith("fr") ? "Tarif" : "Pricing";
-  const showSellerPricingButton = isSignedIn && user?.role === "seller";
 
   // Example: use a default style if shiftNavbarLeft is true, or use the passed style/class
   const leftShiftStyle = shiftNavbarLeft
@@ -363,6 +362,15 @@ export default function SafeBillHeader({
                 {t(item.label)}
               </Link>
             ))}
+            {canSeeSellerDashboard && (
+              <button
+                type="button"
+                onClick={() => setIsCallbackOpen(true)}
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {pricingLabel}
+              </button>
+            )}
           </nav>
 
           {/* Right Side - Desktop */}
@@ -370,15 +378,6 @@ export default function SafeBillHeader({
             className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`}
             style={leftShiftStyle}
           >
-            {showSellerPricingButton && (
-              <button
-                type="button"
-                onClick={() => setIsCallbackOpen(true)}
-                className="ml-10 px-2.5 py-1.5 text-xs font-medium text-white bg-[#01257D] hover:bg-[#2346a0] rounded-[10px] transition-colors cursor-pointer"
-              >
-                {pricingLabel}
-              </button>
-            )}
             {/* Role Toggle Button */}
             {canToggleRoles && (
               <div className="flex items-center mr-2">
@@ -547,15 +546,6 @@ export default function SafeBillHeader({
           {/* Mobile Right Side (avatar and bell only, no hamburger) */}
           {!showMobileMenuButton && (
             <div className="flex md:hidden items-center space-x-4">
-              {showSellerPricingButton && (
-                <button
-                  type="button"
-                  onClick={() => setIsCallbackOpen(true)}
-                  className="ml-6 px-3 py-1 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0] rounded-[10px] transition-colors cursor-pointer"
-                >
-                  {pricingLabel}
-                </button>
-              )}
               {/* Role Toggle Button - Mobile */}
               {canToggleRoles && (
                 <div className="flex items-center">
@@ -794,14 +784,14 @@ export default function SafeBillHeader({
                   {t(item.label)}
                 </Link>
               ))}
-              {showSellerPricingButton && (
+              {canSeeSellerDashboard && (
                 <button
                   type="button"
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     setIsCallbackOpen(true);
                   }}
-                  className="w-full text-left px-3 py-2 text-base font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-50 rounded-md border border-[#01257D]"
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
                   {pricingLabel}
                 </button>

@@ -540,7 +540,10 @@
      "final_total": "Final Total",
      "vat_section": "VAT Rate",
      "platform_fees": "Platform Fees",
-     "net_amount": "Net Amount"
+     "net_amount": "Net Amount",
+     "step_1": "Step 1",
+     "step_2": "Step 2",
+     "step_3": "Step 3"
    },
    "my_profile": {
      "title": "My Profile",
@@ -1286,9 +1289,8 @@
     "contact": {
       "title": "Contact Us",
       "content": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
-      "email": "privacy@safebill.com",
-      "phone": "+1 (555) 123-4567",
-      "address": "123 Business Street, City, State 12345"
+      "email": "contact@safebill.fr",
+      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
     },
     "updates": {
       "title": "Policy Updates",
@@ -1436,9 +1438,8 @@
     "contact": {
       "title": "Contact Us",
       "content": "If you have any questions about these Terms of Service, please contact us:",
-      "email": "legal@safebill.com",
-      "phone": "+1 (555) 123-4567",
-      "address": "123 Business Street, City, State 12345"
+      "email": "contact@safebill.fr",
+      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
     },
     "updates": {
       "title": "Terms Updates",

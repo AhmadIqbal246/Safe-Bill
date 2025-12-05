@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Scale, Users, Shield, AlertTriangle, Mail, Phone, MapPin } from 'lucide-react';
+import { FileText, Scale, Users, Shield, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { useTranslation } from 'react-i18next';
 
@@ -308,10 +308,6 @@ export default function TermsOfServicePage() {
                   <div className="flex items-center space-x-3">
                     <Mail className="w-5 h-5" />
                     <span>{t('terms_of_service.contact.email')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5" />
-                    <span>{t('terms_of_service.contact.phone')}</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <MapPin className="w-5 h-5" />

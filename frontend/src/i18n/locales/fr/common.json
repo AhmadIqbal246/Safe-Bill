@@ -542,7 +542,10 @@
     "final_total": "Total final",
     "vat_section": "Taux de TVA",
     "platform_fees": "Frais de plateforme",
-    "net_amount": "Montant Net"
+    "net_amount": "Montant Net",
+    "step_1": "Étape 1",
+    "step_2": "Étape 2",
+    "step_3": "Étape 3"
   },
   "my_profile": {
     "title": "Mon Profil",
@@ -1233,6 +1236,42 @@
         "content": "Vous opposer au traitement de vos données personnelles à certaines fins"
       }
     },
+    "cookie_policy": {
+      "title": "Politique des Cookies",
+      "subtitle": "Nous utilisons des cookies pour améliorer votre expérience et assurer la conformité GDPR.",
+      "essential_cookies": {
+        "title": "Cookies Essentiels",
+        "description": "Ces cookies sont nécessaires au bon fonctionnement du site Web et ne peuvent pas être désactivés. Ils sont généralement définis en réponse à des actions que vous effectuez et qui équivalent à une demande de services.",
+        "examples": [
+          "Gestion de session et authentification",
+          "Fonctionnalités de sécurité et protection CSRF",
+          "Préférences utilisateur de base (langue, thème)"
+        ]
+      },
+      "analytics_cookies": {
+        "title": "Cookies d'Analyse",
+        "description": "Ces cookies nous aident à comprendre comment les visiteurs interagissent avec notre site Web en collectant et en rapportant des informations de manière anonyme.",
+        "examples": [
+          "Pages vues et comportement des utilisateurs",
+          "Surveillance des performances",
+          "Suivi des erreurs et débogage"
+        ]
+      },
+      "marketing_cookies": {
+        "title": "Cookies Marketing",
+        "description": "Ces cookies sont utilisés pour suivre les visiteurs sur différents sites Web à des fins publicitaires et marketing.",
+        "examples": [
+          "Préférences de marketing par e-mail",
+          "Abonnements à la newsletter",
+          "Suivi des campagnes marketing"
+        ]
+      },
+      "consent_management": {
+        "title": "Gestion du Consentement",
+        "description": "Nous utilisons Axeptio pour gérer vos préférences de cookies et assurer la conformité aux réglementations GDPR. Vous pouvez modifier vos paramètres de consentement à tout moment.",
+        "withdrawal": "Vous avez le droit de retirer votre consentement à tout moment. Le retrait du consentement n'affectera pas la licéité du traitement basé sur le consentement avant son retrait."
+      }
+    },
     "cookies": {
       "title": "Cookies et Suivi",
       "content": "Nous utilisons des cookies et des technologies similaires pour améliorer votre expérience :",
@@ -1244,9 +1283,8 @@
     "contact": {
       "title": "Nous Contacter",
       "content": "Si vous avez des questions sur cette Politique de Confidentialité ou nos pratiques de données, veuillez nous contacter :",
-      "email": "privacy@safebill.com",
-      "phone": "+1 (555) 123-4567",
-      "address": "123 Business Street, City, State 12345"
+      "email": "contact@safebill.fr",
+      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
     },
     "updates": {
       "title": "Mises à Jour de la Politique",
@@ -1267,6 +1305,12 @@
       "title": "Acceptation des Conditions",
       "content": "En créant un compte, en accédant à notre plateforme ou en utilisant l'un de nos services, vous reconnaissez avoir lu, compris et accepté d'être lié par ces Conditions d'Utilisation et notre Politique de Confidentialité.",
       "agreement": "Votre utilisation continue de Safe Bill constitue votre acceptation de toute mise à jour ou modification de ces Conditions."
+    },
+    "consent_requirements": {
+      "title": "Exigences de Consentement",
+      "content": "En utilisant Safe Bill, vous consentez à notre collecte et utilisation de vos informations telles que décrites dans notre Politique de Confidentialité. Vous devez fournir un consentement valide pour toutes les activités de traitement des données conformément aux réglementations GDPR.",
+      "cookie_consent": "Notre plateforme utilise des cookies et des technologies similaires. Vous devez fournir votre consentement pour les cookies non essentiels via notre plateforme de gestion du consentement alimentée par Axeptio.",
+      "withdrawal": "Vous pouvez retirer votre consentement à tout moment, mais cela peut limiter votre capacité à utiliser certaines fonctionnalités de notre plateforme."
     },
     "service_description": {
       "title": "Description du Service",
@@ -1388,9 +1432,8 @@
     "contact": {
       "title": "Nous Contacter",
       "content": "Si vous avez des questions sur ces Conditions d'Utilisation, veuillez nous contacter :",
-      "email": "legal@safebill.com",
-      "phone": "+1 (555) 123-4567",
-      "address": "123 Business Street, City, State 12345"
+      "email": "contact@safebill.fr",
+      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
     },
     "updates": {
       "title": "Mises à Jour des Conditions",

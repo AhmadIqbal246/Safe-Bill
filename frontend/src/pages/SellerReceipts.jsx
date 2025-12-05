@@ -624,6 +624,7 @@ export default function SellerReceipts() {
                     <div className="text-xs text-gray-600 space-y-0.5">
                       {receipt.seller_username && <div>{receipt.seller_username}</div>}
                       {receipt.seller_email && <div>{receipt.seller_email}</div>}
+                      {receipt.seller_company && <div className="font-semibold">{receipt.seller_company}</div>}
                       {receipt.seller_address && <div>{receipt.seller_address}</div>}
                       {receipt.seller_phone && <div>{t('receipts.phone')}: {receipt.seller_phone}</div>}
                       {receipt.seller_siret && <div>{t('receipts.siret')}: {receipt.seller_siret}</div>}
@@ -699,8 +700,9 @@ export default function SellerReceipts() {
                   </div>
                   <div className="flex-1 text-xs text-gray-600 text-left sm:text-right">
                     <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_information')}</div>
-                    <div className="text-sm font-semibold text-gray-900 mb-1">{receipt.seller_username || '-'}</div>
+                    <div className="text-sm text-gray-600 mb-1">{receipt.seller_username || '-'}</div>
                     <div>{receipt.seller_email || '-'}</div>
+                    {receipt.seller_company && <div className="text-sm text-gray-600 mb-1">{receipt.seller_company}</div>}
                     <div className="mt-0.5">{receipt.seller_address || '-'}</div>
                     <div className="mt-0.5">{receipt.seller_siret ? `SIRET: ${receipt.seller_siret}` : 'SIRET: -'}</div>
                     <div className="mt-0.5">{receipt.seller_phone ? `${phoneLabel}: ${receipt.seller_phone}` : `${phoneLabel}: -`}</div>

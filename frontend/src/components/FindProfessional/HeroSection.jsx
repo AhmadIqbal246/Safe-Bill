@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import HomeBg from '../../assets/Circle Background/home-bg1.png';
-import ProfessionalsImage from '../../assets/Circle Background/How_To_Keep_Your_Best_Employees-removebg-preview.png';
+import ProfessionalsImage from '../../assets/Circle Background/How_To_Keep_Your_Best_Employees-removebg-preview.jpg';
 
 export default function HeroSection() {
   const { t } = useTranslation();

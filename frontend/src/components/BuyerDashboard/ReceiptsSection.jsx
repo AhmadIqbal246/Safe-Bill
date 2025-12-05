@@ -536,6 +536,7 @@ export default function ReceiptsSection() {
                   <div className="text-xs text-gray-600 space-y-0.5">
                     {project.seller_username && <div>{project.seller_username}</div>}
                     {project.seller_email && <div>{project.seller_email}</div>}
+                    {project.seller_company && <div>{project.seller_company}</div>}
                     {project.seller_address && <div>{project.seller_address}</div>}
                     {project.seller_phone && <div>{t('receipts.phone')}: {project.seller_phone}</div>}
                     {project.seller_siret && <div>{t('receipts.siret')}: {project.seller_siret}</div>}

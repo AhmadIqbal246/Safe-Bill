@@ -881,11 +881,12 @@ class MilestoneApprovalAPIView(APIView):
         # Revenue sync will be triggered automatically on project completion
 
         project = milestone.project
-        status_msg = {
-            "approve": "approved",
-            "not_approved": "not approved",
-            "review_request": "sent for review",
-            "pending": "submitted for approval",
+        # Map action_type to translation key for milestone status
+        status_translation_key = {
+            "approve": "notifications.milestone_status_approved",
+            "not_approved": "notifications.milestone_status_not_approved",
+            "review_request": "notifications.milestone_status_review_request",
+            "pending": "notifications.milestone_status_pending",
         }.get(action_type, milestone.status)
 
         # Notify seller
@@ -895,7 +896,7 @@ class MilestoneApprovalAPIView(APIView):
                 message="notifications.milestone_status_seller",
                 project_name=project.name,
                 milestone_name=milestone.name,
-                status=status_msg
+                status=status_translation_key
             )
         # Notify buyer/client
         if project.client:
@@ -904,7 +905,7 @@ class MilestoneApprovalAPIView(APIView):
                 message="notifications.milestone_status_buyer",
                 project_name=project.name,
                 milestone_name=milestone.name,
-                status=status_msg
+                status=status_translation_key
             )
 
         return Response(

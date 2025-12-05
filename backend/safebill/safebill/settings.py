@@ -235,12 +235,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Site URL for email templates
 SITE_URL = env('SITE_URL', default='https://safebill.fr')
-SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Logo_Bleu.png')
+SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Dark.png')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

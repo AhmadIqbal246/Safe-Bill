@@ -390,7 +390,7 @@ export default function InviteViewProject() {
               {t('invite_view.total_amount')}
             </div>
             <div className="text-gray-900 font-bold text-lg mb-2">
-              ${baseAmount.toLocaleString()}
+              €{baseAmount.toLocaleString()}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
@@ -398,7 +398,7 @@ export default function InviteViewProject() {
               <div key={idx} className="bg-[#F6F0F0] rounded-lg p-4">
                 <div className="font-semibold mb-1">{t('invite_view.installment')} {idx + 1}</div>
                 <div className="text-gray-900 font-medium mb-1">
-                  ${parseFloat(inst.amount).toLocaleString()}
+                  €{parseFloat(inst.amount).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 mb-1">{inst.step}</div>
                 <div className="text-xs text-gray-400">{inst.description}</div>
@@ -409,11 +409,11 @@ export default function InviteViewProject() {
           <div className="bg-white rounded-lg p-4 border-2 border-gray-300 mb-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-lg font-semibold text-gray-900">{t('invite_view.total_payment_required')}</span>
-              <span className="text-2xl font-bold text-[#01257D]">${buyerTotal.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-[#01257D]">€{buyerTotal.toLocaleString()}</span>
             </div>
             <div className="text-sm text-gray-600 space-y-1">
-              <div>{t('invite_view.project_amount')}: ${baseAmount.toLocaleString()}</div>
-              <div>{t('invite_view.vat')} ({Number(project.vat_rate || 0).toFixed(1)}%): ${vatAmount.toLocaleString()}</div>
+              <div>{t('invite_view.project_amount')}: €{baseAmount.toLocaleString()}</div>
+              <div>{t('invite_view.vat')} ({Number(project.vat_rate || 0).toFixed(1)}%): €{vatAmount.toLocaleString()}</div>
             </div>
           </div>
 
