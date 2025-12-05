@@ -255,7 +255,7 @@ class EmailService:
             "user_type": user_type,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -394,7 +394,7 @@ class EmailService:
             "message_preview": message_preview,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -477,7 +477,7 @@ class EmailService:
             "professional_id": professional_id,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -511,7 +511,7 @@ class EmailService:
             "to_email": to_email,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -617,7 +617,7 @@ class EmailService:
         Send payment success email to client.
         """
         if not dashboard_url:
-            dashboard_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+            dashboard_url = f"{settings.FRONTEND_URL}buyer-dashboard"
 
         context = {
             "user_name": user_name,
@@ -727,7 +727,7 @@ class EmailService:
         # Sellers: project creation; Buyers: find professionals; generic dashboard/home as fallback
         login_url = f"{settings.FRONTEND_URL}login"
         find_professionals_url = f"{settings.FRONTEND_URL}find-professionals"
-        dashboard_url = f"{settings.FRONTEND_URL}dashboard"
+        dashboard_url = f"{settings.FRONTEND_URL}login"
 
         context = {
             "first_name": first_name,

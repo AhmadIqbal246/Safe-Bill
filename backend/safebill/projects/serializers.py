@@ -288,10 +288,11 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             installment = PaymentInstallment.objects.create(project=project, **inst)
     
             # Create milestone based on the installment
+            # Keep step identifier as-is (step_1, step_2, step_3) - frontend will translate
             ms = Milestone.objects.create(
                 project=project,
                 related_installment=installment,  # Link to the installment
-                name=inst["step"],  # Use step as milestone name
+                name=inst["step"],  # Store step identifier (step_1, step_2, step_3)
                 description=inst["description"],  # Use description as
                 relative_payment=inst["amount"],  # Use amount as relative
                 status="not_submitted",  # Default status

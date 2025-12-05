@@ -124,6 +124,16 @@ export default function MilestonePage() {
     ).join(' ');
   };
 
+  // Translate milestone name based on current language
+  const getDisplayMilestoneName = (name) => {
+    // Check if the name is a step identifier (step_1, step_2, step_3)
+    if (name && name.match(/^step_[123]$/)) {
+      return t(`project_creation.${name}`);
+    }
+    // Otherwise return the name as-is
+    return name;
+  };
+
   const handleViewComment = (comment) => {
     setSelectedComment(comment);
     setViewCommentDialogOpen(true);
@@ -312,7 +322,7 @@ export default function MilestonePage() {
             <div key={milestone.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                 <div className="flex-1">
-                  <div className="text-lg font-semibold text-[#01257D]">{milestone.name}</div>
+                  <div className="text-lg font-semibold text-[#01257D]">{getDisplayMilestoneName(milestone.name)}</div>
                   <div className="text-gray-500 text-sm">{t('milestones.status_label')}: <span className={
                     milestone.status === 'approved' ? 'text-green-600' : milestone.status === 'pending' ? 'text-yellow-600' : 'text-red-600'
                   }>{getDisplayStatus(milestone.status)}</span></div>

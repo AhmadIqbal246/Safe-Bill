@@ -33,7 +33,7 @@ def log_task_failure(sender=None, task_id=None, exception=None, traceback=None, 
     print(f"   Error: {exception}")
     if 'hubspot' in task_name.lower():
         print(f"   [WARNING] HubSpot sync failure detected!")
-    logger.error(f"Task {task_name} failed: {exception}", extra={'task_id': task_id})
+    logger.error(f"Task {task_name} failed: {exception} (task_id: {task_id})")
 
 @task_retry.connect
 def log_task_retry(sender=None, task_id=None, reason=None, einfo=None, **kwargs):

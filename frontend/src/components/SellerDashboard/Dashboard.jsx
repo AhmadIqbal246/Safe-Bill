@@ -341,6 +341,17 @@ export default function Dashboard() {
         }
       }
       
+      // Translate milestone status if present
+      if (variables.status) {
+        const statusMap = {
+          'Approved': t('notifications.milestone_status_approved'),
+          'Not Approved': t('notifications.milestone_status_not_approved'),
+          'Sent for Review': t('notifications.milestone_status_review_request'),
+          'Submitted for Approval': t('notifications.milestone_status_pending'),
+        };
+        variables = { ...variables, status: statusMap[variables.status] || variables.status };
+      }
+      
       // Use the full key path with notifications namespace
       return t(notification.translation_key, { ...variables });
     }
