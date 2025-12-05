@@ -270,7 +270,8 @@ export default function SellerReceipts() {
         ...project,
         receiptType: 'seller',
         receiptTypeText: t('receipts.seller_receipt'),
-        invoiceType: 'project'
+        invoiceType: 'project',
+        created_at: project.created_at || project.completion_date || new Date().toISOString()
       });
       
       // Add Platform Invoice (use permanent reference from database)
@@ -278,7 +279,8 @@ export default function SellerReceipts() {
         ...project,
         receiptType: 'platform',
         receiptTypeText: t('receipts.platform_invoice'),
-        invoiceType: 'project'
+        invoiceType: 'project',
+        created_at: project.created_at || project.completion_date || new Date().toISOString()
       });
     });
     
@@ -305,10 +307,18 @@ export default function SellerReceipts() {
     
     // Sort all receipts by creation date (newest first)
     // Use created_at for all invoice types to ensure consistent sorting
+    // Secondary sort by ID (descending) for invoices created on the same day
     receipts.sort((a, b) => {
       const dateA = new Date(a.created_at || 0);
       const dateB = new Date(b.created_at || 0);
-      return dateB - dateA; // Newest first
+      
+      // Primary sort: by date (newest first)
+      if (dateB.getTime() !== dateA.getTime()) {
+        return dateB - dateA;
+      }
+      
+      // Secondary sort: by ID (newest first) for same-day invoices
+      return (b.id || 0) - (a.id || 0);
     });
     
     return receipts;
@@ -534,7 +544,7 @@ export default function SellerReceipts() {
                                 return (
                       <tr key={`${receipt.id}-${receipt.receiptType}`} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(receipt.completion_date || receipt.created_at)}
+                          {formatDate(receipt.created_at || receipt.completion_date)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           <div className="font-medium">{receipt.name}</div>
@@ -593,7 +603,7 @@ export default function SellerReceipts() {
                     <div className="grid grid-cols-2 gap-3 text-xs mb-3">
                       <div>
                         <span className="text-gray-500">{t('receipts.date')}:</span>
-                        <div className="font-medium">{formatDate(receipt.completion_date || receipt.created_at)}</div>
+                        <div className="font-medium">{formatDate(receipt.created_at || receipt.completion_date)}</div>
                       </div>
                       <div>
                         <span className="text-gray-500">{t('receipts.reference')}:</span>

@@ -13,18 +13,28 @@ import QuoteUploadModal from './QuoteUploadModal';
 
 const getPaymentConfigs = (t) => [
   [
-    { amount: '€1000', step: 'step_1', desc: 'Full payment upon quote acceptance.' },
+    { amount: '€1000', step: 'Step 1', desc: 'Full payment upon quote acceptance.' },
   ],
   [
-    { amount: '€600', step: 'step_1', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€400', step: 'step_2', desc: 'Final payment upon project completion.' },
+    { amount: '€600', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€400', step: 'Step 2', desc: 'Final payment upon project completion.' },
   ],
   [
-    { amount: '€500', step: 'step_1', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€300', step: 'step_2', desc: 'Payment due at the start of the project.' },
-    { amount: '€200', step: 'step_3', desc: 'Final payment upon project completion.' },
+    { amount: '€500', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€300', step: 'Step 2', desc: 'Payment due at the start of the project.' },
+    { amount: '€200', step: 'Step 3', desc: 'Final payment upon project completion.' },
   ],
 ];
+
+// Helper function to map step names to translation keys
+const getStepTranslationKey = (stepName) => {
+  const mapping = {
+    'Step 1': 'steps.step_1',
+    'Step 2': 'steps.step_2',
+    'Step 3': 'steps.step_3',
+  };
+  return mapping[stepName] || stepName;
+};
 
 export default function ProjectCreation() {
   const { t } = useTranslation();
@@ -387,7 +397,7 @@ export default function ProjectCreation() {
                         />
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-700">
-                        {t(`project_creation.${milestone.step}`)}
+                        {t(getStepTranslationKey(milestone.step))}
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input
@@ -418,7 +428,7 @@ export default function ProjectCreation() {
                   ) : (
                     <>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium">€{milestone.amount.toLocaleString()}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{t(`project_creation.${milestone.step}`)}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{t(getStepTranslationKey(milestone.step))}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{milestone.desc}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-€{(milestone.platformFee).toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">€{milestone.netAmount.toLocaleString()}</td>

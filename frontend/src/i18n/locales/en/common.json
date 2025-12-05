@@ -1920,5 +1920,10 @@
       "precheck": "Please activate your membership to create additional projects.",
       "required_backend": "Subscription required to create additional projects. Please activate your membership."
     }
+  },
+  "steps": {
+    "step_1": "Step 1",
+    "step_2": "Step 2",
+    "step_3": "Step 3"
   }
 }

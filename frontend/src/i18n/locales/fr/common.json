@@ -1910,5 +1910,10 @@
       "precheck": "Veuillez activer votre abonnement pour créer des projets supplémentaires.",
       "required_backend": "Abonnement requis pour créer des projets supplémentaires. Veuillez activer votre abonnement."
     }
+  },
+  "steps": {
+    "step_1": "Étape 1",
+    "step_2": "Étape 2",
+    "step_3": "Étape 3"
   }
 }
