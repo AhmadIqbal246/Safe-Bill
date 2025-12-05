@@ -286,9 +286,9 @@ export default function SellerReceipts() {
     
     // Add subscription invoices
     subscriptionInvoices.forEach(invoice => {
-      // Generate reference number in format SUB-YYYY-XXXXXX (consistent with project invoices)
+      // Generate reference number in format SUB-YYYY-XXXX (consistent with project invoices)
       const year = new Date(invoice.created_at).getFullYear();
-      const randomSuffix = String(invoice.id).padStart(6, '0');
+      const randomSuffix = String(invoice.id).padStart(4, '0');
       const refNumber = `SUB-${year}-${randomSuffix}`;
       
       receipts.push({
