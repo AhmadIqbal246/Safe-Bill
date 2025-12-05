@@ -301,7 +301,7 @@ export default function BuyerRegisterComp() {
             <div className="flex justify-center">
               <button
                 type="submit"
-                className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#2E78A6] text-white hover:bg-[#2346a0] ${
+                className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#2E78A6] text-white ${
                   loading ? "opacity-80" : ""
                 }`}
                 disabled={loading}

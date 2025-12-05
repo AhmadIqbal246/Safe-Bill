@@ -1,15 +1,19 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import status
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timezone as dt_timezone
 from django.db import transaction
+from decimal import Decimal
 import stripe
 import logging
 
-from .models import Subscription
+from .models import Subscription, SubscriptionInvoice
+from .serializers import SubscriptionInvoiceSerializer
 from payments.models import Payment
 
 
@@ -156,6 +160,7 @@ def subscription_webhook(request):
 
     event_type = event.get("type")
     data_object = event.get("data", {}).get("object", {})
+    logger.info(f"[WEBHOOK] Received event type: {event_type}")
 
     try:
         if event_type == "checkout.session.completed":
@@ -218,8 +223,18 @@ def subscription_webhook(request):
                 return Response({"status": "error", "detail": str(e)}, status=200)
 
         elif event_type in ("invoice.payment_succeeded", "invoice.paid"):
-            subscription_id = data_object.get("subscription")
+            logger.info(f"[INVOICE_DEBUG] Handling {event_type} event")
+            # Try to get subscription_id from parent.subscription_details.subscription
+            subscription_id = None
+            parent = data_object.get("parent", {})
+            if parent and isinstance(parent, dict):
+                subscription_details = parent.get("subscription_details", {})
+                if subscription_details and isinstance(subscription_details, dict):
+                    subscription_id = subscription_details.get("subscription")
+            
+            logger.info(f"[INVOICE_DEBUG] subscription_id from parent.subscription_details: {subscription_id}")
             if not subscription_id:
+                logger.warning(f"[INVOICE_DEBUG] No subscription_id found in invoice event")
                 return Response({"status": "ignored"}, status=200)
             try:
                 sub_obj = stripe.Subscription.retrieve(subscription_id)
@@ -238,6 +253,58 @@ def subscription_webhook(request):
                         status=status,
                         membership_active=status in ["active", "trialing"],
                     )
+                
+                # Create SubscriptionInvoice record
+                try:
+                    logger.info(f"[INVOICE_DEBUG] Creating invoice for payment_succeeded event")
+                    invoice_data = stripe.Invoice.retrieve(data_object.get("id"))
+                    subscription = Subscription.objects.filter(stripe_subscription_id=subscription_id).first()
+                    logger.info(f"[INVOICE_DEBUG] Found subscription: {subscription}, User: {subscription.user if subscription else 'None'}")
+                    
+                    if subscription and subscription.user:
+                        logger.info(f"[INVOICE_DEBUG] Creating invoice record for user {subscription.user.id}")
+                        
+                        # Get billing period from subscription's current_period_end
+                        # Calculate period_start as 1 month before period_end
+                        period_end_dt = subscription.current_period_end
+                        if period_end_dt:
+                            # Period end is the subscription's current_period_end
+                            period_end = period_end_dt.date() if hasattr(period_end_dt, 'date') else period_end_dt
+                            # Period start is 1 month before (approximately 30 days)
+                            from datetime import timedelta
+                            period_start = (period_end_dt - timedelta(days=30)).date() if hasattr(period_end_dt, 'date') else period_end_dt
+                        else:
+                            # Fallback to invoice period if subscription period not available
+                            period_start = datetime.fromtimestamp(
+                                invoice_data.period_start, tz=dt_timezone.utc
+                            ).date()
+                            period_end = datetime.fromtimestamp(
+                                invoice_data.period_end, tz=dt_timezone.utc
+                            ).date()
+                        
+                        # Convert amount from cents to euros (fixed €3.00)
+                        amount = Decimal(str(invoice_data.amount_paid / 100)) if invoice_data.amount_paid else Decimal("3.00")
+                        
+                        logger.info(f"[INVOICE_DEBUG] Invoice data - amount: {amount}, period: {period_start} to {period_end}")
+                        
+                        # Create or update invoice
+                        SubscriptionInvoice.objects.update_or_create(
+                            stripe_invoice_id=invoice_data.id,
+                            defaults={
+                                'user': subscription.user,
+                                'subscription': subscription,
+                                'amount': amount,
+                                'billing_period_start': period_start,
+                                'billing_period_end': period_end,
+                                'status': 'paid'
+                            }
+                        )
+                        logger.info(f"✅ CREATED/UPDATED SubscriptionInvoice for user {subscription.user.id}: {period_start} to {period_end}, amount: €{amount}")
+                    else:
+                        logger.warning(f"[INVOICE_DEBUG] Subscription or user not found")
+                except Exception as e:
+                    logger.error(f"❌ Error creating subscription invoice: {str(e)}", exc_info=True)
+                    
             except stripe.error.StripeError as e:
                 logger.error(f"Stripe error in invoice.payment_succeeded: {e}")
             except Exception as e:
@@ -402,4 +469,25 @@ def eligibility(request):
         }
     )
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def seller_subscription_invoices(request):
+    """
+    Return all subscription invoices for the authenticated seller.
+    Only accessible to sellers.
+    """
+    user = request.user
+    if not (getattr(user, "role", None) == "seller"):
+        return Response(
+            {"detail": "Only sellers can access this endpoint."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    invoices = SubscriptionInvoice.objects.filter(user=user).order_by("billing_period_start")
+    serializer = SubscriptionInvoiceSerializer(invoices, many=True)
+    return Response({
+        "invoices": serializer.data,
+        "count": invoices.count()
+    })
 

@@ -374,7 +374,7 @@ export default function SafeBillHeader({
                 {t(item.label)}
               </Link>
             ))}
-            {canSeeSellerDashboard && (
+            {!isSignedIn && (
               <button
                 type="button"
                 onClick={() => setIsCallbackOpen(true)}
@@ -796,7 +796,7 @@ export default function SafeBillHeader({
                   {t(item.label)}
                 </Link>
               ))}
-              {canSeeSellerDashboard && (
+              {!isSignedIn && (
                 <button
                   type="button"
                   onClick={() => {

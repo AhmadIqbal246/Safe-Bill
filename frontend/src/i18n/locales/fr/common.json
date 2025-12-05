@@ -1744,7 +1744,18 @@
     "platform_fees": "Frais de plateforme",
     "seller_invoice": "Facture vendeur",
     "paid": "Payé",
-    "completed_at": "Terminé le"
+    "completed_at": "Terminé le",
+    "subscription_invoice": "Facture d'abonnement",
+    "monthly_subscription_invoice": "Facture d'abonnement mensuel",
+    "invoice_number": "Numéro de facture",
+    "invoice_date": "Date de facturation",
+    "billing_period": "Période de facturation",
+    "to": "à",
+    "status": "Statut",
+    "status_paid": "Payé",
+    "status_pending": "En attente",
+    "subscription_amount": "Montant de l'abonnement",
+    "generated_by_safe_bill": "Généré par Safe Bill"
   },
   "not_found": {
     "page_not_found": "La page que vous recherchez n'existe pas.",

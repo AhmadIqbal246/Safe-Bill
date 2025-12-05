@@ -20,6 +20,7 @@ export default function SellerReceipts() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [projects, setProjects] = React.useState([]);
+  const [subscriptionInvoices, setSubscriptionInvoices] = React.useState([]);
   const [search, setSearch] = React.useState("");
   const [page, setPage] = React.useState(1);
   // Removed receiptType state - now showing both types in one table
@@ -34,15 +35,32 @@ export default function SellerReceipts() {
     setError(null);
     try {
       const token = sessionStorage.getItem('access');
-      const res = await axios.get(`${BASE_URL}api/projects/receipts/seller/`, {
+      
+      // Fetch project invoices
+      const projectRes = await axios.get(`${BASE_URL}api/projects/receipts/seller/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         withCredentials: true,
       });
-      const items = res.data.projects || [];
-      setProjects(items);
+      const projectItems = projectRes.data.projects || [];
+      
+      // Fetch subscription invoices
+      const subRes = await axios.get(`${BASE_URL}api/subscription/invoices/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      });
+      const subItems = subRes.data.invoices || [];
+      
+      setProjects(projectItems);
+      setSubscriptionInvoices(subItems);
+      console.log('[DEBUG] Project invoices:', projectItems.length);
+      console.log('[DEBUG] Subscription invoices:', subItems.length);
+      console.log('[DEBUG] Subscription invoice data:', subItems);
     } catch (e) {
       setError(e?.response?.data?.detail || e.message);
     } finally {
@@ -55,9 +73,22 @@ export default function SellerReceipts() {
   // Reset page on dataset or search change
   React.useEffect(() => {
     setPage(1);
-  }, [projects, search, filters]);
+  }, [projects, subscriptionInvoices, search, filters]);
 
   const calcTotals = (project) => {
+    // Handle subscription invoices
+    if (project.invoiceType === 'subscription') {
+      const total = Number(project.amount || 0);
+      const vatRate = 0; // No VAT for subscription invoices
+      const vatAmount = 0;
+      const amountIncludingVat = total;
+      const platformFee = 0;
+      const platformFeeWithVat = 0;
+      const finalAmount = total;
+      return { total, pct: 0, platformFee, sellerNet: finalAmount, vatRate, vatAmount, platformFeeWithVat, amountIncludingVat, finalAmount };
+    }
+    
+    // Handle project invoices
     const total = (project.installments || []).reduce((s, i) => s + Number(i.amount || 0), 0);
     const vatRate = Number(project.vat_rate || 0);
     const pct = Number(project.platform_fee_percentage || 0);
@@ -87,10 +118,18 @@ export default function SellerReceipts() {
         import('jspdf'),
       ]);
 
-      const elementId = type === 'platform' ? `platform-invoice-${project.id}` : `receipt-${project.id}`;
+      let elementId;
+      if (type === 'subscription') {
+        elementId = `subscription-invoice-${project.id}`;
+      } else if (type === 'platform') {
+        elementId = `platform-invoice-${project.id}`;
+      } else {
+        elementId = `receipt-${project.id}`;
+      }
+      
       const element = document.getElementById(elementId);
       if (!element) {
-        console.error(`Element with id 'receipt-${project.id}' not found`);
+        console.error(`Element with id '${elementId}' not found`);
         toast.error('Receipt not found');
         return;
       }
@@ -196,9 +235,14 @@ export default function SellerReceipts() {
         }
       }
 
-      const filename = type === 'platform' 
-        ? `platform_invoice_${project.reference_number || project.id}.pdf`
-        : `receipt_seller_${project.reference_number || project.id}.pdf`;
+      let filename;
+      if (type === 'subscription') {
+        filename = `subscription_invoice_${project.id}.pdf`;
+      } else if (type === 'platform') {
+        filename = `platform_invoice_${project.reference_number || project.id}.pdf`;
+      } else {
+        filename = `receipt_seller_${project.reference_number || project.id}.pdf`;
+      }
       pdf.save(filename);
 
       // Clean up the temporary container
@@ -215,28 +259,52 @@ export default function SellerReceipts() {
     }
   };
 
-  // Create combined receipts data (both seller receipts and platform invoices)
+  // Create combined receipts data (seller receipts, platform invoices, and subscription invoices)
   const combinedReceipts = React.useMemo(() => {
     const receipts = [];
     
+    // Add project invoices (seller and platform)
     projects.forEach(project => {
       // Add Seller Receipt
       receipts.push({
         ...project,
         receiptType: 'seller',
-        receiptTypeText: t('receipts.seller_receipt')
+        receiptTypeText: t('receipts.seller_receipt'),
+        invoiceType: 'project'
       });
       
       // Add Platform Invoice
       receipts.push({
         ...project,
         receiptType: 'platform',
-        receiptTypeText: t('receipts.platform_invoice')
+        receiptTypeText: t('receipts.platform_invoice'),
+        invoiceType: 'project'
+      });
+    });
+    
+    // Add subscription invoices
+    subscriptionInvoices.forEach(invoice => {
+      // Generate reference number in format SUB-YYYY-XXXXXX (consistent with project invoices)
+      const year = new Date(invoice.created_at).getFullYear();
+      const randomSuffix = String(invoice.id).padStart(6, '0');
+      const refNumber = `SUB-${year}-${randomSuffix}`;
+      
+      receipts.push({
+        ...invoice,
+        receiptType: 'subscription',
+        receiptTypeText: 'Subscription Invoice',
+        invoiceType: 'subscription',
+        name: 'Monthly Subscription',
+        reference_number: refNumber,
+        payment_id: invoice.id,
+        payment_status: invoice.status,
+        created_at: invoice.created_at,
+        completion_date: invoice.created_at
       });
     });
     
     return receipts;
-  }, [projects, t]);
+  }, [projects, subscriptionInvoices, t]);
 
   // Filter and paginate
   const filtered = React.useMemo(() => {
@@ -740,6 +808,59 @@ export default function SellerReceipts() {
                           <div>www.safebill.fr</div>
                         </div>
                       </div>
+
+              {/* Subscription Invoice PDF */}
+              {receipt.invoiceType === 'subscription' && (
+                <div id={`subscription-invoice-${receipt.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200" style={{ background: '#ffffff' }}>
+                  {/* Header with Logo */}
+                  <div className="flex items-center justify-between pt-4 pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+                    <div className="flex items-center gap-3">
+                      <img src={Logo} alt="Safe Bill" style={{ height: 15, width: 'auto' }} />
+                    </div>
+                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">{t('receipts.subscription_invoice')}</div>
+                  </div>
+
+                  {/* Safe Bill and Seller Info */}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pb-4 mb-4 border-b border-gray-200">
+                    <div className="flex-1 text-xs text-gray-600">
+                      <div className="text-sm font-semibold text-gray-900 mb-1">{SAFE_BILL_INFO.name}</div>
+                      <div>{SAFE_BILL_INFO.email}</div>
+                      <div className="mt-0.5">{SAFE_BILL_INFO.address}</div>
+                    </div>
+                    <div className="flex-1 text-xs text-gray-600 text-left sm:text-right">
+                      <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.seller_information')}</div>
+                      <div className="text-sm text-gray-600 mb-1">{receipt.seller_name || '-'}</div>
+                      <div>{receipt.seller_email || '-'}</div>
+                      {receipt.seller_company && <div className="text-sm text-gray-600 mb-1">{receipt.seller_company}</div>}
+                      <div className="mt-0.5">{receipt.seller_address || '-'}</div>
+                      <div className="mt-0.5">{receipt.seller_siret ? `SIRET: ${receipt.seller_siret}` : 'SIRET: -'}</div>
+                      <div className="mt-0.5">{receipt.seller_phone ? `${t('receipts.phone')}: ${receipt.seller_phone}` : `${t('receipts.phone')}: -`}</div>
+                    </div>
+                  </div>
+
+                  {/* Invoice Details */}
+                  <div className="mb-5">
+                    <div className="text-lg font-semibold text-gray-900">{t('receipts.monthly_subscription_invoice')}</div>
+                    <div className="text-xs text-gray-500">{t('receipts.invoice_number')}: {receipt.id}</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {receipt.created_at}</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('receipts.billing_period')}: {receipt.billing_period_start} {t('receipts.to')} {receipt.billing_period_end}</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('receipts.status')}: <span style={{ textTransform: 'capitalize', color: receipt.status === 'paid' ? '#52c41a' : '#faad14' }}>{t(`receipts.status_${receipt.status}`)}</span></div>
+                  </div>
+
+                  {/* Amount Summary */}
+                  <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 text-sm mb-6">
+                    <div className="bg-blue-50 rounded-md p-3 border border-blue-200">
+                      <div className="text-gray-500">{t('receipts.subscription_amount')}</div>
+                      <div className="text-base font-semibold text-blue-700">€{Number(receipt.amount).toFixed(2)}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
+                    <div>{t('receipts.generated_by_safe_bill')}</div>
+                    <div>www.safebill.fr</div>
+                  </div>
+                </div>
+              )}
                   </div>
                 );
               })}

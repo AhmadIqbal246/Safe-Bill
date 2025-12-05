@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from .models import Feedback, QuoteRequest, ContactMessage, CallbackRequest
 from hubspot.tasks import (
     create_feedback_task,
@@ -74,6 +75,7 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
 class CallbackRequestCreateAPIView(generics.CreateAPIView):
     queryset = CallbackRequest.objects.all()
     serializer_class = CallbackRequestSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

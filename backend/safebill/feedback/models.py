@@ -44,6 +44,7 @@ class CallbackRequest(models.Model):
     ROLE_CHOICES = (
         ("seller", "Seller"),
         ("professional-buyer", "Professional Buyer"),
+        ("buyer", "Buyer"),
     )
 
     company_name = models.CharField(max_length=255)
