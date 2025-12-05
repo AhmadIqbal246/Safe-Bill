@@ -424,7 +424,7 @@ class EmailService:
         Notify the buyer that the seller has requested approval for a milestone.
         """
         if not dashboard_url:
-            dashboard_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+            dashboard_url = f"{settings.FRONTEND_URL}buyer-dashboard"
 
         context = {
             "user_name": user_name,
@@ -654,7 +654,7 @@ class EmailService:
         Notify the seller that the buyer has credited the payment so the project can start.
         """
         if not dashboard_url:
-            dashboard_url = f"{settings.FRONTEND_URL}/seller-dashboard"
+            dashboard_url = f"{settings.FRONTEND_URL}seller-dashboard"
 
         context = {
             "user_name": user_name,
@@ -690,7 +690,7 @@ class EmailService:
         Send payment failed email to client.
         """
         if not retry_url:
-            retry_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+            retry_url = f"{settings.FRONTEND_URL}buyer-dashboard"
 
         context = {
             "user_name": user_name,
