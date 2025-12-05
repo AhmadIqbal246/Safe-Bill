@@ -264,8 +264,8 @@ export default function SellerReceipts() {
     const receipts = [];
     
     // Add project invoices (seller and platform)
-    projects.forEach(project => {
-      // Add Seller Receipt
+    projects.forEach((project) => {
+      // Add Seller Receipt (keep original reference_number)
       receipts.push({
         ...project,
         receiptType: 'seller',
@@ -273,7 +273,7 @@ export default function SellerReceipts() {
         invoiceType: 'project'
       });
       
-      // Add Platform Invoice
+      // Add Platform Invoice (use permanent reference from database)
       receipts.push({
         ...project,
         receiptType: 'platform',
@@ -301,6 +301,14 @@ export default function SellerReceipts() {
         created_at: invoice.created_at,
         completion_date: invoice.created_at
       });
+    });
+    
+    // Sort all receipts by creation date (newest first)
+    // Use created_at for all invoice types to ensure consistent sorting
+    receipts.sort((a, b) => {
+      const dateA = new Date(a.created_at || 0);
+      const dateB = new Date(b.created_at || 0);
+      return dateB - dateA; // Newest first
     });
     
     return receipts;
@@ -535,7 +543,7 @@ export default function SellerReceipts() {
                           {receipt.receiptTypeText}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {receipt.reference_number || '-'}
+                          {receipt.receiptType === 'platform' ? (receipt.platform_invoice_reference || '-') : (receipt.reference_number || '-')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div>€{total.toLocaleString()}</div>
@@ -589,7 +597,7 @@ export default function SellerReceipts() {
                       </div>
                       <div>
                         <span className="text-gray-500">{t('receipts.reference')}:</span>
-                        <div className="font-medium">{receipt.reference_number || '-'}</div>
+                        <div className="font-medium">{receipt.receiptType === 'platform' ? (receipt.platform_invoice_reference || '-') : (receipt.reference_number || '-')}</div>
                       </div>
                       <div>
                         <span className="text-gray-500">{t('receipts.amount')}:</span>

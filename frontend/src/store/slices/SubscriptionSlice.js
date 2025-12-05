@@ -73,6 +73,27 @@ export const fetchSubscriptionEligibility = createAsyncThunk(
   }
 );
 
+export const fetchSubscriptionInvoices = createAsyncThunk(
+  "subscription/fetchSubscriptionInvoices",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = sessionStorage.getItem("access");
+      const res = await axios.get(`${BASE_URL}api/subscription/invoices/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      });
+      return res.data; // { invoices, count }
+    } catch (err) {
+      return rejectWithValue(
+        err.response && err.response.data ? err.response.data : err.message
+      );
+    }
+  }
+);
+
 const subscriptionSlice = createSlice({
   name: "subscription",
   initialState: {
@@ -87,6 +108,10 @@ const subscriptionSlice = createSlice({
     eligibility: null,
     eligibilityLoading: false,
     eligibilityError: null,
+
+    invoices: [],
+    invoicesLoading: false,
+    invoicesError: null,
   },
   reducers: {
     clearSubscriptionState: (state) => {
@@ -132,6 +157,18 @@ const subscriptionSlice = createSlice({
       .addCase(fetchSubscriptionEligibility.rejected, (state, action) => {
         state.eligibilityLoading = false;
         state.eligibilityError = action.payload || "Failed to fetch eligibility";
+      })
+      .addCase(fetchSubscriptionInvoices.pending, (state) => {
+        state.invoicesLoading = true;
+        state.invoicesError = null;
+      })
+      .addCase(fetchSubscriptionInvoices.fulfilled, (state, action) => {
+        state.invoicesLoading = false;
+        state.invoices = action.payload.invoices || [];
+      })
+      .addCase(fetchSubscriptionInvoices.rejected, (state, action) => {
+        state.invoicesLoading = false;
+        state.invoicesError = action.payload || "Failed to fetch invoices";
       });
   },
 });

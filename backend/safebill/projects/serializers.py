@@ -487,6 +487,7 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     """
 
     reference_number = serializers.SerializerMethodField()
+    platform_invoice_reference = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
@@ -516,6 +517,7 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "installments",
             "milestones",
             "reference_number",
+            "platform_invoice_reference",
             "total_amount",
             "created_at",
             "completion_date",
@@ -541,6 +543,11 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     def get_reference_number(self, obj):
         if hasattr(obj, "quote") and obj.quote:
             return obj.quote.reference_number
+        return None
+
+    def get_platform_invoice_reference(self, obj):
+        if hasattr(obj, "quote") and obj.quote:
+            return obj.quote.platform_invoice_reference
         return None
 
     def get_total_amount(self, obj):
