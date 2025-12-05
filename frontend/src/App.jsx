@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import "./App.css";
 import Home from "./pages/Home";
 import SellerRegisterPage from "./pages/SellerRegisterPage";
@@ -42,10 +43,35 @@ import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
 import SellerReceipts from "./pages/SellerReceipts";
 import BuyerReceipts from "./pages/BuyerReceipts";
 import NotFound from "./pages/NotFound";
+import DeleteAccount from "./components/AccountDeletion/DeleteAccount";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
+  const user = useSelector((state) => state.auth?.user);
+
+  useEffect(() => {
+    if (!user) return;
+    window._hsq = window._hsq || [];
+    window._hsq.push(['identify', {
+      email: user.email,
+      first_name: user.first_name || user.firstName,
+      last_name: user.last_name || user.lastName,
+      user_id: String(user.id || user.user_id || user.userId || '')
+    }]);
+    window._hsq.push(['trackPageView']);
+  }, [user]);
+
+  function HubspotRouteTracker() {
+    const location = useLocation();
+    useEffect(() => {
+      window._hsq = window._hsq || [];
+      window._hsq.push(['setPath', location.pathname + location.search]);
+      window._hsq.push(['trackPageView']);
+    }, [location.pathname, location.search]);
+    return null;
+  }
+
   return (
     <>
       <ToastContainer
@@ -61,6 +87,7 @@ function App() {
         Bounce
       />
       <Router>
+        <HubspotRouteTracker />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/seller-register" element={<SellerRegisterPage />} />
@@ -100,6 +127,7 @@ function App() {
           <Route path='/privacy-policy' element={<PrivacyPolicyPage/>}/>
           <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
           <Route path='/billings' element={<BillingsPage/>}/>
+          <Route path='/delete-account' element={<ProtectedRoute><DeleteAccount/></ProtectedRoute>}/>
           {/* Add more routes as needed */}
           <Route path='/not-found' element={<NotFound/>}/>
           <Route path='*' element={<NotFound/>}/>

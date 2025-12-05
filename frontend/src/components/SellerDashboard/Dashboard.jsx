@@ -19,6 +19,8 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
+import CallbackForm from '../mutualComponents/CallbackForm';
+import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -29,6 +31,7 @@ export default function Dashboard() {
   const { revenueComparison, revenueComparisonLoading, revenueComparisonError } = useSelector(state => state.payment);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogProject, setDialogProject] = useState(null);
+  const [callbackOpen, setCallbackOpen] = useState(false);
 
   // Initialize WebSocket connection for real-time notifications
   const { markNotificationRead: wsMarkNotificationRead, markAllNotificationsRead: wsMarkAllNotificationsRead } = useNotificationWebSocket();
@@ -144,20 +147,33 @@ export default function Dashboard() {
   ];
 
 
-  // Icon selection based on message content (simple heuristic)
-  function getNotificationIcon(message) {
-    if (message.toLowerCase().includes('project')) return '+';
-    if (message.toLowerCase().includes('approved')) return '✓';
-    if (message.toLowerCase().includes('deadline')) return '⏰';
-    if (message.toLowerCase().includes('payment')) return '$';
+  // Icon selection that prefers stable translation keys (language-agnostic)
+  function getNotificationIconFromNotification(n) {
+    const key = n?.translation_key || '';
+    if (key.startsWith('notifications.project_')) return '+';
+    if (key.startsWith('notifications.payment_')) return '$';
+    if (key.includes('approved')) return '✓';
+    if (key.includes('deadline')) return '⏰';
+    // Fallback to message heuristic to preserve previous behavior
+    const msg = (n?.message || '').toLowerCase();
+    if (msg.includes('project')) return '+';
+    if (msg.includes('approved')) return '✓';
+    if (msg.includes('deadline')) return '⏰';
+    if (msg.includes('payment')) return '$';
     return '!';
   }
 
   // Show loading state for the entire dashboard
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">{t('dashboard.title')}</h1>
+      <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="w-full max-w-7xl mx-auto relative z-10 py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#2E78A6] mb-4 sm:mb-6">{t('dashboard.title')}</h1>
         
         {/* Loading Overview Section */}
         <div className="flex flex-col gap-2 min-w-0 w-full mb-4 sm:mb-6">
@@ -251,14 +267,21 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   // Show error state for the entire dashboard
   if (error) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">{t('dashboard.title')}</h1>
+      <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="w-full max-w-7xl mx-auto relative z-10 py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#2E78A6] mb-4 sm:mb-6">{t('dashboard.title')}</h1>
         
         {/* Error Message */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 sm:p-8 text-center">
@@ -278,6 +301,7 @@ export default function Dashboard() {
             {t('dashboard.try_again')}
           </button>
         </div>
+      </div>
       </div>
     );
   }
@@ -304,6 +328,49 @@ export default function Dashboard() {
   // Check if there are any unread notifications
   const hasUnreadNotifications = notifications && notifications.some(n => !n.is_read);
 
+  // Translate notification message using i18n
+  const translateNotification = (notification) => {
+    if (notification && notification.translation_key) {
+      // Try to parse translation_variables if it's a string
+      let variables = notification.translation_variables || {};
+      if (typeof variables === 'string') {
+        try {
+          variables = JSON.parse(variables);
+        } catch (e) {
+          variables = {};
+        }
+      }
+      
+      // Translate milestone status if present
+      if (variables.status) {
+        const statusMap = {
+          'Approved': t('notifications.milestone_status_approved'),
+          'Not Approved': t('notifications.milestone_status_not_approved'),
+          'Sent for Review': t('notifications.milestone_status_review_request'),
+          'Submitted for Approval': t('notifications.milestone_status_pending'),
+        };
+        variables = { ...variables, status: statusMap[variables.status] || variables.status };
+      }
+      
+      // Use the full key path with notifications namespace
+      return t(notification.translation_key, { ...variables });
+    }
+    if (notification && typeof notification.message === 'string' && notification.message.startsWith('notifications.')) {
+      // For old notifications, we need to extract variables from the message or use defaults
+      // This is a fallback for notifications created before the new system
+      let variables = {};
+      
+      // Try to extract project name from the message if it contains it
+      if (notification.message.includes('project_created') || notification.message.includes('invitation_generated')) {
+        // For old notifications, we can't get the actual project name, so we'll show a generic message
+        variables = { project_name: 'Projet' }; // Generic fallback
+      }
+      
+      return t(notification.message, variables);
+    }
+    return notification?.message || '';
+  };
+
   // Notification UI rendering (shared for mobile and desktop)
   function renderNotifications(list = notifications) {
     if (notifLoading) {
@@ -317,11 +384,11 @@ export default function Dashboard() {
     }
     return list.map((n) => (
       <div key={n.id} className="flex items-start gap-2 sm:gap-3">
-        <div className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full ${n.is_read ? 'bg-gray-200 text-gray-400' : 'bg-[#E6F0FA] text-[#01257D]'} text-sm sm:text-lg font-bold flex-shrink-0`}>
-          {getNotificationIcon(n.message)}
+        <div className={`flex items-center justify_center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full ${n.is_read ? 'bg-gray-200 text-gray-400' : 'bg-[#E6F0FA] text-[#01257D]'} text-sm sm:text-lg font-bold flex-shrink-0`}>
+          {getNotificationIconFromNotification(n)}
         </div>
         <div className="flex-1 flex flex-col min-w-0">
-          <div className={`text-xs sm:text-sm ${n.is_read ? 'text-gray-400' : 'text-gray-800'} break-words`}>{n.message}</div>
+          <div className={`text-xs sm:text-sm ${n.is_read ? 'text-gray-400' : 'text-gray-800'} break-words`}>{translateNotification(n)}</div>
           <div className="text-xs text-gray-400 mt-1">
             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
           </div>
@@ -346,8 +413,17 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6">{t('dashboard.title')}</h1>
+    <>
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="w-full max-w-7xl mx-auto relative z-10 py-4 sm:py-8 px-1 sm:px-2 md:px-4 overflow-x-hidden box-border">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#2E78A6]">{t('dashboard.title')}</h1>
+      </div>
       {/* Responsive layout: mobile-first column, md+: row */}
       <div className="flex flex-col md:flex-row md:items-start gap-4 sm:gap-8">
         {/* Main content column for mobile, left for desktop */}
@@ -357,7 +433,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
               <h2 className="text-base sm:text-lg font-bold mb-2 sm:mb-0">{t('dashboard.overview')}</h2>
               <div className="flex gap-2">
-                <button onClick={() => navigate('/project-creation')} className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#2346a0] transition-colors cursor-pointer">{t('dashboard.new_quote')}</button>
+                <button onClick={() => navigate('/project-creation')} className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded-lg font-semibold text-xs sm:text-sm shadow hover:bg-[#256a94] transition-colors cursor-pointer">{t('dashboard.new_quote')}</button>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 md:gap-4 min-w-0 w-full">
@@ -383,7 +459,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   <button 
-                    className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
+                    className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded font-semibold text-xs hover:bg-[#256a94] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
                     onClick={() => navigate(card.btnNavigate)}
                     disabled={card.loading}
                   >
@@ -458,7 +534,7 @@ export default function Dashboard() {
             </div>
             
             <button 
-              className="w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-full font-semibold text-xs hover:bg-[#2346a0] transition-colors cursor-pointer"
+              className="w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded-full font-semibold text-xs hover:bg-[#256a94] transition-colors cursor-pointer"
               onClick={() => navigate('/my-quotes')}
             >
               {t('dashboard.view_all_projects')}
@@ -510,7 +586,7 @@ export default function Dashboard() {
             </div>
             <div className="flex justify-end mt-3 sm:mt-4">
               <button
-                className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-xs sm:text-sm cursor-pointer"
+                className="px-2 sm:px-3 md:px-5 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded-lg font-semibold hover:bg-[#256a94] transition-colors text-xs sm:text-sm cursor-pointer"
                 onClick={() => navigate('/my-quotes')}
               >
                 {t('dashboard.view_all_projects')}
@@ -545,6 +621,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </div>
     </div>
+    <CallbackForm open={callbackOpen} onClose={() => setCallbackOpen(false)} defaultRole={'seller'} />
+    </>
   );
 }

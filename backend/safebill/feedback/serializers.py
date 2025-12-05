@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.core.validators import EmailValidator
-from .models import Feedback, QuoteRequest, ContactMessage
+from .models import Feedback, QuoteRequest, ContactMessage, CallbackRequest
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
@@ -70,3 +70,13 @@ class ContactMessageSerializer(serializers.ModelSerializer):
         model = ContactMessage
         fields = ['id', 'name', 'email', 'subject', 'message', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+
+class CallbackRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CallbackRequest
+        fields = [
+            'id', 'company_name', 'siret_number', 'first_name', 'last_name',
+            'email', 'phone', 'role', 'source', 'status', 'created_at'
+        ]
+        read_only_fields = ['id', 'status', 'source', 'created_at']

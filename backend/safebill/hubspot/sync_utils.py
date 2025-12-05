@@ -71,7 +71,7 @@ def circuit_breaker(func):
                 # Reset circuit breaker after timeout
                 cache.delete(f"{cache_key}_failures")
                 cache.delete(f"{cache_key}_last_failure")
-                logger.info(f"🔄 Circuit breaker RESET for {func.__name__}")
+                logger.info(f"Circuit breaker RESET for {func.__name__}")
         
         try:
             result = func(*args, **kwargs)
@@ -137,9 +137,9 @@ def log_sync_attempt(task_name: str, args: tuple, kwargs: dict, success: bool,
         log_data['kwargs'] = str(kwargs)
     
     if success:
-        logger.info(f"✅ HubSpot sync success: {json.dumps(log_data)}")
+        logger.info(f"HubSpot sync success: {json.dumps(log_data)}")
     else:
-        logger.error(f"❌ HubSpot sync failed: {json.dumps(log_data)}")
+        logger.error(f"HubSpot sync failed: {json.dumps(log_data)}")
 
 
 @circuit_breaker
@@ -191,7 +191,7 @@ def safe_hubspot_sync(
             log_sync_attempt(task_name, args, kwargs, False, error=e, duration=duration)
             
             if retry_on_failure and not isinstance(e, CircuitBreakerOpen):
-                logger.warning(f"🔄 Retrying {task_name} after failure: {e}")
+                logger.warning(f"Retrying {task_name} after failure: {e}")
                 try:
                     result = task_func.delay(*args, **kwargs)
                     log_sync_attempt(f"{task_name}_retry", args, kwargs, True)
@@ -215,25 +215,25 @@ def safe_hubspot_sync(
         try:
             result = _queue_task()
             if result['status'] in ['failed', 'rate_limited']:
-                logger.warning(f"🔄 {task_name} commit callback issues, trying immediate fallback")
+                logger.warning(f"{task_name} commit callback issues, trying immediate fallback")
                 # Try immediate fallback for certain failures
                 if result['status'] == 'rate_limited':
                     # For rate limiting, we might want to delay the retry
-                    logger.info(f"⏰ Delaying {task_name} due to rate limiting")
+                    logger.info(f"Delaying {task_name} due to rate limiting")
                 else:
                     _queue_task()  # Immediate retry for other failures
         except Exception as e:
-            logger.error(f"💥 {task_name} commit callback crashed: {e}", exc_info=True)
+            logger.error(f"{task_name} commit callback crashed: {e}", exc_info=True)
 
     if use_transaction_commit:
         try:
             transaction.on_commit(_commit_callback)
-            logger.debug(f"📝 HubSpot {task_name} registered for transaction commit")
+            logger.debug(f"HubSpot {task_name} registered for transaction commit")
             return {'status': 'registered', 'message': f'{task_name} registered for commit'}
         except Exception as e:
-            logger.error(f"⚠️ Failed to register {task_name} for commit: {e}", exc_info=True)
+            logger.error(f"Failed to register {task_name} for commit: {e}", exc_info=True)
             # Fallback to immediate execution
-            logger.info(f"🔄 Falling back to immediate {task_name} execution")
+            logger.info(f"Falling back to immediate {task_name} execution")
             return _queue_task()
     else:
         return _queue_task()
@@ -247,26 +247,26 @@ def safe_hubspot_sync_with_backup(task_func, task_name, *args, **kwargs):
         
         # Only run backup if registration actually failed, not if it succeeded
         if result['status'] == 'failed':
-            logger.info(f"🔄 {task_name} registration failed, trying immediate backup execution")
+            logger.info(f"{task_name} registration failed, trying immediate backup execution")
             try:
                 backup_result = task_func.delay(*args, **kwargs)
-                logger.info(f"✅ {task_name} backup queued: {backup_result.id}")
+                logger.info(f"{task_name} backup queued: {backup_result.id}")
                 return {'status': 'backup_success', 'task_id': backup_result.id}
             except Exception as backup_error:
-                logger.error(f"❌ {task_name} backup failed: {backup_error}")
+                logger.error(f"{task_name} backup failed: {backup_error}")
                 return {'status': 'backup_failed', 'error': str(backup_error)}
         
         # If registered successfully, return the original result
         return result
     except Exception as e:
-        logger.error(f"💥 {task_name} sync failed completely: {e}")
+        logger.error(f"{task_name} sync failed completely: {e}")
         # Last resort: try immediate execution
         try:
             result = task_func.delay(*args, **kwargs)
-            logger.info(f"🚨 Emergency {task_name} execution: {result.id}")
+            logger.info(f"Emergency {task_name} execution: {result.id}")
             return {'status': 'emergency_success', 'task_id': result.id}
         except Exception as emergency_error:
-            logger.error(f"💀 Complete failure for {task_name}: {emergency_error}")
+            logger.error(f"Complete failure for {task_name}: {emergency_error}")
             return {'status': 'complete_failure', 'error': str(emergency_error)}
 
 
@@ -336,7 +336,7 @@ def update_milestone_in_hubspot(milestone_id: int, reason: str = "unknown", **kw
     )
 
 
-def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kwargs) -> Dict[str, Any]:
+def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", sync_type: str = "all", **kwargs) -> Dict[str, Any]:
     """
     Safely sync revenue data to HubSpot.
     
@@ -344,6 +344,7 @@ def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kw
         year: Year for revenue sync
         month: Month for revenue sync  
         reason: Reason for syncing (for monitoring)
+        sync_type: Type of sync - "payment", "milestone", or "all"
         **kwargs: Additional options for sync behavior
         
     Returns:
@@ -353,9 +354,10 @@ def sync_revenue_to_hubspot(year: int, month: int, reason: str = "unknown", **kw
     
     return safe_hubspot_sync_with_backup(
         sync_revenue_task,
-        f"Revenue Sync (reason: {reason})",
+        f"Revenue Sync (reason: {reason}, type: {sync_type})",
         year,
         month,
+        sync_type=sync_type,
         **kwargs
     )
 
@@ -464,7 +466,7 @@ class HubSpotHealthCheck:
             created_at__gte=cutoff_time
         ).order_by("-created_at")[:limit]
         
-        logger.info(f"🔍 Checking {projects.count()} recent projects for HubSpot sync status")
+        logger.info(f"Checking {projects.count()} recent projects for HubSpot sync status")
         
         for project in projects:
             try:
@@ -584,10 +586,10 @@ def create_sync_queue_item(content_object, sync_type, priority='normal', schedul
                 existing_item.retry_count = 0
                 existing_item.next_retry_at = None
                 existing_item.save()
-                logger.info(f"🔄 Updated existing queue item for {sync_type} sync: {content_object}")
+                logger.info(f"Updated existing queue item for {sync_type} sync: {content_object}")
                 return existing_item
             else:
-                logger.info(f"📋 Queue item already exists for {sync_type} sync: {content_object}")
+                logger.info(f"Queue item already exists for {sync_type} sync: {content_object}")
                 return existing_item
         
         # Create new queue item
@@ -600,11 +602,11 @@ def create_sync_queue_item(content_object, sync_type, priority='normal', schedul
             **kwargs
         )
         
-        logger.info(f"✅ Created queue item for {sync_type} sync: {content_object}")
+        logger.info(f"Created queue item for {sync_type} sync: {content_object}")
         return queue_item
         
     except Exception as e:
-        logger.error(f"❌ Failed to create queue item for {sync_type} sync: {e}", exc_info=True)
+        logger.error(f"Failed to create queue item for {sync_type} sync: {e}", exc_info=True)
         raise HubSpotSyncError(f"Failed to create queue item: {e}")
 
 
@@ -731,7 +733,7 @@ def reset_stuck_queue_items():
             error_message='Reset due to stuck processing',
             error_details={'reset_reason': 'stuck_processing'}
         )
-        logger.warning(f"🔄 Reset {count} stuck queue items")
+        logger.warning(f"Reset {count} stuck queue items")
     
     return count
 
@@ -765,7 +767,7 @@ def cleanup_old_queue_items(days_old=7):
         processed_at__lt=failed_cutoff
     ).delete()[0]
     
-    logger.info(f"🧹 Cleaned up {synced_deleted} synced items and {failed_deleted} failed items")
+    logger.info(f"Cleaned up {synced_deleted} synced items and {failed_deleted} failed items")
     
     return {
         'synced_deleted': synced_deleted,

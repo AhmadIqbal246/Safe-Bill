@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { UploadCloud, X, CheckCircle } from "lucide-react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { UploadCloud, X, CheckCircle } from "lucide-react";
 import {
   uploadBusinessDocuments,
   resetBusinessDetailState,

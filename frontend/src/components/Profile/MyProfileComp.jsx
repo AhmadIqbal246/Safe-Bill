@@ -19,6 +19,7 @@ import {
   skillOptions,
 } from "../../constants/registerationTypes";
 import { useTranslation } from "react-i18next";
+import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 function getDefaultAvatar(username) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -321,8 +322,14 @@ export default function MyProfileComp() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <div className="flex flex-col items-center mb-6">
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="max-w-2xl mx-auto relative z-10 py-8 px-4">
+        <div className="flex flex-col items-center mb-6">
         <img
           src={avatarSrc}
           alt={profile.username}
@@ -462,7 +469,7 @@ export default function MyProfileComp() {
           onChange={(e) => setFeedbackEmail(e.target.value)}
         />
         <button
-          className="w-full bg-[#01257D] text-white font-semibold py-2 rounded-md hover:bg-[#2346a0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full bg-[#2E78A6] text-white font-semibold py-2 rounded-md hover:bg-[#256a94] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           onClick={handleFeedbackSubmit}
           disabled={feedbackLoading}
         >
@@ -1100,6 +1107,7 @@ export default function MyProfileComp() {
           </Dialog.Panel>
         </div>
       </Dialog>
+      </div>
     </div>
   );
 }

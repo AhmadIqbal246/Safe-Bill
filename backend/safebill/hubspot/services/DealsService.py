@@ -126,6 +126,8 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         "dealname": dealname,
         # HubSpot built-in amount field (numeric)
         "amount": total_amount,
+        # Force HubSpot to treat the amount as EUR regardless of portal/user defaults
+        "deal_currency_code": "EUR",
         # customs
         "project_id": str(project.id),
         "project_type": project.project_type,

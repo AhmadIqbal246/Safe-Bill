@@ -23,7 +23,7 @@ Total: 11 clean, organized tasks (reduced from 15+ messy tasks)
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from celery import shared_task
 from celery import chain
@@ -55,8 +55,11 @@ from .services.RevenueService import HubSpotRevenueClient
 from adminpanelApp.models import PlatformRevenue
 from payments.models import Payment
 from django.db.models import Sum
+from django.db import models
 from datetime import datetime
 from .services.ContactMessageService import HubSpotContactMessageClient
+from .services.LeadsService import HubSpotLeadsClient
+from .services.payment_service import PaymentService
 
 
 logger = logging.getLogger(__name__)
@@ -85,7 +88,7 @@ def _mark_task_finished(task_key):
 # CORE SYNC TASKS (UNIFIED - SUPPORT BOTH DIRECT AND QUEUE MODES)
 # =============================================================================
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_contact_task(self, user_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified contact sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -215,7 +218,7 @@ def sync_contact_task(self, user_id: int = None, queue_item_id: int = None) -> O
         _mark_task_finished(task_key)
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_company_task(self, business_detail_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified company sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -280,10 +283,13 @@ def sync_company_task(self, business_detail_id: int = None, queue_item_id: int =
                 link.save(update_fields=["status", "last_error", "last_synced_at"])
             return data.get("id")
 
-        # No stored ID: search by siret, then by name (fallback) to avoid duplicates
+        # No stored ID: search by SIRET, then by domain, then by name (fallback) to avoid duplicates
         existing = None
         if props.get("siret_number"):
             existing = client.search_company_by_siret(props.get("siret_number"))
+        # Reuse HubSpot's auto-created domain company if it exists
+        if not existing and props.get("domain"):
+            existing = client.search_company_by_domain(props.get("domain"))
         if not existing and props.get("name"):
             existing = client.search_company_by_name(props.get("name"))
         if existing:
@@ -318,6 +324,64 @@ def sync_company_task(self, business_detail_id: int = None, queue_item_id: int =
                     link.last_error = ""
                     link.save(update_fields=["hubspot_id", "status", "last_error", "last_synced_at"])
 
+            # Best-effort association between this company and the user's HubSpot contact
+            try:
+                user = getattr(bd, "user", None)
+                if user:
+                    contact_link = HubSpotContactLink.objects.filter(user=user).first()
+                    contact_id = contact_link.hubspot_id if contact_link else None
+
+                    if contact_id:
+                        logger.info(
+                            "HubSpot: associating company id=%s with contact id=%s for user_id=%s",
+                            hubspot_id,
+                            contact_id,
+                            getattr(user, "id", None),
+                        )
+                        # Associate this contact with the real company
+                        client.associate_contact_company(contact_id, hubspot_id)
+
+                        # Cleanup: detach contact from placeholder companies (no name/SIRET)
+                        try:
+                            assoc_data = client.get_contact_companies(contact_id)
+                            # v4 response structure: results -> [ { toObjectId, ... }, ... ]
+                            assoc_results = assoc_data.get("results", []) if isinstance(assoc_data, dict) else []
+                            for assoc in assoc_results:
+                                company_id = (
+                                    assoc.get("toObjectId")
+                                    or assoc.get("toObjectId", None)
+                                )
+                                if not company_id or str(company_id) == str(hubspot_id):
+                                    continue
+
+                                company_obj = client.get_company(str(company_id))
+                                props = (company_obj or {}).get("properties", {}) if isinstance(company_obj, dict) else {}
+                                name_val = (props.get("name") or "").strip()
+                                siret_val = (props.get("siret_number") or "").strip()
+
+                                # Treat companies with no name and no SIRET as HubSpot's blank placeholders
+                                if not name_val and not siret_val:
+                                    logger.info(
+                                        "HubSpot: disassociating contact %s from placeholder company id=%s",
+                                        contact_id,
+                                        company_id,
+                                    )
+                                    client.disassociate_contact_company(contact_id, str(company_id))
+                        except Exception as cleanup_exc:
+                            logger.exception(
+                                "HubSpot: failed placeholder company cleanup for contact %s: %s",
+                                contact_id,
+                                cleanup_exc,
+                            )
+            except Exception as assoc_exc:
+                # Never fail the whole sync because association failed
+                logger.exception(
+                    "HubSpot: failed to associate company %s with contact for business_detail %s: %s",
+                    hubspot_id,
+                    business_detail_id,
+                    assoc_exc,
+                )
+
         # Update queue item status if in queue mode
         if queue_item_id:
             try:
@@ -349,7 +413,7 @@ def sync_company_task(self, business_detail_id: int = None, queue_item_id: int =
         _mark_task_finished(task_key)
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified deal sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -387,7 +451,13 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
         # Do not manage HubSpot pipeline/stages; rely only on custom properties
         dealstage_id = None
         props = build_deal_properties(project, None, None)
-        logger.info("HubSpot: built deal props for project %s -> name=%s, stage_id=%s", project.id, props.get("dealname"), props.get("dealstage"))
+        logger.info(
+            "HubSpot: built deal props for project %s -> name=%s, stage_id=%s, total_amount=%s",
+            project.id,
+            props.get("dealname"),
+            props.get("dealstage"),
+            props.get("amount"),
+        )
 
         try:
             existing = client.search_deal_by_project_id(str(project.id))
@@ -407,7 +477,7 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
         _mark_task_finished(task_key)
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_milestone_task(self, milestone_id: int = None, queue_item_id: int = None) -> Optional[str]:
     """Unified milestone sync task that works in both direct and queue modes."""
     from .models import HubSpotSyncQueue
@@ -543,9 +613,17 @@ def sync_milestone_task(self, milestone_id: int = None, queue_item_id: int = Non
         raise
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
-def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: int = None) -> Optional[str]:
-    """Unified revenue sync task that works in both direct and queue modes."""
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
+def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: int = None, sync_type: str = "all") -> Optional[str]:
+    """
+    Unified revenue sync task that works in both direct and queue modes.
+    
+    Args:
+        year: Year for revenue sync
+        month: Month for revenue sync
+        queue_item_id: Queue item ID for queue mode
+        sync_type: Type of sync - "payment" (VAT + total payments) or "milestone" (seller revenue + milestones) or "all" (everything)
+    """
     from .models import HubSpotSyncQueue
     
     # Handle queue mode
@@ -564,69 +642,75 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         logger.info("HubSpot: sync_revenue_task start (direct mode) year=%s month=%s", year, month)
     
     try:
-        # Calculate ALL revenue values LIVE from database for accuracy
-        # This ensures HubSpot always has current data regardless of PlatformRevenue sync state
-        
-        # 1. Total payments amount (what buyers paid)
-        total_payments_amount = (
-            Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
-            .aggregate(total=Sum("amount"))
-            .get("total")
-            or 0
-        )
-        
-        # 2. VAT collected (difference between buyer_total and amount)
-        payments_with_vat = Payment.objects.filter(
-            status="paid", created_at__year=year, created_at__month=month
-        )
-        vat_collected = sum(
-            (p.buyer_total_amount or 0) - (p.amount or 0) for p in payments_with_vat
-        )
-        
-        # 3. Seller revenue (platform fees from approved milestones)
-        from projects.models import Milestone
-        from payments.services import FeeCalculationService
-        
-        # FIXED: Only count milestones from projects that received payments in this month
-        # This prevents counting milestones from projects without payments
-        paid_projects_in_month = Payment.objects.filter(
-            status="paid",
-            created_at__year=year,
-            created_at__month=month
-        ).values_list('project_id', flat=True).distinct()
-        
-        # Get approved milestones for this month but ONLY from projects with payments
-        milestones = Milestone.objects.filter(
-            status="approved",
-            completion_date__year=year,
-            completion_date__month=month,
-            project_id__in=paid_projects_in_month  # Only count milestones from paid projects
-        ).select_related('project')
-        
+        # Initialize all revenue values
+        total_payments_amount = 0
+        vat_collected = 0
         seller_revenue = 0
-        total_milestones_approved = milestones.count()
+        total_revenue = 0
+        total_milestones_approved = 0
         
-        for milestone in milestones:
-            try:
-                # Calculate platform fee for this milestone
-                fees = FeeCalculationService.calculate_fees(
-                    milestone.relative_payment,
-                    milestone.project.platform_fee_percentage,
-                    milestone.project.vat_rate
-                )
-                seller_revenue += float(fees["platform_fee"])
-            except Exception as e:
-                logger.warning(f"Error calculating fees for milestone {milestone.id}: {e}")
+        # Calculate revenue values based on sync type
+        if sync_type in ["payment", "all"]:
+            # 1. Total payments amount (what buyers paid)
+            total_payments_amount = (
+                Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
+                .aggregate(total=Sum("amount"))
+                .get("total")
+                or 0
+            )
+            
+            # 2. VAT collected (difference between buyer_total and amount)
+            payments_with_vat = Payment.objects.filter(
+                status="paid", created_at__year=year, created_at__month=month
+            )
+            vat_collected = sum(
+                (p.buyer_total_amount or 0) - (p.amount or 0) for p in payments_with_vat
+            )
         
-        # 4. Total revenue (same as seller revenue for now)
-        total_revenue = seller_revenue
+        if sync_type in ["milestone", "all"]:
+            # 3. Seller revenue (platform fees from approved milestones)
+            from projects.models import Milestone
+            from payments.services import FeeCalculationService
+            
+            # FIXED: Only count milestones from projects that received payments in this month
+            # This prevents counting milestones from projects without payments
+            paid_projects_in_month = Payment.objects.filter(
+                status="paid",
+                created_at__year=year,
+                created_at__month=month
+            ).values_list('project_id', flat=True).distinct()
+            
+            # Get approved milestones for this month but ONLY from projects with payments
+            milestones = Milestone.objects.filter(
+                status="approved",
+                completion_date__year=year,
+                completion_date__month=month,
+                project_id__in=paid_projects_in_month  # Only count milestones from paid projects
+            ).select_related('project')
+            
+            total_milestones_approved = milestones.count()
+            
+            for milestone in milestones:
+                try:
+                    # Calculate platform fee for this milestone
+                    fees = FeeCalculationService.calculate_fees(
+                        milestone.relative_payment,
+                        milestone.project.platform_fee_percentage,
+                        milestone.project.vat_rate
+                    )
+                    seller_revenue += float(fees["platform_fee"])
+                except Exception as e:
+                    logger.warning(f"Error calculating fees for milestone {milestone.id}: {e}")
+            
+            # 4. Total revenue (same as seller revenue for now)
+            total_revenue = seller_revenue
         
         # Debug logging for revenue calculation transparency
         logger.info(
-            f"HubSpot revenue calculation for {year}-{month:02d}: "
+            f"HubSpot revenue calculation for {year}-{month:02d} (sync_type={sync_type}): "
             f"total_payments={total_payments_amount}, vat_collected={vat_collected}, "
             f"seller_revenue={seller_revenue}, total_revenue={total_revenue}, "
-            f"milestones_approved={total_milestones_approved} (from {len(paid_projects_in_month)} paid projects)"
+            f"milestones_approved={total_milestones_approved}"
         )
 
         period_key = f"{year}-{month:02d}"
@@ -636,18 +720,29 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         # Create period start date (first day of month at midnight UTC)
         period_start_date = f"{year}-{month:02d}-01T00:00:00Z"
         
+        # Build properties based on sync type
         props = {
             client.period_key_property: period_key,
             "year": year,
             # Save month as zero-padded string ("01".."12")
             "month": f"{month:02d}",
             "period_start_date": period_start_date,
-            "total_payments_amount": float(total_payments_amount),
-            "vat_collected": float(vat_collected),
-            "seller_revenue": float(seller_revenue),
-            "total_revenue": float(total_revenue),
-            "total_milestones_approved": int(total_milestones_approved),
         }
+        
+        # Add payment-related properties
+        if sync_type in ["payment", "all"]:
+            props.update({
+                "total_payments_amount": float(total_payments_amount),
+                "vat_collected": float(vat_collected),
+            })
+        
+        # Add milestone-related properties
+        if sync_type in ["milestone", "all"]:
+            props.update({
+                "seller_revenue": float(seller_revenue),
+                "total_revenue": float(total_revenue),
+                "total_milestones_approved": int(total_milestones_approved),
+            })
 
         if existing:
             hs_id = existing.get("id")
@@ -685,10 +780,10 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
 # SPECIALIZED TASKS (SPECIFIC PURPOSES)
 # =============================================================================
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
-def create_dispute_ticket_task(self, dispute_id: int) -> str:
-    """Create a HubSpot ticket for a newly created dispute and persist mapping."""
-    logger.info("HubSpot: create_dispute_ticket_task start dispute_id=%s", dispute_id)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
+def sync_dispute_ticket_task(self, dispute_id: int) -> str:
+    """Create or update HubSpot ticket for dispute and persist mapping."""
+    logger.info("HubSpot: sync_dispute_ticket_task start dispute_id=%s", dispute_id)
     dispute = Dispute.objects.filter(id=dispute_id).select_related("project", "initiator", "respondent").first()
     if not dispute:
         logger.warning("HubSpot: dispute not found id=%s", dispute_id)
@@ -707,6 +802,7 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
         f"Status: {dispute.get_status_display()}",
         f"Initiator: {getattr(dispute.initiator, 'email', '')}",
         f"Respondent: {getattr(dispute.respondent, 'email', '')}",
+        f"Mediator: {getattr(getattr(dispute, 'assigned_mediator', None), 'email', 'Not assigned')}",
         "",
         dispute.description or "",
     ])
@@ -728,24 +824,42 @@ def create_dispute_ticket_task(self, dispute_id: int) -> str:
         "safebill_assigned_mediator_email": getattr(getattr(dispute, "assigned_mediator", None), "email", ""),
     }
 
-    created = client.create_ticket(properties)
-    ticket_id = created.get("id", "")
+    # Check if ticket already exists
+    try:
+        existing_link = HubSpotTicketLink.objects.get(dispute=dispute)
+        ticket_id = existing_link.hubspot_id
+        
+        # Update existing ticket
+        logger.info("HubSpot: updating existing ticket id=%s for dispute=%s", ticket_id, dispute_id)
+        client.update_ticket(ticket_id, properties)
+        
+        # Update link status
+        existing_link.status = "success"
+        existing_link.last_error = ""
+        existing_link.save()
+        
+        logger.info("HubSpot: updated ticket id=%s for dispute=%s", ticket_id, dispute_id)
+        return ticket_id
+        
+    except HubSpotTicketLink.DoesNotExist:
+        # Create new ticket
+        logger.info("HubSpot: creating new ticket for dispute=%s", dispute_id)
+        created = client.create_ticket(properties)
+        ticket_id = created.get("id", "")
+        
+        if ticket_id:
+            HubSpotTicketLink.objects.create(
+                dispute=dispute,
+                hubspot_id=ticket_id,
+                status="success",
+                last_error="",
+            )
+            logger.info("HubSpot: created new ticket id=%s for dispute=%s", ticket_id, dispute_id)
+        
+        return ticket_id
 
-    if ticket_id:
-        HubSpotTicketLink.objects.update_or_create(
-            dispute=dispute,
-            defaults={
-                "hubspot_id": ticket_id,
-                "status": "success",
-                "last_error": "",
-            },
-        )
 
-    logger.info("HubSpot: created ticket id=%s for dispute=%s", ticket_id, dispute_id)
-    return ticket_id
-
-
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def create_feedback_task(self, username: str = None, initiator_email: str = None, description: str = None, create_ticket: bool = True, metadata: Optional[dict] = None, queue_item_id: int = None) -> str:
     """Unified feedback task that works in both direct and queue modes.
     
@@ -789,7 +903,7 @@ def create_feedback_task(self, username: str = None, initiator_email: str = None
                 elif hasattr(feedback, 'user') and getattr(feedback.user, 'email', None):
                     initiator_email = feedback.user.email
 
-                description = getattr(feedback, 'message', None) or str(feedback)
+                description = getattr(feedback, 'feedback', None) or str(feedback)
 
                 # Validate required email
                 if not initiator_email:
@@ -797,7 +911,7 @@ def create_feedback_task(self, username: str = None, initiator_email: str = None
                 create_ticket = False  # Use custom object for queue processing
                 metadata = {'feedback_id': feedback.id}
                 
-                logger.info(f"🔄 Processing feedback sync from queue: {feedback.id}")
+                logger.info(f"Processing feedback sync from queue: {feedback.id}")
             except Exception as e:
                 logger.error(f"HubSpot: Failed to get queue item {queue_item_id}: {e}")
                 return ""
@@ -874,7 +988,7 @@ def create_feedback_task(self, username: str = None, initiator_email: str = None
         raise
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def create_contact_message_task(self, name: str = None, initiator_email: str = None, subject: str = None, description: str = None, create_ticket: bool = True, metadata: Optional[dict] = None, queue_item_id: int = None) -> str:
     """Unified contact message task that works in both direct and queue modes.
     
@@ -915,7 +1029,7 @@ def create_contact_message_task(self, name: str = None, initiator_email: str = N
                     raise ValueError("Contact message email missing; refusing to send placeholder to HubSpot")
                 create_ticket = False  # Use custom object for queue processing
                 
-                logger.info(f"🔄 Processing contact message sync from queue: {contact_message.id}")
+                logger.info(f"Processing contact message sync from queue: {contact_message.id}")
             except Exception as e:
                 logger.error(f"HubSpot: Failed to get queue item {queue_item_id}: {e}")
                 return ""
@@ -992,10 +1106,74 @@ def create_contact_message_task(self, name: str = None, initiator_email: str = N
 
 
 # =============================================================================
+# CallbackRequest -> Lead Object
+# =============================================================================
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
+def create_lead_from_callback_task(self, callback_request_id: int = None) -> str:
+    """Create a HubSpot Lead custom object from a CallbackRequest.
+
+    We intentionally do not persist hubspot_id per product decision.
+    """
+    from feedback.models import CallbackRequest
+    logger.info("HubSpot: create_lead_from_callback_task start for callback_request_id=%s", callback_request_id)
+
+    if not callback_request_id:
+        logger.warning("HubSpot: create_lead_from_callback_task abort - missing callback_request_id")
+        return ""
+
+    try:
+        cb = CallbackRequest.objects.filter(id=callback_request_id).first()
+        if not cb:
+            logger.warning("HubSpot: CallbackRequest %s not found", callback_request_id)
+            return ""
+
+        client = HubSpotLeadsClient()
+        properties = {
+            "company_name": cb.company_name,
+            "siret_number": cb.siret_number or "",
+            "firstname": cb.first_name,
+            "lastname": cb.last_name,
+            "email": cb.email,
+            "phone": cb.phone,
+            "user_role": (cb.role or "").replace('-', '_'),
+        }
+
+        # HubSpot requires a primary association to Contact or Company for Leads
+        contact_id: str = ""
+        try:
+            # Try to find or create a Contact by email
+            contacts_client = HubSpotClient()
+            existing = contacts_client.search_contact_by_email(cb.email)
+            if existing:
+                contact_id = existing.get("id", "")
+            else:
+                created_contact = contacts_client.create_contact({
+                    "email": cb.email,
+                    "firstname": cb.first_name or "",
+                    "lastname": cb.last_name or "",
+                    "phone": cb.phone or "",
+                })
+                contact_id = created_contact.get("id", "")
+        except Exception:
+            # Do not fail lead creation if contact creation fails; proceed without association
+            logger.warning("HubSpot: unable to ensure contact for callback_request_id=%s", callback_request_id)
+            contact_id = ""
+
+        created = client.create(properties, contact_id=contact_id or None)
+        lead_id = created.get("id", "")
+        logger.info("HubSpot: created Lead id=%s for callback_request_id=%s", lead_id, callback_request_id)
+        return lead_id
+    except Exception as exc:
+        logger.exception("HubSpot: create_lead_from_callback_task failed for callback_request_id %s: %s", callback_request_id, exc)
+        raise
+
+
+# =============================================================================
 # QUEUE PROCESSING TASKS (SYSTEM MANAGEMENT)
 # =============================================================================
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3, queue='emails')
 def process_sync_queue(self, batch_size=50):
     """Process pending items in the HubSpot sync queue."""
     from .models import HubSpotSyncQueue
@@ -1004,7 +1182,7 @@ def process_sync_queue(self, batch_size=50):
     import uuid
     
     worker_id = f"{self.request.hostname}-{uuid.uuid4().hex[:8]}"
-    logger.info(f"🔄 Starting sync queue processing (worker: {worker_id}, batch_size: {batch_size})")
+    logger.info(f"Starting sync queue processing (worker: {worker_id}, batch_size: {batch_size})")
     
     try:
         # Get pending items that are ready to process
@@ -1020,13 +1198,12 @@ def process_sync_queue(self, batch_size=50):
         ).order_by('priority', 'created_at')[:batch_size]
         
         if not pending_items:
-            logger.info("📭 No pending sync items found")
-            return {"processed": 0, "success": 0, "failed": 0}
+            logger.info("No pending sync items found")
+            return {"processed": 0, "failed": 0}
         
-        logger.info(f"📋 Processing {len(pending_items)} sync items")
+        logger.info(f"Processing {len(pending_items)} sync items")
         
         processed = 0
-        success = 0
         failed = 0
         
         for item in pending_items:
@@ -1044,16 +1221,16 @@ def process_sync_queue(self, batch_size=50):
                 elif item.sync_type == 'contact_message':
                     result = create_contact_message_task.delay(queue_item_id=item.id)
                 else:
-                    logger.warning(f"⚠️ Unknown sync type: {item.sync_type}")
+                    logger.warning(f"Unknown sync type: {item.sync_type}")
                     item.mark_failed(f"Unknown sync type: {item.sync_type}")
                     failed += 1
                     continue
                 
                 processed += 1
-                logger.info(f"✅ Queued {item.sync_type} sync for {item.content_object}")
+                logger.info(f"Queued {item.sync_type} sync for {item.content_object}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to queue {item.sync_type} sync: {e}", exc_info=True)
+                logger.error(f"Failed to queue {item.sync_type} sync: {e}", exc_info=True)
                 item.mark_failed(str(e), {"error_type": "queue_error"})
                 failed += 1
         
@@ -1068,18 +1245,18 @@ def process_sync_queue(self, batch_size=50):
             processed_at__gte=timezone.now() - timedelta(minutes=5)
         ).count()
         
-        logger.info(f"🎯 Queue processing completed: {processed} queued, {recent_synced} recently synced, {failed} failed")
-        return {"processed": processed, "success": recent_synced, "failed": failed}
+        logger.info(f"Queue processing completed: {processed} queued, {recent_synced} recently synced, {failed} failed")
+        return {"processed": processed, "failed": failed}
         
     except Exception as e:
-        logger.error(f"💥 Queue processing failed: {e}", exc_info=True)
+        logger.error(f"Queue processing failed: {e}", exc_info=True)
         raise
 
 
 # REMOVED: sync_feedback_from_queue() - functionality merged into create_feedback_task()
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
 def sync_dispute_from_queue(self, queue_item_id):
     """Process dispute sync from queue."""
     from .models import HubSpotSyncQueue
@@ -1092,19 +1269,19 @@ def sync_dispute_from_queue(self, queue_item_id):
         if not isinstance(dispute, Dispute):
             raise ValueError(f"Expected Dispute object, got {type(dispute)}")
         
-        logger.info(f"🔄 Processing dispute sync from queue: {dispute.id}")
+        logger.info(f"Processing dispute sync from queue: {dispute.id}")
         
         # Call the existing dispute sync task
-        result = create_dispute_ticket_task(dispute.id)
+        result = sync_dispute_ticket_task(dispute.id)
         
         # Mark as synced
         queue_item.mark_synced()
         
-        logger.info(f"✅ Dispute sync completed: {dispute.id}")
+        logger.info(f"Dispute sync completed: {dispute.id}")
         return result
         
     except Exception as e:
-        logger.error(f"❌ Dispute sync from queue failed: {e}", exc_info=True)
+        logger.error(f"Dispute sync from queue failed: {e}", exc_info=True)
         if 'queue_item' in locals():
             queue_item.mark_failed(str(e), {"error_type": "sync_error"})
         raise
@@ -1113,7 +1290,7 @@ def sync_dispute_from_queue(self, queue_item_id):
 # REMOVED: sync_contact_message_from_queue() - functionality merged into create_contact_message_task()
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3, queue='emails')
 def cleanup_old_sync_queue_items(self, days_old=7):
     """Clean up old synced items from the queue to prevent database bloat."""
     from .models import HubSpotSyncQueue
@@ -1136,15 +1313,15 @@ def cleanup_old_sync_queue_items(self, days_old=7):
             processed_at__lt=failed_cutoff
         ).delete()[0]
         
-        logger.info(f"🧹 Cleaned up {deleted_count} synced items and {failed_deleted_count} failed items")
+        logger.info(f"Cleaned up {deleted_count} synced items and {failed_deleted_count} failed items")
         return {"synced_deleted": deleted_count, "failed_deleted": failed_deleted_count}
         
     except Exception as e:
-        logger.error(f"❌ Queue cleanup failed: {e}", exc_info=True)
+        logger.error(f"Queue cleanup failed: {e}", exc_info=True)
         raise
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3, queue='emails')
 def retry_failed_sync_items(self):
     """Retry failed sync items that are ready for retry."""
     from .models import HubSpotSyncQueue
@@ -1160,7 +1337,7 @@ def retry_failed_sync_items(self):
         ).order_by('next_retry_at')[:20]  # Limit to 20 items per run
         
         if not retry_items:
-            logger.info("📭 No items ready for retry")
+            logger.info("No items ready for retry")
             return {"retried": 0}
         
         retried = 0
@@ -1182,15 +1359,116 @@ def retry_failed_sync_items(self):
                     create_contact_message_task.delay(queue_item_id=item.id)
                 
                 retried += 1
-                logger.info(f"🔄 Retrying {item.sync_type} sync for {item.content_object}")
+                logger.info(f"Retrying {item.sync_type} sync for {item.content_object}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to retry {item.sync_type} sync: {e}", exc_info=True)
+                logger.error(f"Failed to retry {item.sync_type} sync: {e}", exc_info=True)
                 item.mark_failed(str(e), {"error_type": "retry_error"})
         
-        logger.info(f"🔄 Retry processing completed: {retried} items retried")
+        logger.info(f"Retry processing completed: {retried} items retried")
         return {"retried": retried}
         
     except Exception as e:
-        logger.error(f"❌ Retry processing failed: {e}", exc_info=True)
+        logger.error(f"Retry processing failed: {e}", exc_info=True)
+        raise
+
+
+# =============================================================================
+# PAYMENT SYNC TASKS (HUBSPOT PAYMENTS INTEGRATION)
+# =============================================================================
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=5, queue='emails')
+def sync_payment_to_hubspot(self, payment_id: int = None, payment_ids: list = None, hours_back: int = None, project_id: int = None, create_from_project: bool = False) -> Dict[str, Any]:
+    """
+    Unified payment sync task that handles individual, bulk, and recent payment synchronization.
+    
+    This single task can handle:
+    - Individual payment sync (payment_id)
+    - Bulk payment sync (payment_ids list)
+    - Recent payments sync (hours_back)
+    
+    Args:
+        payment_id: Single payment ID to sync
+        payment_ids: List of payment IDs to sync
+        hours_back: Number of hours to look back for recent payments
+        
+    Returns:
+        Dictionary with sync results
+    """
+    logger.info("HubSpot: sync_payment_to_hubspot start - payment_id=%s, payment_ids=%s, hours_back=%s, project_id=%s, create_from_project=%s", 
+                payment_id, payment_ids, hours_back, project_id, create_from_project)
+    
+    try:
+        service = PaymentService()
+        
+        # Project-based creation mode (on project creation)
+        if project_id and create_from_project:
+            logger.info("HubSpot: Project-based payment creation mode for project_id=%s", project_id)
+            project = Project.objects.filter(id=project_id).select_related('user', 'client').first()
+            if not project:
+                logger.warning("HubSpot: Project %s not found for payment creation", project_id)
+                return {"success": [], "failed": [project_id], "total": 1}
+            hubspot_id = service.create_project_payment_record(project)
+            if hubspot_id:
+                logger.info("HubSpot: Created payment record %s for project %s", hubspot_id, project_id)
+                return {"success": [project_id], "failed": [], "total": 1, "hubspot_id": hubspot_id}
+            else:
+                logger.error("HubSpot: Failed to create payment record for project %s", project_id)
+                return {"success": [], "failed": [project_id], "total": 1}
+
+        # Determine which sync mode to use (payment-based)
+        if payment_id:
+            # Single payment sync
+            logger.info("HubSpot: Single payment sync mode for payment_id=%s", payment_id)
+            payment = Payment.objects.filter(id=payment_id).select_related('project', 'project__user', 'project__client').first()
+            if not payment:
+                logger.warning("HubSpot: Payment %s not found", payment_id)
+                return {"success": [], "failed": [payment_id], "total": 1}
+            
+            # Update existing HubSpot record for this project with real payment data
+            result = service.update_payment_record_for_project(payment)
+            if result:
+                logger.info("HubSpot: Single payment sync completed for payment_id=%s", payment_id)
+                return {"success": [payment_id], "failed": [], "total": 1}
+            else:
+                logger.error("HubSpot: Single payment sync failed for payment_id=%s", payment_id)
+                return {"success": [], "failed": [payment_id], "total": 1}
+                
+        elif payment_ids:
+            # Bulk payment sync
+            logger.info("HubSpot: Bulk payment sync mode with %s payments", len(payment_ids))
+            results = service.bulk_sync_payments(payment_ids)
+            logger.info("HubSpot: Bulk payment sync completed: %s success, %s failed", 
+                       len(results["success"]), len(results["failed"]))
+            return results
+            
+        elif hours_back:
+            # Recent payments sync
+            logger.info("HubSpot: Recent payments sync mode (last %s hours)", hours_back)
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            cutoff_time = timezone.now() - timedelta(hours=hours_back)
+            recent_payments = Payment.objects.filter(
+                models.Q(created_at__gte=cutoff_time) | models.Q(updated_at__gte=cutoff_time)
+            ).values_list('id', flat=True)
+            
+            payment_ids_list = list(recent_payments)
+            
+            if not payment_ids_list:
+                logger.info("HubSpot: No recent payments found in the last %s hours", hours_back)
+                return {"success": [], "failed": [], "total": 0}
+            
+            logger.info("HubSpot: Found %s recent payments to sync", len(payment_ids_list))
+            results = service.bulk_sync_payments(payment_ids_list)
+            logger.info("HubSpot: Recent payments sync completed: %s success, %s failed", 
+                       len(results["success"]), len(results["failed"]))
+            return results
+            
+        else:
+            logger.error("HubSpot: No valid sync parameters provided")
+            return {"success": [], "failed": [], "total": 0, "error": "No valid sync parameters"}
+            
+    except Exception as exc:
+        logger.exception("HubSpot: sync_payment_to_hubspot failed: %s", exc)
         raise

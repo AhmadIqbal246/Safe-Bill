@@ -2,17 +2,22 @@ import React from 'react'
 import MainLayout from '../components/Layout/MainLayout'
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function Support() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   return (
-    <MainLayout>
-
-    
-    <div className="min-h-screen px-8 py-8">
+    <MainLayout mainBackgroundClass="bg-transparent">
+      <div className="relative -m-6 min-h-screen">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="min-h-screen px-8 py-8 relative z-10">
       {/* Title */}
-      <h1 className="text-3xl font-bold mb-8">{t('support.title')}</h1>
+      <h1 className="text-3xl font-bold mb-8 text-[#2E78A6]">{t('support.title')}</h1>
 
       {/* Search Bar */}
       {/* <div className="flex items-center mb-10 max-w-5xl">
@@ -31,7 +36,7 @@ export default function Support() {
         <h2 className="text-xl font-bold mb-2">{t('support.contact_us')}</h2>
         <p className="mb-6 text-gray-700">{t('support.contact_help')}</p>
         <div className="flex gap-4 flex-wrap">
-          <button className="bg-cyan-300 hover:bg-cyan-400 text-black font-semibold px-6 py-2 rounded-full transition-colors focus:outline-none cursor-pointer" onClick={() => navigate('/contact-us')}>
+          <button className="bg-[#2E78A6] hover:bg-[#256a94] text-white font-semibold px-6 py-2 rounded-full transition-colors focus:outline-none cursor-pointer" onClick={() => navigate('/contact-us')}>
             {t('support.submit_request')}
           </button>
           {/* <button className="bg-[#01257D] hover:bg-[#2346a0] text-white font-semibold px-6 py-2 rounded-full transition-colors focus:outline-none">
@@ -39,7 +44,8 @@ export default function Support() {
           </button> */}
         </div>
       </div>
-    </div>
+        </div>
+      </div>
     </MainLayout>
   )
 }

@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { useTranslation } from 'react-i18next';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
+import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 // Filters will be translated via i18n inside the component
 
@@ -130,8 +131,14 @@ export default function QuoteManagement() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
-      {/* Confirmation Modal using Headless UI Dialog */}
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="max-w-6xl mx-auto relative z-10 py-10 px-4">
+        {/* Confirmation Modal using Headless UI Dialog */}
       <Dialog open={confirmModal.open} onClose={() => setConfirmModal({ open: false, projectId: null })} className="relative z-50">
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
@@ -157,9 +164,9 @@ export default function QuoteManagement() {
         </div>
       </Dialog>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold">{t('quote_management.title')}</h1>
+        <h1 className="text-2xl font-bold text-[#2E78A6]">{t('quote_management.title')}</h1>
         <button
-          className="px-5 py-2 bg-[#01257D] text-white rounded-lg font-semibold hover:bg-[#2346a0] transition-colors text-sm mt-2 sm:mt-0 cursor-pointer"
+          className="px-5 py-2 bg-[#2E78A6] text-white rounded-lg font-semibold hover:bg-[#256a94] transition-colors text-sm mt-2 sm:mt-0 cursor-pointer"
           onClick={() => navigate('/project-creation')}
         >
           {t('quote_management.new_quote')}
@@ -170,7 +177,7 @@ export default function QuoteManagement() {
           {filters.map(({ key, label }) => (
             <button
               key={key}
-              className={`px-3 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${activeSort === key ? 'bg-[#E6F0FA] text-[#01257D] font-bold' : 'bg-[#E6F0FA] text-[#01257D]'}`}
+              className={`px-5 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${activeSort === key ? 'bg-[#C1E7FF] text-[#01257D] font-bold' : 'bg-[#C1E7FF] text-[#01257D]'}`}
               onClick={() => setActiveSort(key)}
             >
               {label}
@@ -181,7 +188,7 @@ export default function QuoteManagement() {
           <input
             type="text"
             placeholder={t('quote_management.search_placeholder')}
-            className="w-[100%] sm:w-full px-3 py-3 rounded-md border border-gray-200 bg-[#E6F0FA] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+            className="w-[100%] sm:w-full px-3 py-3 rounded-[15px] border border-gray-200 bg-[#C1E7FF] text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01257D]"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -298,6 +305,7 @@ export default function QuoteManagement() {
             </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -50,6 +50,8 @@ ALLOWED_HOSTS = _env_list(
         "https://www.safebill.fr",
         "http://localhost:3000",  # For development
         "http://127.0.0.1:3000", # For development
+        "https://dea6eb7b074c.ngrok-free.app",
+        "dea6eb7b074c.ngrok-free.app",
     ],
 )
 
@@ -82,7 +84,7 @@ CSRF_TRUSTED_ORIGINS = _env_list(
 # For production, disable this
 #CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 
-# Allow custom headers for language detection
+# Allow custom headers for language detection and GDPR consent
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -94,6 +96,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'x-user-language',  # Custom header for language detection
+    'x-consent-status',  # GDPR consent status header
 ]
 
 
@@ -124,6 +127,7 @@ INSTALLED_APPS = [
     "connect_stripe",
     "payments",
     "hubspot",
+    "subscription",
 
 ]
 
@@ -135,6 +139,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "utils.consent_middleware.ConsentMiddleware",  # GDPR consent checking
     "utils.language_middleware.LanguageMiddleware",  # Custom language middleware
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
 ]
@@ -170,17 +175,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Ensure channels middleware is loaded
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
-]
+# Note: MIDDLEWARE is already defined above, no need to redefine
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -235,17 +230,26 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Locale paths for translations
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Site URL for email templates
 SITE_URL = env('SITE_URL', default='https://safebill.fr')
-SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Logo_Bleu.png')
+SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Dark.png')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -266,40 +270,191 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    # Update Django's User.last_login on successful token obtain/refresh
+    "UPDATE_LAST_LOGIN": True,
 }
 
-# Channels / Redis layer (use in-memory if REDIS_URL not provided)
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    }
-}
+# Note: CHANNEL_LAYERS is already defined above with Redis configuration
 
-# Email backend for development
+# Email backend - Hostinger Email Configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+# Hostinger SMTP settings for safebill.fr domain
+# SMTP Server: smtp.hostinger.com
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.hostinger.com")
+EMAIL_PORT = int(env("EMAIL_PORT", default=587))
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+# Connection timeout and retry settings
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=60)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "contact@safebill.fr")
+# Server email (for error messages)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Additional email settings for better deliverability
+EMAIL_USE_LOCALTIME = False
 FRONTEND_URL = env("FRONTEND_URL")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 SIRET_VALIDATION_ACCESS_TOKEN = env("SIRET_VALIDATION_ACCESS_TOKEN")
 STRIPE_API_KEY = env("STRIPE_API_KEY")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 STRIPE_CONNECT_WEBHOOK_SECRET = env("STRIPE_CONNECT_WEBHOOK_SECRET")
 STRIPE_VERIFICATION_FLOW_ID = env("STRIPE_VERIFICATION_FLOW_ID")
+STRIPE_SUBSCRIPTION_WEBHOOK_SECRET = env("STRIPE_SUBSCRIPTION_WEBHOOK_SECRET", default="")
+STRIPE_SUBSCRIPTION_PRICE_ID = env("STRIPE_SUBSCRIPTION_PRICE_ID", default="")
 
 # X-Frame-Options disabled for PDF iframe embedding
 
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'projects': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'disputes': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'hubspot': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounts': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
 # Celery Configuration
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_DEFAULT_QUEUE = 'emails'
+
+# Celery Beat Configuration
+CELERY_BEAT_SCHEDULE = {
+    'process-hubspot-sync-queue': {
+        'task': 'hubspot.tasks.process_sync_queue',
+        'schedule': float(os.environ.get('HUBSPOT_PROCESS_SYNC_QUEUE_INTERVAL', 7200.0)),
+        'options': {
+            'queue': 'emails',
+            'priority': 5,
+        }
+    },
+    'retry-failed-hubspot-syncs': {
+        'task': 'hubspot.tasks.retry_failed_sync_items',
+        'schedule': float(os.environ.get('HUBSPOT_RETRY_FAILED_SYNC_INTERVAL', 3600.0)),
+        'options': {
+            'queue': 'emails',
+            'priority': 3,
+        }
+    },
+    'cleanup-hubspot-sync-queue': {
+        'task': 'hubspot.tasks.cleanup_old_sync_queue_items',
+        'schedule': float(os.environ.get('HUBSPOT_CLEANUP_SYNC_QUEUE_INTERVAL', 86400.0)),
+        'options': {
+            'queue': 'emails',
+            'priority': 1,
+        }
+    },
+    'no-project-nurture-orchestrator': {
+        'task': 'feedback.tasks.orchestrate_no_project_nurture_task',
+        'schedule': float(os.environ['NO_PROJECT_ORCHESTRATOR_INTERVAL']),
+        'options': {
+            'queue': 'emails',
+            'priority': 4,
+        }
+    },
+    'relogin-reminder-orchestrator': {
+        'task': 'accounts.tasks.orchestrate_relogin_reminder_task',
+        'schedule': float(os.environ['RELOGIN_ORCHESTRATOR_INTERVAL']),
+        'options': {
+            'queue': 'emails',
+            'priority': 4,
+        }
+    },
+    'success-story-orchestrator': {
+        'task': 'accounts.tasks.orchestrate_success_story_emails_task',
+        'schedule': float(os.environ['SUCCESS_STORY_ORCHESTRATOR_INTERVAL']),
+        'options': {
+            'queue': 'emails',
+            'priority': 4,
+        }
+    },
+    'cleanup-old-email-logs': {
+        'task': 'feedback.tasks.cleanup_old_email_logs_task',
+        'schedule': float(os.environ.get('EMAIL_LOG_CLEANUP_INTERVAL', '86400.0')),  # Default: daily (24 hours)
+        'options': {
+            'queue': 'emails',
+            'priority': 1,
+        }
+    },
+}
+
+# Celery Beat max loop interval
+CELERY_BEAT_MAX_LOOP_INTERVAL = int(os.environ.get('CELERY_BEAT_MAX_LOOP_INTERVAL', 3600))
+
+# Celery Task Routing
+CELERY_TASK_ROUTES = {
+    'projects.tasks.*': {'queue': 'emails'},
+    'disputes.tasks.*': {'queue': 'emails'},
+    'hubspot.tasks.*': {'queue': 'emails'},
+    'accounts.tasks.*': {'queue': 'emails'},
+    'payments.tasks.*': {'queue': 'emails'},
+    'feedback.tasks.*': {'queue': 'emails'},
+}
+
+# Celery Task Discovery
+CELERY_IMPORTS = [
+    'projects.tasks',
+    'disputes.tasks',
+    'hubspot.tasks',
+    'accounts.tasks',
+    'payments.tasks',
+    'feedback.tasks',
+]
 
 # HubSpot Integration
 # Private App token for direct API access
@@ -312,6 +467,12 @@ HUBSPOT_MILESTONE_OBJECT = env("HUBSPOT_MILESTONE_OBJECT")
 HUBSPOT_REVENUE_OBJECT = env("HUBSPOT_REVENUE_OBJECT")
 HUBSPOT_FEEDBACK_OBJECT = env("HUBSPOT_FEEDBACK_OBJECT")
 HUBSPOT_CONTACT_MESSAGE_OBJECT = env("HUBSPOT_CONTACT_MESSAGE_OBJECT")
+HUBSPOT_PAYMENTS_OBJECT = env("HUBSPOT_PAYMENTS_OBJECT")
+# Custom Lead object (used for CallbackRequest → Lead)
+HUBSPOT_LEAD_OBJECT = env("HUBSPOT_LEAD_OBJECT", default="leads")
+# Lead association type overrides (optional)
+HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID = env("HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID", default=None)
+HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID = env("HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID", default=None)
 # Core HubSpot settings
 HUBSPOT_SYNC_ENABLED = env.bool('HUBSPOT_SYNC_ENABLED')
 HUBSPOT_SYNC_DEBUG = env.bool('HUBSPOT_SYNC_DEBUG')

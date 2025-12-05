@@ -2,7 +2,7 @@ from rest_framework import status
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
 from .serializers import (
     SellerRegistrationSerializer, UserTokenObtainPairSerializer,
@@ -18,6 +18,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
 from rest_framework.decorators import api_view, permission_classes
+from .services import UserDeletionService
 
 import re
 import unicodedata
@@ -928,5 +929,73 @@ def verify_siret_api(request):
         return Response(
             {'valid': False, 'detail': 'SIRET not found or invalid.'}, 
             status=404
+        )
+
+
+# User Account Deletion Endpoints
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def deletion_eligibility(request):
+    """Check if user can delete their account"""
+    user = request.user
+    
+    try:
+        eligibility = UserDeletionService.get_deletion_eligibility(user)
+        return Response(eligibility, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to check deletion eligibility: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """Delete user account permanently"""
+    user = request.user
+    password = request.data.get('password')
+    
+    # 1. Verify password
+    if not password:
+        return Response(
+            {'error': 'Password is required'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not authenticate(username=user.email, password=password):
+        return Response(
+            {'error': 'Invalid password'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # 2. Check if deletion is allowed
+    try:
+        can_delete, message = UserDeletionService.can_delete_user(user)
+        if not can_delete:
+            return Response(
+                {'error': message}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 3. Delete account
+        deleted_user_record = UserDeletionService.delete_user_account(user)
+        
+        return Response({
+            'message': 'Account deleted successfully',
+            'deletion_id': deleted_user_record.id,
+            'data_retention_until': deleted_user_record.data_retention_until
+        }, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to delete account: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 

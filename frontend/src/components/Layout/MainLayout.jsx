@@ -6,7 +6,7 @@ import { Menu } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { signedInNavItems, signedOutNavItems } from '../mutualComponents/Navbar/Navbar';
 
-export default function MainLayout({ children, hideSafeBillHeader }) {
+export default function MainLayout({ children, hideSafeBillHeader, mainBackgroundClass = 'bg-gray-50' }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Get user info from Redux
   const user = useSelector(state => state.auth.user);
@@ -46,7 +46,7 @@ export default function MainLayout({ children, hideSafeBillHeader }) {
             />
           </div>
         </div>
-        <main className="flex-1 bg-gray-50 p-6">{children}</main>
+        <main className={`flex-1 ${mainBackgroundClass} p-6`}>{children}</main>
         {/* Render seller chat globally across pages, safely gated by role */}
         {user?.role === 'seller' && <Chat />}
       </div>

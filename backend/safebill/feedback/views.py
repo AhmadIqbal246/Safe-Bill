@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Feedback, QuoteRequest, ContactMessage
+from rest_framework.permissions import AllowAny
+from .models import Feedback, QuoteRequest, ContactMessage, CallbackRequest
 from hubspot.tasks import (
     create_feedback_task,
     create_contact_message_task,
@@ -8,14 +9,18 @@ from hubspot.tasks import (
 from .serializers import (
     FeedbackSerializer,
     QuoteRequestSerializer,
-    ContactMessageSerializer
+    ContactMessageSerializer,
+    CallbackRequestSerializer,
 )
 from .tasks import (
     send_feedback_admin_notification_task,
     send_contact_admin_notification_task,
     send_quote_request_email_task,
     send_quote_request_confirmation_email_task,
+    send_callback_request_confirmation_email_task,
 )
+from hubspot.sync_utils import safe_hubspot_sync
+from hubspot.tasks import create_lead_from_callback_task
 
 
 class FeedbackCreateAPIView(generics.CreateAPIView):
@@ -66,6 +71,73 @@ class FeedbackCreateAPIView(generics.CreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class CallbackRequestCreateAPIView(generics.CreateAPIView):
+    queryset = CallbackRequest.objects.all()
+    serializer_class = CallbackRequestSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    'detail': 'Validation failed',
+                    'errors': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Persist request
+            instance = serializer.save()
+
+            # Determine preferred language from headers (consistent with other views)
+            preferred_lang = (
+                request.headers.get("X-User-Language")
+                or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            )
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+
+            # Send confirmation email asynchronously via Celery
+            try:
+                send_callback_request_confirmation_email_task.delay(
+                    user_email=instance.email,
+                    first_name=instance.first_name,
+                    language=language,
+                )
+            except Exception:
+                # Non-blocking: do not fail the API if email queueing fails
+                pass
+
+            # Queue HubSpot Lead creation safely (no blocking)
+            try:
+                safe_hubspot_sync(
+                    create_lead_from_callback_task,
+                    "Create Lead from Callback",
+                    instance.id,
+                    use_transaction_commit=True,
+                )
+            except Exception:
+                # Non-blocking: we don't fail the API if queueing fails
+                pass
+
+            return Response(
+                {
+                    'detail': 'Callback request submitted successfully',
+                    'id': instance.id
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception:
+            return Response(
+                {
+                    'detail': 'Failed to submit callback request. Please try again.'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ContactMessageCreateAPIView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()

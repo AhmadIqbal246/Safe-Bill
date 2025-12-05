@@ -86,6 +86,22 @@ def build_contact_properties(user) -> Dict[str, Any]:
                  (getattr(bd, "company_contact_person_last_name", None) if bd else None) or
                  "")
 
+    # Determine whether the user has a SIRET number on file
+    has_siret_number = bool(getattr(bd, "siret_number", None))
+
+    # Compute total number of projects the user is involved in (as owner or client), regardless of status
+    try:
+        from django.db.models import Q
+        from projects.models import Project
+
+        total_projects_count = (
+            Project.objects.filter(Q(user=user) | Q(client=user))
+            .values("id").distinct().count()
+        )
+    except Exception:
+        # Be defensive: if projects app is unavailable in a context, don't break contact sync
+        total_projects_count = 0
+
     return {
         "email": getattr(user, "email", "") or "",
         "firstname": first_name or "",
@@ -96,6 +112,10 @@ def build_contact_properties(user) -> Dict[str, Any]:
         # Send booleans for Single checkbox properties
         "is_email_verified": bool(getattr(user, "is_email_verified", False)),
         "onboarding_complete": bool(getattr(user, "onboarding_complete", False)),
+        # New: expose whether a SIRET number exists for this user (Contact boolean property in HubSpot)
+        "has_siret_number": has_siret_number,
+        # New: total projects the user is involved in (Contact number property in HubSpot)
+        "total_projects_count": int(total_projects_count),
     }
 
 

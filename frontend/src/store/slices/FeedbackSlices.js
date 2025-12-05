@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import i18n from '../../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,6 +31,33 @@ export const submitContactMessage = createAsyncThunk(
         `${BASE_URL}api/feedback/contact/`,
         { name, email, subject, message },
         { headers: { 'Content-Type': 'application/json' } }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Network error' });
+    }
+  }
+);
+
+export const submitCallbackRequest = createAsyncThunk(
+  'feedback/submitCallbackRequest',
+  async ({ company_name, siret_number, first_name, last_name, email, phone, role }, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const token = state?.auth?.access;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      // Send user language to backend for localized email handling
+      const lang = (i18n?.language || navigator?.language || 'fr');
+      headers['X-User-Language'] = lang;
+
+      const response = await axios.post(
+        `${BASE_URL}api/feedback/callback-request/`,
+        { company_name, siret_number, first_name, last_name, email, phone, role },
+        { headers }
       );
       return response.data;
     } catch (err) {
@@ -82,6 +110,19 @@ const feedbackSlice = createSlice({
       .addCase(submitContactMessage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.detail || 'Failed to send message.';
+      })
+      .addCase(submitCallbackRequest.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(submitCallbackRequest.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(submitCallbackRequest.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.detail || 'Failed to submit callback request.';
       });
   },
 });

@@ -52,7 +52,48 @@ export default function BuyerReceipts() {
       ]);
 
       const element = document.getElementById(`receipt-buyer-${project.id}`);
-      if (!element) return;
+      if (!element) {
+        toast.error('Receipt not found');
+        return;
+      }
+
+      // Clone the element to avoid affecting the original
+      const clone = element.cloneNode(true);
+      
+      // Create a temporary container for the clone
+      const container = document.createElement('div');
+      container.id = 'pdf-buyer-temp-container';
+      container.style.position = 'absolute';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '210mm';
+      container.style.height = '297mm'; // A4 height
+      container.style.backgroundColor = '#ffffff';
+      container.style.opacity = '0';
+      container.style.pointerEvents = 'none';
+      container.style.zIndex = '999999';
+      container.style.overflow = 'visible';
+      
+      // Style the clone for PDF
+      clone.style.width = '800px';
+      clone.style.maxWidth = '800px';
+      clone.style.padding = '24px';
+      clone.style.backgroundColor = '#ffffff';
+      clone.className = ''; // Remove all classes to avoid hidden styling
+      clone.style.margin = '0';
+      
+      // Append clone to container
+      container.appendChild(clone);
+      document.body.appendChild(container);
+
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log('Buyer Element for PDF:', {
+        id: element.id,
+        cloneHeight: clone.offsetHeight,
+        cloneWidth: clone.offsetWidth
+      });
 
       // Inline any images to avoid CORS tainting in production
       const inlineImages = async (root) => {
@@ -79,13 +120,13 @@ export default function BuyerReceipts() {
         );
       };
 
-      await inlineImages(element);
+      await inlineImages(clone);
 
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false,
+        logging: true,
         allowTaint: false,
         foreignObjectRendering: true,
       });
@@ -108,9 +149,18 @@ export default function BuyerReceipts() {
       }
 
       pdf.save(`receipt_buyer_${project.reference_number || project.id}.pdf`);
+
+      // Clean up the temporary container
+      document.body.removeChild(container);
     } catch (e) {
       console.error('Buyer receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
+      
+      // Clean up the temporary container in case of error
+      const container = document.getElementById('pdf-buyer-temp-container');
+      if (container) {
+        document.body.removeChild(container);
+      }
     }
   };
 
@@ -188,39 +238,93 @@ export default function BuyerReceipts() {
                   )}
 
                   {/* Hidden printable area for PDF */}
-                  <div id={`receipt-buyer-${p.id}`} className="p-6" style={{ background: '#ffffff' }}>
-                    <div className="text-2xl font-bold mb-2">Receipt</div>
-                    <div className="text-sm text-gray-600 mb-4">Buyer copy</div>
-                    <div className="mb-4">
-                      <div className="font-semibold">{p.name}</div>
-                      <div className="text-xs text-gray-500">Ref: {p.reference_number || '-'}</div>
-                      <div className="text-xs text-gray-500">Start: {p.created_at}</div>
+                  <div id={`receipt-buyer-${p.id}`} className="max-w-[800px] mx-auto bg-white p-6 rounded-lg border border-gray-200" style={{ display: expands[p.id] || false ? 'block' : 'none' }}>
+                    {/* Header with Logo */}
+                    <div className="flex items-center justify-between pt-4 pb-4 mb-4 border-b-2" style={{ borderColor: '#01257D' }}>
+                      <div className="flex items-center gap-3">
+                        <div className="text-xl font-bold text-[#01257D]">SafeBill</div>
+                      </div>
+                      <div className="text-xs text-gray-500">Buyer copy</div>
                     </div>
-                    <div className="text-sm mb-4">
-                      <div>Total: €{total.toLocaleString()}</div>
-                      <div>VAT: {vatPct.toFixed(1)}% (+€{vatAmount.toLocaleString()})</div>
-                      <div>Paid: €{buyerPaid.toLocaleString()}</div>
+
+                    {/* Seller and Buyer Info */}
+                    <div className="flex items-start justify-between mb-4">
+                      {/* Seller Info - Top Left */}
+                      <div className="flex-1 pr-4">
+                        <div className="text-xs font-semibold text-gray-700 mb-1">Seller Information</div>
+                        <div className="text-xs text-gray-600 space-y-0.5">
+                          {p.seller_username && <div>{p.seller_username}</div>}
+                          {p.seller_email && <div>{p.seller_email}</div>}
+                          {p.seller_company && <div>{p.seller_company}</div>}
+                          {p.seller_address && <div>{p.seller_address}</div>}
+                          {p.seller_phone && <div>Phone: {p.seller_phone}</div>}
+                          {p.seller_siret && <div>SIRET: {p.seller_siret}</div>}
+                        </div>
+                      </div>
+                      
+                      {/* Buyer Info - Top Right */}
+                      <div className="flex-1 pl-4 text-right">
+                        <div className="text-xs font-semibold text-gray-700 mb-1">Buyer Information</div>
+                        <div className="text-xs text-gray-600 space-y-0.5">
+                          {p.buyer_full_name && <div>{p.buyer_full_name}</div>}
+                          {!p.buyer_full_name && p.buyer_username && <div>{p.buyer_username}</div>}
+                          {p.buyer_email && <div>{p.buyer_email}</div>}
+                          {p.buyer_address && <div>{p.buyer_address}</div>}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Project info */}
+                    <div className="mb-5">
+                      <div className="text-lg font-semibold text-gray-900">{p.name}</div>
+                      <div className="text-xs text-gray-500">Réf: {p.reference_number || '-'}</div>
+                      <div className="text-xs text-gray-500">Début: {p.created_at}</div>
+                      <div className="text-xs text-gray-500 mt-1">TVA: {vatPct.toFixed(1)}%</div>
+                    </div>
+
+                    {/* Summary boxes */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-6">
+                      <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                        <div className="text-gray-500">Total</div>
+                        <div className="text-base font-semibold">€{total.toLocaleString()}</div>
+                      </div>
+                      <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                        <div className="text-gray-500">VAT</div>
+                        <div className="text-base font-semibold">{vatPct.toFixed(1)}% (+€{vatAmount.toLocaleString()})</div>
+                      </div>
+                      <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+                        <div className="text-gray-500">Paid</div>
+                        <div className="text-base font-semibold text-green-700">€{buyerPaid.toLocaleString()}</div>
+                      </div>
+                    </div>
+
+                    {/* Milestones */}
                     <div className="text-sm">
                       <div className="font-semibold mb-2">Milestones</div>
-                      <table className="w-full text-xs">
+                      <table className="w-full text-xs border border-gray-200 rounded-md overflow-hidden">
                         <thead>
-                          <tr className="text-left">
-                            <th className="py-1 pr-2">Name</th>
-                            <th className="py-1 pr-2">Completed at</th>
-                            <th className="py-1 pr-0 text-right">Amount</th>
+                          <tr className="bg-gray-50 text-gray-600">
+                            <th className="py-2 px-2 text-left">Name</th>
+                            <th className="py-2 px-2 text-left">Completed at</th>
+                            <th className="py-2 px-2 text-right">Amount</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(p.milestones || []).filter(m => m.status === 'approved').map((m) => (
-                            <tr key={m.id}>
-                              <td className="py-1 pr-2">{m.name}</td>
-                              <td className="py-1 pr-2">{m.completion_date || '-'}</td>
-                              <td className="py-1 pr-0 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
+                          {(p.milestones || []).filter(m => m.status === 'approved').map((m, idx) => (
+                            <tr key={m.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="py-2 px-2">{m.name}</td>
+                              <td className="py-2 px-2">{m.completion_date || '-'}</td>
+                              <td className="py-2 px-2 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-6 text-[11px] text-gray-500 flex items-center justify-between">
+                      <div>Generated by Safe Bill</div>
+                      <div>www.safebill.fr</div>
                     </div>
                   </div>
                 </div>

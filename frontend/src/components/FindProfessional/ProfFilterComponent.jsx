@@ -344,10 +344,12 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           return (
             <button
               key={f}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors focus:outline-none cursor-pointer ${
-                (f === 'Service type' || f === 'Area' || f === 'Rating')
-                  ? 'bg-[#E6F0FA] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
-                  : 'bg-[#E6F0FA] text-[#01257D] cursor-not-allowed opacity-70'
+              className={`py-2 rounded-full text-sm font-medium transition-colors focus:outline-none cursor-pointer ${
+                (f === 'Service type' || f === 'Area')
+                  ? 'px-6 bg-[#C1E7FF] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
+                  : (f === 'Rating')
+                  ? 'px-4 bg-[#E6F0FA] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
+                  : 'px-4 bg-[#E6F0FA] text-[#01257D] cursor-not-allowed opacity-70'
               }`}
               onClick={() => {
                 if (f === 'Service type') setOpenFilter('serviceType');
@@ -363,7 +365,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
       </div>
       <div className="flex flex-wrap gap-3 mb-6">
         <button
-          className="px-5 py-2 rounded-md bg-[#01257D] text-white font-semibold text-sm hover:bg-[#2346a0] transition-colors cursor-pointer"
+          className="px-5 py-2 rounded-[15px] bg-[#2E78A6] text-white font-semibold text-sm hover:bg-[#256a94] transition-colors cursor-pointer"
           onClick={() => {
             setAppliedServiceType(selectedServiceType);
             setAppliedArea(selectedArea);
@@ -373,7 +375,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           {t('find_professional.apply_filters')}
         </button>
         <button
-          className="px-5 py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold text-sm cursor-pointer"
+          className="px-5 py-2 rounded-[15px] bg-[#B0B0DB] text-white font-semibold text-sm hover:bg-[#9a9ac9] transition-colors cursor-pointer"
           onClick={() => {
             setSelectedServiceType('');
             setSelectedServiceTypeLabel(''); // Clear the label
@@ -390,7 +392,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           {t('find_professional.clear_all')}
         </button>
       </div>
-      <h3 className="text-lg font-bold text-[#111827] mb-4">{t('find_professional.results')}</h3>
+      <h3 className="text-lg font-bold text-[#2E78A6] mb-4">{t('find_professional.results')}</h3>
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
@@ -415,7 +417,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                     alt={pro.name}
                     className="w-36 h-36 object-cover rounded-xl mb-3"
                   />
-                  <div className="font-semibold text-[#111827] text-base">{pro.name}</div>
+                  <div className="font-semibold text-[#2E78A6] text-base">{pro.name}</div>
                   <div className="text-[#6B7280] text-sm mb-1">{getBusinessActivityLabel(pro.business_type)}</div>
                   {/* <div className="text-[#178582] text-sm font-semibold flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
@@ -439,7 +441,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                 <button
                   key={i + 1}
                   className={`w-8 h-8 flex items-center justify-center rounded-full text-[#111827] font-semibold cursor-pointer ${
-                    currentPage === i + 1 ? 'bg-[#E6F0FA]' : ''
+                    currentPage === i + 1 ? 'bg-[#C1E7FF]' : ''
                   }`}
                   onClick={() => setCurrentPage(i + 1)}
                 >

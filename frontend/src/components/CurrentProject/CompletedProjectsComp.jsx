@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCompletedProjects } from '../../store/slices/ProjectSlice';
 import { useTranslation } from 'react-i18next';
+import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
 
 const getRandomDate = () => {
   // Generate a random date in 2022-2025 for demo
@@ -54,20 +55,26 @@ export default function CompletedProjectsComp() {
   const paginated = sorted.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4">
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('completed_projects.title')}</h1>
+    <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
+      <div className="max-w-5xl mx-auto relative z-10 py-8 px-4">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2 text-[#2E78A6]">{t('completed_projects.title')}</h1>
       <p className="text-gray-500 mb-6 max-w-2xl">{t('completed_projects.subtitle')}</p>
       {/* Sort & Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
         <div className="flex gap-2">
           <button
-            className={`px-4 py-2 bg-[#E6F0FA] text-[#01257D] rounded-md font-semibold text-sm flex items-center gap-2 ${sortBy === 'date' ? 'ring-2 ring-[#01257D]' : ''}`}
+            className={`px-4 py-2 bg-[#C1E7FF] text-[#01257D] rounded-[20px] font-semibold text-sm flex items-center gap-2 ${sortBy === 'date' ? 'ring-2 ring-[#01257D]' : ''}`}
             onClick={() => setSortBy('date')}
           >
             {t('completed_projects.sort_by_date')} <span className="ml-1">▼</span>
           </button>
           <button
-            className={`px-4 py-2 bg-[#E6F0FA] text-[#01257D] rounded-md font-semibold text-sm flex items-center gap-2 ${sortBy === 'client' ? 'ring-2 ring-[#01257D]' : ''}`}
+            className={`px-4 py-2 bg-[#C1E7FF] text-[#01257D] rounded-[20px] font-semibold text-sm flex items-center gap-2 ${sortBy === 'client' ? 'ring-2 ring-[#01257D]' : ''}`}
             onClick={() => setSortBy('client')}
           >
             {t('completed_projects.filter_by_client')} <span className="ml-1">▼</span>
@@ -146,6 +153,7 @@ export default function CompletedProjectsComp() {
         >
           {'>'}
         </button>
+      </div>
       </div>
     </div>
   );

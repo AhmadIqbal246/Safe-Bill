@@ -5,47 +5,80 @@
 {% block header_subtitle %}Request Confirmation{% endblock %}
 
 {% block content %}
-<h2>Quote Request Sent Successfully</h2>
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Quote Request Sent Successfully
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            We’ve shared your request with the professional
+        </p>
+    </div>
 
-<p>Hello!</p>
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Hello! 👋
+        </p>
+    </div>
 
-<div class="success">
-    <p><strong>Your quote request has been sent successfully!</strong></p>
+    <!-- Summary -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            ✅ Request Summary
+        </h3>
+        <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0;">
+            <strong>Subject:</strong> {{ subject }}<br>
+            <strong>Professional ID:</strong> {{ professional_id }}<br>
+            <strong>Sent to:</strong> {{ to_email }}
+        </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🔜 What Happens Next?
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+            <li>The professional reviews your request</li>
+            <li>You’ll be contacted via our platform or directly</li>
+            <li>We’ll notify you as soon as there’s a response</li>
+            <li>You can track everything from your dashboard</li>
+        </ul>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ dashboard_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            View My Requests
+        </a>
+    </div>
+
+    <!-- Tips -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            ⏱ Need a Faster Reply?
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+            Response times vary depending on availability, but most professionals reply within 24–48 hours. If you don’t hear back, you can:
+        </p>
+        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+            <li>Send a polite follow-up</li>
+            <li>Contact another professional</li>
+            <li>Reach out to our support team</li>
+        </ul>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
+            Questions? Email us at <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Best regards,<br>
+            The {{ site_name }} Team
+        </p>
+    </div>
 </div>
-
-<div class="highlight">
-    <p><strong>Subject:</strong> {{ subject }}</p>
-    <p><strong>Professional ID:</strong> {{ professional_id }}</p>
-    <p><strong>Sent to:</strong> {{ to_email }}</p>
-</div>
-
-<p>Your quote request has been delivered to the professional. They will receive a notification and should respond to you soon.</p>
-
-<h3>What happens next?</h3>
-<ul style="margin-left: 20px; color: #4b5563;">
-    <li>The professional will review your request</li>
-    <li>They may contact you directly or through our platform</li>
-    <li>You'll receive notifications about any responses</li>
-    <li>You can track the status in your dashboard</li>
-</ul>
-
-<div style="text-align: center; margin: 30px 0;">
-    <a href="{{ dashboard_url }}" class="btn">View My Requests</a>
-</div>
-
-<div class="warning">
-    <p><strong>Note:</strong> Response times may vary depending on the professional's availability. Most professionals respond within 24-48 hours.</p>
-</div>
-
-<p>If you don't receive a response within a reasonable time, you can:</p>
-<ul style="margin-left: 20px; color: #4b5563;">
-    <li>Send a follow-up message</li>
-    <li>Contact other professionals for the same service</li>
-    <li>Contact our support team for assistance</li>
-</ul>
-
-<p>If you have any questions or need assistance, please contact our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
-
-<p>Best regards,<br>
-The {{ site_name }} Team</p>
 {% endblock %}

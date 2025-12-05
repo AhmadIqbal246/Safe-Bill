@@ -2,6 +2,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import Notification
 from django.contrib.auth import get_user_model
+import json
 
 User = get_user_model()
 
@@ -10,14 +11,15 @@ class NotificationService:
     """Service for managing notifications and WebSocket communication"""
 
     @staticmethod
-    def create_notification(user, message, notification_type=None):
+    def create_notification(user, message, notification_type=None, **kwargs):
         """
         Create a new notification and send it via WebSocket
 
         Args:
             user: User instance or user ID
-            message: Notification message
+            message: Notification message (can be translation key or plain text)
             notification_type: Optional notification type for future use
+            **kwargs: Variables for message formatting (e.g., project_name, amount)
 
         Returns:
             Notification instance
@@ -26,8 +28,29 @@ class NotificationService:
         if isinstance(user, int):
             user = User.objects.get(id=user)
 
-        # Create the notification
-        notification = Notification.objects.create(user=user, message=message)
+        # Check if message is a project-related translation key
+        if (message.startswith('notifications.project_') or 
+            message.startswith('notifications.payment_') or 
+            message.startswith('notifications.milestone_') or
+            message.startswith('notifications.stripe_') or
+            message.startswith('notifications.identity_') or
+            message.startswith('notifications.funds_') or
+            message.startswith('notifications.transfer_') or
+            message.startswith('notifications.dispute_') or
+            message.startswith('notifications.refund_')):
+            # Store translation key and variables in dedicated fields
+            notification = Notification.objects.create(
+                user=user,
+                message=message,  # Store the translation key as message for backward compatibility
+                translation_key=message,  # Store in dedicated field
+                translation_variables=kwargs  # Store variables in dedicated field
+            )
+        else:
+            # Store plain text (backward compatibility)
+            notification = Notification.objects.create(
+                user=user,
+                message=message
+            )
 
         # Send via WebSocket
         NotificationService.send_notification_websocket(notification)
@@ -54,6 +77,8 @@ class NotificationService:
                     "notification": {
                         "id": notification.id,
                         "message": notification.message,
+                        "translation_key": getattr(notification, "translation_key", None),
+                        "translation_variables": getattr(notification, "translation_variables", None),
                         "created_at": notification.created_at.isoformat(),
                         "is_read": notification.is_read,
                     },
@@ -132,6 +157,8 @@ class NotificationService:
                     "notification": {
                         "id": notification.id,
                         "message": notification.message,
+                        "translation_key": getattr(notification, "translation_key", None),
+                        "translation_variables": getattr(notification, "translation_variables", None),
                         "created_at": notification.created_at.isoformat(),
                         "is_read": notification.is_read,
                     },
