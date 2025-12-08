@@ -73,6 +73,8 @@ class ContactMessageSerializer(serializers.ModelSerializer):
 
 
 class CallbackRequestSerializer(serializers.ModelSerializer):
+    role = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = CallbackRequest
         fields = [
@@ -80,3 +82,19 @@ class CallbackRequestSerializer(serializers.ModelSerializer):
             'email', 'phone', 'role', 'source', 'status', 'created_at'
         ]
         read_only_fields = ['id', 'status', 'source', 'created_at']
+
+    def validate_role(self, value):
+        """
+        Allow empty role for unauthenticated users.
+        If role is empty or blank, set it to empty string (will be handled by model).
+        """
+        if not value or value.strip() == '':
+            return ''
+
+        # Validate against allowed choices if role is provided
+        valid_roles = ['seller', 'professional-buyer', 'buyer']
+        if value not in valid_roles:
+            raise serializers.ValidationError(
+                f"Invalid role. Must be one of: {', '.join(valid_roles)}"
+            )
+        return value
