@@ -96,7 +96,7 @@ class Quote(models.Model):
     reference_number = models.CharField(max_length=20, unique=True)
     platform_invoice_reference = models.CharField(
         max_length=20,
-        unique=True,
+        unique=False,
         null=True,
         blank=True,
         editable=False,
@@ -105,6 +105,7 @@ class Quote(models.Model):
 
     def __str__(self):
         return f"{self.reference_number} for {self.project.name}"
+
 
     def save(self, *args, **kwargs):
         # Auto-generate platform_invoice_reference if not already set
@@ -127,6 +128,19 @@ class Quote(models.Model):
             
             # Generate reference in format YYYY-0001
             self.platform_invoice_reference = f"{year}-{str(next_num).zfill(4)}"
+        else:
+            # Validate uniqueness per user when platform_invoice_reference is provided
+            from django.core.exceptions import ValidationError
+            existing = Quote.objects.filter(
+                project__user=self.project.user,
+                platform_invoice_reference=self.platform_invoice_reference
+            ).exclude(pk=self.pk).exists()
+            
+            if existing:
+                raise ValidationError(
+                    f"Platform invoice reference '{self.platform_invoice_reference}' "
+                    f"already exists for this user."
+                )
         
         super().save(*args, **kwargs)
 

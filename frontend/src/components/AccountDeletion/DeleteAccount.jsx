@@ -241,7 +241,7 @@ const DeleteAccount = () => {
                           <div className="flex justify-end">
                             <button
                               onClick={handleContinueToDeletion}
-                              className="bg-[#01257D] text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-[#2346a0] transition-colors duration-200 font-medium text-sm md:text-base"
+                              className="bg-[#01257D] text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-[#2346a0] transition-colors duration-200 font-medium text-sm md:text-base cursor-pointer"
                             >
                               {t('account_deletion.continue_to_deletion')}
                             </button>
@@ -440,11 +440,11 @@ const DeleteAccount = () => {
                     <button
                       onClick={handleConfirmDeletion}
                       disabled={accountDeletion.deletionLoading}
-                      className="flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm md:text-base cursor-pointer"
+                      className="flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-3 bg-[#01257D] text-white  rounded-lg  disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm md:text-base cursor-pointer"
                     >
                       {accountDeletion.deletionLoading ? (
                         <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white mr-2"></div>
+                          <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white mr-2 "></div>
                           {t('account_deletion.deleting')}
                         </div>
                       ) : (

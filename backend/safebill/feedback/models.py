@@ -53,7 +53,7 @@ class CallbackRequest(models.Model):
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=50)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, blank=True, default="")
     source = models.CharField(max_length=50, default="callback_form")
 
     status = models.CharField(max_length=30, default="new")
