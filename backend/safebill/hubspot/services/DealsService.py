@@ -107,25 +107,50 @@ class HubSpotClient:
         return resp.json()
 
 
+
 def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Optional[str]) -> Dict[str, Any]:
     seller_name = getattr(project.user, "username", "")
     dealname = project.name or f"Project {project.id}"
     # Compute total project amount from installments (fallback to 0 if none)
     try:
-        total_amount = sum(float(inst.amount) for inst in getattr(project, "installments", []).all())
-    except Exception:
+        from django.db.models import Sum
+        from projects.models import PaymentInstallment
+        
+        # Use direct DB aggregation for reliability (avoids reverse relation caching issues)
+        agg_result = PaymentInstallment.objects.filter(project_id=project.id).aggregate(total=Sum('amount'))
+        offset_amount = agg_result.get('total')
+        
+        if offset_amount is not None:
+             total_amount = float(offset_amount)
+             logger.info(f"Calculated total_amount for project {project.id} (DB Aggregation): {total_amount}")
+        else:
+             total_amount = 0.0
+             logger.warning(f"Project {project.id} has no installments (DB Aggregation returned None)")
+             
+    except Exception as e:
+        logger.error(f"Failed to compute total_amount for project {project.id}: {e}", exc_info=True)
         total_amount = 0.0
+
     # Derive project creation month/year
     created_at = getattr(project, "created_at", None) or getattr(project, "created_date", None)
     if not created_at:
         created_at = datetime.utcnow()
     month_str = created_at.strftime("%m")
     year_num = created_at.year
+
+    # Calculate amount same as Frontend: Total * (1 + VAT) * (1 - Fee)
+    vat_rate = float(project.vat_rate) if project.vat_rate is not None else 20.0
+    fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
+    
+    amount_with_vat = total_amount * (1 + vat_rate / 100.0)
+    # Seller net amount (what is displayed in UI)
+    displayed_amount = amount_with_vat * (1 - fee_pct / 100.0)
+    
     return {
         # built-ins
         "dealname": dealname,
-        # HubSpot built-in amount field (numeric)
-        "amount": total_amount,
+        # HubSpot built-in amount field (numeric) matching UI
+        "amount": round(displayed_amount, 2),
         # Force HubSpot to treat the amount as EUR regardless of portal/user defaults
         "deal_currency_code": "EUR",
         # customs
