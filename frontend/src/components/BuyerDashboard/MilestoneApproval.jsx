@@ -74,7 +74,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
 
     try {
       const payload = {
-        milestoneId: selectedMilestone.id, 
+        milestoneId: selectedMilestone.id,
         action: pendingAction
       };
 
@@ -84,19 +84,19 @@ export default function MilestoneApproval({ onMilestoneAction }) {
       }
 
       await dispatch(approveMilestone(payload)).unwrap();
-      
+
       const actionMessages = {
         approve: t('milestone_approval.success_approved'),
         not_approved: t('milestone_approval.success_not_approved'),
         review_request: t('milestone_approval.success_review'),
       };
-      
+
       toast.success(actionMessages[pendingAction] || 'Action completed successfully!');
-      
+
       // Fetch updated data and notifications
       dispatch(fetchClientProjectsWithPendingMilestones());
       dispatch(fetchNotifications());
-      
+
       // Refetch all data in parent component
       if (onMilestoneAction) {
         onMilestoneAction();
@@ -191,7 +191,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 min-w-[340px] h-[500px] flex flex-col">
       <div className="font-semibold text-lg mb-4">{t('milestone_approval.title_plural')}</div>
-      
+
       {/* Search Bar */}
       <div className="mb-4">
         <input
@@ -221,21 +221,21 @@ export default function MilestoneApproval({ onMilestoneAction }) {
                   </span>
                 </div>
                 <div className="text-sm font-semibold text-gray-800">
-                  ${parseFloat(milestone.relative_payment).toLocaleString()}
+                  €{parseFloat(milestone.relative_payment).toLocaleString()}
                 </div>
               </div>
-              
+
               {/* Project and seller info in one line */}
               <div className="flex items-center gap-4 text-xs text-gray-600 mb-2">
                 <span>{t('milestone_approval.project_label')} {milestone.project_name}</span>
                 <span>{t('milestone_approval.seller_label')} {milestone.seller_name}</span>
                 <span>{t('milestone_approval.submitted_label')} {formatDate(milestone.created_date)}</span>
               </div>
-              
+
               {/* Description - only show if exists */}
               {milestone.description && (
                 <div className="text-gray-700 mb-2 text-xs">
-                  <span className="font-medium">{t('milestone_approval.description_label')}</span> 
+                  <span className="font-medium">{t('milestone_approval.description_label')}</span>
                   <div className="mt-1">
                     {milestone.description.length > 50 ? (
                       <>
@@ -257,7 +257,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
                   </div>
                 </div>
               )}
-              
+
               {/* Supporting document link - compact */}
               {milestone.supporting_doc && (
                 <div className="mb-2">
@@ -271,26 +271,26 @@ export default function MilestoneApproval({ onMilestoneAction }) {
                   </a>
                 </div>
               )}
-              
 
-              
+
+
               {/* Action buttons - more compact */}
               <div className="flex gap-1.5 flex-wrap">
-                <button 
+                <button
                   className="px-2.5 py-1 bg-[#01257D] text-white rounded text-xs font-medium hover:bg-[#2346a0] transition-colors cursor-pointer disabled:opacity-50"
                   disabled={approveMilestoneLoading}
                   onClick={() => handleAction(milestone, 'approve')}
                 >
                   {approveMilestoneLoading ? t('actions.processing') : getActionButtonText('approve')}
                 </button>
-                <button 
+                <button
                   className="px-2.5 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50"
                   disabled={approveMilestoneLoading}
                   onClick={() => handleAction(milestone, 'not_approved')}
                 >
                   {approveMilestoneLoading ? t('actions.processing') : getActionButtonText('not_approved')}
                 </button>
-                <button 
+                <button
                   className="px-2.5 py-1 bg-[#0ec6b0] text-white rounded text-xs font-medium hover:bg-[#0bb3a0] transition-colors cursor-pointer disabled:opacity-50"
                   disabled={approveMilestoneLoading}
                   onClick={() => handleAction(milestone, 'review_request')}
@@ -315,7 +315,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
               {t('milestone_approval.confirm_action_title')}
             </Dialog.Title>
-            
+
             <div className="mb-6">
               <p className="text-gray-700 mb-2">
                 {getActionMessage(pendingAction)}
@@ -326,7 +326,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
                   <p className="text-sm text-gray-600">{t('milestone_approval.project_label')} {selectedMilestone.project_name}</p>
                 </div>
               )}
-              
+
               {/* Review Comment Input */}
               {pendingAction === 'review_request' && (
                 <div className="mt-4">
@@ -380,7 +380,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
               {t('milestone_approval.review_comment_title')}
             </Dialog.Title>
-            
+
             <div className="mb-6">
               <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">
@@ -414,7 +414,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
               {t('milestone_approval.milestone_description_title')}
             </Dialog.Title>
-            
+
             <div className="mb-6">
               <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">

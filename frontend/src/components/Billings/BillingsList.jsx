@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, CreditCard, CheckCircle, XCircle, Clock, ExternalLink, TrendingUp, DollarSign } from 'lucide-react';
+import { Calendar, CreditCard, CheckCircle, XCircle, Clock, ExternalLink, TrendingUp, Euro } from 'lucide-react';
 
 export default function BillingsList({ billings, loading, error }) {
   const { t } = useTranslation();
@@ -116,7 +116,7 @@ export default function BillingsList({ billings, loading, error }) {
           <span>{billings.length} {billings.length === 1 ? 'transaction' : 'transactions'}</span>
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {billings.map((billing, index) => (
           <div
@@ -141,7 +141,7 @@ export default function BillingsList({ billings, loading, error }) {
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="w-5 h-5 text-success-600" />
+                  <Euro className="w-5 h-5 text-success-600" />
                   <div className="text-2xl font-bold text-gray-900">
                     {parseFloat(billing.amount).toLocaleString()} {billing.currency}
                   </div>
@@ -155,7 +155,7 @@ export default function BillingsList({ billings, loading, error }) {
                 </span>
               </div>
             </div>
-            
+
             <div className="pt-4 border-t border-gray-100">
               <div className="flex items-center gap-3 text-sm">
                 <div className="p-2 bg-primary-100 rounded-lg">

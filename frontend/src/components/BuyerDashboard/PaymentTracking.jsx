@@ -30,10 +30,10 @@ export default function PaymentTracking({ billings = [] }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -58,25 +58,25 @@ export default function PaymentTracking({ billings = [] }) {
           />
         </div>
       </div>
-      
+
       {filteredBillings.length > 0 ? (
         <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '360px', width: '100%' }}>
-          <table style={{ 
+          <table style={{
             minWidth: '750px',
-            width: '100%', 
+            width: '100%',
             borderCollapse: 'collapse',
             fontSize: 14,
             tableLayout: 'fixed'
           }}>
             <thead>
-              <tr style={{ 
-                backgroundColor: '#f8fafc', 
-                borderBottom: '2px solid #e5e7eb' 
+              <tr style={{
+                backgroundColor: '#f8fafc',
+                borderBottom: '2px solid #e5e7eb'
               }}>
-                <th style={{ 
-                  padding: '12px 16px', 
-                  textAlign: 'center', 
-                  fontWeight: 600, 
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
                   color: '#374151',
                   borderRight: '1px solid #e5e7eb',
                   minWidth: '150px',
@@ -84,10 +84,10 @@ export default function PaymentTracking({ billings = [] }) {
                 }}>
                   {t('payment_tracking.project_name')}
                 </th>
-                <th style={{ 
-                  padding: '12px 16px', 
-                  textAlign: 'center', 
-                  fontWeight: 600, 
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
                   color: '#374151',
                   borderRight: '1px solid #e5e7eb',
                   minWidth: '150px',
@@ -95,21 +95,21 @@ export default function PaymentTracking({ billings = [] }) {
                 }}>
                   {t('payment_tracking.project_amount')}
                 </th>
-                <th style={{ 
-                  padding: '12px 16px', 
-                  textAlign: 'center', 
-                  fontWeight: 600, 
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
                   color: '#374151',
                   borderRight: '1px solid #e5e7eb',
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
                 }}>
-                 {t('payment_tracking.paid_amount')}
+                  {t('payment_tracking.paid_amount')}
                 </th>
-                <th style={{ 
-                  padding: '12px 16px', 
-                  textAlign: 'center', 
-                  fontWeight: 600, 
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
                   color: '#374151',
                   borderRight: '1px solid #e5e7eb',
                   minWidth: '150px',
@@ -117,10 +117,10 @@ export default function PaymentTracking({ billings = [] }) {
                 }}>
                   {t('payment_tracking.date')}
                 </th>
-                <th style={{ 
-                  padding: '12px 16px', 
-                  textAlign: 'center', 
-                  fontWeight: 600, 
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
                   color: '#374151',
                   minWidth: '150px',
                   whiteSpace: 'nowrap'
@@ -132,19 +132,19 @@ export default function PaymentTracking({ billings = [] }) {
             <tbody>
               {filteredBillings.map((payment, index) => {
                 const statusColor = getStatusColor(payment.status);
-                
+
                 return (
-                  <tr 
-                    key={payment.id} 
-                    style={{ 
+                  <tr
+                    key={payment.id}
+                    style={{
                       borderBottom: index < filteredBillings.length - 1 ? '1px solid #e5e7eb' : 'none',
                       backgroundColor: index % 2 === 0 ? '#ffffff' : '#f9fafb'
                     }}
                   >
-                    <td style={{ 
-                      padding: '12px 16px', 
+                    <td style={{
+                      padding: '12px 16px',
                       textAlign: 'center',
-                      fontWeight: 500, 
+                      fontWeight: 500,
                       color: '#111827',
                       borderRight: '1px solid #e5e7eb',
                       minWidth: '150px',
@@ -154,8 +154,8 @@ export default function PaymentTracking({ billings = [] }) {
                     }}>
                       {payment.project?.name || 'Unknown Project'}
                     </td>
-                    <td style={{ 
-                      padding: '12px 16px', 
+                    <td style={{
+                      padding: '12px 16px',
                       textAlign: 'center',
                       color: '#6b7280',
                       borderRight: '1px solid #e5e7eb',
@@ -166,19 +166,19 @@ export default function PaymentTracking({ billings = [] }) {
                       {" "}
                       {payment.currency || 'USD'}
                     </td>
-                    <td style={{ 
-                      padding: '12px 16px', 
-                      textAlign: 'center', 
-                      fontWeight: 600, 
+                    <td style={{
+                      padding: '12px 16px',
+                      textAlign: 'center',
+                      fontWeight: 600,
                       color: payment.status === 'paid' || payment.status === 'succeeded' ? '#0ec6b0' : '#153A7D',
                       borderRight: '1px solid #e5e7eb',
                       minWidth: '150px',
                       whiteSpace: 'nowrap'
                     }}>
-                      ${parseFloat(payment.buyer_total_amount).toFixed(2)} {payment.currency || 'USD'}
+                      €{parseFloat(payment.buyer_total_amount).toFixed(2)} {payment.currency || 'USD'}
                     </td>
-                    <td style={{ 
-                      padding: '12px 16px', 
+                    <td style={{
+                      padding: '12px 16px',
                       textAlign: 'center',
                       color: '#6b7280',
                       borderRight: '1px solid #e5e7eb',
@@ -187,18 +187,18 @@ export default function PaymentTracking({ billings = [] }) {
                     }}>
                       {formatDate(payment.created_at)}
                     </td>
-                    <td style={{ 
-                      padding: '12px 16px', 
+                    <td style={{
+                      padding: '12px 16px',
                       textAlign: 'center',
                       minWidth: '150px',
                       whiteSpace: 'nowrap'
                     }}>
-                      <span style={{ 
-                        background: statusColor, 
-                        color: '#fff', 
-                        borderRadius: 8, 
-                        padding: '4px 12px', 
-                        fontSize: 12, 
+                      <span style={{
+                        background: statusColor,
+                        color: '#fff',
+                        borderRadius: 8,
+                        padding: '4px 12px',
+                        fontSize: 12,
                         fontWeight: 500
                       }}>
                         {payment.status}
