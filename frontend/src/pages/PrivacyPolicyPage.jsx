@@ -43,10 +43,19 @@ export default function PrivacyPolicyPage() {
                 <p className="text-gray-700 leading-relaxed mt-4">
                   {t('privacy_policy.introduction.content2')}
                 </p>
+                <div className="bg-blue-50 rounded-lg p-6 mt-6 border-l-4 border-blue-400">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">{t('privacy_policy.introduction.company_info.name')}</h3>
+                  <ul className="space-y-2 text-blue-800">
+                    <li><strong>{t('privacy_policy.introduction.company_info.legal_form')}</strong></li>
+                    <li><strong>{t('privacy_policy.introduction.company_info.capital')}</strong></li>
+                    <li><strong>{t('privacy_policy.introduction.company_info.address')}</strong></li>
+                    <li><strong>{t('privacy_policy.introduction.company_info.email')}</strong></li>
+                  </ul>
+                </div>
               </div>
             </section>
 
-            {/* Information We Collect */}
+            {/* Information Collection */}
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Database className="w-6 h-6 mr-3 text-[#1e3a8a]" />
