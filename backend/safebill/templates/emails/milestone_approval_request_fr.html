@@ -1,6 +1,6 @@
 {% extends 'emails/base.html' %}
 
-{% block title %}Demande d'Approbation de Acompte - {{ site_name }}{% endblock %}
+{% block title %}Demande d'Approbation d'Acompte - {{ site_name }}{% endblock %}
 
 {% block header_subtitle %}Approbation Demandée{% endblock %}
 
@@ -9,7 +9,7 @@
     <!-- Header -->
     <div style="text-align: center; margin-bottom: 40px;">
         <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
-            Demande d'Approbation de Acompte
+            Demande d'Approbation d'Acompte
         </h1>
         <p style="color: #6b7280; font-size: 16px; margin: 0;">
             Action requise pour votre projet
@@ -24,14 +24,16 @@
     </div>
 
     <!-- Milestone Request - Blue Background -->
-    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center;">
+    <div
+        style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center;">
         <h2 style="color: #3535AA; font-size: 20px; font-weight: 600; margin: 0 0 15px 0;">
             📋 Demande d'Approbation d'Acompte
         </h2>
         <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Le vendeur a demandé votre approbation pour un Acompte du projet <strong>{{ project_name }}</strong>.
         </p>
-        <div style="background: #ffffff; border: 1px solid #3535AA; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; display: inline-block; min-width: 300px;">
+        <div
+            style="background: #ffffff; border: 1px solid #3535AA; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; display: inline-block; min-width: 300px;">
             <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0 0 10px 0;">
                 <strong>Acompte :</strong> {{ milestone_name }}
             </p>
@@ -43,26 +45,31 @@
 
     <!-- CTA Button -->
     <div style="text-align: center; margin: 30px 0;">
-        <a href="{{ dashboard_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+        <a href="{{ dashboard_url }}"
+            style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
             Examiner le Acompte
         </a>
     </div>
 
     <!-- Important Notice - Gray Background -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+    <div
+        style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
         <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
             ⚠️ Important
         </h3>
         <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
-            L'approbation d'un Acompte déclenchera le paiement conformément aux conditions du projet. Veuillez examiner attentivement les détails de l'Acompte avant d'approuver.
+            L'approbation d'un Acompte déclenchera le paiement conformément aux conditions du projet. Veuillez examiner
+            attentivement les détails de l'Acompte avant d'approuver.
         </p>
         <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
-            Vous pouvez consulter les détails de l'Acompte et approuver ou demander des modifications depuis votre tableau de bord.
+            Vous pouvez consulter les détails de l'Acompte et approuver ou demander des modifications depuis votre
+            tableau de bord.
         </p>
     </div>
 
     <!-- What You Can Do - Gray Background -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+    <div
+        style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
         <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
             ✨ Prochaines Étapes
         </h3>
@@ -75,12 +82,15 @@
     </div>
 
     <!-- Support - Gray Background -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+    <div
+        style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
         <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
             💬 Besoin d'Aide ?
         </h3>
         <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
-            Si vous avez des questions concernant cet Acompte ou besoin d'assistance, veuillez contacter notre équipe de support à <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+            Si vous avez des questions concernant cet Acompte ou besoin d'assistance, veuillez contacter notre équipe de
+            support à <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{
+                support_email }}</a>.
         </p>
     </div>
 
@@ -93,5 +103,3 @@
     </div>
 </div>
 {% endblock %}
-
-

@@ -5,6 +5,7 @@ import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { useTranslation } from 'react-i18next';
+import { getStepTranslationKey } from '../../utils/translationUtils';
 
 export default function MilestoneApproval({ onMilestoneAction }) {
   const dispatch = useDispatch();
@@ -20,12 +21,12 @@ export default function MilestoneApproval({ onMilestoneAction }) {
   const [selectedDescription, setSelectedDescription] = useState('');
 
   // Translate milestone name based on current language
+  // Translate milestone name based on current language
   const getDisplayMilestoneName = (name) => {
-    // Check if the name is a step identifier (step_1, step_2, step_3)
-    if (name && name.match(/^step_[123]$/)) {
-      return t(`project_creation.${name}`);
+    const translationKey = getStepTranslationKey(name);
+    if (translationKey) {
+      return t(translationKey);
     }
-    // Otherwise return the name as-is
     return name;
   };
 

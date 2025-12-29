@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import SignUpPopup from "./SignUpPopup";
 import CallbackForm from "../CallbackForm";
 import { useTranslation } from "react-i18next";
+import { getStepTranslationKey } from "../../../utils/translationUtils";
 import Logo from "../../../assets/Safe_Bill_Dark.png";
 
 export const signedOutNavItems = [
@@ -67,9 +68,8 @@ export default function SafeBillHeader({
   const computedProfilePic = profilePic
     ? profilePic.startsWith("http")
       ? profilePic
-      : `${BASE_URL}${
-          profilePic.startsWith("/") ? profilePic.slice(1) : profilePic
-        }`
+      : `${BASE_URL}${profilePic.startsWith("/") ? profilePic.slice(1) : profilePic
+      }`
     : null;
   const userAvatar =
     computedProfilePic || (user && user.avatar ? user.avatar : null);
@@ -95,7 +95,7 @@ export default function SafeBillHeader({
   // Toggle visibility: show only if both seller and professional-buyer are enabled
   // AND user's current role is either seller or professional-buyer
   const canToggleRoles = !!(
-    user && 
+    user &&
     Array.isArray(user.available_roles) &&
     user.available_roles.includes("seller") &&
     user.available_roles.includes("professional-buyer") &&
@@ -105,20 +105,20 @@ export default function SafeBillHeader({
   const handleToggleRole = async () => {
     if (!user) return;
     const targetRole = user.role === "seller" ? "professional-buyer" : "seller";
-    
+
     try {
       const action = await dispatch(switchActiveRole({ targetRole }));
-      
+
       if (action?.error) {
         console.error('Role switch failed:', action.error);
         return;
       }
-      
+
       const updated = action?.payload?.user || null;
       const role = updated?.role || user.role;
       const sellerComplete = !!updated?.seller_onboarding_complete;
       const proBuyerComplete = !!updated?.pro_buyer_onboarding_complete;
-      
+
       // Determine the target URL based on the new role
       let targetUrl = '/';
       if (role === 'seller') {
@@ -126,7 +126,7 @@ export default function SafeBillHeader({
       } else if (role === 'professional-buyer') {
         targetUrl = !proBuyerComplete ? '/onboarding' : '/buyer-dashboard';
       }
-      
+
       // Use React Router navigation - ProtectedRoute will automatically re-evaluate
       navigate(targetUrl);
     } catch (error) {
@@ -214,7 +214,10 @@ export default function SafeBillHeader({
           variables = {};
         }
       }
-      
+
+      // Ensure variables object is mutable (it might be a read-only object from Redux state)
+      variables = { ...variables };
+
       // Translate milestone status if present
       if (variables.status) {
         const statusMap = {
@@ -226,26 +229,38 @@ export default function SafeBillHeader({
         // Create a copy to avoid mutating the original object
         variables = { ...variables, status: statusMap[variables.status] || variables.status };
       }
-      
+
+      // Translate milestone name if present in variables
+      // Loop through all variables to find potential milestone names
+      Object.keys(variables).forEach(key => {
+        const value = variables[key];
+        if (typeof value === 'string') {
+          const translationKey = getStepTranslationKey(value);
+          if (translationKey) {
+            variables[key] = t(translationKey);
+          }
+        }
+      });
+
       // Use the full key path with notifications namespace
       return t(notification.translation_key, { ...variables });
     }
-    
+
     // Fallback: Check if message is a translation key (backward compatibility)
     if (notification.message && notification.message.startsWith('notifications.')) {
       // For old notifications, we need to extract variables from the message or use defaults
       // This is a fallback for notifications created before the new system
       let variables = {};
-      
+
       // Try to extract project name from the message if it contains it
       if (notification.message.includes('project_created') || notification.message.includes('invitation_generated')) {
         // For old notifications, we can't get the actual project name, so we'll show a generic message
         variables = { project_name: 'Projet' }; // Generic fallback
       }
-      
+
       return t(notification.message, variables);
     }
-    
+
     // Return plain text message (old notifications without translation)
     return notification.message;
   }
@@ -396,21 +411,19 @@ export default function SafeBillHeader({
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     onClick={() => user.role !== 'seller' && handleToggleRole()}
-                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${
-                      user.role === 'seller'
-                        ? 'bg-[#01257D] text-white shadow-sm'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${user.role === 'seller'
+                      ? 'bg-[#01257D] text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
                   >
                     {t("navbar.seller")}
                   </button>
                   <button
                     onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
-                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${
-                      user.role === 'professional-buyer'
-                        ? 'bg-[#01257D] text-white shadow-sm'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${user.role === 'professional-buyer'
+                      ? 'bg-[#01257D] text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
                   >
                     {t("navbar.pro_buyer")}
                   </button>
@@ -422,11 +435,10 @@ export default function SafeBillHeader({
             <div className="flex items-center mr-2 border border-transparent rounded-md bg-white px-2 py-1">
               <button
                 onClick={() => changeLanguage("fr")}
-                className={`text-xs cursor-pointer ${
-                  i18n.language.startsWith("fr")
-                    ? "text-[#01257D] font-bold"
-                    : "text-gray-400 font-bold"
-                }`}
+                className={`text-xs cursor-pointer ${i18n.language.startsWith("fr")
+                  ? "text-[#01257D] font-bold"
+                  : "text-gray-400 font-bold"
+                  }`}
                 title="Français"
               >
                 FR
@@ -434,11 +446,10 @@ export default function SafeBillHeader({
               <span className="text-xs text-[#01257D] mx-2 font-bold">|</span>
               <button
                 onClick={() => changeLanguage("en")}
-                className={`text-xs cursor-pointer ${
-                  i18n.language.startsWith("en")
-                    ? "text-[#01257D] font-bold"
-                    : "text-gray-400 font-bold"
-                }`}
+                className={`text-xs cursor-pointer ${i18n.language.startsWith("en")
+                  ? "text-[#01257D] font-bold"
+                  : "text-gray-400 font-bold"
+                  }`}
                 title="English"
               >
                 ENG
@@ -504,8 +515,8 @@ export default function SafeBillHeader({
                             (user.role || user.active_role) === "seller"
                               ? "/profile"
                               : user.role === "admin"
-                              ? "/admin"
-                              : "/buyer-dashboard"
+                                ? "/admin"
+                                : "/buyer-dashboard"
                           }
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
@@ -564,22 +575,20 @@ export default function SafeBillHeader({
                   <div className="flex bg-gray-100 rounded-lg p-0.5">
                     <button
                       onClick={() => user.role !== 'seller' && handleToggleRole()}
-                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${
-                        user.role === 'seller'
-                          ? 'bg-[#01257D] text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'seller'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
                     >
                       <span className="hidden sm:inline">{t("navbar.seller")}</span>
                       <span className="sm:hidden">S</span>
                     </button>
                     <button
                       onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
-                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${
-                        user.role === 'professional-buyer'
-                          ? 'bg-[#01257D] text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'professional-buyer'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
                     >
                       <span className="hidden sm:inline">{t("navbar.pro_buyer")}</span>
                       <span className="sm:hidden">P</span>
@@ -592,11 +601,10 @@ export default function SafeBillHeader({
               <div className="flex items-center border border-transparent rounded-md bg-white px-2 py-1">
                 <button
                   onClick={() => changeLanguage("fr")}
-                  className={`text-xs cursor-pointer ${
-                    i18n.language.startsWith("fr")
-                      ? "text-[#01257D] font-bold"
-                      : "text-gray-400 font-bold"
-                  }`}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("fr")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
                   title="Français"
                 >
                   FR
@@ -604,11 +612,10 @@ export default function SafeBillHeader({
                 <span className="text-xs text-[#01257D] mx-2 font-bold">|</span>
                 <button
                   onClick={() => changeLanguage("en")}
-                  className={`text-xs cursor-pointer ${
-                    i18n.language.startsWith("en")
-                      ? "text-[#01257D] font-bold"
-                      : "text-gray-400 font-bold"
-                  }`}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("en")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
                   title="English"
                 >
                   ENG
@@ -675,8 +682,8 @@ export default function SafeBillHeader({
                               (user.role || user.active_role) === "seller"
                                 ? "/profile"
                                 : user.role === "admin"
-                                ? "/admin"
-                                : "/buyer-dashboard"
+                                  ? "/admin"
+                                  : "/buyer-dashboard"
                             }
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
@@ -815,22 +822,20 @@ export default function SafeBillHeader({
                   <div className="flex bg-gray-100 rounded-lg p-1 w-full">
                     <button
                       onClick={() => user.role !== 'seller' && handleToggleRole()}
-                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${
-                        user.role === 'seller'
-                          ? 'bg-[#01257D] text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'seller'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
                     >
                       <span className="hidden min-[480px]:inline">{t("navbar.seller")}</span>
                       <span className="min-[480px]:hidden">S</span>
                     </button>
                     <button
                       onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
-                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${
-                        user.role === 'professional-buyer'
-                          ? 'bg-[#01257D] text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'professional-buyer'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
                     >
                       <span className="hidden min-[480px]:inline">{t("navbar.pro_buyer")}</span>
                       <span className="min-[480px]:hidden">P</span>
@@ -843,22 +848,20 @@ export default function SafeBillHeader({
               <div className="flex items-center border border-transparent rounded-md bg-white px-3 py-1 mx-3">
                 <button
                   onClick={() => changeLanguage("fr")}
-                  className={`text-xs cursor-pointer ${
-                    i18n.language.startsWith("fr")
-                      ? "text-[#01257D] font-bold"
-                      : "text-gray-400 font-bold"
-                  }`}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("fr")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
                 >
                   FR
                 </button>
                 <span className="text-xs text-[#01257D] mx-3 font-bold">|</span>
                 <button
                   onClick={() => changeLanguage("en")}
-                  className={`text-xs cursor-pointer ${
-                    i18n.language.startsWith("en")
-                      ? "text-[#01257D] font-bold"
-                      : "text-gray-400 font-bold"
-                  }`}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("en")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
                 >
                   ENG
                 </button>
@@ -917,7 +920,7 @@ export default function SafeBillHeader({
                       </button>
                       {isMobileNotifDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
-                        <div className="py-2">{renderNotifications()}</div>
+                          <div className="py-2">{renderNotifications()}</div>
                           <div className="py-2">{renderNotifications()}</div>
                         </div>
                       )}
@@ -937,8 +940,8 @@ export default function SafeBillHeader({
                               user.role === "seller"
                                 ? "/profile"
                                 : user.role === "admin"
-                                ? "/admin"
-                                : "/buyer-dashboard"
+                                  ? "/admin"
+                                  : "/buyer-dashboard"
                             }
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >

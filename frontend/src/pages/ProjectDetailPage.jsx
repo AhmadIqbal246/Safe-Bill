@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchClientProjectDetail } from "../store/slices/ProjectSlice";
 import { RefundPayment } from "../store/slices/PaymentSlice";
+import { getStepTranslationKey } from "../utils/translationUtils";
 import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
 import {
   Download,
@@ -284,10 +285,10 @@ export default function ProjectDetailPage() {
                             {/* Node */}
                             <div
                               className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 ${isCompleted
-                                  ? "bg-[#01257D] border-[#01257D] text-white"
-                                  : isPending
-                                    ? "bg-[#E6F0FA] border-[#01257D] text-[#01257D]"
-                                    : "bg-white border-gray-300 text-gray-600"
+                                ? "bg-[#01257D] border-[#01257D] text-white"
+                                : isPending
+                                  ? "bg-[#E6F0FA] border-[#01257D] text-[#01257D]"
+                                  : "bg-white border-gray-300 text-gray-600"
                                 }`}
                             >
                               {isCompleted ? "✓" : index + 1}
@@ -296,14 +297,16 @@ export default function ProjectDetailPage() {
                             {/* Labels */}
                             <div className="mt-3 text-center max-w-32">
                               <div className="text-sm font-medium text-gray-900 mb-1">
-                                {milestone.name}
+                                {getStepTranslationKey(milestone.name)
+                                  ? t(getStepTranslationKey(milestone.name))
+                                  : milestone.name}
                               </div>
                               <div
                                 className={`text-xs ${isCompleted
-                                    ? "text-green-600"
-                                    : isPending
-                                      ? "text-orange-600"
-                                      : "text-gray-500"
+                                  ? "text-green-600"
+                                  : isPending
+                                    ? "text-orange-600"
+                                    : "text-gray-500"
                                   }`}
                               >
                                 €
@@ -361,7 +364,9 @@ export default function ProjectDetailPage() {
                           className="border-b border-gray-100"
                         >
                           <td className="py-3 px-4 text-gray-900">
-                            {milestone.name}
+                            {getStepTranslationKey(milestone.name)
+                              ? t(getStepTranslationKey(milestone.name))
+                              : milestone.name}
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -443,7 +448,9 @@ export default function ProjectDetailPage() {
                         >
                           <div>
                             <div className="font-medium text-gray-900">
-                              {milestone.name} -{" "}
+                              {getStepTranslationKey(milestone.name)
+                                ? t(getStepTranslationKey(milestone.name))
+                                : milestone.name} -{" "}
                               {t("project_detail.supporting_document")}
                             </div>
                             <div className="text-sm text-gray-600">
