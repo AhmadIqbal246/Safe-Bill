@@ -64,10 +64,10 @@ export default function CurrentProjects({ projects = [] }) {
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
           {filtered.map((project, index) => {
             const progress = getProgressPercentage(project);
-            
+
             return (
-              <div 
-                key={project.id} 
+              <div
+                key={project.id}
                 className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-[#01257D] hover:shadow-md transition-all cursor-pointer"
                 onClick={() => handleProjectClick(project)}
               >
@@ -77,29 +77,29 @@ export default function CurrentProjects({ projects = [] }) {
                     <ProjectStatusBadge status={project.status} size="small" />
                   </div>
                   <div className="text-sm font-semibold text-gray-800">
-                  ${(() => {
-                          const totalAmount = Number(project.total_amount) || 0;
-                          const vatPct = Number(project.vat_rate) || 0;
-                          const amountWithVat = totalAmount * (1 + vatPct / 100);
-                          const netAmount = amountWithVat;
-                          return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
-                        })()}
+                    €{(() => {
+                      const totalAmount = Number(project.total_amount) || 0;
+                      const vatPct = Number(project.vat_rate) || 0;
+                      const amountWithVat = totalAmount * (1 + vatPct / 100);
+                      const netAmount = amountWithVat;
+                      return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                    })()}
                   </div>
                 </div>
-                
+
                 {/* Progress Bar */}
                 <div className="w-full h-2 bg-gray-200 rounded-full mb-2">
-                  <div 
+                  <div
                     className="h-2 bg-[#01257D] rounded-full transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                
+
                 <div className="text-xs text-gray-600">
-                  Due: {new Date(project.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
+                  Due: {new Date(project.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
                   })}
                 </div>
               </div>

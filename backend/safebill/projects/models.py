@@ -113,9 +113,8 @@ class Quote(models.Model):
             from django.utils import timezone
             year = timezone.now().year
             
-            # Get the highest existing platform_invoice_reference for this seller in current year
+            # Get the highest existing platform_invoice_reference GLOBALLY in current year
             latest = Quote.objects.filter(
-                project__user=self.project.user,
                 platform_invoice_reference__startswith=f"{year}-"
             ).order_by("-platform_invoice_reference").first()
             
