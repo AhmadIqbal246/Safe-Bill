@@ -471,14 +471,16 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
             return None
 
         client = HubSpotDealsClient()
-        # Resolve stage id dynamically from pipeline labels (no env map needed)
-        # Do not manage HubSpot pipeline/stages; rely only on custom properties
-        dealstage_id = None
-        props = build_deal_properties(project, None, None)
+        # Resolve pipeline and stage id dynamically from pipeline labels
+        pipeline_id = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
+        dealstage_id = client.resolve_stage_id(pipeline_id, project.status)
+        
+        props = build_deal_properties(project, pipeline_id, dealstage_id)
         logger.info(
-            "HubSpot: built deal props for project %s -> name=%s, stage_id=%s, total_amount=%s",
+            "HubSpot: built deal props for project %s -> name=%s, pipeline=%s, stage_id=%s, total_amount=%s",
             project.id,
             props.get("dealname"),
+            props.get("pipeline"),
             props.get("dealstage"),
             props.get("amount"),
         )

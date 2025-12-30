@@ -43,17 +43,18 @@ class HubSpotClient:
                 return labels_to_id[key]
             # fallbacks for terminal stages
             fallback_map = {
+                "pending": ["pending", "project created", "projets créés", "appointmentscheduled"],
+                "payment_in_progress": ["payment_in_progress", "awaiting payment", "attente de paiement", "qualificationsummary"],
                 "approved": [
                     "approved",
-                    "qualification",
-                    "qualified",
-                    "qualified to buy",
-                    "accepted",
-                    "open",
-                    "in progress",
+                    "payment secured (escrow)",
+                    "paiement sécurisé",
+                    "presentation",
+                    "contractsent",
                 ],
-                "completed": ["completed", "closed won", "closedwon", "won"],
-                "not_approved": ["not_approved", "closed lost", "closedlost", "lost"],
+                "in_progress": ["in_progress", "project in execution", "projet en cours", "decisionmakerboughtin"],
+                "completed": ["completed", "closed won", "closedwon", "won", "terminé", "clôturé gagné"],
+                "not_approved": ["not_approved", "closed lost", "closedlost", "lost", "refusé", "clôturé perdu"],
             }
             for label in fallback_map.get(key, []):
                 lk = label.strip().lower()
@@ -145,14 +146,28 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
     amount_with_vat = total_amount * (1 + vat_rate / 100.0)
     # Seller net amount (what is displayed in UI)
     displayed_amount = amount_with_vat * (1 - fee_pct / 100.0)
-    
-    return {
+
+    # Forecast and Assignment properties
+    # Get default owner from settings or fallback to your provided ID
+    deal_owner_id = getattr(settings, "HUBSPOT_DEAL_OWNER_ID", "79866344")
+
+    props = {
         # built-ins
         "dealname": dealname,
         # HubSpot built-in amount field (numeric) matching UI
         "amount": round(displayed_amount, 2),
         # Force HubSpot to treat the amount as EUR regardless of portal/user defaults
         "deal_currency_code": "EUR",
+        # Assignment (HubSpot API identifies the owner via this specific key)
+        "hubspot_owner_id": deal_owner_id,
+    }
+
+    if pipeline_id:
+        props["pipeline"] = pipeline_id
+    if dealstage_id:
+        props["dealstage"] = dealstage_id
+
+    props.update({
         # customs
         "project_id": str(project.id),
         "project_type": project.project_type,
@@ -167,6 +182,13 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         "year": year_num,    # e.g., 2025
         # helpful text if not associating yet
         "description": f"Seller: {seller_name} | Client: {project.client_email}",
-    }
+    })
+
+    # If the project is completed, set the Close Date to help HubSpot Forecasting
+    if project.status == "completed":
+        from django.utils import timezone
+        props["closedate"] = timezone.now().isoformat()
+    
+    return props
 
 
