@@ -44,7 +44,9 @@ class User(AbstractUser):
     rating_count = models.PositiveIntegerField(default=0, help_text="Total number of ratings received")
 
     def __str__(self):
-        return f"{self.username} ({self.role})"
+        if self.username.startswith('deleted_'):
+            return f"Deleted User - {self.get_role_display()}"
+        return f"{self.username} ({self.get_role_display()})"
 
     def save(self, *args, **kwargs):
         # Ensure available_roles is only set by the system, not by user input
@@ -214,7 +216,7 @@ class DeletedUser(models.Model):
         ]
     
     def __str__(self):
-        return f"Deleted User {self.original_user_id} ({self.original_email})"
+        return f"Deleted User - {self.original_username} ({self.original_role})"
     
     @property
     def is_data_retention_expired(self):

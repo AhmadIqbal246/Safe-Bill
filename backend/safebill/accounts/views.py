@@ -981,7 +981,11 @@ def delete_account(request):
         
         # 3. Delete account
         deleted_user_record = UserDeletionService.delete_user_account(user)
-        
+
+        # Trigger Celery task to sync deleted user to HubSpot
+        from hubspot.tasks import sync_deleted_user_task
+        sync_deleted_user_task.delay(deleted_user_record.id)
+
         return Response({
             'message': 'Account deleted successfully',
             'deletion_id': deleted_user_record.id,

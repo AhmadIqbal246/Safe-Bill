@@ -65,6 +65,30 @@ from .services.payment_service import PaymentService
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+from accounts.models import DeletedUser
+from .services.DeletedUserService import DeletedUserService
+from django.core.exceptions import ObjectDoesNotExist
+
+@shared_task(bind=True, max_retries=3)
+def sync_deleted_user_task(self, deleted_user_id):
+    """
+    Celery task to sync a deleted user to HubSpot custom object.
+    """
+    try:
+        deleted_user = DeletedUser.objects.get(pk=deleted_user_id)
+        service = DeletedUserService()
+        hubspot_id = service.create_deleted_user_record(deleted_user)
+        if hubspot_id:
+            logger.info(f"Deleted user {deleted_user_id} synced to HubSpot with id {hubspot_id}")
+            return hubspot_id
+        else:
+            logger.error(f"Failed to sync deleted user {deleted_user_id} to HubSpot")
+    except ObjectDoesNotExist:
+        logger.error(f"DeletedUser with ID {deleted_user_id} not found")
+    except Exception as exc:
+        logger.error(f"Error syncing deleted user {deleted_user_id} to HubSpot: {exc}")
+        self.retry(exc=exc, countdown=2 ** self.request.retries)
+
 # Deal pipeline id (Sales pipeline is "default")
 DEALS_PIPELINE_ID = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
 
