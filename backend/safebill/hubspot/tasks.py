@@ -671,6 +671,7 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         vat_collected = 0
         seller_revenue = 0
         total_revenue = 0
+        total_gmv = 0
         total_milestones_approved = 0
         
         # Calculate revenue values based on sync type
@@ -679,6 +680,14 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             total_payments_amount = (
                 Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
                 .aggregate(total=Sum("amount"))
+                .get("total")
+                or 0
+            )
+            
+            # 1.1 Total GMV (Total spent by buyers including VAT/Fees)
+            total_gmv = (
+                Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
+                .aggregate(total=Sum("buyer_total_amount"))
                 .get("total")
                 or 0
             )
@@ -729,13 +738,17 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             # 4. Total revenue (same as seller revenue for now)
             total_revenue = seller_revenue
         
-        # Debug logging for revenue calculation transparency
-        logger.info(
-            f"HubSpot revenue calculation for {year}-{month:02d} (sync_type={sync_type}): "
-            f"total_payments={total_payments_amount}, vat_collected={vat_collected}, "
-            f"seller_revenue={seller_revenue}, total_revenue={total_revenue}, "
-            f"milestones_approved={total_milestones_approved}"
+        # Debug logging and console output for GMV tracking
+        gmv_log_msg = (
+            f"💰 GMV CALCULATION SUCCESS ({year}-{month:02d}):\n"
+            f"   - Total GMV: ${total_gmv:,.2f} (Total buyer spend)\n"
+            f"   - Total Payments: ${total_payments_amount:,.2f} (Base amount)\n"
+            f"   - VAT Collected: ${vat_collected:,.2f}\n"
+            f"   - Seller Revenue: ${seller_revenue:,.2f}\n"
+            f"   - Milestones: {total_milestones_approved}"
         )
+        print(gmv_log_msg)
+        logger.info(gmv_log_msg)
 
         period_key = f"{year}-{month:02d}"
 
@@ -758,6 +771,7 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             props.update({
                 "total_payments_amount": float(total_payments_amount),
                 "vat_collected": float(vat_collected),
+                "gmv": float(total_gmv),
             })
         
         # Add milestone-related properties
