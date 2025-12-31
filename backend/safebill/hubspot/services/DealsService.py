@@ -65,34 +65,8 @@ class HubSpotClient:
         except Exception as exc:
             logger.error("HubSpot resolve_stage_id error: %s", exc)
             return None
-    def search_deal_by_project_id_and_side(self, project_id: str, side: str) -> Optional[Dict[str, Any]]:
-        url = f"{self.base_url}/crm/v3/objects/deals/search"
-        # Determine the activity type based on the side for searching
-        activity_type = "Sale" if side == "seller" else "Purchase"
-        
-        payload = {
-            "filterGroups": [
-                {
-                    "filters": [
-                        {"propertyName": "project_id", "operator": "EQ", "value": str(project_id)},
-                        {"propertyName": "deal_activity_type", "operator": "EQ", "value": activity_type}
-                    ]
-                }
-            ],
-            "limit": 1,
-        }
-        resp = requests.post(url, headers=self.headers, data=json.dumps(payload), timeout=20)
-        try:
-            resp.raise_for_status()
-        except requests.HTTPError:
-            logger.error("HubSpot search_deal_by_project_id_and_side error: %s", resp.text)
-            raise
-        data = resp.json()
-        results = data.get("results", [])
-        return results[0] if results else None
-
     def search_deal_by_project_id(self, project_id: str) -> Optional[Dict[str, Any]]:
-        """General search for any deal matching this project ID (backward compatibility)"""
+        """Find the single deal associated with this project ID."""
         url = f"{self.base_url}/crm/v3/objects/deals/search"
         payload = {
             "filterGroups": [
@@ -205,12 +179,11 @@ class HubSpotClient:
 
 
 
-def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Optional[str], side: str = "seller") -> Dict[str, Any]:
+def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Optional[str]) -> Dict[str, Any]:
     seller_name = getattr(project.user, "username", "")
     buyer = project.client
     buyer_name = f"{getattr(buyer, 'first_name', '')} {getattr(buyer, 'last_name', '')}".strip() or getattr(buyer, "username", "")
-    side_label = "Sale" if side == "seller" else "Purchase"
-    dealname = f"{project.name} ({side_label})" if project.name else f"Project {project.id} ({side_label})"
+    dealname = project.name or f"Project {project.id}"
     # Compute total project amount from installments (fallback to 0 if none)
     try:
         from django.db.models import Sum
@@ -231,6 +204,33 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         logger.error(f"Failed to compute total_amount for project {project.id}: {e}", exc_info=True)
         total_amount = 0.0
 
+    # Calculate Actual Paid Amounts
+    try:
+        from django.db.models import Sum
+        from payments.models import Payment
+        from projects.models import Milestone
+        
+        # Buyer side: Total of all payments successfully processed (Status = paid)
+        # This represents funds currently in Escrow or Paid
+        paid_payments = Payment.objects.filter(project_id=project.id, status='paid')
+        buyer_paid_total = float(paid_payments.aggregate(total=Sum('buyer_total_amount'))['total'] or 0.0)
+
+        # Seller side: Total of all approved milestones
+        # This represents funds actually released to the seller after approval
+        approved_milestones = Milestone.objects.filter(project_id=project.id, status='approved')
+        seller_paid_base = float(approved_milestones.aggregate(total=Sum('relative_payment'))['total'] or 0.0)
+        
+        # Apply VAT and Deduct Fee for Seller Net (to match same logic as displayed_amount)
+        vat_rate = float(project.vat_rate) if project.vat_rate is not None else 20.0
+        fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
+        
+        seller_paid_total = seller_paid_base * (1 + vat_rate / 100.0) * (1 - fee_pct / 100.0)
+
+    except Exception as e:
+        logger.error(f"Failed to calculate paid amounts for project {project.id}: {e}")
+        seller_paid_total = 0.0
+        buyer_paid_total = 0.0
+
     # Derive project creation month/year
     created_at = getattr(project, "created_at", None) or getattr(project, "created_date", None)
     if not created_at:
@@ -238,26 +238,30 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
     month_str = created_at.strftime("%m")
     year_num = created_at.year
 
-    # Calculate amount same as Frontend: Total * (1 + VAT) * (1 - Fee)
+    # Calculate Amounts
     vat_rate = float(project.vat_rate) if project.vat_rate is not None else 20.0
-    fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
     
-    amount_with_vat = total_amount * (1 + vat_rate / 100.0)
-    # Seller net amount (what is displayed in UI)
-    displayed_amount = amount_with_vat * (1 - fee_pct / 100.0)
+    # Gross Amount (What the buyer paid: Total project value + VAT)
+    buyer_pays_gross = total_amount * (1 + vat_rate / 100.0)
+    
+    # Seller Net for description/reference (Total * (1+VAT) * (1-Fee))
+    fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
+    seller_net = buyer_pays_gross * (1 - fee_pct / 100.0)
+
+    # Keep deal name clean with just the project name
+    dealname = project.name or f"Project {project.id}"
 
     # Forecast and Assignment properties
-    # Get default owner from settings or fallback to your provided ID
     deal_owner_id = getattr(settings, "HUBSPOT_DEAL_OWNER_ID", "79866344")
 
     props = {
         # built-ins
         "dealname": dealname,
-        # HubSpot built-in amount field (numeric) matching UI
-        "amount": round(displayed_amount, 2),
+        # HubSpot built-in amount field = Gross total paid by buyer
+        "amount": round(buyer_pays_gross, 2),
         # Force HubSpot to treat the amount as EUR regardless of portal/user defaults
         "deal_currency_code": "EUR",
-        # Assignment (HubSpot API identifies the owner via this specific key)
+        # Assignment
         "hubspot_owner_id": deal_owner_id,
     }
 
@@ -279,12 +283,13 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         # Company Info for "Double Sided" Sales/Purchase visibility
         "seller_company_name": getattr(project.user.business_detail, "company_name", "") if hasattr(project.user, "business_detail") else seller_name,
         "buyer_company_name": getattr(project.client.business_detail, "company_name", "") if hasattr(project.client, "business_detail") else buyer_name,
-        # Counterparty info for Company View
-        "deal_activity_type": "Sale" if side == "seller" else "Purchase",
-        "counterparty_name": buyer_name if side == "seller" else seller_name,
-        # Project creation period for reporting
-        "month": month_str,  # e.g., "09"
-        "year": year_num,    # e.g., 2025
+        # Neutral Activity Type for One-Deal marketplace visibility
+        "deal_activity_type": "Sale / Purchase",
+        # Explicit Counterparty for the shared record
+        "counterparty_name": f"Seller: {seller_name} / Buyer: {buyer_name if buyer_name else 'Pending Buyer'}",
+        # Paid Amounts Tracking
+        "total_seller_paid_amount": seller_paid_total,
+        "total_buyer_paid_amount": buyer_paid_total,
         # helpful text if not associating yet
         "description": f"Seller: {seller_name} | Client: {project.client_email}",
     })
