@@ -108,6 +108,48 @@ def _mark_task_finished(task_key):
     _running_tasks.discard(task_key)
 
 
+def _get_or_sync_hubspot_company_id(business_detail) -> Optional[str]:
+    """Helper to get a HubSpot Company ID for a BusinessDetail, syncing if necessary."""
+    if not business_detail:
+        return None
+    
+    from .models import HubSpotCompanyLink
+    link = HubSpotCompanyLink.objects.filter(business_detail=business_detail).first()
+    if link and link.hubspot_id:
+        return link.hubspot_id
+    
+    # If no link, trigger a sync now (synchronously for this internal resolution)
+    # We use the existing task logic but call it directly
+    try:
+        from .services.CompaniesService import HubSpotClient as HubSpotCompanyClient, build_company_properties
+        client = HubSpotCompanyClient()
+        props = build_company_properties(business_detail)
+        
+        # Check by SIRET/Domain/Name matches to prevent duplicates
+        existing = None
+        if props.get("siret_number"):
+            existing = client.search_company_by_siret(props.get("siret_number"))
+        if not existing and props.get("domain"):
+            existing = client.search_company_by_domain(props.get("domain"))
+        
+        if existing:
+            hs_id = existing.get("id")
+            client.update_company(hs_id, props)
+        else:
+            created = client.create_company(props)
+            hs_id = created.get("id")
+            
+        if hs_id:
+            HubSpotCompanyLink.objects.update_or_create(
+                business_detail=business_detail,
+                defaults={"hubspot_id": hs_id, "status": "success", "last_synced_at": timezone.now()}
+            )
+            return hs_id
+    except Exception as e:
+        logger.error(f"Failed to auto-sync company for {business_detail.company_name}: {e}")
+    return None
+
+
 # =============================================================================
 # CORE SYNC TASKS (UNIFIED - SUPPORT BOTH DIRECT AND QUEUE MODES)
 # =============================================================================
@@ -474,31 +516,78 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
         # Resolve pipeline and stage id dynamically from pipeline labels
         pipeline_id = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
         dealstage_id = client.resolve_stage_id(pipeline_id, project.status)
-        
-        props = build_deal_properties(project, pipeline_id, dealstage_id)
-        logger.info(
-            "HubSpot: built deal props for project %s -> name=%s, pipeline=%s, stage_id=%s, total_amount=%s",
-            project.id,
-            props.get("dealname"),
-            props.get("pipeline"),
-            props.get("dealstage"),
-            props.get("amount"),
-        )
 
-        try:
-            existing = client.search_deal_by_project_id(str(project.id))
-            if existing:
-                deal_id = existing.get("id")
-                logger.info("HubSpot: updating existing deal id=%s for project_id=%s", deal_id, project_id)
-                client.update_deal(deal_id, props)
-                return deal_id
-            created = client.create_deal(props)
-            deal_id = created.get("id")
-            logger.info("HubSpot: created new deal id=%s for project_id=%s", deal_id, project_id)
-            return deal_id
-        except Exception as exc:
-            logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
-            raise
+        last_deal_id = None
+        for side in ["seller", "buyer"]:
+            props = build_deal_properties(project, pipeline_id, dealstage_id, side=side)
+            logger.info(
+                "HubSpot: built deal props for project %s (%s) -> name=%s, pipeline=%s, stage_id=%s, total_amount=%s",
+                project.id,
+                side,
+                props.get("dealname"),
+                props.get("pipeline"),
+                props.get("dealstage"),
+                props.get("amount"),
+            )
+
+            try:
+                # Search for the deal specific to this side
+                existing = client.search_deal_by_project_id_and_side(str(project.id), side)
+                
+                if existing:
+                    deal_id = existing.get("id")
+                    logger.info("HubSpot: updating existing deal id=%s for project_id=%s (%s)", deal_id, project_id, side)
+                    client.update_deal(deal_id, props)
+                else:
+                    created = client.create_deal(props)
+                    deal_id = created.get("id")
+                    logger.info("HubSpot: created new deal id=%s for project_id=%s (%s)", deal_id, project_id, side)
+
+                # Associations based on the side
+                if deal_id:
+                    if side == "seller":
+                        # Link Sale Deal to Seller Company
+                        seller_bd = getattr(project.user, "business_detail", None)
+                        seller_hs_company_id = _get_or_sync_hubspot_company_id(seller_bd)
+                        if seller_hs_company_id:
+                            client.associate_deal_company(deal_id, seller_hs_company_id)
+                            logger.info("HubSpot: associated SALE deal %s with seller company %s", deal_id, seller_hs_company_id)
+                    else:
+                        # Link Purchase Deal to Buyer Company or Contact
+                        buyer_bd = getattr(project.client, "business_detail", None) if project.client else None
+                        buyer_hs_company_id = _get_or_sync_hubspot_company_id(buyer_bd)
+                        if buyer_hs_company_id:
+                            client.associate_deal_company(deal_id, buyer_hs_company_id)
+                            logger.info("HubSpot: associated PURCHASE deal %s with buyer company %s", deal_id, buyer_hs_company_id)
+                        else:
+                            # Fallback to Buyer Contact search by Email
+                            buyer_contact_id = None
+                            if project.client:
+                                from .models import HubSpotContactLink
+                                buyer_contact_link = HubSpotContactLink.objects.filter(user=project.client).first()
+                                if buyer_contact_link:
+                                    buyer_contact_id = buyer_contact_link.hubspot_id
+
+                            if not buyer_contact_id and project.client_email:
+                                existing_contact = client.search_contact_by_email(project.client_email)
+                                if existing_contact:
+                                    buyer_contact_id = existing_contact.get("id")
+
+                            if buyer_contact_id:
+                                client.associate_deal_contact(deal_id, buyer_contact_id)
+                                logger.info("HubSpot: associated PURCHASE deal %s with buyer contact %s", deal_id, buyer_contact_id)
+                
+                last_deal_id = deal_id
+
+            except Exception as side_exc:
+                logger.error("HubSpot: failed sync for side=%s project_id=%s: %s", side, project.id, side_exc)
+                # Continue to next side if one fails
+
+        return last_deal_id
+
+    except Exception as exc:
+        logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
+        raise
     finally:
         _mark_task_finished(task_key)
 

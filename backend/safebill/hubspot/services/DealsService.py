@@ -65,7 +65,34 @@ class HubSpotClient:
         except Exception as exc:
             logger.error("HubSpot resolve_stage_id error: %s", exc)
             return None
+    def search_deal_by_project_id_and_side(self, project_id: str, side: str) -> Optional[Dict[str, Any]]:
+        url = f"{self.base_url}/crm/v3/objects/deals/search"
+        # Determine the activity type based on the side for searching
+        activity_type = "Sale" if side == "seller" else "Purchase"
+        
+        payload = {
+            "filterGroups": [
+                {
+                    "filters": [
+                        {"propertyName": "project_id", "operator": "EQ", "value": str(project_id)},
+                        {"propertyName": "deal_activity_type", "operator": "EQ", "value": activity_type}
+                    ]
+                }
+            ],
+            "limit": 1,
+        }
+        resp = requests.post(url, headers=self.headers, data=json.dumps(payload), timeout=20)
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError:
+            logger.error("HubSpot search_deal_by_project_id_and_side error: %s", resp.text)
+            raise
+        data = resp.json()
+        results = data.get("results", [])
+        return results[0] if results else None
+
     def search_deal_by_project_id(self, project_id: str) -> Optional[Dict[str, Any]]:
+        """General search for any deal matching this project ID (backward compatibility)"""
         url = f"{self.base_url}/crm/v3/objects/deals/search"
         payload = {
             "filterGroups": [
@@ -107,11 +134,83 @@ class HubSpotClient:
             raise
         return resp.json()
 
+    # ---- Associations ----
+    def associate_deal_company(self, deal_id: str, company_id: str) -> None:
+        url = f"{self.base_url}/crm/v4/associations/deals/companies/batch/create"
+        payload = {
+            "inputs": [
+                {
+                    "from": {"id": deal_id},
+                    "to": {"id": company_id},
+                    "types": [
+                        {
+                            "associationCategory": "HUBSPOT_DEFINED",
+                            "associationTypeId": 341  # Deal to Company
+                        }
+                    ],
+                }
+            ]
+        }
+        resp = requests.post(url, headers=self.headers, data=json.dumps(payload), timeout=20)
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError:
+            logger.error("HubSpot associate_deal_company error: %s", resp.text)
+            raise
+
+    def associate_deal_contact(self, deal_id: str, contact_id: str) -> None:
+        url = f"{self.base_url}/crm/v4/associations/deals/contacts/batch/create"
+        payload = {
+            "inputs": [
+                {
+                    "from": {"id": deal_id},
+                    "to": {"id": contact_id},
+                    "types": [
+                        {
+                            "associationCategory": "HUBSPOT_DEFINED",
+                            "associationTypeId": 3  # Deal to Contact
+                        }
+                    ],
+                }
+            ]
+        }
+        resp = requests.post(url, headers=self.headers, data=json.dumps(payload), timeout=20)
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError:
+            logger.error("HubSpot associate_deal_contact error: %s", resp.text)
+            raise
+
+    def search_contact_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        url = f"{self.base_url}/crm/v3/objects/contacts/search"
+        payload = {
+            "filterGroups": [
+                {
+                    "filters": [
+                        {"propertyName": "email", "operator": "EQ", "value": email}
+                    ]
+                }
+            ],
+            "limit": 1,
+        }
+        resp = requests.post(url, headers=self.headers, data=json.dumps(payload), timeout=20)
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError:
+            logger.error("HubSpot search_contact_by_email error: %s", resp.text)
+            return None
+        data = resp.json()
+        results = data.get("results", [])
+        return results[0] if results else None
 
 
-def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Optional[str]) -> Dict[str, Any]:
+
+def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Optional[str], side: str = "seller") -> Dict[str, Any]:
     seller_name = getattr(project.user, "username", "")
-    dealname = project.name or f"Project {project.id}"
+    buyer = project.client
+    buyer_name = f"{getattr(buyer, 'first_name', '')} {getattr(buyer, 'last_name', '')}".strip() or getattr(buyer, "username", "")
+    side_label = "Sale" if side == "seller" else "Purchase"
+    dealname = f"{project.name} ({side_label})" if project.name else f"Project {project.id} ({side_label})"
     # Compute total project amount from installments (fallback to 0 if none)
     try:
         from django.db.models import Sum
@@ -177,6 +276,12 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         "vat_rate": float(project.vat_rate) if project.vat_rate is not None else None,
         "client_email": project.client_email or "",
         "seller_name": seller_name,
+        # Company Info for "Double Sided" Sales/Purchase visibility
+        "seller_company_name": getattr(project.user.business_detail, "company_name", "") if hasattr(project.user, "business_detail") else seller_name,
+        "buyer_company_name": getattr(project.client.business_detail, "company_name", "") if hasattr(project.client, "business_detail") else buyer_name,
+        # Counterparty info for Company View
+        "deal_activity_type": "Sale" if side == "seller" else "Purchase",
+        "counterparty_name": buyer_name if side == "seller" else seller_name,
         # Project creation period for reporting
         "month": month_str,  # e.g., "09"
         "year": year_num,    # e.g., 2025
