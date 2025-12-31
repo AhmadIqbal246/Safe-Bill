@@ -832,7 +832,7 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             f"   - Total GMV: ${total_gmv:,.2f} (Total buyer spend)\n"
             f"   - Total Payments: ${total_payments_amount:,.2f} (Base amount)\n"
             f"   - VAT Collected: ${vat_collected:,.2f}\n"
-            f"   - Seller Revenue: ${seller_revenue:,.2f}\n"
+            f"   - SafeBill Commission: ${seller_revenue:,.2f}\n"
             f"   - Milestones: {total_milestones_approved}"
         )
         print(gmv_log_msg)
@@ -866,6 +866,7 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         if sync_type in ["milestone", "all"]:
             props.update({
                 "seller_revenue": float(seller_revenue),
+                "platform_fee_total": float(seller_revenue),  # Dedicated commission field
                 "total_revenue": float(total_revenue),
                 "total_milestones_approved": int(total_milestones_approved),
             })
