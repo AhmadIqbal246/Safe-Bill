@@ -65,6 +65,30 @@ from .services.payment_service import PaymentService
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+from accounts.models import DeletedUser
+from .services.DeletedUserService import DeletedUserService
+from django.core.exceptions import ObjectDoesNotExist
+
+@shared_task(bind=True, max_retries=3)
+def sync_deleted_user_task(self, deleted_user_id):
+    """
+    Celery task to sync a deleted user to HubSpot custom object.
+    """
+    try:
+        deleted_user = DeletedUser.objects.get(pk=deleted_user_id)
+        service = DeletedUserService()
+        hubspot_id = service.create_deleted_user_record(deleted_user)
+        if hubspot_id:
+            logger.info(f"Deleted user {deleted_user_id} synced to HubSpot with id {hubspot_id}")
+            return hubspot_id
+        else:
+            logger.error(f"Failed to sync deleted user {deleted_user_id} to HubSpot")
+    except ObjectDoesNotExist:
+        logger.error(f"DeletedUser with ID {deleted_user_id} not found")
+    except Exception as exc:
+        logger.error(f"Error syncing deleted user {deleted_user_id} to HubSpot: {exc}")
+        self.retry(exc=exc, countdown=2 ** self.request.retries)
+
 # Deal pipeline id (Sales pipeline is "default")
 DEALS_PIPELINE_ID = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
 
@@ -82,6 +106,48 @@ def _mark_task_running(task_key):
 def _mark_task_finished(task_key):
     """Mark a task as finished"""
     _running_tasks.discard(task_key)
+
+
+def _get_or_sync_hubspot_company_id(business_detail) -> Optional[str]:
+    """Helper to get a HubSpot Company ID for a BusinessDetail, syncing if necessary."""
+    if not business_detail:
+        return None
+    
+    from .models import HubSpotCompanyLink
+    link = HubSpotCompanyLink.objects.filter(business_detail=business_detail).first()
+    if link and link.hubspot_id:
+        return link.hubspot_id
+    
+    # If no link, trigger a sync now (synchronously for this internal resolution)
+    # We use the existing task logic but call it directly
+    try:
+        from .services.CompaniesService import HubSpotClient as HubSpotCompanyClient, build_company_properties
+        client = HubSpotCompanyClient()
+        props = build_company_properties(business_detail)
+        
+        # Check by SIRET/Domain/Name matches to prevent duplicates
+        existing = None
+        if props.get("siret_number"):
+            existing = client.search_company_by_siret(props.get("siret_number"))
+        if not existing and props.get("domain"):
+            existing = client.search_company_by_domain(props.get("domain"))
+        
+        if existing:
+            hs_id = existing.get("id")
+            client.update_company(hs_id, props)
+        else:
+            created = client.create_company(props)
+            hs_id = created.get("id")
+            
+        if hs_id:
+            HubSpotCompanyLink.objects.update_or_create(
+                business_detail=business_detail,
+                defaults={"hubspot_id": hs_id, "status": "success", "last_synced_at": timezone.now()}
+            )
+            return hs_id
+    except Exception as e:
+        logger.error(f"Failed to auto-sync company for {business_detail.company_name}: {e}")
+    return None
 
 
 # =============================================================================
@@ -447,32 +513,78 @@ def sync_deal_task(self, project_id: int = None, queue_item_id: int = None) -> O
             return None
 
         client = HubSpotDealsClient()
-        # Resolve stage id dynamically from pipeline labels (no env map needed)
-        # Do not manage HubSpot pipeline/stages; rely only on custom properties
-        dealstage_id = None
-        props = build_deal_properties(project, None, None)
+        # Resolve pipeline and stage id dynamically from pipeline labels
+        pipeline_id = getattr(settings, "HUBSPOT_DEALS_PIPELINE_ID", "default")
+        dealstage_id = client.resolve_stage_id(pipeline_id, project.status)
+
+        last_deal_id = None
+        props = build_deal_properties(project, pipeline_id, dealstage_id)
         logger.info(
-            "HubSpot: built deal props for project %s -> name=%s, stage_id=%s, total_amount=%s",
+            "HubSpot: built deal props for project %s -> name=%s, pipeline=%s, stage_id=%s, total_amount=%s",
             project.id,
             props.get("dealname"),
+            props.get("pipeline"),
             props.get("dealstage"),
             props.get("amount"),
         )
 
         try:
+            # Search for the single deal associated with this project
             existing = client.search_deal_by_project_id(str(project.id))
+            
             if existing:
                 deal_id = existing.get("id")
                 logger.info("HubSpot: updating existing deal id=%s for project_id=%s", deal_id, project_id)
                 client.update_deal(deal_id, props)
-                return deal_id
-            created = client.create_deal(props)
-            deal_id = created.get("id")
-            logger.info("HubSpot: created new deal id=%s for project_id=%s", deal_id, project_id)
-            return deal_id
-        except Exception as exc:
-            logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
+            else:
+                created = client.create_deal(props)
+                deal_id = created.get("id")
+                logger.info("HubSpot: created new deal id=%s for project_id=%s", deal_id, project_id)
+
+            # Associations (Dual Association: Seller Company AND Buyer Company/Contact)
+            if deal_id:
+                # 1. Seller Company Association
+                seller_bd = getattr(project.user, "business_detail", None)
+                seller_hs_company_id = _get_or_sync_hubspot_company_id(seller_bd)
+                if seller_hs_company_id:
+                    client.associate_deal_company(deal_id, seller_hs_company_id)
+                    logger.info("HubSpot: associated deal %s with seller company %s", deal_id, seller_hs_company_id)
+
+                # 2. Buyer Company/Contact Association
+                buyer_bd = getattr(project.client, "business_detail", None) if project.client else None
+                buyer_hs_company_id = _get_or_sync_hubspot_company_id(buyer_bd)
+                if buyer_hs_company_id:
+                    client.associate_deal_company(deal_id, buyer_hs_company_id)
+                    logger.info("HubSpot: associated deal %s with buyer company %s", deal_id, buyer_hs_company_id)
+                else:
+                    # Fallback to Buyer Contact search by Email
+                    buyer_contact_id = None
+                    if project.client:
+                        from .models import HubSpotContactLink
+                        buyer_contact_link = HubSpotContactLink.objects.filter(user=project.client).first()
+                        if buyer_contact_link:
+                            buyer_contact_id = buyer_contact_link.hubspot_id
+
+                    if not buyer_contact_id and project.client_email:
+                        existing_contact = client.search_contact_by_email(project.client_email)
+                        if existing_contact:
+                            buyer_contact_id = existing_contact.get("id")
+
+                    if buyer_contact_id:
+                        client.associate_deal_contact(deal_id, buyer_contact_id)
+                        logger.info("HubSpot: associated deal %s with buyer contact %s", deal_id, buyer_contact_id)
+            
+            last_deal_id = deal_id
+
+        except Exception as deal_exc:
+            logger.error("HubSpot: failed single deal sync for project_id=%s: %s", project.id, deal_exc)
             raise
+
+        return last_deal_id
+
+    except Exception as exc:
+        logger.exception("HubSpot: sync_deal_task failed for project_id %s: %s", project_id, exc)
+        raise
     finally:
         _mark_task_finished(task_key)
 
@@ -647,6 +759,7 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
         vat_collected = 0
         seller_revenue = 0
         total_revenue = 0
+        total_gmv = 0
         total_milestones_approved = 0
         
         # Calculate revenue values based on sync type
@@ -655,6 +768,14 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             total_payments_amount = (
                 Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
                 .aggregate(total=Sum("amount"))
+                .get("total")
+                or 0
+            )
+            
+            # 1.1 Total GMV (Total spent by buyers including VAT/Fees)
+            total_gmv = (
+                Payment.objects.filter(status="paid", created_at__year=year, created_at__month=month)
+                .aggregate(total=Sum("buyer_total_amount"))
                 .get("total")
                 or 0
             )
@@ -705,13 +826,17 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             # 4. Total revenue (same as seller revenue for now)
             total_revenue = seller_revenue
         
-        # Debug logging for revenue calculation transparency
-        logger.info(
-            f"HubSpot revenue calculation for {year}-{month:02d} (sync_type={sync_type}): "
-            f"total_payments={total_payments_amount}, vat_collected={vat_collected}, "
-            f"seller_revenue={seller_revenue}, total_revenue={total_revenue}, "
-            f"milestones_approved={total_milestones_approved}"
+        # Debug logging and console output for GMV tracking
+        gmv_log_msg = (
+            f"💰 GMV CALCULATION SUCCESS ({year}-{month:02d}):\n"
+            f"   - Total GMV: ${total_gmv:,.2f} (Total buyer spend)\n"
+            f"   - Total Payments: ${total_payments_amount:,.2f} (Base amount)\n"
+            f"   - VAT Collected: ${vat_collected:,.2f}\n"
+            f"   - SafeBill Commission: ${seller_revenue:,.2f}\n"
+            f"   - Milestones: {total_milestones_approved}"
         )
+        print(gmv_log_msg)
+        logger.info(gmv_log_msg)
 
         period_key = f"{year}-{month:02d}"
 
@@ -734,12 +859,14 @@ def sync_revenue_task(self, year: int = None, month: int = None, queue_item_id: 
             props.update({
                 "total_payments_amount": float(total_payments_amount),
                 "vat_collected": float(vat_collected),
+                "gmv": float(total_gmv),
             })
         
         # Add milestone-related properties
         if sync_type in ["milestone", "all"]:
             props.update({
                 "seller_revenue": float(seller_revenue),
+                "platform_fee_total": float(seller_revenue),  # Dedicated commission field
                 "total_revenue": float(total_revenue),
                 "total_milestones_approved": int(total_milestones_approved),
             })

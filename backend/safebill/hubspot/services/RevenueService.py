@@ -21,7 +21,7 @@ class HubSpotRevenueClient:
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         }
-        self.object_type = getattr(settings, "HUBSPOT_REVENUE_OBJECT", "p243761680_revenue")
+        self.object_type = getattr(settings, "HUBSPOT_REVENUE_OBJECT", "p146671560_revenue")
         # Default to 'period' without requiring settings.py
         self.period_key_property = getattr(settings, "HUBSPOT_REVENUE_PERIOD_KEY_PROP", "period")
 

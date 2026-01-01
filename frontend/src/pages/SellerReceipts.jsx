@@ -239,7 +239,7 @@ export default function SellerReceipts() {
       if (type === 'subscription') {
         filename = `subscription_invoice_${project.id}.pdf`;
       } else if (type === 'platform') {
-        filename = `platform_invoice_${project.reference_number || project.id}.pdf`;
+        filename = `platform_invoice_${project.platform_invoice_reference || project.id}.pdf`;
       } else {
         filename = `receipt_seller_${project.reference_number || project.id}.pdf`;
       }
@@ -797,7 +797,7 @@ export default function SellerReceipts() {
 
                 <div className="mb-5">
                   <div className="text-lg font-semibold text-gray-900">{receipt.name}</div>
-                  <div className="text-xs text-gray-500">{t('receipts.ref')} {receipt.reference_number || '-'}</div>
+                  <div className="text-xs text-gray-500">{t('receipts.ref')} {receipt.platform_invoice_reference || '-'}</div>
                   <div className="text-xs text-gray-500 mt-1">{t('receipts.vat_rate')}: {vatRate.toFixed(1)}%</div>
                   <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {receipt.completion_date || receipt.created_at}</div>
                 </div>

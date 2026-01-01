@@ -38,6 +38,7 @@ import AcceptProjectInvite from "./pages/AcceptProjectInvite";
 import HowToAcceptProjectInvite from "./pages/HowToAcceptProjectInvite";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
+import CookiePreferencesPage from "./pages/CookiePreferencesPage";
 import BillingsPage from "./pages/BillingsPage";
 import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
 import SellerReceipts from "./pages/SellerReceipts";
@@ -126,6 +127,7 @@ function App() {
           <Route path='/how-to-accept-project-invite' element={<HowToAcceptProjectInvite/>}/>
           <Route path='/privacy-policy' element={<PrivacyPolicyPage/>}/>
           <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
+          <Route path='/cookie-preferences' element={<CookiePreferencesPage/>}/>
           <Route path='/billings' element={<BillingsPage/>}/>
           <Route path='/delete-account' element={<ProtectedRoute><DeleteAccount/></ProtectedRoute>}/>
           {/* Add more routes as needed */}

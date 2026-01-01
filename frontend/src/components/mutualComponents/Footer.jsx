@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mail, MapPin, Facebook, Instagram } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Logo from '../../assets/Safe_Bill_Dark.png';
 
@@ -8,6 +8,7 @@ const Email = 'contact@safebill.fr';
 const Address = 'Safe Bill 66 avenue des Champs Elysées 75008 Paris';
 export default function Footer() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   
   
@@ -46,10 +47,10 @@ export default function Footer() {
             <li><Link to="/privacy-policy" className="hover:underline text-white">{t('footer.privacy')}</Link></li>
             <li>
               <button 
-                onClick={() => window.axeptio?.showConsentModal?.()}
+                onClick={() => navigate('/cookie-preferences')}
                 className="hover:underline text-white cursor-pointer"
               >
-                Cookie Preferences
+                {t('footer.cookie_preferences')}
               </button>
             </li>
           </ul>

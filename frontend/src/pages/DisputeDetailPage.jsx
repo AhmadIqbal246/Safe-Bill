@@ -4,11 +4,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchDisputeDetail } from '../store/slices/DisputeSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { Dialog } from '@headlessui/react';
-import { 
-  ArrowLeft, 
-  FileText, 
-  Users, 
-  Calendar, 
+import {
+  ArrowLeft,
+  FileText,
+  Users,
+  Calendar,
   AlertTriangle,
   Download,
   MessageCircle,
@@ -23,11 +23,11 @@ export default function DisputeDetailPage() {
   const { disputeId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // View description dialog state
   const [viewDescriptionDialogOpen, setViewDescriptionDialogOpen] = useState(false);
   const [selectedDescription, setSelectedDescription] = useState('');
-  
+
   const {
     disputeDetail,
     disputeDetailLoading,
@@ -70,7 +70,7 @@ export default function DisputeDetailPage() {
 
   const getDisputeTypeText = (type) => {
     if (!type) return t('dispute_detail.unknown');
-    return type.replace('_', ' ').split(' ').map(word => 
+    return type.replace('_', ' ').split(' ').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -213,7 +213,7 @@ export default function DisputeDetailPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.nature_of_dispute')}</label>
@@ -305,7 +305,7 @@ export default function DisputeDetailPage() {
                       {getStatusText(dispute.status)}
                     </span>
                   </div>
-                  
+
                   {dispute.assigned_mediator && (
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">{t('dispute_detail.assigned_mediator')}</span>
@@ -321,7 +321,7 @@ export default function DisputeDetailPage() {
                 <div className="relative">
                   {/* Timeline Line */}
                   <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-                  
+
                   {/* Timeline Events */}
                   <div className="space-y-4">
                     {dispute.events && dispute.events.map((event) => (
@@ -330,7 +330,7 @@ export default function DisputeDetailPage() {
                         <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-[#01257D] rounded-full text-white">
                           {getEventIcon(event.event_type)}
                         </div>
-                        
+
                         {/* Event Content */}
                         <div className="flex-1 pt-1">
                           <p className="text-sm font-medium text-gray-900">{event.description}</p>
@@ -351,14 +351,14 @@ export default function DisputeDetailPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.resolution_details')}</label>
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-lg text-sm">{dispute.resolution_details}</p>
                     </div>
-                    
+
                     {dispute.resolution_amount && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.resolution_amount')}</label>
-                        <p className="text-gray-900 font-medium">${dispute.resolution_amount}</p>
+                        <p className="text-gray-900 font-medium">€{dispute.resolution_amount}</p>
                       </div>
                     )}
-                    
+
                     {dispute.resolved_at && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">{t('dispute_detail.resolved_date')}</label>
@@ -385,7 +385,7 @@ export default function DisputeDetailPage() {
             <Dialog.Title className="text-lg font-semibold text-[#01257D] mb-4">
               {t('dispute_detail.dispute_description')}
             </Dialog.Title>
-            
+
             <div className="mb-6">
               <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
                 <p className="text-gray-700 whitespace-pre-wrap leading-relaxed break-words">

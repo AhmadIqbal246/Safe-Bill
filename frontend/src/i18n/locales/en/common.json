@@ -1,7 +1,7 @@
 {
-  "navbar": { 
-    "home": "Home", 
-    "profile": "Profile", 
+  "navbar": {
+    "home": "Home",
+    "profile": "Profile",
     "logout": "Logout",
     "directory": "Directory",
     "contact": "Contact",
@@ -24,7 +24,7 @@
     "close": "Close",
     "submit": "Submit",
     "processing": "Processing...",
-    "request_quote": "Request Quote", 
+    "request_quote": "Request Quote",
     "send": "Send",
     "download_view": "Download/View",
     "search": "Search",
@@ -40,9 +40,9 @@
     "id": "ID",
     "created": "Created"
   },
-  "chat": { 
-    "messages": "Messages", 
-    "type_message": "Type your message..." 
+  "chat": {
+    "messages": "Messages",
+    "type_message": "Type your message..."
   },
   "signup_popup": {
     "title": "Choose Your Registration Type",
@@ -132,6 +132,7 @@
     "legal_links": "Legal links",
     "terms": "Terms",
     "privacy": "Privacy",
+    "cookie_preferences": "Cookie Preferences",
     "copyright": "© 2025 Safe Bill. All rights reserved.",
     "socials": "Socials"
   },
@@ -497,128 +498,128 @@
     "expired": "Expired",
     "project_ready": "Project Ready"
   },
-     "project_creation": {
-     "title": "Project Creation",
-     "project_name_section": "Project Name",
-     "project_name_placeholder": "Enter project name",
-     "signed_quote_section": "Signed Quote",
-     "upload_signed_quote": "Upload signed quote",
-     "drag_drop_message": "Drag and drop or browse to upload the signed quote.",
-     "upload": "Upload",
-     "change_file": "Change File",
-     "only_pdf_allowed": "Only PDF files are allowed.",
-     "invalid_file_type": "Invalid file type. Only PDF and image files (JPEG, PNG, WEBP) are allowed.",
-     "upload_quote_title": "Upload Quote Document",
-     "select_upload_method": "Choose how you want to upload the quote document:",
-     "take_photo": "Take Photo",
-     "upload_from_device": "Upload from Device",
-     "capture_photo": "Capture Photo",
-     "retake": "Retake",
-     "use_photo": "Use Photo",
-     "camera_access_error": "Unable to access camera. Please check your permissions or try uploading from device.",
-     "view": "View",
-     "remove": "Remove",
-     "payment_configuration": "Payment Configuration",
-     "installment": "installment",
-     "installments": "installments",
-     "amount": "Amount",
+  "project_creation": {
+    "title": "Project Creation",
+    "project_name_section": "Project Name",
+    "project_name_placeholder": "Enter project name",
+    "signed_quote_section": "Signed Quote",
+    "upload_signed_quote": "Upload signed quote",
+    "drag_drop_message": "Drag and drop or browse to upload the signed quote.",
+    "upload": "Upload",
+    "change_file": "Change File",
+    "only_pdf_allowed": "Only PDF files are allowed.",
+    "invalid_file_type": "Invalid file type. Only PDF and image files (JPEG, PNG, WEBP) are allowed.",
+    "upload_quote_title": "Upload Quote Document",
+    "select_upload_method": "Choose how you want to upload the quote document:",
+    "take_photo": "Take Photo",
+    "upload_from_device": "Upload from Device",
+    "capture_photo": "Capture Photo",
+    "retake": "Retake",
+    "use_photo": "Use Photo",
+    "camera_access_error": "Unable to access camera. Please check your permissions or try uploading from device.",
+    "view": "View",
+    "remove": "Remove",
+    "payment_configuration": "Payment Configuration",
+    "installment": "installment",
+    "installments": "installments",
+    "amount": "Amount",
     "trigger_step": "Steps",
-     "description": "Description",
-     "edit": "Edit",
-     "save": "Save",
-     "client_section": "Client",
-     "client_email_placeholder": "Client's email",
-     "send_payment_invitation": "Send Payment Invitation",
-     "sending": "Sending...",
-     "project_created_successfully": "Project created successfully!",
-     "fill_all_fields": "Please fill all fields and upload the signed quote.",
-     "summary": "Payment Summary",
-     "review_before_send": "Review before sending",
-     "subtotal": "Subtotal",
-     "platform_fee_label": "Platform fee",
-     "stripe_fee": "Stripe fee (2.9% + €0.30)",
-     "final_total": "Final Total",
-     "vat_section": "VAT Rate",
-     "platform_fees": "Platform Fees",
-     "net_amount": "Net Amount",
-     "step_1": "Step 1",
-     "step_2": "Step 2",
-     "step_3": "Step 3"
-   },
-   "my_profile": {
-     "title": "My Profile",
-     "business_activity": "Business Activity",
-     "not_specified": "Not specified",
-     "categories": "Categories",
-     "subcategories": "Subcategories",
-     "service_areas": "Service Areas",
-     "about": "About",
-     "no_about_info": "No about info provided.",
-     "contact": "Contact",
-     "email": "Email",
-     "phone": "Phone",
-     "help_improve": "Help us improve",
-     "select_rating": "Select a rating to get started, then feel free to add your own thoughts below!",
-     "feedback": "Feedback",
-     "your_email": "Your email address",
-     "submit_feedback": "Submit Feedback",
-     "submitting": "Submitting...",
-     "edit_profile": "Edit Profile",
-     "required_fields_note": "* indicates required fields",
-     "upload_new_picture": "Upload New Picture",
-     "username_label": "Username *",
-     "business_activity_label": "Business Activity *",
-     "choose_business_activity": "Choose Business Activity",
-     "search_business_activity": "Search business activity...",
-     "categories_label": "Categories (Optional)",
-     "choose_categories": "Choose Categories",
-     "search_categories": "Search categories...",
-     "selected": "selected",
-     "subcategories_label": "Subcategories (Optional)",
-     "choose_subcategories": "Choose Subcategories",
-     "search_subcategories": "Search subcategories...",
-     "service_areas_label": "Service Areas *",
-     "choose_service_areas": "Choose Service Areas",
-     "search_areas": "Search areas...",
-     "about_label": "About",
-     "submit": "Submit",
-     "profile_updated_successfully": "Profile updated successfully!",
-     "username_required": "Username is required",
-     "business_activity_required": "Business activity is required",
-     "service_areas_required": "At least one service area is required",
-     "please_select_rating": "Please select a rating first",
-     "please_provide_email": "Please provide your email address",
-     "feedback_submitted_successfully": "Feedback submitted successfully!",
-     "failed_submit_feedback": "Failed to submit feedback.",
-     "loading": "Loading...",
-     "failed_load_profile": "Failed to load profile.",
-     "no_profile_data": "No profile data available.",
-     "username_too_long": "Username must be less than {{max}} characters",
-     "about_too_long_chars": "About must be less than {{max}} characters",
-     "about_too_many_words": "About must be less than {{max}} words",
-     "about_placeholder": "Enter your about"
-   },
-   "documents": {
-     "title": "Documents",
-     "business_registration_certificate": "Business Registration Certificate",
-     "professional_liability_insurance": "Professional Liability Insurance",
-     "general_insurance_certificate": "General Insurance Certificate",
-     "contact_id_document": "Contact ID Document",
-     "company_bank_details": "Company Bank Details",
-     "coverage_area": "Coverage Area",
-     "nationwide": "Nationwide",
-     "regional": "Regional",
-     "local": "Local",
-     "limitations": "Limitations",
-     "excludes_projects_over": "Excludes projects over $50,000",
-     "none": "None",
-     "approved": "Approved",
-     "rejected": "Rejected",
-     "not_uploaded": "Not Uploaded",
-     "view_document": "View Document",
-     "failed_load_documents": "Failed to load documents."
-   },
-     "current_projects": {
+    "description": "Description",
+    "edit": "Edit",
+    "save": "Save",
+    "client_section": "Client",
+    "client_email_placeholder": "Client's email",
+    "send_payment_invitation": "Send Payment Invitation",
+    "sending": "Sending...",
+    "project_created_successfully": "Project created successfully!",
+    "fill_all_fields": "Please fill all fields and upload the signed quote.",
+    "summary": "Payment Summary",
+    "review_before_send": "Review before sending",
+    "subtotal": "Subtotal",
+    "platform_fee_label": "Platform fee",
+    "stripe_fee": "Stripe fee (2.9% + €0.30)",
+    "final_total": "Final Total",
+    "vat_section": "VAT Rate",
+    "platform_fees": "Platform Fees",
+    "net_amount": "Net Amount",
+    "step_1": "Step 1",
+    "step_2": "Step 2",
+    "step_3": "Step 3"
+  },
+  "my_profile": {
+    "title": "My Profile",
+    "business_activity": "Business Activity",
+    "not_specified": "Not specified",
+    "categories": "Categories",
+    "subcategories": "Subcategories",
+    "service_areas": "Service Areas",
+    "about": "About",
+    "no_about_info": "No about info provided.",
+    "contact": "Contact",
+    "email": "Email",
+    "phone": "Phone",
+    "help_improve": "Help us improve",
+    "select_rating": "Select a rating to get started, then feel free to add your own thoughts below!",
+    "feedback": "Feedback",
+    "your_email": "Your email address",
+    "submit_feedback": "Submit Feedback",
+    "submitting": "Submitting...",
+    "edit_profile": "Edit Profile",
+    "required_fields_note": "* indicates required fields",
+    "upload_new_picture": "Upload New Picture",
+    "username_label": "Username *",
+    "business_activity_label": "Business Activity *",
+    "choose_business_activity": "Choose Business Activity",
+    "search_business_activity": "Search business activity...",
+    "categories_label": "Categories (Optional)",
+    "choose_categories": "Choose Categories",
+    "search_categories": "Search categories...",
+    "selected": "selected",
+    "subcategories_label": "Subcategories (Optional)",
+    "choose_subcategories": "Choose Subcategories",
+    "search_subcategories": "Search subcategories...",
+    "service_areas_label": "Service Areas *",
+    "choose_service_areas": "Choose Service Areas",
+    "search_areas": "Search areas...",
+    "about_label": "About",
+    "submit": "Submit",
+    "profile_updated_successfully": "Profile updated successfully!",
+    "username_required": "Username is required",
+    "business_activity_required": "Business activity is required",
+    "service_areas_required": "At least one service area is required",
+    "please_select_rating": "Please select a rating first",
+    "please_provide_email": "Please provide your email address",
+    "feedback_submitted_successfully": "Feedback submitted successfully!",
+    "failed_submit_feedback": "Failed to submit feedback.",
+    "loading": "Loading...",
+    "failed_load_profile": "Failed to load profile.",
+    "no_profile_data": "No profile data available.",
+    "username_too_long": "Username must be less than {{max}} characters",
+    "about_too_long_chars": "About must be less than {{max}} characters",
+    "about_too_many_words": "About must be less than {{max}} words",
+    "about_placeholder": "Enter your about"
+  },
+  "documents": {
+    "title": "Documents",
+    "business_registration_certificate": "Business Registration Certificate",
+    "professional_liability_insurance": "Professional Liability Insurance",
+    "general_insurance_certificate": "General Insurance Certificate",
+    "contact_id_document": "Contact ID Document",
+    "company_bank_details": "Company Bank Details",
+    "coverage_area": "Coverage Area",
+    "nationwide": "Nationwide",
+    "regional": "Regional",
+    "local": "Local",
+    "limitations": "Limitations",
+    "excludes_projects_over": "Excludes projects over $50,000",
+    "none": "None",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "not_uploaded": "Not Uploaded",
+    "view_document": "View Document",
+    "failed_load_documents": "Failed to load documents."
+  },
+  "current_projects": {
     "title": "Current Projects",
     "in_progress_title": "In-Progress Projects",
     "search_placeholder": "Search by client email or project name",
@@ -632,18 +633,18 @@
     "no_projects_matching_search": "No projects found matching your search.",
     "failed_load_projects": "Failed to load projects."
   },
-   "completed_projects": {
-     "title": "Completed Projects",
-     "subtitle": "Explore a selection of projects successfully completed by our team, showcasing our expertise and commitment to quality.",
-     "sort_by_date": "Sort by Date",
-     "filter_by_client": "Filter by Client",
-     "projects": "Projects",
-     "project_title": "Project Title",
-     "client_name": "Client Name",
-     "price": "Price",
-     "completion_date": "Completion Date",
-     "failed_load_projects": "Failed to load projects."
-   },
+  "completed_projects": {
+    "title": "Completed Projects",
+    "subtitle": "Explore a selection of projects successfully completed by our team, showcasing our expertise and commitment to quality.",
+    "sort_by_date": "Sort by Date",
+    "filter_by_client": "Filter by Client",
+    "projects": "Projects",
+    "project_title": "Project Title",
+    "client_name": "Client Name",
+    "price": "Price",
+    "completion_date": "Completion Date",
+    "failed_load_projects": "Failed to load projects."
+  },
   "admin": {
     "title": "Administration",
     "loading_overview": "Loading admin overview...",
@@ -742,7 +743,7 @@
     "clear_search": "Clear search",
     "title": "Buyer Dashboard",
     "subtitle": "Manage your projects and track progress",
-    "view_all_disputes": "View All Disputes",
+    "view_all_disputes": "View All Discret",
     "failed_load_dashboard": "Failed to load dashboard",
     "unexpected_error": "An unexpected error occurred",
     "try_again": "Try Again",
@@ -894,7 +895,6 @@
     "invalid_credentials": "Invalid credentials",
     "email_verification": "Email Verification"
   },
-  
   "contact_us": {
     "title": "Contact Us",
     "subtitle": "We'd love to hear from you! Send us a message and we'll respond as soon as possible.",
@@ -1148,155 +1148,6 @@
     "note3": "You can approve or reject projects based on your requirements",
     "get_started_button": "Get Started Now",
     "get_started_note": "Ready to accept your first project invitation? Click the button above to begin!"
-  },
-  "privacy_policy": {
-    "title": "Privacy Policy",
-    "subtitle": "Your privacy is important to us. This policy explains how Safe Bill collects, uses, and protects your information.",
-    "last_updated": "Last updated:",
-    "introduction": {
-      "title": "Introduction",
-      "content1": "Safe Bill (\"we,\" \"our,\" or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform for project management, milestone tracking, and secure payments between buyers and sellers.",
-      "content2": "By using Safe Bill, you agree to the collection and use of information in accordance with this policy."
-    },
-    "information_collection": {
-      "title": "Information We Collect",
-      "personal_info": {
-        "title": "Personal Information",
-        "items": [
-          "Name, email address, and contact information",
-          "Business information (company name, SIRET number, business type)",
-          "Profile information and preferences",
-          "Payment and billing information (processed securely through Stripe)"
-        ]
-      },
-      "project_info": {
-        "title": "Project Information",
-        "items": [
-          "Project details, descriptions, and requirements",
-          "Quotes, proposals, and project documents",
-          "Milestone information and completion status",
-          "Communication history between buyers and sellers"
-        ]
-      },
-      "technical_info": {
-        "title": "Technical Information",
-        "items": [
-          "IP address, browser type, and device information",
-          "Usage patterns and platform interactions",
-          "Cookies and similar tracking technologies",
-          "Log files and analytics data"
-        ]
-      }
-    },
-    "cookie_policy": {
-      "title": "Cookie Policy",
-      "subtitle": "We use cookies to enhance your experience and ensure GDPR compliance.",
-      "essential_cookies": {
-        "title": "Essential Cookies",
-        "description": "These cookies are necessary for the website to function properly and cannot be disabled. They are usually set in response to actions made by you which amount to a request for services.",
-        "examples": [
-          "Session management and authentication",
-          "Security features and CSRF protection",
-          "Basic user preferences (language, theme)"
-        ]
-      },
-      "analytics_cookies": {
-        "title": "Analytics Cookies",
-        "description": "These cookies help us understand how visitors interact with our website by collecting and reporting information anonymously.",
-        "examples": [
-          "Page views and user behavior",
-          "Performance monitoring",
-          "Error tracking and debugging"
-        ]
-      },
-      "marketing_cookies": {
-        "title": "Marketing Cookies",
-        "description": "These cookies are used to track visitors across websites for advertising and marketing purposes.",
-        "examples": [
-          "Email marketing preferences",
-          "Newsletter subscriptions",
-          "Marketing campaign tracking"
-        ]
-      },
-      "consent_management": {
-        "title": "Consent Management",
-        "description": "We use Axeptio to manage your cookie preferences and ensure compliance with GDPR regulations. You can change your consent settings at any time.",
-        "withdrawal": "You have the right to withdraw your consent at any time. Withdrawing consent will not affect the lawfulness of processing based on consent before its withdrawal."
-      }
-    },
-    "how_we_use": {
-      "title": "How We Use Your Information",
-      "service_provision": {
-        "title": "Service Provision",
-        "content": "To provide, maintain, and improve our platform services, including project management, milestone tracking, and secure payment processing."
-      },
-      "communication": {
-        "title": "Communication",
-        "content": "To send you important updates, notifications, and respond to your inquiries and support requests."
-      },
-      "security_compliance": {
-        "title": "Security & Compliance",
-        "content": "To ensure platform security, prevent fraud, and comply with legal obligations and regulations."
-      },
-      "analytics_improvement": {
-        "title": "Analytics & Improvement",
-        "content": "To analyze usage patterns, improve user experience, and develop new features and services."
-      }
-    },
-    "information_sharing": {
-      "title": "Information Sharing",
-      "content": "We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:",
-      "service_providers": "Service Providers: With trusted third-party service providers who assist in platform operations (e.g., Stripe for payments, email services)",
-      "legal_requirements": "Legal Requirements: When required by law, court order, or to protect our rights and safety",
-      "business_transfers": "Business Transfers: In connection with a merger, acquisition, or sale of assets",
-      "consent": "Consent: When you explicitly consent to sharing your information"
-    },
-    "data_security": {
-      "title": "Data Security",
-      "content": "We implement industry-standard security measures to protect your information:",
-      "ssl_encryption": "SSL/TLS encryption for data transmission",
-      "secure_storage": "Secure database storage with encryption",
-      "security_audits": "Regular security audits and updates",
-      "access_controls": "Access controls and authentication"
-    },
-    "your_rights": {
-      "title": "Your Rights",
-      "access_portability": {
-        "title": "Access & Portability",
-        "content": "Request access to your personal data and receive it in a portable format"
-      },
-      "correction": {
-        "title": "Correction",
-        "content": "Request correction of inaccurate or incomplete personal information"
-      },
-      "deletion": {
-        "title": "Deletion",
-        "content": "Request deletion of your personal data under certain circumstances"
-      },
-      "objection": {
-        "title": "Objection",
-        "content": "Object to processing of your personal data for certain purposes"
-      }
-    },
-    "cookies": {
-      "title": "Cookies and Tracking",
-      "content": "We use cookies and similar technologies to enhance your experience:",
-      "essential_cookies": "Essential Cookies: Required for platform functionality and security",
-      "analytics_cookies": "Analytics Cookies: Help us understand how you use our platform",
-      "preference_cookies": "Preference Cookies: Remember your settings and preferences",
-      "browser_control": "You can control cookie settings through your browser preferences."
-    },
-    "contact": {
-      "title": "Contact Us",
-      "content": "If you have any questions about this Privacy Policy or our data practices, please contact us:",
-      "email": "contact@safebill.fr",
-      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
-    },
-    "updates": {
-      "title": "Policy Updates",
-      "content": "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last updated\" date. Your continued use of Safe Bill after any modifications constitutes acceptance of the updated policy."
-    },
-    "copyright": "© 2025 Safe Bill. All rights reserved."
   },
   "terms_of_service": {
     "title": "Terms of Service",
@@ -1900,8 +1751,7 @@
     "resolve_disputes": "Resolve all active disputes",
     "password_required": "Password is required",
     "confirm_password_required": "Confirm password is required"
-  }
-  ,
+  },
   "subscription_card": {
     "title": "Activate your membership",
     "subtitle": "Unlock project creation for the next 30 days",
@@ -1925,5 +1775,276 @@
     "step_1": "Step 1",
     "step_2": "Step 2",
     "step_3": "Step 3"
+  },
+  "privacy_policy": {
+    "title": "Privacy Policy – Safe Bill",
+    "subtitle": "How Safe Bill collects and processes your personal data",
+    "last_updated": "Last Updated:",
+    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "introduction": {
+      "title": "Data Controller",
+      "content1": "This privacy policy describes how Safe Bill collects and processes your personal data when using its marketplace.",
+      "content2": "Safe Bill is responsible for processing personal data collected via the website, application and associated services.",
+      "company_info": {
+        "name": "Safe Bill",
+        "legal_form": "Legal Form: SASU",
+        "capital": "Share Capital: €10,000",
+        "address": "Registered Office: 66 avenue des Champs-Élysées, 75008 Paris, France",
+        "email": "Contact Email: contact@safebill.fr"
+      }
+    },
+    "information_collection": {
+      "title": "Data Collected",
+      "subtitle": "Safe Bill collects only data necessary to provide its trusted third-party services and manage the marketplace.",
+      "personal_info": {
+        "title": "Identification and Contact Data",
+        "items": [
+          "First name, last name",
+          "Email address, phone number",
+          "Postal address",
+          "Password (stored in encrypted form)"
+        ]
+      },
+      "project_info": {
+        "title": "Professional Data (Sellers/Professionals)",
+        "items": [
+          "Company name, legal form",
+          "SIRET/SIREN, VAT number",
+          "Registered office address",
+          "Job title, business sector, specialties"
+        ]
+      },
+      "technical_info": {
+        "title": "Technical and Navigation Data",
+        "items": [
+          "IP address, browser type, operating system",
+          "Login logs, timestamps",
+          "Navigation data on marketplace (pages viewed, clicks, etc.)",
+          "Cookies and trackers"
+        ]
+      }
+    },
+    "cookie_policy": {
+      "title": "Cookie Policy",
+      "subtitle": "Safe Bill uses cookies and other trackers on the marketplace for various purposes.",
+      "essential_cookies": {
+        "title": "Essential Cookies",
+        "description": "These cookies are necessary for the website to function properly.",
+        "examples": [
+          "Session management",
+          "Security and fraud prevention",
+          "User preferences"
+        ]
+      },
+      "analytics_cookies": {
+        "title": "Analytics Cookies",
+        "description": "These cookies help us measure audience and improve platform performance.",
+        "examples": [
+          "Page views and user behavior",
+          "Performance metrics",
+          "User engagement data"
+        ]
+      },
+      "marketing_cookies": {
+        "title": "Marketing Cookies",
+        "description": "These cookies help us deliver targeted advertising and marketing content.",
+        "examples": [
+          "Targeted advertising",
+          "Campaign tracking",
+          "User preferences for content"
+        ]
+      },
+      "consent_management": {
+        "title": "Consent Management",
+        "description": "On your first visit, a cookie banner informs you of the purposes of these trackers and allows you to accept, refuse or customize your choices.",
+        "withdrawal": "You can modify your preferences at any time via the cookie management link available on the site."
+      }
+    },
+    "how_we_use": {
+      "title": "How We Use Information",
+      "service_provision": {
+        "title": "Service Provision",
+        "content": "Your data is processed to create and manage your user account, provide marketplace access, and manage projects, quotes, orders, deposits and deliveries."
+      },
+      "communication": {
+        "title": "Communication",
+        "content": "We respond to your requests (support, customer service, disputes), send notifications related to your projects and payments, and improve service quality."
+      },
+      "security_compliance": {
+        "title": "Security & Compliance",
+        "content": "We verify seller/professional identity, prevent fraud and money laundering, manage disputes, and secure transactions."
+      },
+      "analytics_improvement": {
+        "title": "Analytics & Improvement",
+        "content": "We measure audience and performance, improve platform ergonomics, and personalize user experience."
+      }
+    },
+    "information_sharing": {
+      "title": "Information Sharing",
+      "content": "Your data may be shared with the following recipients:",
+      "service_providers": "Service Providers: Technical hosting, CRM tools, email services, support ticketing, data analysis tools",
+      "legal_requirements": "Legal Requirements: Administrative or judicial authorities when required by law",
+      "business_transfers": "Business Transfers: In case of merger, acquisition or sale of assets",
+      "consent": "Consent-Based: When you explicitly authorize sharing with third parties"
+    },
+    "data_security": {
+      "title": "Data Security",
+      "content": "Safe Bill implements appropriate technical and organizational measures to protect your personal data against destruction, loss, alteration, disclosure or unauthorized access.",
+      "ssl_encryption": "SSL/TLS encryption for all communications",
+      "secure_storage": "Secure storage with regular backups",
+      "security_audits": "Regular security audits and monitoring",
+      "access_controls": "Strict access controls and role-based permissions"
+    },
+    "your_rights": {
+      "title": "Your Rights",
+      "access_portability": {
+        "title": "Access & Portability",
+        "content": "Obtain confirmation that data about you is being processed and receive a copy in a structured, machine-readable format."
+      },
+      "correction": {
+        "title": "Correction",
+        "content": "Correct inaccurate or incomplete data about yourself."
+      },
+      "deletion": {
+        "title": "Deletion",
+        "content": "Request deletion of your data, within limits provided by law."
+      },
+      "objection": {
+        "title": "Objection",
+        "content": "Object to certain processing based on legitimate interest or commercial prospecting."
+      }
+    },
+    "cookies": {
+      "title": "Cookies",
+      "content": "Safe Bill uses cookies and other trackers to ensure proper website functioning, measure audience and performance, improve user experience, and deliver targeted advertising when applicable.",
+      "essential_cookies": "Essential Cookies (necessary for site functionality)",
+      "analytics_cookies": "Analytics Cookies (measure audience and performance)",
+      "preference_cookies": "Preference Cookies (remember user preferences)",
+      "browser_control": "You can control cookies through your browser settings and modify your preferences at any time via the cookie management link on the site."
+    },
+    "contact": {
+      "title": "Contact Information",
+      "content": "If you have questions about this privacy policy or wish to exercise your rights, please contact us:",
+      "email": "contact@safebill.fr",
+      "address": "66 avenue des Champs-Élysées, 75008 Paris, France"
+    },
+    "updates": {
+      "title": "Policy Updates",
+      "content": "Safe Bill reserves the right to modify this privacy policy at any time to account for legal, regulatory, technical or organizational changes. In case of significant modification, we will inform you by appropriate means and invite you to review the updated policy."
+    }
+  },
+  "cookie_policy_page": {
+    "title": "Cookie Policy – Safe Bill",
+    "last_updated": "Last Updated:",
+    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "section1": {
+      "title": "Purpose of This Policy",
+      "content": "This policy explains how Safe Bill uses cookies and other trackers on its marketplace accessible from https://safebill.fr. It complements the Privacy Policy and aims to inform you about:\n- the types of cookies used;\n- their purposes;\n- how you can accept, refuse or configure them.\n\nBy continuing to browse or by configuring your choices via the banner and cookie management module, you consent to the use of cookies in accordance with this policy. You can withdraw your consent at any time."
+    },
+    "section2": {
+      "title": "What is a Cookie?",
+      "content": "A cookie is a small text file placed on your device (computer, tablet, smartphone) when you visit a website or application. During its validity period, it allows your device to be recognized and certain information to be stored (preferences, language, session, etc.).\n\nOther similar technologies may be used (pixels, tags, local storage, etc.) and are collectively referred to as \"cookies\" or \"trackers\" in this policy."
+    },
+    "section3": {
+      "title": "Who Places Cookies on Safe Bill?",
+      "content": "Cookies may be placed by:\n\n- Safe Bill (internal/first-party cookies): necessary for marketplace functionality and service improvement.\n- Third parties (third-party cookies): for example our audience analytics providers, payment providers, or integrated service providers (such as measurement or support tools).\n\nA detailed list of the main partners placing cookies on the site is available in the cookie management module accessible from the banner or footer."
+    },
+    "section4": {
+      "title": "Types of Cookies Used and Purposes",
+      "subsection4_1": {
+        "title": "Strictly Necessary Cookies (exempt from consent)",
+        "content": "These cookies are essential for proper website functioning and service delivery (account login, security, session management). They do not require your prior consent.\n\nThey enable:\n- authenticating users and securing access to their space;\n- maintaining your active session;\n- remembering your technical choices (language, display settings);\n- ensuring security (fraud prevention, protection against certain attacks).\n\nWithout these cookies, navigation and use of the marketplace may be severely degraded or impossible."
+      },
+      "subsection4_2": {
+        "title": "Audience Measurement and Performance Cookies (subject to consent)",
+        "content": "These cookies measure website traffic and usage (most visited pages, time spent, technical errors, user journey) to improve marketplace functionality and ergonomics.\n\nExcept where provided by CNIL (very strict configuration and advanced anonymization), these cookies are only placed with your consent.\n\nExamples of purposes:\n- traffic statistics;\n- user journey analysis;\n- detection of technical anomalies."
+      },
+      "subsection4_3": {
+        "title": "Functionality Cookies",
+        "content": "These cookies improve your user experience by remembering certain choices and preferences (for example, saving certain form information, light interface personalization).\n\nThey may also be used to integrate third-party services improving experience (live chat, support tools, etc.). Their placement may require your consent depending on their nature and data collected."
+      },
+      "subsection4_4": {
+        "title": "Advertising and Personalization Cookies (where applicable)",
+        "content": "If Safe Bill implements advertising or retargeting campaigns (for example via external platforms), advertising cookies may be used to:\n- display relevant advertisements based on your browsing;\n- limit the number of times the same advertisement is displayed;\n- measure campaign effectiveness.\n\nThese cookies are always subject to your prior consent. You can refuse them without affecting service access."
+      }
+    },
+    "section5": {
+      "title": "Cookie Retention Period",
+      "content": "The retention period for cookies varies according to their type and purpose. In any case:\n- session cookies are retained for the duration of the browsing session;\n- cookies subject to consent have a maximum lifespan generally less than or equal to 13 months;\n- information collected via these cookies is not retained beyond 25 months in identifiable form, unless otherwise required by law.\n\nExact retention periods for each cookie are indicated, where possible, in the cookie management module."
+    },
+    "section6": {
+      "title": "Managing Your Cookie Preferences",
+      "subsection6_1": {
+        "title": "Consent Banner",
+        "content": "On your first visit to the Safe Bill marketplace (and at regular intervals), a cookie banner appears to:\n- inform you of cookie usage;\n- allow you to accept all, refuse all, or customize your choices, with clear and accessible information.\n\nRefusing non-necessary cookies must be as easy as accepting all cookies."
+      },
+      "subsection6_2": {
+        "title": "Cookie Management Module",
+        "content": "You can at any time:\n- reconsider your choices;\n- modify your preferences by category;\n- withdraw your consent for non-necessary cookies, via a permanent link such as \"Manage my cookies\" available in the site footer.\n\nThe choices you express (acceptance or refusal) are retained for a limited period, after which we may ask for your consent again."
+      },
+      "subsection6_3": {
+        "title": "Browser Configuration",
+        "content": "You can also configure your browser to:\n- accept or refuse cookies on a case-by-case basis;\n- delete cookies already recorded on your device;\n- be informed of any new cookie placement.\n\nEach browser's configuration is different. It is usually described in your browser's help menus (Chrome, Firefox, Safari, Edge, etc.)."
+      }
+    },
+    "section7": {
+      "title": "Cookies Placed by Third Parties",
+      "content": "Some site features rely on services provided by third parties (for example: analytics tool, chat services, video players, share buttons, payment solutions). These third parties may place cookies when you use these features.\n\nIn this case:\n- these third parties sometimes act as autonomous data controllers;\n- their privacy and cookie policies apply in addition to this policy;\n- you are invited to consult these providers' policies directly for more information."
+    },
+    "section8": {
+      "title": "Cookie Policy Updates",
+      "content": "This Cookie Policy may evolve, particularly to account for CNIL recommendations, legal developments, or technical and functional changes made to the Safe Bill marketplace.\n\nAny substantial modification will be subject to appropriate notification (banner, pop-up, update of the effective date)."
+    },
+    "section9": {
+      "title": "Contact",
+      "content": "For any questions regarding Safe Bill's use of cookies or to exercise your rights regarding personal data, you can contact:\n\nSafe Bill\nAddress: 66 avenue des Champs-Élysées, 75008 Paris, France\nEmail: contact@safebill.fr\n\nYou can also consult our Privacy Policy to learn more about how Safe Bill processes your personal data and your rights."
+    }
+  },
+  "milestones": {
+    "page_title": "Milestones for",
+    "back_to_projects": "Back to projects",
+    "loading": "Loading milestones...",
+    "load_failed": "Failed to load milestones",
+    "empty_state": "No milestones found for this project.",
+    "status_label": "Status",
+    "status_tooltip_submitted": "Milestone submitted for approval",
+    "status_tooltip_approved": "Milestone approved",
+    "you_receive_prefix": "You receive",
+    "edit_tooltip": "Edit milestone",
+    "submit_for_approval": "Submit for validation",
+    "submitting": "Submitting...",
+    "description_label": "Description",
+    "view_full_description": "View full description",
+    "view_supporting_doc": "View supporting document",
+    "completion_notice": "Completion Notice",
+    "platform_fee": "Platform Fee",
+    "review_comment": "Review Comment",
+    "view_full_comment": "View full comment",
+    "created_label": "Created",
+    "completed_label": "Completed",
+    "edit_title": "Edit Milestone",
+    "name_label": "Name",
+    "payment_amount_label": "Payment Amount",
+    "payment_amount_placeholder": "Enter amount",
+    "supporting_documents": "Supporting Documents",
+    "current_document": "Current Document",
+    "view_current_document": "View",
+    "upload_instructions": "Click to upload or drag and drop",
+    "drag_drop_hint": "PDF, DOC, DOCX, JPG or PNG (MAX. 5MB)",
+    "choose_files": "Choose Files",
+    "file_selected": "File selected",
+    "size_label": "Size",
+    "update_button": "Update Milestone",
+    "update_success": "Milestone updated successfully",
+    "update_failed_default": "Failed to update milestone",
+    "submit_success": "Milestone submitted successfully",
+    "submit_failed_default": "Failed to submit milestone",
+    "confirm_submission_title": "Confirm Submission",
+    "confirm_submission_body": "Are you sure you want to submit this milestone for approval? You won't be able to edit it while it's pending approval.",
+    "status_not_submitted": "Not Submitted",
+    "status_pending": "Pending",
+    "status_approved": "Approved",
+    "status_not_approved": "Not Approved",
+    "status_review_request": "Review Request"
   }
 }

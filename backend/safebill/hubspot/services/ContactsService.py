@@ -101,6 +101,21 @@ def build_contact_properties(user) -> Dict[str, Any]:
     except Exception:
         # Be defensive: if projects app is unavailable in a context, don't break contact sync
         total_projects_count = 0
+    
+    # Get lifetime metrics from Balance model
+    total_spent = 0
+    total_earnings = 0
+    try:
+        if hasattr(user, 'balance'):
+            total_spent = float(user.balance.total_spent)
+            total_earnings = float(user.balance.total_earnings)
+            
+            # Log individual contact GMV
+            contact_gmv_msg = f"👤 User Sync GMV (UID: {user.id}): Spent: ${total_spent:,.2f}, Earnings: ${total_earnings:,.2f}"
+            print(contact_gmv_msg)
+            logger.info(contact_gmv_msg)
+    except Exception:
+        pass
 
     return {
         "email": getattr(user, "email", "") or "",
@@ -116,6 +131,9 @@ def build_contact_properties(user) -> Dict[str, Any]:
         "has_siret_number": has_siret_number,
         # New: total projects the user is involved in (Contact number property in HubSpot)
         "total_projects_count": int(total_projects_count),
+        # Lifetime metrics
+        "total_spent": total_spent,
+        "total_earnings": total_earnings,
     }
 
 

@@ -132,7 +132,7 @@
     "legal_links": "Liens juridiques",
     "terms": "Conditions",
     "privacy": "Confidentialité",
-    "socials": "Réseaux sociaux",
+    "cookie_preferences": "Préférences Cookies",
     "copyright": "© 2025 Safe Bill. Tous droits réservés.",
     "socials": "Réseaux sociaux"
   },
@@ -735,7 +735,7 @@
     "successfully_finished": "Terminés avec succès",
     "in_progress": "En cours",
     "current_projects": "Projets en cours",
-    "view_all_disputes": "Voir tous les litiges",
+    "view_all_disputes": "Voir tous les Discrets",
     "accept_project_invite": "Accepter l'invitation du projet",
     "contact_support": "Contacter le support",
     "no_in_progress_projects": "Aucun projet en cours.",
@@ -1142,155 +1142,6 @@
     "note3": "Vous pouvez approuver ou rejeter les projets selon vos exigences",
     "get_started_button": "Commencer Maintenant",
     "get_started_note": "Prêt à accepter votre première invitation de projet ? Cliquez sur le bouton ci-dessus pour commencer !"
-  },
-  "privacy_policy": {
-    "title": "Politique de Confidentialité",
-    "subtitle": "Votre confidentialité est importante pour nous. Cette politique explique comment Safe Bill collecte, utilise et protège vos informations.",
-    "last_updated": "Dernière mise à jour :",
-    "introduction": {
-      "title": "Introduction",
-      "content1": "Safe Bill (\"nous\", \"notre\" ou \"nos\") s'engage à protéger votre confidentialité. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme pour la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
-      "content2": "En utilisant Safe Bill, vous acceptez la collecte et l'utilisation d'informations conformément à cette politique."
-    },
-    "information_collection": {
-      "title": "Informations que Nous Collectons",
-      "personal_info": {
-        "title": "Informations Personnelles",
-        "items": [
-          "Nom, adresse e-mail et informations de contact",
-          "Informations commerciales (nom de l'entreprise, numéro SIRET, type d'entreprise)",
-          "Informations de profil et préférences",
-          "Informations de paiement et de facturation (traitées de manière sécurisée via Stripe)"
-        ]
-      },
-      "project_info": {
-        "title": "Informations sur les Projets",
-        "items": [
-          "Détails, descriptions et exigences des projets",
-          "Devis, propositions et documents de projet",
-          "Informations sur les étapes et statut d'achèvement",
-          "Historique des communications entre acheteurs et vendeurs"
-        ]
-      },
-      "technical_info": {
-        "title": "Informations Techniques",
-        "items": [
-          "Adresse IP, type de navigateur et informations sur l'appareil",
-          "Modèles d'utilisation et interactions avec la plateforme",
-          "Cookies et technologies de suivi similaires",
-          "Fichiers journaux et données d'analyse"
-        ]
-      }
-    },
-    "how_we_use": {
-      "title": "Comment Nous Utilisons Vos Informations",
-      "service_provision": {
-        "title": "Prestation de Services",
-        "content": "Pour fournir, maintenir et améliorer nos services de plateforme, y compris la gestion de projets, le suivi des étapes et le traitement sécurisé des paiements."
-      },
-      "communication": {
-        "title": "Communication",
-        "content": "Pour vous envoyer des mises à jour importantes, des notifications et répondre à vos demandes et demandes de support."
-      },
-      "security_compliance": {
-        "title": "Sécurité et Conformité",
-        "content": "Pour assurer la sécurité de la plateforme, prévenir la fraude et se conformer aux obligations légales et réglementaires."
-      },
-      "analytics_improvement": {
-        "title": "Analyse et Amélioration",
-        "content": "Pour analyser les modèles d'utilisation, améliorer l'expérience utilisateur et développer de nouvelles fonctionnalités et services."
-      }
-    },
-    "information_sharing": {
-      "title": "Partage d'Informations",
-      "content": "Nous ne vendons, n'échangeons ni ne louons vos informations personnelles à des tiers. Nous ne pouvons partager vos informations que dans les circonstances suivantes :",
-      "service_providers": "Prestataires de Services : Avec des prestataires de services tiers de confiance qui assistent dans les opérations de la plateforme (par exemple, Stripe pour les paiements, services e-mail)",
-      "legal_requirements": "Exigences Légales : Lorsque requis par la loi, ordonnance du tribunal ou pour protéger nos droits et notre sécurité",
-      "business_transfers": "Transferts d'Entreprise : En relation avec une fusion, acquisition ou vente d'actifs",
-      "consent": "Consentement : Lorsque vous consentez explicitement au partage de vos informations"
-    },
-    "data_security": {
-      "title": "Sécurité des Données",
-      "content": "Nous mettons en œuvre des mesures de sécurité standard de l'industrie pour protéger vos informations :",
-      "ssl_encryption": "Chiffrement SSL/TLS pour la transmission de données",
-      "secure_storage": "Stockage sécurisé de base de données avec chiffrement",
-      "security_audits": "Audits de sécurité et mises à jour réguliers",
-      "access_controls": "Contrôles d'accès et authentification"
-    },
-    "your_rights": {
-      "title": "Vos Droits",
-      "access_portability": {
-        "title": "Accès et Portabilité",
-        "content": "Demander l'accès à vos données personnelles et les recevoir dans un format portable"
-      },
-      "correction": {
-        "title": "Correction",
-        "content": "Demander la correction d'informations personnelles inexactes ou incomplètes"
-      },
-      "deletion": {
-        "title": "Suppression",
-        "content": "Demander la suppression de vos données personnelles dans certaines circonstances"
-      },
-      "objection": {
-        "title": "Objection",
-        "content": "Vous opposer au traitement de vos données personnelles à certaines fins"
-      }
-    },
-    "cookie_policy": {
-      "title": "Politique des Cookies",
-      "subtitle": "Nous utilisons des cookies pour améliorer votre expérience et assurer la conformité GDPR.",
-      "essential_cookies": {
-        "title": "Cookies Essentiels",
-        "description": "Ces cookies sont nécessaires au bon fonctionnement du site Web et ne peuvent pas être désactivés. Ils sont généralement définis en réponse à des actions que vous effectuez et qui équivalent à une demande de services.",
-        "examples": [
-          "Gestion de session et authentification",
-          "Fonctionnalités de sécurité et protection CSRF",
-          "Préférences utilisateur de base (langue, thème)"
-        ]
-      },
-      "analytics_cookies": {
-        "title": "Cookies d'Analyse",
-        "description": "Ces cookies nous aident à comprendre comment les visiteurs interagissent avec notre site Web en collectant et en rapportant des informations de manière anonyme.",
-        "examples": [
-          "Pages vues et comportement des utilisateurs",
-          "Surveillance des performances",
-          "Suivi des erreurs et débogage"
-        ]
-      },
-      "marketing_cookies": {
-        "title": "Cookies Marketing",
-        "description": "Ces cookies sont utilisés pour suivre les visiteurs sur différents sites Web à des fins publicitaires et marketing.",
-        "examples": [
-          "Préférences de marketing par e-mail",
-          "Abonnements à la newsletter",
-          "Suivi des campagnes marketing"
-        ]
-      },
-      "consent_management": {
-        "title": "Gestion du Consentement",
-        "description": "Nous utilisons Axeptio pour gérer vos préférences de cookies et assurer la conformité aux réglementations GDPR. Vous pouvez modifier vos paramètres de consentement à tout moment.",
-        "withdrawal": "Vous avez le droit de retirer votre consentement à tout moment. Le retrait du consentement n'affectera pas la licéité du traitement basé sur le consentement avant son retrait."
-      }
-    },
-    "cookies": {
-      "title": "Cookies et Suivi",
-      "content": "Nous utilisons des cookies et des technologies similaires pour améliorer votre expérience :",
-      "essential_cookies": "Cookies Essentiels : Requis pour la fonctionnalité et la sécurité de la plateforme",
-      "analytics_cookies": "Cookies d'Analyse : Nous aident à comprendre comment vous utilisez notre plateforme",
-      "preference_cookies": "Cookies de Préférence : Se souviennent de vos paramètres et préférences",
-      "browser_control": "Vous pouvez contrôler les paramètres des cookies via les préférences de votre navigateur."
-    },
-    "contact": {
-      "title": "Nous Contacter",
-      "content": "Si vous avez des questions sur cette Politique de Confidentialité ou nos pratiques de données, veuillez nous contacter :",
-      "email": "contact@safebill.fr",
-      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
-    },
-    "updates": {
-      "title": "Mises à Jour de la Politique",
-      "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de Safe Bill après toute modification constitue une acceptation de la politique mise à jour."
-    },
-    "copyright": "©  2025 Safe Bill. Tous droits réservés."
   },
   "terms_of_service": {
     "title": "Conditions d'Utilisation",
@@ -1890,8 +1741,7 @@
     "resolve_disputes": "Résoudre tous les litiges actifs",
     "password_required": "Le mot de passe est requis",
     "confirm_password_required": "La confirmation du mot de passe est requise"
-  }
-  ,
+  },
   "subscription_card": {
     "title": "Activez votre abonnement",
     "subtitle": "Débloquez la création de projets pour les 30 prochains jours",
@@ -1915,5 +1765,276 @@
     "step_1": "Étape 1",
     "step_2": "Étape 2",
     "step_3": "Étape 3"
+  },
+  "privacy_policy": {
+    "title": "Politique de confidentialité – Safe Bill",
+    "subtitle": "Comment Safe Bill collecte et traite vos données personnelles",
+    "last_updated": "Dernière mise à jour :",
+    "copyright": "© 2025 Safe Bill. Tous droits réservés.",
+    "introduction": {
+      "title": "Responsable de traitement",
+      "content1": "La présente politique de confidentialité décrit la manière dont Safe Bill collecte et traite vos données personnelles dans le cadre de l'utilisation de sa marketplace.",
+      "content2": "Safe Bill est responsable du traitement des données personnelles collectées via le site, l'application et les services associés.",
+      "company_info": {
+        "name": "Safe Bill",
+        "legal_form": "Forme juridique : SASU",
+        "capital": "Capital social : 10 000 €",
+        "address": "Siège social : 66 avenue des Champs-Élysées, 75008 Paris, France",
+        "email": "Email de contact : contact@safebill.fr"
+      }
+    },
+    "information_collection": {
+      "title": "Données collectées",
+      "subtitle": "Safe Bill collecte uniquement les données nécessaires à la fourniture de ses services de tiers de confiance et à la gestion de la marketplace.",
+      "personal_info": {
+        "title": "Données d'identification et de contact",
+        "items": [
+          "Nom, prénom",
+          "Adresse email, numéro de téléphone",
+          "Adresse postale",
+          "Mot de passe (stocké sous forme chiffrée)"
+        ]
+      },
+      "project_info": {
+        "title": "Données professionnelles (vendeurs/professionnels)",
+        "items": [
+          "Raison sociale, forme juridique",
+          "SIRET/SIREN, numéro de TVA intracommunautaire",
+          "Adresse du siège social",
+          "Fonction, secteur d'activité, spécialités"
+        ]
+      },
+      "technical_info": {
+        "title": "Données techniques et de navigation",
+        "items": [
+          "Adresse IP, type de navigateur, système d'exploitation",
+          "Logs de connexion, horodatages",
+          "Données de navigation sur la marketplace (pages consultées, clics, etc.)",
+          "Cookies et traceurs"
+        ]
+      }
+    },
+    "cookie_policy": {
+      "title": "Politique Cookies",
+      "subtitle": "Safe Bill utilise des cookies et autres traceurs sur la marketplace à diverses fins.",
+      "essential_cookies": {
+        "title": "Cookies essentiels",
+        "description": "Ces cookies sont nécessaires au bon fonctionnement du site web.",
+        "examples": [
+          "Gestion des sessions",
+          "Sécurité et prévention de la fraude",
+          "Préférences utilisateur"
+        ]
+      },
+      "analytics_cookies": {
+        "title": "Cookies d'analyse",
+        "description": "Ces cookies nous aident à mesurer l'audience et à améliorer les performances de la plateforme.",
+        "examples": [
+          "Pages vues et comportement utilisateur",
+          "Métriques de performance",
+          "Données d'engagement utilisateur"
+        ]
+      },
+      "marketing_cookies": {
+        "title": "Cookies marketing",
+        "description": "Ces cookies nous aident à diffuser de la publicité ciblée et du contenu marketing.",
+        "examples": [
+          "Publicité ciblée",
+          "Suivi des campagnes",
+          "Préférences utilisateur pour le contenu"
+        ]
+      },
+      "consent_management": {
+        "title": "Gestion du consentement",
+        "description": "Lors de votre première visite, un bandeau de cookies vous informe des finalités de ces traceurs et vous permet d'accepter, de refuser ou de personnaliser vos choix.",
+        "withdrawal": "Vous pouvez modifier vos préférences à tout moment via le lien de gestion des cookies disponible sur le site."
+      }
+    },
+    "how_we_use": {
+      "title": "Comment nous utilisons vos informations",
+      "service_provision": {
+        "title": "Fourniture de services",
+        "content": "Vos données sont traitées pour créer et gérer votre compte utilisateur, fournir l'accès à la marketplace et gérer les projets, devis, commandes, acomptes et livraisons."
+      },
+      "communication": {
+        "title": "Communication",
+        "content": "Nous répondons à vos demandes (support, service client, litiges), envoyons des notifications liées à vos projets et paiements, et améliorons la qualité du service."
+      },
+      "security_compliance": {
+        "title": "Sécurité et conformité",
+        "content": "Nous vérifions l'identité des vendeurs/professionnels, prévenons la fraude et le blanchiment d'argent, gérons les litiges et sécurisons les transactions."
+      },
+      "analytics_improvement": {
+        "title": "Analyse et amélioration",
+        "content": "Nous mesurons l'audience et les performances, améliorons l'ergonomie de la plateforme et personnalisons l'expérience utilisateur."
+      }
+    },
+    "information_sharing": {
+      "title": "Partage des informations",
+      "content": "Vos données peuvent être partagées avec les destinataires suivants :",
+      "service_providers": "Prestataires de services : hébergement technique, outils CRM, services email, ticketing support, outils d'analyse de données",
+      "legal_requirements": "Obligations légales : autorités administratives ou judiciaires lorsque requis par la loi",
+      "business_transfers": "Transferts commerciaux : en cas de fusion, acquisition ou vente d'actifs",
+      "consent": "Consentement : lorsque vous autorisez explicitement le partage avec des tiers"
+    },
+    "data_security": {
+      "title": "Sécurité des données",
+      "content": "Safe Bill met en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données personnelles contre la destruction, la perte, l'altération, la divulgation ou l'accès non autorisé.",
+      "ssl_encryption": "Chiffrement SSL/TLS pour toutes les communications",
+      "secure_storage": "Stockage sécurisé avec sauvegardes régulières",
+      "security_audits": "Audits de sécurité réguliers et surveillance",
+      "access_controls": "Contrôles d'accès stricts et permissions basées sur les rôles"
+    },
+    "your_rights": {
+      "title": "Vos droits",
+      "access_portability": {
+        "title": "Accès et portabilité",
+        "content": "Obtenir la confirmation que vos données sont traitées et recevoir une copie dans un format structuré et lisible par machine."
+      },
+      "correction": {
+        "title": "Rectification",
+        "content": "Corriger les données inexactes ou incomplètes vous concernant."
+      },
+      "deletion": {
+        "title": "Suppression",
+        "content": "Demander la suppression de vos données, dans les limites prévues par la loi."
+      },
+      "objection": {
+        "title": "Opposition",
+        "content": "Vous opposer à certains traitements fondés sur l'intérêt légitime ou la prospection commerciale."
+      }
+    },
+    "cookies": {
+      "title": "Cookies",
+      "content": "Safe Bill utilise des cookies et autres traceurs pour assurer le bon fonctionnement du site, mesurer l'audience et les performances, améliorer l'expérience utilisateur et diffuser de la publicité ciblée le cas échéant.",
+      "essential_cookies": "Cookies essentiels (nécessaires au fonctionnement du site)",
+      "analytics_cookies": "Cookies d'analyse (mesurer l'audience et les performances)",
+      "preference_cookies": "Cookies de préférence (mémoriser les préférences utilisateur)",
+      "browser_control": "Vous pouvez contrôler les cookies via les paramètres de votre navigateur et modifier vos préférences à tout moment via le lien de gestion des cookies sur le site."
+    },
+    "contact": {
+      "title": "Informations de contact",
+      "content": "Si vous avez des questions concernant cette politique de confidentialité ou souhaitez exercer vos droits, veuillez nous contacter :",
+      "email": "contact@safebill.fr",
+      "address": "66 avenue des Champs-Élysées, 75008 Paris, France"
+    },
+    "updates": {
+      "title": "Mises à jour de la politique",
+      "content": "Safe Bill se réserve le droit de modifier la présente politique de confidentialité à tout moment pour tenir compte des évolutions légales, réglementaires, techniques ou organisationnelles. En cas de modification importante, nous vous en informerons par tout moyen approprié et vous inviterons à en prendre connaissance."
+    }
+  },
+  "cookie_policy_page": {
+    "title": "Politique Cookies – Safe Bill",
+    "last_updated": "Dernière mise à jour :",
+    "copyright": "© 2025 Safe Bill. Tous droits réservés.",
+    "section1": {
+      "title": "Objet de la présente politique",
+      "content": "La présente politique explique comment Safe Bill utilise des cookies et autres traceurs sur sa marketplace accessible depuis le site https://safebill.fr. Elle vient en complément de la Politique de confidentialité et a pour objectif de vous informer sur :\n- les types de cookies utilisés ;\n- leurs finalités ;\n- la manière dont vous pouvez les accepter, les refuser ou les paramétrer.\n\nEn poursuivant votre navigation ou en paramétrant vos choix via le bandeau et le module de gestion des cookies, vous consentez à l'utilisation des cookies conformément à la présente politique. Vous pouvez retirer votre consentement à tout moment."
+    },
+    "section2": {
+      "title": "Qu'est-ce qu'un cookie ?",
+      "content": "Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette, smartphone) lors de la consultation d'un site internet ou d'une application. Il permet, pendant sa durée de validité, de reconnaître votre terminal et de mémoriser certaines informations (préférences, langue, session, etc.).\n\nD'autres technologies similaires peuvent être utilisées (pixels, tags, local storage, etc.) et sont désignées collectivement comme « cookies » ou « traceurs » dans la présente politique."
+    },
+    "section3": {
+      "title": "Qui dépose les cookies sur le site Safe Bill ?",
+      "content": "Les cookies peuvent être déposés :\n\n- Par Safe Bill (cookies internes / first-party) : nécessaires au fonctionnement de la marketplace et à l'amélioration du service.\n- Par des tiers (cookies tiers / third-party) : par exemple nos prestataires d'analyse d'audience, de paiement, ou de services intégrés (comme certains outils de mesure ou de support).\n\nLa liste détaillée des principaux partenaires déposant des cookies sur le site est disponible dans le module de gestion des cookies accessible depuis le bandeau ou le pied de page."
+    },
+    "section4": {
+      "title": "Types de cookies utilisés et finalités",
+      "subsection4_1": {
+        "title": "Cookies strictement nécessaires (exemptés de consentement)",
+        "content": "Ces cookies sont indispensables au bon fonctionnement du site et au bon déroulement des services (connexion au compte, sécurité, gestion de session). Ils ne requièrent pas votre consentement préalable.\n\nIls permettent notamment :\n- d'authentifier les utilisateurs et sécuriser l'accès à leur espace ;\n- de maintenir votre session active ;\n- de mémoriser vos choix techniques (langue, paramètres d'affichage) ;\n- d'assurer la sécurité (prévention des usages frauduleux, protection contre certaines attaques).\n\nSans ces cookies, la navigation et l'utilisation de la marketplace peuvent être grandement dégradées ou impossibles."
+      },
+      "subsection4_2": {
+        "title": "Cookies de mesure d'audience et de performance (soumis à consentement)",
+        "content": "Ces cookies permettent de mesurer la fréquentation et l'utilisation du site (pages les plus consultées, temps passé, erreurs techniques, parcours utilisateur) afin d'améliorer le fonctionnement et l'ergonomie de la marketplace.\n\nSauf exception prévue par la CNIL (configuration très stricte et anonymisation avancée), ces cookies ne sont déposés qu'avec votre consentement.\n\nExemples de finalités :\n- statistiques de fréquentation ;\n- analyse des parcours utilisateurs ;\n- détection d'anomalies techniques."
+      },
+      "subsection4_3": {
+        "title": "Cookies de fonctionnalité",
+        "content": "Ces cookies permettent d'améliorer votre expérience utilisateur en mémorisant certains choix et préférences (par exemple, sauvegarde de certaines informations de formulaire, personnalisation légère de l'interface).\n\nIls peuvent également être utilisés pour intégrer des services tiers améliorant l'expérience (chat en ligne, outils de support, etc.). Leur dépôt peut nécessiter votre consentement en fonction de leur nature et des données collectées."
+      },
+      "subsection4_4": {
+        "title": "Cookies de publicité et de personnalisation (le cas échéant)",
+        "content": "Si Safe Bill met en place des campagnes publicitaires ou de reciblage (par exemple via des plateformes externes), des cookies de publicité peuvent être utilisés pour :\n- afficher des publicités pertinentes en fonction de votre navigation ;\n- limiter le nombre d'affichages d'une même publicité ;\n- mesurer l'efficacité des campagnes.\n\nCes cookies sont toujours soumis à votre consentement préalable. Vous pouvez les refuser sans que cela n'affecte l'accès au service."
+      }
+    },
+    "section5": {
+      "title": "Durée de conservation des cookies",
+      "content": "La durée de conservation des cookies varie selon leur type et leur finalité. En tout état de cause :\n- les cookies de session sont conservés le temps de la session de navigation ;\n- les cookies soumis à consentement ont une durée de vie maximale généralement inférieure ou égale à 13 mois ;\n- les informations collectées via ces cookies ne sont pas conservées au-delà de 25 mois sous forme identifiable, sauf obligation légale contraire.\n\nLes durées exactes de conservation pour chaque cookie sont indiquées, lorsque cela est possible, dans le module de gestion des cookies."
+    },
+    "section6": {
+      "title": "Gestion de vos préférences cookies",
+      "subsection6_1": {
+        "title": "Bandeau de consentement",
+        "content": "Lors de votre première visite sur la marketplace Safe Bill (et à intervalles réguliers), un bandeau de cookies apparaît pour :\n- vous informer de l'usage de cookies ;\n- vous permettre d'accepter tout, de refuser tout ou de personnaliser vos choix, avec un niveau d'information clair et accessible.\n\nRefuser les cookies non nécessaires doit être aussi simple qu'accepter l'ensemble des cookies."
+      },
+      "subsection6_2": {
+        "title": "Module de gestion des cookies",
+        "content": "Vous pouvez à tout moment :\n- revenir sur vos choix ;\n- modifier vos préférences par catégorie ;\n- retirer votre consentement pour les cookies non nécessaires, via un lien permanent du type « Gérer mes cookies » disponible en pied de page du site.\n\nLes choix que vous exprimez (acceptation ou refus) sont conservés pendant une durée limitée, après laquelle nous pourrons vous redemander votre consentement."
+      },
+      "subsection6_3": {
+        "title": "Paramétrage via votre navigateur",
+        "content": "Vous pouvez également configurer votre navigateur pour :\n- accepter ou refuser les cookies au cas par cas ;\n- supprimer les cookies déjà enregistrés sur votre terminal ;\n- être informé de tout dépôt de nouveau cookie.\n\nLa configuration de chaque navigateur est différente. Elle est généralement décrite dans les menus d'aide de votre navigateur (Chrome, Firefox, Safari, Edge, etc.)."
+      }
+    },
+    "section7": {
+      "title": "Cookies déposés par des tiers",
+      "content": "Certaines fonctionnalités du site reposent sur des services proposés par des tiers (par exemple : outil d'analytics, services de chat, lecteurs vidéo, boutons de partage, solutions de paiement). Ces tiers peuvent déposer des cookies lorsque vous utilisez ces fonctionnalités.\n\nDans ce cas :\n- ces tiers agissent parfois comme responsables de traitement autonomes ;\n- leurs politiques de confidentialité et de cookies s'appliquent en complément de la présente politique ;\n- vous êtes invité à consulter directement les politiques de ces prestataires pour plus d'informations."
+    },
+    "section8": {
+      "title": "Mise à jour de la Politique Cookies",
+      "content": "La présente Politique Cookies peut être amenée à évoluer, notamment pour tenir compte des recommandations de la CNIL, des évolutions légales ou des modifications techniques et fonctionnelles apportées à la marketplace Safe Bill.\n\nToute modification substantielle fera l'objet d'une information appropriée (bandeau, pop-up, mise à jour de la date d'entrée en vigueur)."
+    },
+    "section9": {
+      "title": "Contact",
+      "content": "Pour toute question relative à l'utilisation des cookies par Safe Bill ou à l'exercice de vos droits en matière de données personnelles, vous pouvez contacter :\n\nSafe Bill\nAdresse : 66 avenue des Champs-Élysées, 75008 Paris, France\nEmail : contact@safebill.fr\n\nVous pouvez également consulter notre Politique de confidentialité pour en savoir plus sur la manière dont Safe Bill traite vos données personnelles et sur vos droits."
+    }
+  },
+  "milestones": {
+    "page_title": "Jalons pour",
+    "back_to_projects": "Retour aux projets",
+    "loading": "Chargement des jalons...",
+    "load_failed": "Échec du chargement des jalons",
+    "empty_state": "Aucun jalon trouvé pour ce projet.",
+    "status_label": "Statut",
+    "status_tooltip_submitted": "Jalon soumis pour approbation",
+    "status_tooltip_approved": "Jalon approuvé",
+    "you_receive_prefix": "Vous recevez",
+    "edit_tooltip": "Modifier le jalon",
+    "submit_for_approval": "Soumettre pour validation",
+    "submitting": "Soumission...",
+    "description_label": "Description",
+    "view_full_description": "Voir la description complète",
+    "view_supporting_doc": "Voir le document justificatif",
+    "completion_notice": "Avis d'achèvement",
+    "platform_fee": "Frais de plateforme",
+    "review_comment": "Commentaire de révision",
+    "view_full_comment": "Voir le commentaire complet",
+    "created_label": "Créé",
+    "completed_label": "Terminé",
+    "edit_title": "Modifier le Jalon",
+    "name_label": "Nom",
+    "payment_amount_label": "Montant du paiement",
+    "payment_amount_placeholder": "Entrer le montant",
+    "supporting_documents": "Documents justificatifs",
+    "current_document": "Document actuel",
+    "view_current_document": "Voir",
+    "upload_instructions": "Cliquez pour télécharger ou glisser-déposer",
+    "drag_drop_hint": "PDF, DOC, DOCX, JPG ou PNG (MAX. 5Mo)",
+    "choose_files": "Choisir des fichiers",
+    "file_selected": "Fichier sélectionné",
+    "size_label": "Taille",
+    "update_button": "Mettre à jour le jalon",
+    "update_success": "Jalon mis à jour avec succès",
+    "update_failed_default": "Échec de la mise à jour du jalon",
+    "submit_success": "Jalon soumis avec succès",
+    "submit_failed_default": "Échec de la soumission du jalon",
+    "confirm_submission_title": "Confirmer la soumission",
+    "confirm_submission_body": "Êtes-vous sûr de vouloir soumettre ce jalon pour approbation ? Vous ne pourrez pas le modifier tant qu'il est en attente d'approbation.",
+    "status_not_submitted": "Non Soumis",
+    "status_pending": "En Attente",
+    "status_approved": "Approuvé",
+    "status_not_approved": "Non Approuvé",
+    "status_review_request": "Demande de Révision"
   }
 }

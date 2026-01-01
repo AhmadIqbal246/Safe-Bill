@@ -85,28 +85,28 @@ def safe_signal_handler(signal_name: str, enabled_flag: bool):
             # Feature flag check
             if not enabled_flag:
                 if SIGNALS_DEBUG_MODE:
-                    logger.debug(f"🔕 {signal_name} signal disabled by feature flag")
+                    logger.debug(f"[SIGNAL] {signal_name} signal disabled by feature flag")
                 return
             
             # Global sync check
             if not is_hubspot_sync_enabled():
                 if SIGNALS_DEBUG_MODE:
-                    logger.debug(f"🔕 {signal_name} signal skipped - HubSpot sync disabled")
+                    logger.debug(f"[SIGNAL] {signal_name} signal skipped - HubSpot sync disabled")
                 return
             
             try:
                 if SIGNALS_DEBUG_MODE:
-                    logger.debug(f"📡 {signal_name} signal triggered")
+                    logger.debug(f"[SIGNAL] {signal_name} signal triggered")
                 return func(*args, **kwargs)
             except Exception as e:
                 # NEVER let signal handlers break the main application flow
                 logger.error(
-                    f"💥 {signal_name} signal handler failed: {e}",
+                    f"[ERROR] {signal_name} signal handler failed: {e}",
                     exc_info=True,
                     extra={
                         'signal_name': signal_name,
-                        'args': str(args),
-                        'kwargs': str(kwargs)
+                        'func_args': str(args),
+                        'func_kwargs': str(kwargs)
                     }
                 )
                 # Signal failures should never propagate
@@ -181,8 +181,8 @@ def auto_sync_user_to_hubspot(sender, instance, created, **kwargs):
     if not should_sync:
         return
     
-    # Simple emoji indicator when signal fires
-    print(f"🚀 Django signal fired - User sync ({sync_type})")
+    # Simple text indicator when signal fires
+    print(f"--- Django signal fired - User sync ({sync_type})")
     
     logger.info(f"Auto-syncing user {user_id} to HubSpot via signal ({reason})")
     
@@ -214,8 +214,8 @@ def auto_sync_company_to_hubspot(sender, instance, created, **kwargs):
             logger.debug(f"Skipping company sync for business {business_id} - not seller/pro-buyer")
         return
     
-    # Simple emoji indicator when signal fires
-    print("🏢 Django signal fired - Company sync")
+    # Simple text indicator when signal fires
+    print("--- Django signal fired - Company sync")
     
     reason = "signal_company_created" if created else "signal_company_updated"
     logger.info(f"Auto-syncing company {business_id} to HubSpot via signal ({reason})")
@@ -298,8 +298,8 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
         for k in expired_keys:
             del _project_sync_locks[k]
     
-    # Simple emoji indicator when signal fires
-    print("💼 Django signal fired - Project sync")
+    # Simple text indicator when signal fires
+    print("--- Django signal fired - Project sync")
     
     try:
         # For newly created projects, initial HubSpot deal sync is triggered
@@ -399,55 +399,26 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
     # Always log signal entry for debugging
     logger.info(f"DEBUG: Milestone signal fired for milestone_id={milestone_id}, project_id={project_id}")
         
-    # CRITICAL: Use thread-safe global lock to prevent duplicate syncs
-    # This prevents multiple signals for the same project from running simultaneously
     lock_key = f"project_{project_id}_milestone_sync"
-    current_time = time.time()
-    
+    # Deduplication logic
     with _milestone_lock:
-        # Smart deduplication based on creation vs update
         if lock_key in _milestone_sync_locks:
             last_sync_time = _milestone_sync_locks[lock_key]
-            time_diff = current_time - last_sync_time
-            
-            # For creation: be very strict - skip if ANY sync happened recently
-            if created and time_diff < 30:  # 30 second window for milestone creation
-                logger.info(f"DEBUG: Project {project_id} milestone creation sync already happened ({time_diff:.1f}s ago) - SKIPPING")
+            if time.time() - last_sync_time < 5:  # 5 second debounce
                 return
-            # For rapid updates, apply stricter deduplication
-            elif not created and time_diff < 10:  # 10 second window for milestone updates
-                logger.info(f"DEBUG: Project {project_id} milestone sync already in progress ({time_diff:.1f}s ago) - SKIPPING")
-                return
-        
-        # For creation: check if milestone links already exist (don't create duplicates)
-        # For updates: allow sync to update existing milestone summary
-        from hubspot.models import HubSpotMilestoneLink
-        existing_links = HubSpotMilestoneLink.objects.filter(
-            milestone__project_id=project_id
-        ).exists()
-        
-        if created and existing_links:
-            logger.info(f"DEBUG: Found existing milestone links for project {project_id} - SKIPPING creation sync")
-            return
-        
-        # Claim this project for syncing
-        _milestone_sync_locks[lock_key] = current_time
-        logger.info(f"DEBUG: Acquired sync lock for project {project_id} ({'creation' if created else 'update'})")
-        
-        # Clean up old locks (older than 5 minutes)
-        expired_keys = [k for k, v in _milestone_sync_locks.items() if current_time - v > 300]
-        for k in expired_keys:
-            del _milestone_sync_locks[k]
+        _milestone_sync_locks[lock_key] = time.time()
+
+    # Simple text indicator
+    print(f"--- Django signal fired - Milestone update (Project {project_id})")
     
-    # Simple emoji indicator when signal fires
-    sync_type = "creation" if created else "update"
-    print(f"🎯 Django signal fired - Milestone {sync_type} sync (Project {project_id})")
+    # Trigger full project/deal sync because milestone changes affect "Total Paid to Seller"
+    from .tasks import sync_deal_task
+    sync_deal_task.delay(project_id)
     
-    # Changed: Only queue on creation. We no longer sync milestone status updates to HubSpot.
-    if not created:
-        if SIGNALS_DEBUG_MODE:
-            logger.info(f"Skipping milestone update sync for project {project_id} (updates disabled)")
-        return
+    # Only queue the specific milestone object sync on creation
+    if created:
+        from .sync_utils import queue_milestone_sync
+        queue_milestone_sync(milestone=instance, priority='normal')
 
     reason = f"signal_milestone_creation"
     logger.info(f"Auto-syncing milestone creation for project {project_id} via signal ({reason})")
