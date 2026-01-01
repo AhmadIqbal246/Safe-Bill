@@ -225,11 +225,17 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
         
         seller_paid_total = seller_paid_base * (1 + vat_rate / 100.0) * (1 - fee_pct / 100.0)
-
+        
+        # Commission Calculations for Forecasting
+        # commission_earned is based on approved milestones (base quantity)
+        commission_earned = seller_paid_base * (fee_pct / 100.0)
+        total_commission_potential = total_amount * (fee_pct / 100.0)
+        
     except Exception as e:
         logger.error(f"Failed to calculate paid amounts for project {project.id}: {e}")
         seller_paid_total = 0.0
         buyer_paid_total = 0.0
+        commission_earned = 0.0
 
     # Derive project creation month/year
     created_at = getattr(project, "created_at", None) or getattr(project, "created_date", None)
@@ -238,15 +244,19 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
     month_str = created_at.strftime("%m")
     year_num = created_at.year
 
-    # Calculate Amounts
+    # SafeBill Commission Calculations
     vat_rate = float(project.vat_rate) if project.vat_rate is not None else 20.0
+    fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
     
     # Gross Amount (What the buyer paid: Total project value + VAT)
     buyer_pays_gross = total_amount * (1 + vat_rate / 100.0)
     
-    # Seller Net for description/reference (Total * (1+VAT) * (1-Fee))
-    fee_pct = float(project.platform_fee_percentage) if project.platform_fee_percentage is not None else 10.0
-    seller_net = buyer_pays_gross * (1 - fee_pct / 100.0)
+    # Total Potential Commission for the whole deal (Based on Base Amount, not including VAT)
+    total_platform_fee = total_amount * (fee_pct / 100.0)
+    
+    # Remaining Forecast (Total Potential - what we already earned)
+    # Note: commission_earned is already calculated correctly on base in the blocks above
+    commission_remaining = max(0, total_platform_fee - commission_earned)
 
     # Keep deal name clean with just the project name
     dealname = project.name or f"Project {project.id}"
@@ -290,6 +300,11 @@ def build_deal_properties(project, pipeline_id: Optional[str], dealstage_id: Opt
         # Paid Amounts Tracking
         "total_seller_paid_amount": seller_paid_total,
         "total_buyer_paid_amount": buyer_paid_total,
+        # Commission & Forecasting Sight
+        "platform_fee_amount": round(total_platform_fee, 2),
+        "commission_earned": round(commission_earned, 2),
+        "commission_remaining": round(commission_remaining, 2),
+        "platform_fee_percentage": fee_pct,
         # helpful text if not associating yet
         "description": f"Seller: {seller_name} | Client: {project.client_email}",
     })
