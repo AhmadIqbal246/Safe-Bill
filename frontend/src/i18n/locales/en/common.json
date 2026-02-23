@@ -1634,6 +1634,7 @@
     "completed_at": "Completed at",
     "subscription_invoice": "Subscription Invoice",
     "monthly_subscription_invoice": "Monthly Subscription Invoice",
+    "monthly_subscription": "Monthly Subscription",
     "invoice_number": "Invoice #",
     "invoice_date": "Invoice Date",
     "billing_period": "Billing Period",

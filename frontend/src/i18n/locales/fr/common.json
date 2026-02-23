@@ -1624,6 +1624,7 @@
     "completed_at": "Terminé le",
     "subscription_invoice": "Facture d'abonnement",
     "monthly_subscription_invoice": "Facture d'abonnement mensuel",
+    "monthly_subscription": "Abonnement mensuel",
     "invoice_number": "Numéro de facture",
     "invoice_date": "Date de facturation",
     "billing_period": "Période de facturation",

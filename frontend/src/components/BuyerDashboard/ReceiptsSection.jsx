@@ -115,7 +115,11 @@ export default function ReceiptsSection() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
+    if (typeof dateString === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
@@ -562,7 +566,10 @@ export default function ReceiptsSection() {
               <div className="mb-5">
                 <div className="text-lg font-semibold text-gray-900">{project.name}</div>
                 <div className="text-xs text-gray-500">{t('receipts.ref')} {project.reference_number || '-'}</div>
-                <div className="text-xs text-gray-500">{t('receipts.start')} {formatDate(project.created_at)}</div>
+                <div className="text-xs text-gray-500">
+                  {t('receipts.start')} {formatDate(project.created_at)}
+                  {project.completion_date && ` • ${t('receipts.completed')}: ${formatDate(project.completion_date)}`}
+                </div>
                 <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {vatRate.toFixed(1)}%</div>
               </div>
 

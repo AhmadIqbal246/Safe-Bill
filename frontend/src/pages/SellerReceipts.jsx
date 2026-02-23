@@ -287,16 +287,17 @@ export default function SellerReceipts() {
     // Add subscription invoices
     subscriptionInvoices.forEach(invoice => {
       // Generate reference number in format SUB-YYYY-XXXX (consistent with project invoices)
-      const year = new Date(invoice.created_at).getFullYear();
+      const invoiceDate = invoice.created_at ? new Date(invoice.created_at) : new Date();
+      const year = isNaN(invoiceDate.getFullYear()) ? new Date().getFullYear() : invoiceDate.getFullYear();
       const randomSuffix = String(invoice.id).padStart(4, '0');
       const refNumber = `SUB-${year}-${randomSuffix}`;
 
       receipts.push({
         ...invoice,
         receiptType: 'subscription',
-        receiptTypeText: 'Subscription Invoice',
+        receiptTypeText: t('receipts.subscription_invoice'),
         invoiceType: 'subscription',
-        name: 'Monthly Subscription',
+        name: t('receipts.monthly_subscription'),
         reference_number: refNumber,
         payment_id: invoice.id,
         payment_status: invoice.status,
@@ -392,7 +393,11 @@ export default function SellerReceipts() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
+    if (typeof dateString === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
@@ -734,7 +739,7 @@ export default function SellerReceipts() {
                   <div className="mb-5">
                     <div className="text-lg font-semibold text-gray-900">{receipt.name}</div>
                     <div className="text-xs text-gray-500">{t('receipts.ref')} {receipt.reference_number || '-'}</div>
-                    <div className="text-xs text-gray-500">{t('receipts.start')} {receipt.created_at} {receipt.completion_date ? `• ${t('receipts.completed')}: ${receipt.completion_date}` : ''}</div>
+                    <div className="text-xs text-gray-500">{t('receipts.start')} {formatDate(receipt.created_at)} {receipt.completion_date ? `• ${t('receipts.completed')}: ${formatDate(receipt.completion_date)}` : ''}</div>
                     <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {Number(receipt.vat_rate || 0).toFixed(1)}%</div>
                     <div className="text-xs text-gray-500 mt-1">{t('receipts.seller_label')}: {receipt.seller_username || '-'} ({receipt.seller_email || '-'})</div>
                     <div className="text-xs text-gray-500">{t('receipts.buyer_label')}: {receipt.buyer_username || '-'} ({receipt.buyer_email || '-'})</div>
@@ -800,7 +805,7 @@ export default function SellerReceipts() {
                     <div className="text-lg font-semibold text-gray-900">{receipt.name}</div>
                     <div className="text-xs text-gray-500">{t('receipts.ref')} {receipt.platform_invoice_reference || '-'}</div>
                     <div className="text-xs text-gray-500 mt-1">{t('receipts.vat_rate')}: {vatRate.toFixed(1)}%</div>
-                    <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {receipt.completion_date || receipt.created_at}</div>
+                    <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {formatDate(receipt.completion_date || receipt.created_at)}</div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
@@ -861,8 +866,8 @@ export default function SellerReceipts() {
                     <div className="mb-5">
                       <div className="text-lg font-semibold text-gray-900">{t('receipts.monthly_subscription_invoice')}</div>
                       <div className="text-xs text-gray-500">{t('receipts.invoice_number')}: {receipt.id}</div>
-                      <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {receipt.created_at}</div>
-                      <div className="text-xs text-gray-500 mt-1">{t('receipts.billing_period')}: {receipt.billing_period_start} {t('receipts.to')} {receipt.billing_period_end}</div>
+                      <div className="text-xs text-gray-500 mt-1">{t('receipts.invoice_date')}: {formatDate(receipt.created_at)}</div>
+                      <div className="text-xs text-gray-500 mt-1">{t('receipts.billing_period')}: {formatDate(receipt.billing_period_start)} {t('receipts.to')} {formatDate(receipt.billing_period_end)}</div>
                       <div className="text-xs text-gray-500 mt-1">{t('receipts.status')}: <span style={{ textTransform: 'capitalize', color: receipt.status === 'paid' ? '#52c41a' : '#faad14' }}>{t(`receipts.status_${receipt.status}`)}</span></div>
                     </div>
 
