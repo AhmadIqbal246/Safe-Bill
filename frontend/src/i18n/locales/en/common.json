@@ -803,7 +803,13 @@
   },
   "documents_section": {
     "title": "Documents (Quotes)",
-    "search_placeholder": "Search by project or reference..."
+    "search_placeholder": "Search by project or reference...",
+    "project_name": "Project name",
+    "creation_date": "Creation date",
+    "action": "Action",
+    "ref": "Ref:",
+    "download": "Download",
+    "no_documents": "No documents found"
   },
   "dispute_submit": {
     "back": "← Back",

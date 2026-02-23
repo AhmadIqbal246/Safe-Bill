@@ -724,8 +724,8 @@ export default function SellerReceipts() {
                         {!receipt.buyer_full_name && receipt.buyer_username && <div>{receipt.buyer_username}</div>}
                         {receipt.buyer_email && <div>{receipt.buyer_email}</div>}
                         {receipt.buyer_company && <div className="font-semibold">{receipt.buyer_company}</div>}
-                        {receipt.buyer_siret && <div>{t('receipts.siret')}: {receipt.buyer_siret}</div>}
                         {receipt.buyer_address && <div>{receipt.buyer_address}</div>}
+                        {receipt.buyer_siret && <div>{t('receipts.siret')}: {receipt.buyer_siret}</div>}
                       </div>
                     </div>
                   </div>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import Logo from '../../assets/Safe_Bill_Dark.png';
+import { getStepTranslationKey } from '../../utils/translationUtils';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -551,8 +552,8 @@ export default function ReceiptsSection() {
                     {!project.buyer_full_name && project.buyer_username && <div>{project.buyer_username}</div>}
                     {project.buyer_email && <div>{project.buyer_email}</div>}
                     {project.buyer_company && <div className="font-semibold">{project.buyer_company}</div>}
-                    {project.buyer_siret && <div>{t('receipts.siret')}: {project.buyer_siret}</div>}
                     {project.buyer_address && <div>{project.buyer_address}</div>}
+                    {project.buyer_siret && <div>{t('receipts.siret')}: {project.buyer_siret}</div>}
                   </div>
                 </div>
               </div>
@@ -595,7 +596,9 @@ export default function ReceiptsSection() {
                   <tbody>
                     {(project.milestones || []).filter(m => m.status === 'approved').map((m, idx) => (
                       <tr key={m.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="py-2 px-2">{m.name}</td>
+                        <td className="py-2 px-2">
+                          {getStepTranslationKey(m.name) ? t(getStepTranslationKey(m.name)) : m.name}
+                        </td>
                         <td className="py-2 px-2">{m.completion_date || '-'}</td>
                         <td className="py-2 px-2 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
                       </tr>

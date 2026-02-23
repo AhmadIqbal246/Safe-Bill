@@ -3,10 +3,13 @@ import axios from 'axios';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Loader from '../components/common/Loader';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
+import { getStepTranslationKey } from '../utils/translationUtils';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function BuyerReceipts() {
+  const { t } = useTranslation();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [projects, setProjects] = React.useState([]);
@@ -226,7 +229,9 @@ export default function BuyerReceipts() {
                           <tbody>
                             {(p.milestones || []).filter(m => m.status === 'approved').map((m) => (
                               <tr key={m.id} className="border-t border-gray-100">
-                                <td className="py-2 pr-4">{m.name}</td>
+                                <td className="py-2 pr-4">
+                                  {getStepTranslationKey(m.name) ? t(getStepTranslationKey(m.name)) : m.name}
+                                </td>
                                 <td className="py-2 pr-4">{m.completion_date || '-'}</td>
                                 <td className="py-2 pr-0 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
                               </tr>
@@ -270,8 +275,8 @@ export default function BuyerReceipts() {
                           {!p.buyer_full_name && p.buyer_username && <div>{p.buyer_username}</div>}
                           {p.buyer_email && <div>{p.buyer_email}</div>}
                           {p.buyer_company && <div className="font-semibold">{p.buyer_company}</div>}
-                          {p.buyer_siret && <div>{t('receipts.siret')}: {p.buyer_siret}</div>}
                           {p.buyer_address && <div>{p.buyer_address}</div>}
+                          {p.buyer_siret && <div>{t('receipts.siret')}: {p.buyer_siret}</div>}
                         </div>
                       </div>
                     </div>
@@ -314,7 +319,9 @@ export default function BuyerReceipts() {
                         <tbody>
                           {(p.milestones || []).filter(m => m.status === 'approved').map((m, idx) => (
                             <tr key={m.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="py-2 px-2">{m.name}</td>
+                              <td className="py-2 px-2">
+                                {getStepTranslationKey(m.name) ? t(getStepTranslationKey(m.name)) : m.name}
+                              </td>
                               <td className="py-2 px-2">{m.completion_date || '-'}</td>
                               <td className="py-2 px-2 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
                             </tr>

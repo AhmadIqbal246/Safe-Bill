@@ -797,7 +797,13 @@
   },
   "documents_section": {
     "title": "Documents (Devis)",
-    "search_placeholder": "Rechercher par projet ou référence..."
+    "search_placeholder": "Rechercher par projet ou référence...",
+    "project_name": "Nom du projet",
+    "creation_date": "Date de création",
+    "action": "Action",
+    "ref": "Réf :",
+    "download": "Télécharger",
+    "no_documents": "Aucun document trouvé"
   },
   "dispute_submit": {
     "back": "← Retour",
