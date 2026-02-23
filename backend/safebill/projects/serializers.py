@@ -360,6 +360,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    completion_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
@@ -373,6 +374,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "reference_number",
             "total_amount",
             "created_at",
+            "completion_date",
             "status",
             "project_type",
             "invite_token",
@@ -383,6 +385,15 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "progress_pct",
             "refundable_amount",
         ]
+
+    def get_completion_date(self, obj):
+        # Use the latest milestone completion_date as completion date fallback
+        latest = (
+            obj.milestones.filter(completion_date__isnull=False)
+            .order_by("-completion_date")
+            .first()
+        )
+        return latest.completion_date.strftime("%Y-%m-%d") if latest else None
 
     def get_reference_number(self, obj):
         if hasattr(obj, "quote") and obj.quote:

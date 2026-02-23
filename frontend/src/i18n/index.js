@@ -12,11 +12,11 @@ i18n
       en: { common: en },
       fr: { common: fr },
     },
-    fallbackLng: 'fr',
+    fallbackLng: 'en',
     // Do not force a language here; rely on detection
     ns: ['common'],
     defaultNS: 'common',
-    interpolation: { 
+    interpolation: {
       escapeValue: false
     },
     detection: {
