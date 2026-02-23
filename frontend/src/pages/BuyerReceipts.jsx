@@ -59,7 +59,7 @@ export default function BuyerReceipts() {
 
       // Clone the element to avoid affecting the original
       const clone = element.cloneNode(true);
-      
+
       // Create a temporary container for the clone
       const container = document.createElement('div');
       container.id = 'pdf-buyer-temp-container';
@@ -73,7 +73,7 @@ export default function BuyerReceipts() {
       container.style.pointerEvents = 'none';
       container.style.zIndex = '999999';
       container.style.overflow = 'visible';
-      
+
       // Style the clone for PDF
       clone.style.width = '800px';
       clone.style.maxWidth = '800px';
@@ -81,7 +81,7 @@ export default function BuyerReceipts() {
       clone.style.backgroundColor = '#ffffff';
       clone.className = ''; // Remove all classes to avoid hidden styling
       clone.style.margin = '0';
-      
+
       // Append clone to container
       container.appendChild(clone);
       document.body.appendChild(container);
@@ -109,13 +109,13 @@ export default function BuyerReceipts() {
               await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                  try { img.src = reader.result; } catch {}
+                  try { img.src = reader.result; } catch { }
                   resolve();
                 };
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
               });
-            } catch {}
+            } catch { }
           })
         );
       };
@@ -155,7 +155,7 @@ export default function BuyerReceipts() {
     } catch (e) {
       console.error('Buyer receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
-      
+
       // Clean up the temporary container in case of error
       const container = document.getElementById('pdf-buyer-temp-container');
       if (container) {
@@ -195,7 +195,7 @@ export default function BuyerReceipts() {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 bg-gray-50">
                     <div>
                       <div className="text-lg font-semibold text-[#01257D]">{p.name}</div>
-                      <div className="text-sm text-gray-600">Ref: {p.reference_number || '-'}</div>
+                      <div className="text-sm text-gray-600">Ref{p.reference_number || '-'}</div>
                       <div className="text-xs text-gray-500">Start: {p.created_at}</div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export default function BuyerReceipts() {
                           {p.seller_siret && <div>SIRET: {p.seller_siret}</div>}
                         </div>
                       </div>
-                      
+
                       {/* Buyer Info - Top Right */}
                       <div className="flex-1 pl-4 text-right">
                         <div className="text-xs font-semibold text-gray-700 mb-1">Buyer Information</div>
@@ -269,6 +269,8 @@ export default function BuyerReceipts() {
                           {p.buyer_full_name && <div>{p.buyer_full_name}</div>}
                           {!p.buyer_full_name && p.buyer_username && <div>{p.buyer_username}</div>}
                           {p.buyer_email && <div>{p.buyer_email}</div>}
+                          {p.buyer_company && <div className="font-semibold">{p.buyer_company}</div>}
+                          {p.buyer_siret && <div>{t('receipts.siret')}: {p.buyer_siret}</div>}
                           {p.buyer_address && <div>{p.buyer_address}</div>}
                         </div>
                       </div>
@@ -277,9 +279,9 @@ export default function BuyerReceipts() {
                     {/* Project info */}
                     <div className="mb-5">
                       <div className="text-lg font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500">Réf: {p.reference_number || '-'}</div>
-                      <div className="text-xs text-gray-500">Début: {p.created_at}</div>
-                      <div className="text-xs text-gray-500 mt-1">TVA: {vatPct.toFixed(1)}%</div>
+                      <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                      <div className="text-xs text-gray-500">{t('receipts.start')} {p.created_at}</div>
+                      <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {vatPct.toFixed(1)}%</div>
                     </div>
 
                     {/* Summary boxes */}

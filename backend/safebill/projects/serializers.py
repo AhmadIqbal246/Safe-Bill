@@ -514,6 +514,8 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     buyer_username = serializers.CharField(source="client.username", read_only=True)
     buyer_email = serializers.EmailField(source="client.email", read_only=True)
     buyer_full_name = serializers.SerializerMethodField()
+    buyer_company = serializers.SerializerMethodField()
+    buyer_siret = serializers.SerializerMethodField()
     buyer_address = serializers.SerializerMethodField()
     payment_id = serializers.SerializerMethodField()
     payment_status = serializers.SerializerMethodField()
@@ -545,6 +547,8 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "buyer_username",
             "buyer_email",
             "buyer_full_name",
+            "buyer_company",
+            "buyer_siret",
             "buyer_address",
             "payment_id",
             "payment_status",
@@ -659,6 +663,24 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             return obj.user.username
         except Exception:
             return obj.user.username
+
+    def get_buyer_company(self, obj):
+        """Return the buyer's company name if available (for pro buyers)"""
+        try:
+            if obj.client and hasattr(obj.client, "business_detail") and obj.client.business_detail:
+                return obj.client.business_detail.company_name
+            return None
+        except Exception:
+            return None
+
+    def get_buyer_siret(self, obj):
+        """Return the buyer's SIRET number if available (for pro buyers)"""
+        try:
+            if obj.client and hasattr(obj.client, "business_detail") and obj.client.business_detail:
+                return obj.client.business_detail.siret_number
+            return None
+        except Exception:
+            return None
 
     def get_seller_phone(self, obj):
         """Return the seller's phone number"""

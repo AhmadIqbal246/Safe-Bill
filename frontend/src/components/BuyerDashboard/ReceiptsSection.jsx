@@ -53,10 +53,10 @@ export default function ReceiptsSection() {
   // Filter and paginate
   const filtered = React.useMemo(() => {
     let filteredProjects = projects;
-    
+
     // Search filter
     if (search) {
-      filteredProjects = filteredProjects.filter(p => 
+      filteredProjects = filteredProjects.filter(p =>
         p.name?.toLowerCase().includes(search.toLowerCase()) ||
         p.reference_number?.toLowerCase().includes(search.toLowerCase())
       );
@@ -101,9 +101,9 @@ export default function ReceiptsSection() {
       'pending': { color: 'bg-yellow-100 text-yellow-800', text: t('receipts.pending') },
       'failed': { color: 'bg-red-100 text-red-800', text: t('receipts.failed') }
     };
-    
+
     const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800', text: status || 'Unknown' };
-    
+
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
         <span className="w-1.5 h-1.5 bg-current rounded-full mr-1.5"></span>
@@ -144,7 +144,7 @@ export default function ReceiptsSection() {
 
       // Clone the element to avoid affecting the original
       const clone = element.cloneNode(true);
-      
+
       // Create a temporary container for the clone
       const container = document.createElement('div');
       container.id = 'pdf-section-temp-container';
@@ -158,7 +158,7 @@ export default function ReceiptsSection() {
       container.style.pointerEvents = 'none';
       container.style.zIndex = '999999';
       container.style.overflow = 'visible';
-      
+
       // Style the clone for PDF
       clone.style.width = '800px';
       clone.style.maxWidth = '800px';
@@ -166,7 +166,7 @@ export default function ReceiptsSection() {
       clone.style.backgroundColor = '#ffffff';
       clone.className = ''; // Remove all classes to avoid hidden styling
       clone.style.margin = '0';
-      
+
       // Append clone to container
       container.appendChild(clone);
       document.body.appendChild(container);
@@ -203,13 +203,13 @@ export default function ReceiptsSection() {
               await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                  try { img.src = reader.result; } catch {}
+                  try { img.src = reader.result; } catch { }
                   resolve();
                 };
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
               });
-            } catch {}
+            } catch { }
           })
         );
       };
@@ -225,7 +225,7 @@ export default function ReceiptsSection() {
         allowTaint: false,
         foreignObjectRendering: true,
       });
-      
+
       console.log('Canvas created:', {
         width: canvas.width,
         height: canvas.height
@@ -239,7 +239,7 @@ export default function ReceiptsSection() {
       }
 
       const imgData = canvas.toDataURL('image/png');
-      
+
       if (!imgData || imgData === 'data:,' || imgData.length < 100) {
         console.error('Invalid image data!');
         document.body.removeChild(container);
@@ -272,7 +272,7 @@ export default function ReceiptsSection() {
     } catch (e) {
       console.error('Receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
-      
+
       // Clean up the temporary container in case of error
       const container = document.getElementById('pdf-section-temp-container');
       if (container) {
@@ -391,7 +391,7 @@ export default function ReceiptsSection() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {paged.map((project) => {
                   const { total, vatRate, vatAmount, finalAmount } = calcTotals(project);
-                  
+
                   return (
                     <tr key={project.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -445,7 +445,7 @@ export default function ReceiptsSection() {
                     </div>
                     {getStatusBadge(project.payment_status)}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-3 text-xs mb-3">
                     <div>
                       <span className="text-gray-500">{t('receipts.date')}:</span>
@@ -542,7 +542,7 @@ export default function ReceiptsSection() {
                     {project.seller_siret && <div>{t('receipts.siret')}: {project.seller_siret}</div>}
                   </div>
                 </div>
-                
+
                 {/* Buyer Info - Top Right */}
                 <div className="flex-1 pl-4 text-right">
                   <div className="text-xs font-semibold text-gray-700 mb-1">{t('receipts.buyer_information')}</div>
@@ -550,6 +550,8 @@ export default function ReceiptsSection() {
                     {project.buyer_full_name && <div>{project.buyer_full_name}</div>}
                     {!project.buyer_full_name && project.buyer_username && <div>{project.buyer_username}</div>}
                     {project.buyer_email && <div>{project.buyer_email}</div>}
+                    {project.buyer_company && <div className="font-semibold">{project.buyer_company}</div>}
+                    {project.buyer_siret && <div>{t('receipts.siret')}: {project.buyer_siret}</div>}
                     {project.buyer_address && <div>{project.buyer_address}</div>}
                   </div>
                 </div>
@@ -558,8 +560,8 @@ export default function ReceiptsSection() {
               {/* Project info */}
               <div className="mb-5">
                 <div className="text-lg font-semibold text-gray-900">{project.name}</div>
-                <div className="text-xs text-gray-500">{t('receipts.ref')}: {project.reference_number || '-'}</div>
-                <div className="text-xs text-gray-500">{t('receipts.start')}: {formatDate(project.created_at)}</div>
+                <div className="text-xs text-gray-500">{t('receipts.ref')} {project.reference_number || '-'}</div>
+                <div className="text-xs text-gray-500">{t('receipts.start')} {formatDate(project.created_at)}</div>
                 <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {vatRate.toFixed(1)}%</div>
               </div>
 
