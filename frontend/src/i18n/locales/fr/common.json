@@ -565,7 +565,11 @@
     "net_amount": "Montant Net",
     "step_1": "Étape 1",
     "step_2": "Étape 2",
-    "step_3": "Étape 3"
+    "step_3": "Étape 3",
+    "desc_full_payment": "Paiement intégral à l'acceptation du devis.",
+    "desc_initial_payment": "Paiement initial à l'acceptation du devis.",
+    "desc_start_payment": "Paiement dû au début du projet.",
+    "desc_final_payment": "Paiement final à la fin du projet."
   },
   "my_profile": {
     "title": "Mon Profil",
@@ -782,7 +786,11 @@
   "approved_projects": {
     "header": "Projets approuvés",
     "search_placeholder": "Rechercher des projets approuvés",
-    "view_quote": "Voir le devis"
+    "view_quote": "Voir le devis",
+    "none": "Vous n'avez pas encore de projets approuvés.",
+    "seller": "Vendeur",
+    "ref": "Réf",
+    "approved": "Approuvé"
   },
   "callback": {
     "title": "Demander un rappel",
@@ -1510,7 +1518,7 @@
     "confirm_not_approved": "Êtes-vous sûr de vouloir marquer ce Acompte comme non approuvé ?",
     "confirm_review": "Envoyer une demande de révision avec votre commentaire ?",
     "confirm_generic": "Êtes-vous sûr de vouloir effectuer cette action ?",
-    "title_single": "Validation de Acompte",
+    "title_single": "Validation d’acompte",
     "title_plural": "Validations de jalons",
     "loading_pending": "Chargement des jalons en attente...",
     "load_failed": "Échec du chargement des jalons",

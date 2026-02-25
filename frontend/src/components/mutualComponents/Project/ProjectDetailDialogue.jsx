@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog } from '@headlessui/react';
 import { Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getStepTranslationKey, getDescriptionTranslationKey } from '../../../utils/translationUtils';
 
 export default function ProjectDetailDialogue({ open, onClose, project }) {
   const { t } = useTranslation();
@@ -10,7 +11,7 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
     const str = String(text);
     return str.length > max ? `${str.slice(0, max)}…` : str;
   };
-  
+
   if (!project) return null;
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -61,15 +62,22 @@ export default function ProjectDetailDialogue({ open, onClose, project }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {(project.installments || []).map((inst, idx) => (
-                    <tr key={idx} className="border-t border-gray-100">
-                      <td className="px-3 py-2">{inst.step}</td>
-                      <td className="px-3 py-2 text-[#01257D] font-semibold">€{parseFloat(inst.amount).toLocaleString()}</td>
-                      <td className="px-3 py-2 text-gray-600" title={inst.description}>
-                        {truncate(inst.description)}
-                      </td>
-                    </tr>
-                  ))}
+                  {(project.installments || []).map((inst, idx) => {
+                    const stepKey = getStepTranslationKey(inst.step);
+                    const descKey = getDescriptionTranslationKey(inst.description);
+                    const displayStep = stepKey ? t(stepKey) : inst.step;
+                    const displayDesc = descKey ? t(descKey) : inst.description;
+
+                    return (
+                      <tr key={idx} className="border-t border-gray-100">
+                        <td className="px-3 py-2">{displayStep}</td>
+                        <td className="px-3 py-2 text-[#01257D] font-semibold">€{parseFloat(inst.amount).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-gray-600" title={displayDesc}>
+                          {truncate(displayDesc)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

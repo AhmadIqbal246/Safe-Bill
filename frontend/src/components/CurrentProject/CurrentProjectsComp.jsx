@@ -6,6 +6,7 @@ import ProjectDetailDialogue from '../mutualComponents/Project/ProjectDetailDial
 import { useTranslation } from 'react-i18next';
 import ProjectStatusBadge from '../common/ProjectStatusBadge';
 import LoginBg from '../../assets/Circle Background/login-removed-bg.jpg';
+import { getStepTranslationKey } from '../../utils/translationUtils';
 
 export default function CurrentProjectsComp() {
   const { t } = useTranslation();
@@ -111,7 +112,7 @@ export default function CurrentProjectsComp() {
             <div className="flex flex-col md:flex-row justify-between mt-4 gap-4">
               {(currentProject.installments || []).map((item, idx) => (
                 <div key={idx} className="flex-1 text-center">
-                  <div className="text-gray-500 text-sm mb-1">{item.step}</div>
+                  <div className="text-gray-500 text-sm mb-1">{getStepTranslationKey(item.step) ? t(getStepTranslationKey(item.step)) : item.step}</div>
                   <div className="text-lg font-semibold text-gray-800">€{parseFloat(item.amount).toLocaleString()}</div>
                 </div>
               ))}

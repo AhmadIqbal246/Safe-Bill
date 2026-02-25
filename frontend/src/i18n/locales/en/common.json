@@ -133,7 +133,7 @@
     "terms": "Terms",
     "privacy": "Privacy",
     "cookie_preferences": "Cookie Preferences",
-    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "copyright": "© 2026 Safe Bill. All rights reserved.",
     "socials": "Socials"
   },
   "homepage": {
@@ -564,7 +564,11 @@
     "net_amount": "Net Amount",
     "step_1": "Step 1",
     "step_2": "Step 2",
-    "step_3": "Step 3"
+    "step_3": "Step 3",
+    "desc_full_payment": "Full payment upon quote acceptance.",
+    "desc_initial_payment": "Initial payment upon quote acceptance.",
+    "desc_start_payment": "Payment due at the start of the project.",
+    "desc_final_payment": "Final payment upon project completion."
   },
   "my_profile": {
     "title": "My Profile",
@@ -788,7 +792,10 @@
     "title": "Approved Projects",
     "search_placeholder": "Search Approved Projects",
     "view_quote": "View Quote",
-    "none": "You have no approved projects yet."
+    "none": "You have no approved projects yet.",
+    "seller": "Seller",
+    "ref": "Ref",
+    "approved": "Approved"
   },
   "callback": {
     "title": "Request a Callback",
@@ -1331,7 +1338,7 @@
       "title": "Terms Updates",
       "content": "We may update these Terms of Service from time to time. We will notify users of any material changes by email or through our platform. Your continued use of Safe Bill after any modifications constitutes acceptance of the updated Terms."
     },
-    "copyright": "© 2025 Safe Bill. All rights reserved."
+    "copyright": "© 2026 Safe Bill. All rights reserved."
   },
   "billings": {
     "title": "Billings & Payments",
@@ -1816,7 +1823,7 @@
     "title": "Privacy Policy – Safe Bill",
     "subtitle": "How Safe Bill collects and processes your personal data",
     "last_updated": "Last Updated:",
-    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "copyright": "© 2026 Safe Bill. All rights reserved.",
     "introduction": {
       "title": "Data Controller",
       "content1": "This privacy policy describes how Safe Bill collects and processes your personal data when using its marketplace.",
@@ -1972,7 +1979,7 @@
   "cookie_policy_page": {
     "title": "Cookie Policy – Safe Bill",
     "last_updated": "Last Updated:",
-    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "copyright": "© 2026 Safe Bill. All rights reserved.",
     "section1": {
       "title": "Purpose of This Policy",
       "content": "This policy explains how Safe Bill uses cookies and other trackers on its marketplace accessible from https://safebill.fr. It complements the Privacy Policy and aims to inform you about:\n- the types of cookies used;\n- their purposes;\n- how you can accept, refuse or configure them.\n\nBy continuing to browse or by configuring your choices via the banner and cookie management module, you consent to the use of cookies in accordance with this policy. You can withdraw your consent at any time."

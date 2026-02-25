@@ -37,7 +37,7 @@ export default function ApprovedProjects({ projects }) {
           <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
-          <p className="text-gray-500 text-sm">You have no approved projects yet.</p>
+          <p className="text-gray-500 text-sm">{t('approved_projects.none')}</p>
         </div>
       </div>
     );
@@ -71,9 +71,9 @@ export default function ApprovedProjects({ projects }) {
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-900 mb-1">{project.name}</h4>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>Seller: {project.seller_name}</span>
-                    <span>Ref: {project.reference_number}</span>
-                    <span>Approved: {new Date(project.created_at).toLocaleDateString()}</span>
+                    <span>{t('approved_projects.seller')}: {project.seller_name}</span>
+                    <span>{t('approved_projects.ref')}: {project.reference_number}</span>
+                    <span>{t('approved_projects.approved')}: {new Date(project.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <ProjectStatusBadge status={project.status} size="small" />
