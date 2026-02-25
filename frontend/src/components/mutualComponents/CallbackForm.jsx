@@ -46,14 +46,14 @@ export default function CallbackForm({ open, onClose, defaultRole }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // SIRET validation: only allow digits and limit to 14 characters
     if (name === 'siret_number') {
       const digitsOnly = value.replace(/\D/g, ''); // Remove non-digits
       const limitedValue = digitsOnly.slice(0, 14); // Limit to 14 digits
-      
+
       setForm(prev => ({ ...prev, [name]: limitedValue }));
-      
+
       // Clear error when user starts typing
       if (errors.siret_number) {
         setErrors(prev => ({ ...prev, siret_number: '' }));
@@ -65,18 +65,18 @@ export default function CallbackForm({ open, onClose, defaultRole }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate SIRET number
     const newErrors = {};
     if (form.siret_number && form.siret_number.length !== 14) {
-      newErrors.siret_number = 'SIRET number must be exactly 14 digits';
+      newErrors.siret_number = t('callback.siret_error', 'SIRET number must be exactly 14 digits');
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     const role = user?.role || defaultRole || '';
     await dispatch(submitCallbackRequest({ ...form, role }));
     // Close on success
@@ -106,12 +106,12 @@ export default function CallbackForm({ open, onClose, defaultRole }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('callback.siret', 'SIRET')}</label>
-            <input 
-              name="siret_number" 
-              value={form.siret_number} 
-              onChange={handleChange} 
-              placeholder="Enter 14-digit SIRET number"
-              className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#01257D] focus:border-[#01257D] ${errors.siret_number ? 'border-red-500' : 'border-gray-300'}`} 
+            <input
+              name="siret_number"
+              value={form.siret_number}
+              onChange={handleChange}
+              placeholder={t('callback.siret_placeholder', 'Enter 14-digit SIRET number')}
+              className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#01257D] focus:border-[#01257D] ${errors.siret_number ? 'border-red-500' : 'border-gray-300'}`}
             />
             {errors.siret_number && (
               <p className="mt-1 text-sm text-red-600">{errors.siret_number}</p>

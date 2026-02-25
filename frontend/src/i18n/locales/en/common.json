@@ -621,7 +621,13 @@
     "username_too_long": "Username must be less than {{max}} characters",
     "about_too_long_chars": "About must be less than {{max}} characters",
     "about_too_many_words": "About must be less than {{max}} words",
-    "about_placeholder": "Enter your about"
+    "about_placeholder": "Enter your about",
+    "rating_excellent": "Excellent",
+    "rating_good": "Good",
+    "rating_needs_improvement": "Needs Improvement",
+    "feedback_excellent": "The platform is working perfectly for my needs. Great user experience and all features are functioning well. ",
+    "feedback_good": "The platform is good overall. There are some minor improvements that could make it even better. ",
+    "feedback_needs_improvement": "I've encountered some issues with the platform. There are several areas that need attention and improvement. "
   },
   "documents": {
     "title": "Documents",
@@ -815,7 +821,9 @@
     "submitting": "Submitting...",
     "error": "Failed to submit. Please try again.",
     "success_toast": "Callback request submitted successfully!",
-    "error_toast": "Failed to submit callback request."
+    "error_toast": "Failed to submit callback request.",
+    "siret_placeholder": "Enter 14-digit SIRET number",
+    "siret_error": "SIRET number must be exactly 14 digits"
   },
   "documents_section": {
     "title": "Documents (Quotes)",
