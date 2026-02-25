@@ -165,7 +165,10 @@ class ClientProjectListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(client=self.request.user).order_by("-id")
+        from django.db.models import Q
+        return Project.objects.filter(
+            Q(client=self.request.user) | Q(client__isnull=True, client_email__iexact=self.request.user.email)
+        ).order_by("-id")
 
 
 class ProjectDeleteAPIView(generics.DestroyAPIView):
@@ -927,9 +930,11 @@ class ClientProjectsWithPendingMilestonesAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        from django.db.models import Q
         return (
             Project.objects.filter(
-                client=self.request.user, milestones__status="pending"
+                Q(client=self.request.user) | Q(client__isnull=True, client_email__iexact=self.request.user.email),
+                milestones__status="pending"
             )
             .distinct()
             .order_by("-id")
@@ -945,7 +950,10 @@ class ClientProjectDetailAPIView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(client=self.request.user)
+        from django.db.models import Q
+        return Project.objects.filter(
+            Q(client=self.request.user) | Q(client__isnull=True, client_email__iexact=self.request.user.email)
+        )
 
 
 @api_view(["GET"])

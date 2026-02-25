@@ -772,7 +772,16 @@
     "completed_projects": "Completed Projects",
     "completed_on": "Completed on",
     "approve_project": "Approve Project",
-    "reject_project": "Reject Project"
+    "reject_project": "Reject Project",
+    "review_and_pay": "Review & Pay",
+    "seller": "Seller",
+    "ref": "Ref",
+    "created": "Created",
+    "total_amount": "Total Amount",
+    "installments_label": "Installments",
+    "payments_count": "{{count}} payment(s)",
+    "view_quote": "View Quote",
+    "download": "Download"
   },
   "approved_projects": {
     "header": "Approved Projects",

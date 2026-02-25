@@ -768,7 +768,16 @@
     "no_search_results": "Aucun projet correspondant à votre recherche",
     "clear_search": "Effacer la recherche",
     "approve_project": "Approuver le projet",
-    "reject_project": "Rejeter le projet"
+    "reject_project": "Rejeter le projet",
+    "review_and_pay": "Réviser et payer",
+    "seller": "Vendeur",
+    "ref": "Réf",
+    "created": "Créé",
+    "total_amount": "Montant total",
+    "installments_label": "Échéances",
+    "payments_count": "{{count}} paiement(s)",
+    "view_quote": "Voir le devis",
+    "download": "Télécharger"
   },
   "approved_projects": {
     "header": "Projets approuvés",
