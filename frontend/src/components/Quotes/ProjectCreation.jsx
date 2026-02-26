@@ -58,42 +58,59 @@ export default function ProjectCreation() {
   );
 
   // Calculate platform fee percentage based on total project amount (tiered system)
-  const getPlatformFeePct = (totalAmount) => {
-    if (totalAmount >= 500001) return 1.5;
-    if (totalAmount >= 400001) return 2.0;
-    if (totalAmount >= 300001) return 2.5;
-    if (totalAmount >= 200001) return 3.0;
-    if (totalAmount >= 100001) return 5.0;
-    if (totalAmount >= 1001) return 7.0;
+  // Logic updated: Tiered commission applied to GROSS amount (incl. VAT)
+  const getPlatformFeePct = (grossAmount) => {
+    if (grossAmount >= 500001) return 1.5;
+    if (grossAmount >= 400001) return 2.0;
+    if (grossAmount >= 300001) return 2.5;
+    if (grossAmount >= 200001) return 3.0;
+    if (grossAmount >= 100001) return 5.0;
+    if (grossAmount >= 1001) return 7.0;
     return 10.0; // Default for amounts 500-1000
   };
 
-  // Helper to compute per-row fees; simplified platform fee only
-  const computeRowFees = (amount, platformPct) => {
-    const numericAmount = Number(amount) || 0;
-    const platformFee = +(numericAmount * platformPct / 100).toFixed(2);
-    const sellerNet = numericAmount - platformFee;
+  // Helper to compute per-row fees; platform fee applies to amount (base)
+  // but percentage is determined by the total gross amount
+  const computeRowFees = (baseAmount, platformPct, vatRatePct) => {
+    const numericBase = Number(baseAmount) || 0;
+    const numericVatRate = Number(vatRatePct) || 0;
+    
+    // Calculate Gross for this row
+    const vatAmount = +(numericBase * numericVatRate / 100).toFixed(2);
+    const grossAmount = numericBase + vatAmount;
+    
+    // Platform fee is calculated on the GROSS amount of this milestone
+    const platformFee = +(grossAmount * platformPct / 100).toFixed(2);
+    
+    // Seller net for this row: Base Amount - Platform Fee
+    // (Platform absorbs Stripe fees from its own cut, so seller doesn't pay them)
+    const sellerNet = numericBase - platformFee;
+    
     return {
-      amount: numericAmount,
+      amount: numericBase,
+      vatAmount,
+      grossAmount,
       platformFee,
       netAmount: +Math.max(sellerNet, 0).toFixed(2),
     };
   };
 
-  // Frontend platform fee calculation based on total project amount
-  const totalProjectAmount = installmentRows.reduce((sum, row) => {
+  // Frontend platform fee calculation based on total project gross amount
+  const totalBaseAmount = installmentRows.reduce((sum, row) => {
     const amount = Number(String(row.amount).replace(/[^0-9.]/g, '')) || 0;
     return sum + amount;
   }, 0);
-  const platformPctForProject = getPlatformFeePct(totalProjectAmount);
-  const platformFeeForProject = +(totalProjectAmount * platformPctForProject / 100).toFixed(2);
+  
+  const totalGrossAmount = +(totalBaseAmount * (1 + Number(vatRate) / 100)).toFixed(2);
+  const platformPctForProject = getPlatformFeePct(totalGrossAmount);
+  const platformFeeForProject = +(totalGrossAmount * platformPctForProject / 100).toFixed(2);
 
   // Calculate fees for each milestone using platformPctForProject
   const milestoneFees = installmentRows.map(row => {
     const amount = Number(String(row.amount).replace(/[^0-9.]/g, '')) || 0;
     return {
       ...row,
-      ...computeRowFees(amount, platformPctForProject),
+      ...computeRowFees(amount, platformPctForProject, vatRate),
     };
   });
 
@@ -469,7 +486,9 @@ export default function ProjectCreation() {
               <div className="flex items-center gap-4 justify-between">
                 <span className="text-lg font-semibold text-gray-900">{t('project_creation.final_total') || 'Total Net Earnings'}: </span>
                 <span className="text-xl font-bold text-[#01257D]">€{totalSellerNet.toLocaleString()}</span>
-                <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">{t('project_creation.platform_fee_label')}: €{platformFeeForProject.toLocaleString()}</span>
+                <span className="text-sm text-gray-700 bg-[#E6F0FA] px-2 py-1 rounded-md">
+                  {t('project_creation.platform_fee_label')}: €{platformFeeForProject.toLocaleString()} ({platformPctForProject}%)
+                </span>
               </div>
             </div>
           </div>
