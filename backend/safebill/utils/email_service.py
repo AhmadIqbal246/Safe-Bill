@@ -68,23 +68,14 @@ class EmailService:
     ) -> bool:
         """
         Send an HTML email using Django templates.
-
-        Args:
-            subject: Email subject line
-            recipient_list: List of recipient email addresses
-            template_name: Name of the HTML template (without .html extension)
-            context: Context variables for the template
-            from_email: Sender email address (defaults to
-            settings.DEFAULT_FROM_EMAIL)
-            fail_silently: Whether to fail silently on errors
-            connection: Optional SMTP connection to reuse (for batch emails)
-
-        Returns:
-            bool: True if email was sent successfully, False otherwise
         """
         try:
             if not from_email:
                 from_email = settings.DEFAULT_FROM_EMAIL
+
+            # Ensure language is available in context for base template
+            if "language" not in context:
+                context["language"] = language
 
             # Try localized template first: emails/{template_name}_{language}.html
             lang = (language or "en").split("-")[0].lower()
@@ -435,10 +426,14 @@ class EmailService:
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
+            "language": language,
         }
 
         with translation.override(language):
-            subject = translation.gettext("Milestone Approval Requested - {project_name}").format(project_name=project_name)
+            if language == 'fr':
+                subject = f"Demande d'approbation d'acompte - {project_name}"
+            else:
+                subject = translation.gettext("Milestone Approval Requested - {project_name}").format(project_name=project_name)
 
         return EmailService.send_email(
             subject=subject,

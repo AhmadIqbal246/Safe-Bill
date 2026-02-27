@@ -45,3 +45,6 @@ msgstr "Envoyé pour Examen"
 
 msgid "Submitted for Approval"
 msgstr "Soumis pour Approbation"
+
+msgid "Milestone Approval Requested - {project_name}"
+msgstr "Demande d'approbation d'acompte - {project_name}"

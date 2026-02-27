@@ -223,9 +223,15 @@
                         </div>
                         
                         <div class="email-footer">
-                            <p>&copy; 2024 {{ site_name }}. All rights reserved.</p>
-                            <p>If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
-                            <p>This email was sent to you because you have an account with {{ site_name }}.</p>
+                            {% if language == 'fr' %}
+                                <p>&copy; 2026 {{ site_name }}. Tous droits réservés.</p>
+                                <p>Si vous avez des questions, veuillez nous contacter à l'adresse <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+                                <p>Cet e-mail vous a été envoyé car vous avez un compte chez {{ site_name }}.</p>
+                            {% else %}
+                                <p>&copy; 2026 {{ site_name }}. All rights reserved.</p>
+                                <p>If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+                                <p>This email was sent to you because you have an account with {{ site_name }}.</p>
+                            {% endif %}
                         </div>
                     </div>
                 </td>
