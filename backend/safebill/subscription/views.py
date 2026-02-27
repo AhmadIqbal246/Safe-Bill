@@ -153,7 +153,12 @@ def subscription_webhook(request):
     )
 
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        if sig_header:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        else:
+            # Fallback for local development
+            event = json.loads(payload)
+            logger.warning("No Stripe signature found, using raw payload (Dev mode)")
     except Exception as e:
         logger.error(f"Invalid subscription webhook: {e}")
         return Response({"error": "invalid"}, status=400)

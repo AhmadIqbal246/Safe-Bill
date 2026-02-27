@@ -124,7 +124,6 @@ export default function Dashboard() {
     {
       labelKey: 'dashboard.pending_quotes',
       value: pendingQuotesCount,
-      change: '+10%',
       color: 'bg-white',
       btnKey: 'dashboard.view',
       btnNavigate: '/my-quotes',
@@ -132,7 +131,6 @@ export default function Dashboard() {
     {
       labelKey: 'dashboard.current_projects',
       value: currentProjectsCount,
-      change: '+5%',
       color: 'bg-white',
       btnKey: 'dashboard.view',
       btnNavigate: '/current-projects',
@@ -447,16 +445,7 @@ export default function Dashboard() {
                           card.value
                         )}
                       </div>
-                      <div className={`text-xs font-semibold mb-2 ${card.loading ? 'text-gray-400' :
-                          card.change.startsWith('+') ? 'text-green-600' :
-                            card.change.startsWith('-') ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                        {card.loading ? (
-                          <div className="h-4 bg-gray-200 rounded animate-pulse w-12"></div>
-                        ) : (
-                          card.change
-                        )}
-                      </div>
+
                       <button
                         className="mt-auto w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#2E78A6] text-white rounded font-semibold text-xs hover:bg-[#256a94] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => navigate(card.btnNavigate)}

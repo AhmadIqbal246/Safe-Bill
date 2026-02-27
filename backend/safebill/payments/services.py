@@ -21,35 +21,96 @@ class FeeCalculationService:
     """
 
     @staticmethod
-    def calculate_fees(base_amount, platform_fee_percentage, vat_rate):
+    def get_commission_rate(gross_amount):
+        """
+        Determine the commission rate based on the gross amount (incl. VAT).
+        """
+        gross_amount = Decimal(str(gross_amount))
+        if gross_amount <= Decimal("1000"):
+            return Decimal("10")
+        elif gross_amount <= Decimal("100000"):
+            return Decimal("7")
+        elif gross_amount <= Decimal("200000"):
+            return Decimal("5")
+        elif gross_amount <= Decimal("300000"):
+            return Decimal("3")
+        elif gross_amount <= Decimal("400000"):
+            return Decimal("2.5")
+        elif gross_amount <= Decimal("500000"):
+            return Decimal("2")
+        else:
+            return Decimal("1.5")
+
+    @staticmethod
+    def calculate_stripe_fees(gross_amount, payment_method="card"):
+        """
+        Calculate Stripe fees based on payment method and gross amount.
+        - Card: 1.5% + €0.25 (for €500 - €1,000)
+        - Bank Transfer: 0.5% in + 0.5% out (for > €1,000)
+        """
+        gross_amount = Decimal(str(gross_amount))
+        if gross_amount > Decimal("1000") or payment_method == "bank_transfer":
+            # 0.5% incoming + 0.5% outgoing
+            return (gross_amount * Decimal("0.005")) + (gross_amount * Decimal("0.005"))
+        else:
+            # 1.5% + €0.25
+            return (gross_amount * Decimal("0.015")) + Decimal("0.25")
+
+    @staticmethod
+    def calculate_fees(base_amount, platform_fee_percentage=None, vat_rate=Decimal("20")):
         """
         Calculate core amounts for a given base amount.
+        Platform commission is calculated on the GROSS amount (base + VAT).
+        Stripe fees are deducted from the platform commission.
 
         Args:
-            base_amount (Decimal): The base project amount
+            base_amount (Decimal): The base project amount (excl. VAT)
+            platform_fee_percentage (Decimal, optional): If provided, overrides degressive logic
+            vat_rate (Decimal): VAT rate percentage (e.g., 20)
 
         Returns:
             dict: Dictionary containing calculated amounts
         """
         # Ensure Decimal math
         base_amount = Decimal(str(base_amount))
-        platform_fee_percentage = Decimal(str(platform_fee_percentage))
-        platform_fee_amount = (base_amount * platform_fee_percentage) / Decimal("100")
+        vat_rate = Decimal(str(vat_rate))
+        
+        # Calculate VAT and Gross Amount
         vat_amount = (base_amount * vat_rate) / Decimal("100")
+        gross_amount = base_amount + vat_amount
 
-        # Calculate final amounts
-        # Buyer pays: base amount + VAT only
-        buyer_total = base_amount + vat_amount
+        # Determine platform commission rate (use provided or degressive logic)
+        if platform_fee_percentage is None:
+            commission_rate = FeeCalculationService.get_commission_rate(gross_amount)
+        else:
+            commission_rate = Decimal(str(platform_fee_percentage))
 
-        # Seller receives: base amount - platform fee
-        seller_net = base_amount - platform_fee_amount
+        # Calculate Gross Platform Commission (on gross amount)
+        platform_gross_commission = (gross_amount * commission_rate) / Decimal("100")
+
+        # Calculate Stripe fees (deducted from platform commission)
+        stripe_fees = FeeCalculationService.calculate_stripe_fees(gross_amount)
+        
+        # Safe Bill's net commission
+        platform_net_commission = platform_gross_commission - stripe_fees
+
+        # Buyer pays: gross amount (base + VAT)
+        buyer_total = gross_amount
+
+        # Seller receives: gross amount - platform gross commission
+        # (Since platform absorbs Stripe fees from its own gross commission)
+        seller_net = gross_amount - platform_gross_commission
 
         return {
             "base_amount": base_amount,
-            "platform_fee": platform_fee_amount,
+            "vat_amount": vat_amount,
+            "gross_amount": gross_amount,
+            "commission_rate": commission_rate,
+            "platform_fee": platform_gross_commission,
+            "stripe_fees": stripe_fees,
+            "platform_net_commission": platform_net_commission,
             "buyer_total": buyer_total,
             "seller_net": seller_net,
-            "vat_amount": vat_amount,
         }
 
     @staticmethod

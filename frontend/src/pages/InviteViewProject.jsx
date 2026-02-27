@@ -9,6 +9,7 @@ import ProjectStatusBadge from "../components/common/ProjectStatusBadge";
 import Loader from "../components/common/Loader";
 import paymentWebSocketService from "../services/paymentWebSocketService";
 import { toast } from "react-toastify";
+import { getStepTranslationKey, getDescriptionTranslationKey } from "../utils/translationUtils";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -400,8 +401,8 @@ export default function InviteViewProject() {
                 <div className="text-gray-900 font-medium mb-1">
                   €{parseFloat(inst.amount).toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500 mb-1">{inst.step}</div>
-                <div className="text-xs text-gray-400">{inst.description}</div>
+                <div className="text-xs text-gray-500 mb-1">{getStepTranslationKey(inst.step) ? t(getStepTranslationKey(inst.step)) : inst.step}</div>
+                <div className="text-xs text-gray-400">{getDescriptionTranslationKey(inst.description) ? t(getDescriptionTranslationKey(inst.description)) : inst.description}</div>
               </div>
             ))}
           </div>
@@ -418,10 +419,10 @@ export default function InviteViewProject() {
           </div>
 
           <div className="flex items-center mb-4">
-            <input 
-              type="checkbox" 
-              id="terms" 
-              className="mr-2" 
+            <input
+              type="checkbox"
+              id="terms"
+              className="mr-2"
               checked={termsAccepted}
               onChange={(e) => setTermsAccepted(e.target.checked)}
             />
@@ -580,13 +581,12 @@ export default function InviteViewProject() {
 
             {actionMessage && (
               <div
-                className={`mb-4 p-3 rounded-lg ${
-                  actionMessage.includes("approved")
+                className={`mb-4 p-3 rounded-lg ${actionMessage.includes("approved")
                     ? "bg-green-100 text-green-800"
                     : actionMessage.includes("rejected")
-                    ? "bg-red-100 text-red-800"
-                    : "bg-blue-100 text-blue-800"
-                }`}
+                      ? "bg-red-100 text-red-800"
+                      : "bg-blue-100 text-blue-800"
+                  }`}
               >
                 {actionMessage}
               </div>

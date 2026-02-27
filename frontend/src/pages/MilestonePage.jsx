@@ -10,7 +10,7 @@ import { Dialog } from '@headlessui/react';
 import { toast } from 'react-toastify';
 import { Edit, Upload, Cloud } from 'lucide-react';
 import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
-import { getStepTranslationKey } from '../utils/translationUtils';
+import { getStepTranslationKey, getDescriptionTranslationKey } from '../utils/translationUtils';
 
 export default function MilestonePage() {
   const { t, i18n } = useTranslation();
@@ -139,6 +139,12 @@ export default function MilestonePage() {
       return t(translationKey);
     }
     return name;
+  };
+
+  const getTranslatedDescription = (desc) => {
+    if (!desc) return '';
+    const translationKey = getDescriptionTranslationKey(desc);
+    return translationKey ? t(translationKey) : desc;
   };
 
   const handleViewComment = (comment) => {
@@ -362,13 +368,13 @@ export default function MilestonePage() {
                   <div className="text-gray-700 mb-2">
                     <span className="font-medium">{t('milestones.description_label')}:</span>
                     <div className="mt-1">
-                      {milestone.description.length > 100 ? (
+                      {getTranslatedDescription(milestone.description).length > 100 ? (
                         <>
                           <div className="text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
-                            {milestone.description.substring(0, 100)}...
+                            {getTranslatedDescription(milestone.description).substring(0, 100)}...
                           </div>
                           <button
-                            onClick={() => handleViewDescription(milestone.description)}
+                            onClick={() => handleViewDescription(getTranslatedDescription(milestone.description))}
                             className="text-blue-600 underline text-sm hover:text-blue-800 mt-1 cursor-pointer"
                           >
                             {t('milestones.view_full_description')}
@@ -376,7 +382,7 @@ export default function MilestonePage() {
                         </>
                       ) : (
                         <div className="text-gray-700 break-words max-w-full">
-                          {milestone.description}
+                          {getTranslatedDescription(milestone.description)}
                         </div>
                       )}
                     </div>

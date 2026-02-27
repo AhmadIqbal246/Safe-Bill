@@ -133,7 +133,7 @@
     "terms": "Terms",
     "privacy": "Privacy",
     "cookie_preferences": "Cookie Preferences",
-    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "copyright": "© 2026 Safe Bill. All rights reserved.",
     "socials": "Socials"
   },
   "homepage": {
@@ -239,10 +239,11 @@
     "registration_success": "Registration successful. Please check your email to verify your Email.",
     "only_numbers_allowed": "Only numbers are Allowed"
   },
-  "email_verification": {
+  "email_verification_success": {
     "verifying_email": "Verifying your email...",
     "email_verification": "Email Verification",
     "email_verified": "Your email has been verified!",
+    "verification_success_toast": "Your account has been successfully verified. You are being redirected to the login page.",
     "verification_failed": "Verification Failed",
     "verification_failed_message": "Verification failed. The link may be invalid or expired.",
     "invalid_link": "Invalid verification link."
@@ -381,6 +382,10 @@
     "verification_step": "Verification"
   },
   "onboarding": {
+    "basic_information_step": "Basic Information",
+    "connect_stripe_step": "Connect Stripe",
+    "verification_step": "Verification",
+    "identity_verification_step": "Identity Verification",
     "title": "Complete Your Registration",
     "description_documents": "Please upload the required documents to finish your registration.",
     "description_verification": "Documents uploaded successfully. Go to Dashboard to start using the platform.",
@@ -410,13 +415,33 @@
     "connecting": "Connecting...",
     "connect_stripe": "Connect with Stripe",
     "stripe_connect_note": "You will be redirected to Stripe to complete the setup process",
+    "stripe_complete_title": "Stripe Setup Complete",
     "stripe_incomplete_title": "Stripe Setup Incomplete",
     "stripe_incomplete_default": "Your Stripe account setup is not complete yet.",
     "complete_setup": "Complete Setup",
     "checking": "Checking...",
     "refresh_status": "Refresh Status",
     "stripe_not_connected_title": "Stripe Account Not Connected",
-    "stripe_not_connected_description": "You need to connect your Stripe account to receive payments."
+    "stripe_not_connected_description": "You need to connect your Stripe account to receive payments.",
+    "description_stripe_connect": "Connect your Stripe account to start receiving payments",
+    "description_identity_verification": "Verify your identity to access all platform features",
+    "stripe_identity_title": "Verify Your Identity",
+    "stripe_identity_description": "Complete identity verification to access all platform features securely.",
+    "identity_benefits_title": "Why Verify Your Identity?",
+    "secure_platform": "Enhanced security for your account",
+    "full_access": "Access to all professional features",
+    "trusted_verification": "Trusted verification process",
+    "compliance": "Meet regulatory compliance requirements",
+    "start_verification": "Start Verification",
+    "creating_session": "Creating Session...",
+    "try_again": "Try Again",
+    "processing": "Processing...",
+    "verification_canceled": "Identity verification was canceled. Please try again.",
+    "verification_failed": "Identity verification failed. Please try again.",
+    "verification_processing": "Your identity verification is being processed. Please wait...",
+    "processing_note": "Please wait while we process your verification",
+    "identity_not_started_note": "Your identity verification has not started. Click the button above to begin.",
+    "identity_verification_note": "Click to start identity verification with Stripe"
   },
   "sidebar": {
     "dashboard": "Dashboard",
@@ -544,7 +569,11 @@
     "net_amount": "Net Amount",
     "step_1": "Step 1",
     "step_2": "Step 2",
-    "step_3": "Step 3"
+    "step_3": "Step 3",
+    "desc_full_payment": "Full payment upon quote acceptance.",
+    "desc_initial_payment": "Initial payment upon quote acceptance.",
+    "desc_start_payment": "Payment due at the start of the project.",
+    "desc_final_payment": "Final payment upon project completion."
   },
   "my_profile": {
     "title": "My Profile",
@@ -597,7 +626,13 @@
     "username_too_long": "Username must be less than {{max}} characters",
     "about_too_long_chars": "About must be less than {{max}} characters",
     "about_too_many_words": "About must be less than {{max}} words",
-    "about_placeholder": "Enter your about"
+    "about_placeholder": "Enter your about",
+    "rating_excellent": "Excellent",
+    "rating_good": "Good",
+    "rating_needs_improvement": "Needs Improvement",
+    "feedback_excellent": "The platform is working perfectly for my needs. Great user experience and all features are functioning well. ",
+    "feedback_good": "The platform is good overall. There are some minor improvements that could make it even better. ",
+    "feedback_needs_improvement": "I've encountered some issues with the platform. There are several areas that need attention and improvement. "
   },
   "documents": {
     "title": "Documents",
@@ -734,7 +769,8 @@
     "pending_payment": "Pending Payment",
     "awaiting_payment": "Awaiting payment",
     "current_projects": "Current Projects",
-    "no_in_progress_projects": "No in-progress projects found",
+    "no_in_progress_projects": "No projects in progress.",
+    "due_label": "Due",
     "pending_projects": "Pending Projects",
     "no_pending_projects": "No pending projects to review",
     "search_projects": "Search projects...",
@@ -752,14 +788,26 @@
     "completed_projects": "Completed Projects",
     "completed_on": "Completed on",
     "approve_project": "Approve Project",
-    "reject_project": "Reject Project"
+    "reject_project": "Reject Project",
+    "review_and_pay": "Review & Pay",
+    "seller": "Seller",
+    "ref": "Ref",
+    "created": "Created",
+    "total_amount": "Total Amount",
+    "installments_label": "Installments",
+    "payments_count": "{{count}} payment(s)",
+    "view_quote": "View Quote",
+    "download": "Download"
   },
   "approved_projects": {
     "header": "Approved Projects",
     "title": "Approved Projects",
     "search_placeholder": "Search Approved Projects",
     "view_quote": "View Quote",
-    "none": "You have no approved projects yet."
+    "none": "You have no approved projects yet.",
+    "seller": "Seller",
+    "ref": "Ref",
+    "approved": "Approved"
   },
   "callback": {
     "title": "Request a Callback",
@@ -779,11 +827,19 @@
     "submitting": "Submitting...",
     "error": "Failed to submit. Please try again.",
     "success_toast": "Callback request submitted successfully!",
-    "error_toast": "Failed to submit callback request."
+    "error_toast": "Failed to submit callback request.",
+    "siret_placeholder": "Enter 14-digit SIRET number",
+    "siret_error": "SIRET number must be exactly 14 digits"
   },
   "documents_section": {
     "title": "Documents (Quotes)",
-    "search_placeholder": "Search by project or reference..."
+    "search_placeholder": "Search by project or reference...",
+    "project_name": "Project name",
+    "creation_date": "Creation date",
+    "action": "Action",
+    "ref": "Ref:",
+    "download": "Download",
+    "no_documents": "No documents found"
   },
   "dispute_submit": {
     "back": "← Back",
@@ -1296,7 +1352,7 @@
       "title": "Terms Updates",
       "content": "We may update these Terms of Service from time to time. We will notify users of any material changes by email or through our platform. Your continued use of Safe Bill after any modifications constitutes acceptance of the updated Terms."
     },
-    "copyright": "© 2025 Safe Bill. All rights reserved."
+    "copyright": "© 2026 Safe Bill. All rights reserved."
   },
   "billings": {
     "title": "Billings & Payments",
@@ -1608,6 +1664,7 @@
     "completed_at": "Completed at",
     "subscription_invoice": "Subscription Invoice",
     "monthly_subscription_invoice": "Monthly Subscription Invoice",
+    "monthly_subscription": "Monthly Subscription",
     "invoice_number": "Invoice #",
     "invoice_date": "Invoice Date",
     "billing_period": "Billing Period",
@@ -1780,7 +1837,7 @@
     "title": "Privacy Policy – Safe Bill",
     "subtitle": "How Safe Bill collects and processes your personal data",
     "last_updated": "Last Updated:",
-    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "copyright": "© 2026 Safe Bill. All rights reserved.",
     "introduction": {
       "title": "Data Controller",
       "content1": "This privacy policy describes how Safe Bill collects and processes your personal data when using its marketplace.",
@@ -1936,7 +1993,7 @@
   "cookie_policy_page": {
     "title": "Cookie Policy – Safe Bill",
     "last_updated": "Last Updated:",
-    "copyright": "© 2025 Safe Bill. All rights reserved.",
+    "copyright": "© 2026 Safe Bill. All rights reserved.",
     "section1": {
       "title": "Purpose of This Policy",
       "content": "This policy explains how Safe Bill uses cookies and other trackers on its marketplace accessible from https://safebill.fr. It complements the Privacy Policy and aims to inform you about:\n- the types of cookies used;\n- their purposes;\n- how you can accept, refuse or configure them.\n\nBy continuing to browse or by configuring your choices via the banner and cookie management module, you consent to the use of cookies in accordance with this policy. You can withdraw your consent at any time."

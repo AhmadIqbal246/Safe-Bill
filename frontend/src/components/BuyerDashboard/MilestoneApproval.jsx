@@ -5,7 +5,7 @@ import { fetchNotifications } from '../../store/slices/NotificationSlice';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { useTranslation } from 'react-i18next';
-import { getStepTranslationKey } from '../../utils/translationUtils';
+import { getStepTranslationKey, getDescriptionTranslationKey } from '../../utils/translationUtils';
 
 export default function MilestoneApproval({ onMilestoneAction }) {
   const dispatch = useDispatch();
@@ -28,6 +28,12 @@ export default function MilestoneApproval({ onMilestoneAction }) {
       return t(translationKey);
     }
     return name;
+  };
+
+  const getTranslatedDescription = (desc) => {
+    if (!desc) return '';
+    const translationKey = getDescriptionTranslationKey(desc);
+    return translationKey ? t(translationKey) : desc;
   };
 
   const {
@@ -238,13 +244,13 @@ export default function MilestoneApproval({ onMilestoneAction }) {
                 <div className="text-gray-700 mb-2 text-xs">
                   <span className="font-medium">{t('milestone_approval.description_label')}</span>
                   <div className="mt-1">
-                    {milestone.description.length > 50 ? (
+                    {getTranslatedDescription(milestone.description).length > 50 ? (
                       <>
                         <div className="text-gray-700 overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
-                          {milestone.description.substring(0, 50)}...
+                          {getTranslatedDescription(milestone.description).substring(0, 50)}...
                         </div>
                         <button
-                          onClick={() => handleViewDescription(milestone.description)}
+                          onClick={() => handleViewDescription(getTranslatedDescription(milestone.description))}
                           className="text-blue-600 underline text-xs hover:text-blue-800 mt-1 cursor-pointer"
                         >
                           {t('milestone_approval.view_full_description')}
@@ -252,7 +258,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
                       </>
                     ) : (
                       <div className="text-gray-700 break-words max-w-full">
-                        {milestone.description}
+                        {getTranslatedDescription(milestone.description)}
                       </div>
                     )}
                   </div>

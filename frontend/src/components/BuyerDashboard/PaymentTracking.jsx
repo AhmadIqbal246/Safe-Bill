@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function PaymentTracking({ billings = [] }) {
   const { user } = useSelector(state => state.auth);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [search, setSearch] = React.useState('');
   const filteredBillings = React.useMemo(() => {
     const q = (search || '').trim().toLowerCase();
@@ -30,7 +30,7 @@ export default function PaymentTracking({ billings = [] }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric'

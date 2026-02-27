@@ -3,10 +3,13 @@ import axios from 'axios';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import Loader from '../components/common/Loader';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
+import { getStepTranslationKey } from '../utils/translationUtils';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function BuyerReceipts() {
+  const { t } = useTranslation();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [projects, setProjects] = React.useState([]);
@@ -36,12 +39,22 @@ export default function BuyerReceipts() {
 
   const toggleExpand = (id) => setExpands(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const calcTotals = (project) => {
-    const total = (project.installments || []).reduce((s, i) => s + Number(i.amount || 0), 0);
-    const vatPct = Number(project.vat_rate || 0);
-    const vatAmount = +(total * vatPct / 100).toFixed(2);
-    const buyerPaid = +(total + vatAmount).toFixed(2);
-    return { total, vatPct, vatAmount, buyerPaid };
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    if (typeof dateString === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
   };
 
   const downloadPdf = async (project) => {
@@ -59,7 +72,7 @@ export default function BuyerReceipts() {
 
       // Clone the element to avoid affecting the original
       const clone = element.cloneNode(true);
-      
+
       // Create a temporary container for the clone
       const container = document.createElement('div');
       container.id = 'pdf-buyer-temp-container';
@@ -73,7 +86,7 @@ export default function BuyerReceipts() {
       container.style.pointerEvents = 'none';
       container.style.zIndex = '999999';
       container.style.overflow = 'visible';
-      
+
       // Style the clone for PDF
       clone.style.width = '800px';
       clone.style.maxWidth = '800px';
@@ -81,7 +94,7 @@ export default function BuyerReceipts() {
       clone.style.backgroundColor = '#ffffff';
       clone.className = ''; // Remove all classes to avoid hidden styling
       clone.style.margin = '0';
-      
+
       // Append clone to container
       container.appendChild(clone);
       document.body.appendChild(container);
@@ -109,13 +122,13 @@ export default function BuyerReceipts() {
               await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                  try { img.src = reader.result; } catch {}
+                  try { img.src = reader.result; } catch { }
                   resolve();
                 };
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
               });
-            } catch {}
+            } catch { }
           })
         );
       };
@@ -155,7 +168,7 @@ export default function BuyerReceipts() {
     } catch (e) {
       console.error('Buyer receipt PDF generation failed:', e);
       toast.error('Failed to generate PDF');
-      
+
       // Clean up the temporary container in case of error
       const container = document.getElementById('pdf-buyer-temp-container');
       if (container) {
@@ -196,7 +209,10 @@ export default function BuyerReceipts() {
                     <div>
                       <div className="text-lg font-semibold text-[#01257D]">{p.name}</div>
                       <div className="text-sm text-gray-600">Ref: {p.reference_number || '-'}</div>
-                      <div className="text-xs text-gray-500">Start: {p.created_at}</div>
+                      <div className="text-xs text-gray-500">
+                        {t('receipts.start')} {formatDate(p.created_at)}
+                        {p.completion_date && ` • ${t('receipts.completed')}: ${formatDate(p.completion_date)}`}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <button onClick={() => toggleExpand(p.id)} className="px-3 py-2 text-sm rounded-md bg-white border cursor-pointer hover:bg-gray-100">{expands[p.id] ? 'Hide' : 'Details'}</button>
@@ -226,8 +242,10 @@ export default function BuyerReceipts() {
                           <tbody>
                             {(p.milestones || []).filter(m => m.status === 'approved').map((m) => (
                               <tr key={m.id} className="border-t border-gray-100">
-                                <td className="py-2 pr-4">{m.name}</td>
-                                <td className="py-2 pr-4">{m.completion_date || '-'}</td>
+                                <td className="py-2 pr-4">
+                                  {getStepTranslationKey(m.name) ? t(getStepTranslationKey(m.name)) : m.name}
+                                </td>
+                                <td className="py-2 pr-4">{formatDate(m.completion_date)}</td>
                                 <td className="py-2 pr-0 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
                               </tr>
                             ))}
@@ -261,7 +279,7 @@ export default function BuyerReceipts() {
                           {p.seller_siret && <div>SIRET: {p.seller_siret}</div>}
                         </div>
                       </div>
-                      
+
                       {/* Buyer Info - Top Right */}
                       <div className="flex-1 pl-4 text-right">
                         <div className="text-xs font-semibold text-gray-700 mb-1">Buyer Information</div>
@@ -269,7 +287,9 @@ export default function BuyerReceipts() {
                           {p.buyer_full_name && <div>{p.buyer_full_name}</div>}
                           {!p.buyer_full_name && p.buyer_username && <div>{p.buyer_username}</div>}
                           {p.buyer_email && <div>{p.buyer_email}</div>}
+                          {p.buyer_company && <div className="font-semibold">{p.buyer_company}</div>}
                           {p.buyer_address && <div>{p.buyer_address}</div>}
+                          {p.buyer_siret && <div>{t('receipts.siret')}: {p.buyer_siret}</div>}
                         </div>
                       </div>
                     </div>
@@ -277,9 +297,12 @@ export default function BuyerReceipts() {
                     {/* Project info */}
                     <div className="mb-5">
                       <div className="text-lg font-semibold text-gray-900">{p.name}</div>
-                      <div className="text-xs text-gray-500">Réf: {p.reference_number || '-'}</div>
-                      <div className="text-xs text-gray-500">Début: {p.created_at}</div>
-                      <div className="text-xs text-gray-500 mt-1">TVA: {vatPct.toFixed(1)}%</div>
+                      <div className="text-xs text-gray-500">{t('receipts.ref')} {p.reference_number || '-'}</div>
+                      <div className="text-xs text-gray-500">
+                        {t('receipts.start')} {formatDate(p.created_at)}
+                        {p.completion_date && ` • ${t('receipts.completed')}: ${formatDate(p.completion_date)}`}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">{t('receipts.vat')}: {vatPct.toFixed(1)}%</div>
                     </div>
 
                     {/* Summary boxes */}
@@ -312,8 +335,10 @@ export default function BuyerReceipts() {
                         <tbody>
                           {(p.milestones || []).filter(m => m.status === 'approved').map((m, idx) => (
                             <tr key={m.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="py-2 px-2">{m.name}</td>
-                              <td className="py-2 px-2">{m.completion_date || '-'}</td>
+                              <td className="py-2 px-2">
+                                {getStepTranslationKey(m.name) ? t(getStepTranslationKey(m.name)) : m.name}
+                              </td>
+                              <td className="py-2 px-2">{formatDate(m.completion_date)}</td>
                               <td className="py-2 px-2 text-right">€{Number(m.relative_payment).toLocaleString()}</td>
                             </tr>
                           ))}

@@ -75,6 +75,7 @@ def create_stripe_payment(request, project_id):
         platform_fee = fees["platform_fee"]
         buyer_total = fees["buyer_total"]
         seller_net = fees["seller_net"]
+        stripe_fees = fees.get("stripe_fees", Decimal("0"))
         # Build checkout session params
 
         # Check if customer already exists, otherwise create new one
@@ -105,24 +106,25 @@ def create_stripe_payment(request, project_id):
                 "platform_fee": str(platform_fee),
                 "buyer_total": str(buyer_total),
                 "seller_net": str(seller_net),
-                "vat_amount": str((buyer_total - amount)),
+                "vat_amount": str(fees["vat_amount"]),
+                "stripe_fees": str(stripe_fees),
+                "commission_rate": str(fees["commission_rate"]),
             },
         }
 
-        # Restrict to card only when buyer_total > 1000
-        if buyer_total > Decimal("1001"):
-            checkout_params["payment_method_types"] = ["customer_balance"]
-            checkout_params["payment_method_options"] = {
-                "customer_balance": {
-                    "funding_type": "bank_transfer",
-                    "bank_transfer": {
-                        "type": "eu_bank_transfer",
-                        "eu_bank_transfer": {
-                            "country": "FR"  # Default to France, can be made dynamic based on user location
-                        },
+        # Allow both card and bank transfer for all amounts
+        checkout_params["payment_method_types"] = ["card", "customer_balance"]
+        checkout_params["payment_method_options"] = {
+            "customer_balance": {
+                "funding_type": "bank_transfer",
+                "bank_transfer": {
+                    "type": "eu_bank_transfer",
+                    "eu_bank_transfer": {
+                        "country": "FR"
                     },
-                }
+                },
             }
+        }
 
         checkout_session = stripe.checkout.Session.create(**checkout_params)
         # Delete any existing payments for this project by this user

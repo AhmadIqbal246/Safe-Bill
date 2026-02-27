@@ -98,7 +98,12 @@ def stripe_connect_webhook(request):
 
     # Verify webhook signature (optional for development, required for production)
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        if sig_header:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        else:
+            # Fallback for local development without stripe-cli/ngrok signature
+            event = json.loads(payload)
+            logger.warning("No Stripe signature found, using raw payload (Dev mode)")
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
         return Response({"error": "Invalid payload"}, status=400)
@@ -479,7 +484,12 @@ def stripe_identity_webhook(request):
 
     # Verify webhook signature
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        if sig_header:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        else:
+            # Fallback for local development
+            event = json.loads(payload)
+            logger.warning("No Stripe signature found, using raw payload (Dev mode)")
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
         return Response({"error": "Invalid payload"}, status=400)

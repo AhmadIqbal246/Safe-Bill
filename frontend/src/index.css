@@ -83,6 +83,12 @@
   --hubspot-icon-bottom-mobile: 0.4rem;
 }
 
+html, body, #root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
 .chat-fab-anchor {
   right: var(--chat-fab-right);
   bottom: var(--chat-fab-bottom);

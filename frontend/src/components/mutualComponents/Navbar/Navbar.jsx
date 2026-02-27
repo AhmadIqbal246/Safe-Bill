@@ -314,7 +314,7 @@ export default function SafeBillHeader({
             {showSafeBillHeaderOnMobile ? (
               <Link
                 to="/"
-                className="md:hidden inline-flex items-center cursor-pointer pt-2 -ml-4 mr-1"
+                className="lg:hidden inline-flex items-center cursor-pointer pt-2 -ml-4 mr-1"
               >
                 <img
                   src={Logo}
@@ -339,7 +339,7 @@ export default function SafeBillHeader({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8">
             {canSeeProjectInvite && (
               <Link
                 to="/find-professionals"
@@ -402,7 +402,7 @@ export default function SafeBillHeader({
 
           {/* Right Side - Desktop */}
           <div
-            className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`}
+            className={`hidden lg:flex items-center space-x-4 ${leftShiftClass}`}
             style={leftShiftStyle}
           >
             {/* Role Toggle Button */}
@@ -568,7 +568,7 @@ export default function SafeBillHeader({
 
           {/* Mobile Right Side (avatar and bell only, no hamburger) */}
           {!showMobileMenuButton && (
-            <div className="flex md:hidden items-center space-x-4">
+            <div className="flex lg:hidden items-center space-x-4">
               {/* Role Toggle Button - Mobile */}
               {canToggleRoles && (
                 <div className="flex items-center">
@@ -735,7 +735,7 @@ export default function SafeBillHeader({
 
           {/* Mobile Menu Button */}
           {showMobileMenuButton && (
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -752,7 +752,7 @@ export default function SafeBillHeader({
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
               {canSeeProjectInvite && (
                 <Link

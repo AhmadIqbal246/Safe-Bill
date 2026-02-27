@@ -65,8 +65,8 @@ class Project(models.Model):
     platform_fee_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=10.0,
-        help_text="Platform fee percentage applied to this project (e.g. 10.0 for 10%)",
+        default=7.0,
+        help_text="Platform fee percentage applied to this project (e.g. 7.0 for 7%)",
     )
     hubspot_payment_id = models.CharField(
         max_length=255,
