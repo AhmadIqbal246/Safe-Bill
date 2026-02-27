@@ -2,12 +2,21 @@ import React, { useState, useCallback } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { serviceAreaOptions, regionToDepartments } from '../../constants/registerationTypes';
 import { filterSellersByServiceArea, filterSellersByLocation } from '../../store/slices/FilterSlice';
 import { filterSellersByRegion } from '../../store/slices/FilterSlice';
 
 const containerStyle = { width: '100%', height: '300px', borderRadius: '0.75rem' };
-const center = { lat: 37.7749, lng: -122.4194 };
+// Default view centered over France
+const center = { lat: 46.2276, lng: 2.2137 };
+// France mainland bounds (rough)
+const FR_BOUNDS = {
+  north: 51.5,
+  south: 41.0,
+  west: -5.5,
+  east: 9.9,
+};
 
 // Helpers
 const normalize = (s = '') => s
@@ -68,6 +77,7 @@ function mapComponentsToRegionKey(components = []) {
 }
 
 export default function GeoFilterComponent() {
+  const { t } = useTranslation();
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ['places'],
@@ -78,9 +88,14 @@ export default function GeoFilterComponent() {
   const location = useLocation();
 
   const [marker, setMarker] = useState(center);
-  const [address, setAddress] = useState('Click on the map to select a location');
+  // Initialize with empty string so translation updates in real-time via render
+  const [address, setAddress] = useState('');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [matchedAreaLabel, setMatchedAreaLabel] = useState('');
+  const [query, setQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const geocoderRef = React.useRef(null);
 
   const onMapClick = useCallback((e) => {
     const lat = e.latLng.lat();
@@ -89,7 +104,8 @@ export default function GeoFilterComponent() {
     setIsGeocoding(true);
 
     // Reverse geocode
-    const geocoder = new window.google.maps.Geocoder();
+    if (!geocoderRef.current) geocoderRef.current = new window.google.maps.Geocoder();
+    const geocoder = geocoderRef.current;
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       setIsGeocoding(false);
       
@@ -116,14 +132,15 @@ export default function GeoFilterComponent() {
             navigate({ search: params.toString() }, { replace: false });
             return;
           }
-          // Ultimate fallback: flexible backend location filter
+          // Encourage user to pick a supported area instead of free-text fallback
           setMatchedAreaLabel('');
           const { city, postal } = pickCityAndPostal(result.address_components);
-          dispatch(filterSellersByLocation({ city, postalCode: postal, address: result.formatted_address }));
-          const params = new URLSearchParams(location.search);
-          if (postal) params.set('postal', postal);
-          if (city) params.set('city', city);
-          navigate({ search: params.toString() }, { replace: false });
+          const suggested = postal ? `${city} (${postal})` : city;
+          if (suggested) {
+            setQuery(suggested);
+            setShowDropdown(true);
+          }
+          // Do not auto-dispatch free-text location; keep interactions within allowed areas
         }
       } else {
         setAddress('Address not found. Please try another location.');
@@ -131,6 +148,25 @@ export default function GeoFilterComponent() {
       }
     });
   }, [dispatch, location.search, navigate]);
+
+  // Client-side typeahead over allowed service areas to avoid non-supported results
+  const filteredAreas = query
+    ? serviceAreaOptions
+        .filter(o => normalize(o.label).includes(normalize(query)))
+        .slice(0, 10)
+    : [];
+
+  const selectArea = (value) => {
+    const opt = serviceAreaOptions.find(o => o.value === value);
+    if (!opt) return;
+    setMatchedAreaLabel(opt.label);
+    setQuery(opt.label);
+    setShowDropdown(false);
+    dispatch(filterSellersByServiceArea({ serviceArea: value }));
+    const params = new URLSearchParams(location.search);
+    params.set('area', value);
+    navigate({ search: params.toString() }, { replace: false });
+  };
 
   if (loadError) {
     return (
@@ -147,6 +183,36 @@ export default function GeoFilterComponent() {
   return (
     <section className="w-full flex justify-center py-8 px-4 bg-white">
       <div className="bg-white rounded-xl shadow-md p-2 max-w-3xl w-full flex flex-col items-center">
+        {/* Heading */}
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <span className="text-[#3535AA]">Map</span>
+          <span className="text-[#8989C9]"> Pro</span>
+        </h2>
+        {/* Quick search restricted to supported service areas */}
+        <div className="w-full max-w-md mb-3 relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setShowDropdown(true); }}
+            onFocus={() => setShowDropdown(true)}
+            placeholder={t('geo_filter.search_placeholder')}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#01257D]"
+          />
+          {showDropdown && filteredAreas.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-64 overflow-auto">
+              {filteredAreas.map(area => (
+                <button
+                  key={area.value}
+                  type="button"
+                  className="w-full text-left px-3 py-2 hover:bg-[#F0F4F8] text-sm cursor-pointer"
+                  onClick={() => selectArea(area.value)}
+                >
+                  {area.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {isLoaded ? (
           <GoogleMap
             mapContainerStyle={containerStyle}
@@ -156,6 +222,7 @@ export default function GeoFilterComponent() {
             options={{
               disableDefaultUI: true,
               zoomControl: true,
+              restriction: { latLngBounds: FR_BOUNDS, strictBounds: false },
               styles: [
                 { featureType: 'poi', stylers: [{ visibility: 'off' }] },
                 { featureType: 'transit', stylers: [{ visibility: 'off' }] },
@@ -171,12 +238,12 @@ export default function GeoFilterComponent() {
         )}
         
         <div className="mt-4 p-3 bg-gray-50 rounded-lg w-full max-w-md">
-          <div className="text-sm text-gray-600 mb-1">Selected Location:</div>
-          <div className="text-center text-[#01257D] font-medium">
+          <div className="text-sm text-gray-600 mb-1">{t('geo_filter.selected_location')}</div>
+          <div className="text-center text-[#2E78A6] font-medium">
             {isGeocoding ? (
               <span className="text-gray-500">Finding address...</span>
             ) : (
-              address
+              address || t('geo_filter.click_to_select')
             )}
           </div>
           {matchedAreaLabel && (
@@ -187,7 +254,7 @@ export default function GeoFilterComponent() {
         </div>
         
         <div className="mt-2 text-xs text-gray-500 text-center">
-          Click anywhere on the map to get the address and filter professionals for that area
+          {t('geo_filter.map_instruction')}
         </div>
       </div>
     </section>

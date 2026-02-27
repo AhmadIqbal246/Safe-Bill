@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Scale, Users, Shield, AlertTriangle, Mail, Phone, MapPin } from 'lucide-react';
+import { FileText, Scale, Users, Shield, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { useTranslation } from 'react-i18next';
 
@@ -59,6 +59,29 @@ export default function TermsOfServicePage() {
                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
                   <p className="text-blue-800">
                     {t('terms_of_service.acceptance.agreement')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Consent Requirements */}
+            <section>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Shield className="w-6 h-6 mr-3 text-[#1e3a8a]" />
+                {t('terms_of_service.consent_requirements.title')}
+              </h2>
+              <div className="space-y-4">
+                <p className="text-gray-700">
+                  {t('terms_of_service.consent_requirements.content')}
+                </p>
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                  <p className="text-yellow-800">
+                    {t('terms_of_service.consent_requirements.cookie_consent')}
+                  </p>
+                </div>
+                <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                  <p className="text-red-800">
+                    {t('terms_of_service.consent_requirements.withdrawal')}
                   </p>
                 </div>
               </div>
@@ -287,10 +310,6 @@ export default function TermsOfServicePage() {
                     <span>{t('terms_of_service.contact.email')}</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5" />
-                    <span>{t('terms_of_service.contact.phone')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
                     <MapPin className="w-5 h-5" />
                     <span>{t('terms_of_service.contact.address')}</span>
                   </div>
@@ -312,7 +331,7 @@ export default function TermsOfServicePage() {
           {/* Footer */}
           <div className="text-center mt-8">
             <p className="text-gray-500 text-sm">
-              {t('terms_of_service.copyright', { year: new Date().getFullYear() })}
+              {t('terms_of_service.copyright')}
             </p>
           </div>
         </div>

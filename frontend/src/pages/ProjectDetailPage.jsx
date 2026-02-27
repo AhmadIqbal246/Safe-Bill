@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchClientProjectDetail } from "../store/slices/ProjectSlice";
+import { RefundPayment } from "../store/slices/PaymentSlice";
+import { getStepTranslationKey } from "../utils/translationUtils";
 import SafeBillHeader from "../components/mutualComponents/Navbar/Navbar";
 import {
   Download,
@@ -11,8 +13,10 @@ import {
   Shield,
   MessageCircle,
   AlertTriangle,
+  ArrowLeft,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 
 export default function ProjectDetailPage() {
   const { t } = useTranslation();
@@ -25,6 +29,10 @@ export default function ProjectDetailPage() {
     clientProjectDetailLoading,
     clientProjectDetailError,
   } = useSelector((state) => state.project);
+
+  const {
+    refundPaymentLoading,
+  } = useSelector((state) => state.payment);
 
   useEffect(() => {
     if (projectId) {
@@ -57,13 +65,6 @@ export default function ProjectDetailPage() {
     return `${months} ${months === 1 ? 'month' : 'months'}`;
   };
 
-  const getProgressPercentage = (project) => {
-    if (!project?.milestones?.length) return 0;
-    const completedMilestones = project.milestones.filter(
-      (m) => m.status === "approved"
-    ).length;
-    return Math.round((completedMilestones / project.milestones.length) * 100);
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -98,6 +99,25 @@ export default function ProjectDetailPage() {
         return t("project_detail.completed");
       default:
         return t("project_detail.not_submitted");
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!projectId) return;
+
+    try {
+      await dispatch(RefundPayment({ projectId })).unwrap();
+      toast.success('Refund request submitted successfully!');
+      // Refetch project details once after 10 seconds to allow backend/Stripe to settle
+      setTimeout(() => {
+        dispatch(fetchClientProjectDetail(projectId));
+      }, 3000);
+    } catch (err) {
+      toast.error(
+        typeof err === 'string'
+          ? err
+          : 'Failed to submit refund request. Please try again.'
+      );
     }
   };
 
@@ -157,11 +177,11 @@ export default function ProjectDetailPage() {
   }
 
   const project = clientProjectDetail;
-  const totalAmount = project.total_amount || 0;
+  const totalAmount = (project.total_amount + (project.vat_rate / 100 * project.total_amount)) || 0;
   const paidAmount =
     project.milestones
       ?.filter((m) => m.status === "approved")
-      .reduce((sum, m) => sum + (parseFloat(m.relative_payment) || 0), 0) || 0;
+      .reduce((sum, m) => sum + (parseFloat(m.relative_payment) + (parseFloat(m.relative_payment) * parseFloat(project.vat_rate) / 100) || 0), 0) || 0;
   const pendingAmount = totalAmount - paidAmount;
 
   return (
@@ -210,14 +230,10 @@ export default function ProjectDetailPage() {
                 >
                   {getStatusText(project.status)}
                 </span>
-                <button
-                  onClick={() =>
-                    navigate("/dispute-submit", { state: { project } })
-                  }
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-                >
-                  {t("project_detail.raise_dispute")}
-                </button>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                  VAT: {Number(project.vat_rate || 0).toFixed(1)}%
+                </span>
+
               </div>
             </div>
           </div>
@@ -242,14 +258,13 @@ export default function ProjectDetailPage() {
                       style={{
                         width:
                           project.milestones?.length > 1
-                            ? `${
-                                ((project.milestones.filter(
-                                  (m) => m.status === "approved"
-                                ).length -
-                                  1) /
-                                  (project.milestones.length - 1)) *
-                                100
-                              }%`
+                            ? `${((project.milestones.filter(
+                              (m) => m.status === "approved"
+                            ).length -
+                              1) /
+                              (project.milestones.length - 1)) *
+                            100
+                            }%`
                             : "0%",
                       }}
                     ></div>
@@ -269,13 +284,12 @@ export default function ProjectDetailPage() {
                           >
                             {/* Node */}
                             <div
-                              className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                                isCompleted
-                                  ? "bg-[#01257D] border-[#01257D] text-white"
-                                  : isPending
+                              className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 ${isCompleted
+                                ? "bg-[#01257D] border-[#01257D] text-white"
+                                : isPending
                                   ? "bg-[#E6F0FA] border-[#01257D] text-[#01257D]"
                                   : "bg-white border-gray-300 text-gray-600"
-                              }`}
+                                }`}
                             >
                               {isCompleted ? "✓" : index + 1}
                             </div>
@@ -283,26 +297,27 @@ export default function ProjectDetailPage() {
                             {/* Labels */}
                             <div className="mt-3 text-center max-w-32">
                               <div className="text-sm font-medium text-gray-900 mb-1">
-                                {milestone.name}
+                                {getStepTranslationKey(milestone.name)
+                                  ? t(getStepTranslationKey(milestone.name))
+                                  : milestone.name}
                               </div>
                               <div
-                                className={`text-xs ${
-                                  isCompleted
-                                    ? "text-green-600"
-                                    : isPending
+                                className={`text-xs ${isCompleted
+                                  ? "text-green-600"
+                                  : isPending
                                     ? "text-orange-600"
                                     : "text-gray-500"
-                                }`}
+                                  }`}
                               >
-                                $
+                                €
                                 {parseFloat(
                                   milestone.relative_payment
                                 ).toLocaleString()}{" "}
                                 {isCompleted
                                   ? t("project_detail.paid")
                                   : isPending
-                                  ? t("project_detail.in_progress")
-                                  : t("project_detail.pending")}
+                                    ? t("project_detail.in_progress")
+                                    : t("project_detail.pending")}
                               </div>
                             </div>
                           </div>
@@ -349,7 +364,9 @@ export default function ProjectDetailPage() {
                           className="border-b border-gray-100"
                         >
                           <td className="py-3 px-4 text-gray-900">
-                            {milestone.name}
+                            {getStepTranslationKey(milestone.name)
+                              ? t(getStepTranslationKey(milestone.name))
+                              : milestone.name}
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -361,7 +378,7 @@ export default function ProjectDetailPage() {
                             </span>
                           </td>
                           <td className="py-3 px-4 text-gray-900">
-                            $
+                            €
                             {parseFloat(
                               milestone.relative_payment
                             ).toLocaleString()}
@@ -431,7 +448,9 @@ export default function ProjectDetailPage() {
                         >
                           <div>
                             <div className="font-medium text-gray-900">
-                              {milestone.name} -{" "}
+                              {getStepTranslationKey(milestone.name)
+                                ? t(getStepTranslationKey(milestone.name))
+                                : milestone.name} -{" "}
                               {t("project_detail.supporting_document")}
                             </div>
                             <div className="text-sm text-gray-600">
@@ -472,7 +491,13 @@ export default function ProjectDetailPage() {
                       {t("project_detail.total_project_amount")}
                     </span>
                     <span className="font-semibold text-gray-900">
-                      ${totalAmount.toLocaleString()}
+                      €{(() => {
+                        const totalAmount = Number(project.total_amount) || 0;
+                        const vatPct = Number(project.vat_rate) || 0;
+                        const amountWithVat = totalAmount * (1 + vatPct / 100);
+                        const netAmount = amountWithVat;
+                        return Number.isFinite(netAmount) ? Math.round(netAmount).toLocaleString() : '0';
+                      })()}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -480,7 +505,7 @@ export default function ProjectDetailPage() {
                       {t("project_detail.amount_paid")}
                     </span>
                     <span className="font-semibold text-green-600">
-                      ${paidAmount.toLocaleString()}
+                      €{paidAmount.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -488,7 +513,7 @@ export default function ProjectDetailPage() {
                       {t("project_detail.pending_payments")}
                     </span>
                     <span className="font-semibold text-orange-600">
-                      ${pendingAmount.toLocaleString()}
+                      €{pendingAmount.toLocaleString()}
                     </span>
                   </div>
                   <div className="border-t pt-3">
@@ -496,11 +521,11 @@ export default function ProjectDetailPage() {
                       {t("project_detail.next_payment_due")}
                     </div>
                     <div className="font-semibold text-gray-900">
-                      $
+                      €
                       {pendingAmount > 0
                         ? project.installments?.find(
-                            (inst) => inst.step !== "Project Completion"
-                          )?.amount || 0
+                          (inst) => inst.step !== "Project Completion"
+                        )?.amount || 0
                         : 0}
                     </div>
                     <div className="text-xs text-gray-500">
@@ -509,6 +534,42 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Refundable Amount Section */}
+              {project.refundable_amount && parseFloat(project.refundable_amount) > 0 && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    {t('project_detail.refund.title')}
+                  </h2>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        {t('project_detail.refund.refundable_amount')}
+                      </span>
+                      <span className="font-semibold text-green-600">
+                        €{parseFloat(project.refundable_amount).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-4">
+                      {t('project_detail.refund.description')}
+                    </div>
+                    {project.status === "completed" && (
+                      <button
+                        onClick={handleRefund}
+                        disabled={refundPaymentLoading}
+                        className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {refundPaymentLoading ? t('project_detail.refund.processing') : t('project_detail.refund.request_refund')}
+                      </button>
+                    )}
+                    {project.status !== "completed" && (
+                      <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+                        {t('project_detail.refund.only_available_when_completed', { status: t('project_detail.completed') })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Quote Details */}
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -546,7 +607,7 @@ export default function ProjectDetailPage() {
                     }
                     className="w-full mt-4 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium cursor-pointer"
                   >
-                    {t("project_detail.dispute")}
+                    {t("project_detail.raise_dispute")}
                   </button>
                 </div>
               </div>

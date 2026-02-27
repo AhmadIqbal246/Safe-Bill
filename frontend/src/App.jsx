@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import "./App.css";
 import Home from "./pages/Home";
 import SellerRegisterPage from "./pages/SellerRegisterPage";
@@ -37,11 +38,41 @@ import AcceptProjectInvite from "./pages/AcceptProjectInvite";
 import HowToAcceptProjectInvite from "./pages/HowToAcceptProjectInvite";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
+import CookiePreferencesPage from "./pages/CookiePreferencesPage";
 import BillingsPage from "./pages/BillingsPage";
+import SellerExpiredInvitesPage from "./pages/SellerExpiredInvites";
+import SellerReceipts from "./pages/SellerReceipts";
+import BuyerReceipts from "./pages/BuyerReceipts";
+import NotFound from "./pages/NotFound";
+import DeleteAccount from "./components/AccountDeletion/DeleteAccount";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
+  const user = useSelector((state) => state.auth?.user);
+
+  useEffect(() => {
+    if (!user) return;
+    window._hsq = window._hsq || [];
+    window._hsq.push(['identify', {
+      email: user.email,
+      first_name: user.first_name || user.firstName,
+      last_name: user.last_name || user.lastName,
+      user_id: String(user.id || user.user_id || user.userId || '')
+    }]);
+    window._hsq.push(['trackPageView']);
+  }, [user]);
+
+  function HubspotRouteTracker() {
+    const location = useLocation();
+    useEffect(() => {
+      window._hsq = window._hsq || [];
+      window._hsq.push(['setPath', location.pathname + location.search]);
+      window._hsq.push(['trackPageView']);
+    }, [location.pathname, location.search]);
+    return null;
+  }
+
   return (
     <>
       <ToastContainer
@@ -57,6 +88,7 @@ function App() {
         Bounce
       />
       <Router>
+        <HubspotRouteTracker />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/seller-register" element={<SellerRegisterPage />} />
@@ -68,10 +100,12 @@ function App() {
           <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage/></ProtectedRoute>}/>
           <Route path='/find-professionals' element={<ProtectedRoute><FindProfessionals/></ProtectedRoute>}/>
           <Route path='/seller-dashboard' element={<ProtectedRoute requiredRole="seller"><SellerDashboardPage/></ProtectedRoute>}/>
+          <Route path='/seller-dashboard/expired-invites' element={<ProtectedRoute requiredRole="seller"><SellerExpiredInvitesPage/></ProtectedRoute>}/>
           <Route path='/my-quotes' element={<ProtectedRoute><MyQuotesPage/></ProtectedRoute>}/>
           <Route path='/project-creation' element={<ProtectedRoute requiredRole="seller"><ProjectCreationPage/></ProtectedRoute>}/>
           <Route path='/current-projects' element={<ProtectedRoute requiredRole="seller"><CurrentProjects/></ProtectedRoute>}/>
           <Route path='/completed-projects' element={<ProtectedRoute requiredRole="seller"><CompletedProjects/></ProtectedRoute>}/>
+          <Route path='/seller-dashboard/receipts' element={<ProtectedRoute requiredRole="seller"><SellerReceipts/></ProtectedRoute>}/>
           <Route path='/profile' element={<ProtectedRoute requiredRole="seller"><MyProfile/></ProtectedRoute>}/>
           {/* <Route path='/my-documents' element={<ProtectedRoute requiredRole="seller"><MyDocuments/></ProtectedRoute>}/> */}
           <Route path='/milestones' element={<ProtectedRoute requiredRole="seller"><MilestonePage/></ProtectedRoute>}/>
@@ -80,6 +114,7 @@ function App() {
           <Route path='/professional-buyer' element={<ProfessionalBuyerPage/>}/>
           <Route path='/not-authorized' element={<NotAuthorized/>}/>
           <Route path='/buyer-dashboard' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><BuyerDashboardPage/></ProtectedRoute>}/>
+          <Route path='/buyer-dashboard/receipts' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><BuyerReceipts/></ProtectedRoute>}/>
           <Route path='/project/:projectId' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><ProjectDetailPage/></ProtectedRoute>}/>
           <Route path='/dispute-submit' element={<ProtectedRoute requiredRole={["buyer", "professional-buyer"]}><DisputeSubmit/></ProtectedRoute>}/>
           <Route path='/disputes' element={<ProtectedRoute><DisputesPage/></ProtectedRoute>}/>
@@ -92,8 +127,12 @@ function App() {
           <Route path='/how-to-accept-project-invite' element={<HowToAcceptProjectInvite/>}/>
           <Route path='/privacy-policy' element={<PrivacyPolicyPage/>}/>
           <Route path='/terms-of-service' element={<TermsOfServicePage/>}/>
+          <Route path='/cookie-preferences' element={<CookiePreferencesPage/>}/>
           <Route path='/billings' element={<BillingsPage/>}/>
+          <Route path='/delete-account' element={<ProtectedRoute><DeleteAccount/></ProtectedRoute>}/>
           {/* Add more routes as needed */}
+          <Route path='/not-found' element={<NotFound/>}/>
+          <Route path='*' element={<NotFound/>}/>
         </Routes>
       </Router>
     </>

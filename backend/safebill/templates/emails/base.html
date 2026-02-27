@@ -21,6 +21,7 @@
             line-height: 100%;
             outline: none;
             text-decoration: none;
+            max-width: 100%;
         }
         
         /* Main styles */
@@ -51,7 +52,7 @@
         .email-header {
             background-color: #1e3a8a;
             color: #ffffff;
-            padding: 30px 20px;
+            padding: 24px 20px 30px 20px;
             text-align: center;
         }
         
@@ -175,15 +176,27 @@
             }
             
             .email-content {
-                padding: 30px 20px;
+                padding: 24px 16px;
             }
             
             .email-header {
-                padding: 20px 15px;
+                padding: 16px 12px;
             }
             
             .email-header h1 {
-                font-size: 24px;
+                font-size: 22px;
+            }
+            
+            .email-content h2 {
+                font-size: 20px;
+            }
+            
+            .email-content p {
+                font-size: 15px;
+            }
+            
+            .highlight, .warning, .success {
+                padding: 12px;
             }
             
             .btn {
@@ -201,8 +214,8 @@
                 <td align="center">
                     <div class="email-container">
                         <div class="email-header">
-                            <h1>{{ site_name }}</h1>
-                            <p>{% block header_subtitle %}Secure Business Transactions{% endblock %}</p>
+                            <h1 style="margin-top:0;">{{ site_name }}</h1>
+                            <p>{% block header_subtitle %}{% if language == 'fr' %}Transactions Commerciales Sécurisées{% else %}Secure Business Transactions{% endif %}{% endblock %}</p>
                         </div>
                         
                         <div class="email-content">
@@ -210,9 +223,15 @@
                         </div>
                         
                         <div class="email-footer">
-                            <p>&copy; 2024 {{ site_name }}. All rights reserved.</p>
-                            <p>If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
-                            <p>This email was sent to you because you have an account with {{ site_name }}.</p>
+                            {% if language == 'fr' %}
+                                <p>&copy; 2026 {{ site_name }}. Tous droits réservés.</p>
+                                <p>Si vous avez des questions, veuillez nous contacter à l'adresse <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+                                <p>Cet e-mail vous a été envoyé car vous avez un compte chez {{ site_name }}.</p>
+                            {% else %}
+                                <p>&copy; 2026 {{ site_name }}. All rights reserved.</p>
+                                <p>If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+                                <p>This email was sent to you because you have an account with {{ site_name }}.</p>
+                            {% endif %}
                         </div>
                     </div>
                 </td>

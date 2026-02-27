@@ -2,12 +2,15 @@ import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import Logo from '../../assets/Safe_Bill_Dark.png';
 
 const links = [
   { labelKey: 'sidebar.dashboard', to: '/seller-dashboard' },
   { labelKey: 'sidebar.my_quotes', to: '/my-quotes' },
   { labelKey: 'sidebar.current_projects', to: '/current-projects' },
   { labelKey: 'sidebar.completed_projects', to: '/completed-projects' },
+  { labelKey: 'sidebar.receipts', to: '/seller-dashboard/receipts' },
+  { labelKey: 'sidebar.expired_tokens', to: '/seller-dashboard/expired-invites' },
   { labelKey: 'sidebar.disputes', to: '/seller-disputes' },
   { labelKey: 'sidebar.my_profile', to: '/profile' },
   { labelKey: 'sidebar.billings', to: '/billings' },
@@ -22,7 +25,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden md:block w-64 bg-[#F6FAFD] min-h-screen p-6 border-r border-gray-200">
-        <Link to="/" className="text-xl font-bold mb-8 block  transition-colors cursor-pointer">Safe Bill</Link>
+        <Link to="/" className="mb-8 block cursor-pointer mt-18"><img src={Logo} alt="Safe Bill" className="h-6 w-auto object-contain" /></Link>
         <nav className="flex flex-col gap-2">
           {links.map(link => (
             link.to === "#" ? (
@@ -64,7 +67,7 @@ export default function Sidebar({ open, setOpen, extraNavItems = [] }) {
         >
           <X className="w-6 h-6" />
         </button>
-        <Link to="/seller-dashboard" className="text-xl font-bold mb-8 block hover:text-[#01257D] transition-colors cursor-pointer">Safe Bill</Link>
+        <Link to="/seller-dashboard" className="mb-8 block hover:text-[#01257D] transition-colors cursor-pointer"><img src={Logo} alt="Safe Bill" className="h-12 w-auto object-contain" /></Link>
         <nav className="flex flex-col gap-2">
           {links.map(link => (
             link.to === "#" ? (

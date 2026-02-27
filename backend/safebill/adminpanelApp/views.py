@@ -11,9 +11,13 @@ from rest_framework.decorators import api_view, permission_classes
 
 from disputes.models import Dispute, DisputeEvent
 from notifications.models import Notification
+from notifications.services import NotificationService
 from .permissions import IsAdminRole, IsSuperAdmin, IsAdmin
 from .services import RevenueService
 from .models import PlatformRevenue
+from payments.models import Refund
+from payments.serializers import RefundSerializer
+from hubspot.tasks import sync_dispute_ticket_task
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +281,13 @@ class AssignMediatorAPIView(APIView):
         dispute.assigned_mediator = mediator
         dispute.status = "mediation_initiated"
         dispute.save()
+        
+        # Update HubSpot ticket asynchronously
+        try:
+            sync_dispute_ticket_task.delay(dispute.id)
+        except Exception:
+            pass
+        
         DisputeEvent.objects.create(
             dispute=dispute,
             event_type="mediation_initiated",
@@ -298,24 +309,29 @@ class AssignMediatorAPIView(APIView):
         dispute_title = dispute.title or f"Dispute {dispute.dispute_id}"
 
         # Notify initiator
-        initiator_message = (
-            f"Mediator {mediator_name} ({mediator.email}) "
-            f"has been assigned to your dispute: {dispute_title}"
+        NotificationService.create_notification(
+            user=dispute.initiator,
+            message="notifications.dispute_mediator_assigned_admin_initiator",
+            mediator_name=mediator_name,
+            mediator_email=mediator.email,
+            dispute_title=dispute_title
         )
-        Notification.objects.create(user=dispute.initiator, message=initiator_message)
 
         # Notify respondent
-        respondent_message = (
-            f"Mediator {mediator_name} ({mediator.email}) "
-            f"has been assigned to your dispute: {dispute_title}"
+        NotificationService.create_notification(
+            user=dispute.respondent,
+            message="notifications.dispute_mediator_assigned_admin_respondent",
+            mediator_name=mediator_name,
+            mediator_email=mediator.email,
+            dispute_title=dispute_title
         )
-        Notification.objects.create(user=dispute.respondent, message=respondent_message)
 
         # Notify mediator
-        mediator_message = (
-            f"You have been assigned as mediator for dispute: " f"{dispute_title}"
+        NotificationService.create_notification(
+            user=mediator,
+            message="notifications.dispute_mediator_assigned_admin_mediator",
+            dispute_title=dispute_title
         )
-        Notification.objects.create(user=mediator, message=mediator_message)
 
         return Response(
             {
@@ -400,6 +416,12 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
         dispute.status = new_status
         dispute.save()
 
+        # Update HubSpot ticket asynchronously
+        try:
+            sync_dispute_ticket_task.delay(dispute.id)
+        except Exception:
+            pass
+
         # Helper function to format status for display
         def format_status_display(status):
             if not status:
@@ -418,20 +440,25 @@ class MediatorUpdateDisputeStatusAPIView(APIView):
 
         # Send notifications to initiator and respondent about status change
         dispute_title = dispute.title or f"Dispute {dispute.dispute_id}"
-        status_change_message = (
-            f"Dispute '{dispute_title}' status changed from "
-            f'"{format_status_display(current)}" to '
-            f'"{format_status_display(new_status)}"'
-        )
+        old_status = format_status_display(current)
+        new_status_display = format_status_display(new_status)
 
         # Notify initiator
-        Notification.objects.create(
-            user=dispute.initiator, message=status_change_message
+        NotificationService.create_notification(
+            user=dispute.initiator,
+            message="notifications.dispute_status_changed_admin_initiator",
+            dispute_id=dispute.dispute_id,
+            old_status=old_status,
+            new_status=new_status_display
         )
 
         # Notify respondent
-        Notification.objects.create(
-            user=dispute.respondent, message=status_change_message
+        NotificationService.create_notification(
+            user=dispute.respondent,
+            message="notifications.dispute_status_changed_admin_respondent",
+            dispute_id=dispute.dispute_id,
+            old_status=old_status,
+            new_status=new_status_display
         )
 
         return Response(
@@ -475,7 +502,7 @@ def get_monthly_revenue(request, year, month):
             data = {
                 "year": revenue.year,
                 "month": revenue.month,
-                "buyer_revenue": revenue.buyer_revenue,
+                "vat_collected": revenue.vat_collected,
                 "seller_revenue": revenue.seller_revenue,
                 "total_revenue": revenue.total_revenue,
                 "total_payments": revenue.total_payments,
@@ -525,7 +552,7 @@ def recalculate_monthly_revenue(request, year, month):
         data = {
             "year": revenue.year,
             "month": revenue.month,
-            "buyer_revenue": revenue.buyer_revenue,
+            "vat_collected": revenue.vat_collected,
             "seller_revenue": revenue.seller_revenue,
             "total_revenue": revenue.total_revenue,
             "total_payments": revenue.total_payments,
@@ -555,7 +582,7 @@ def list_revenue_months(request):
                 {
                     "year": revenue.year,
                     "month": revenue.month,
-                    "buyer_revenue": revenue.buyer_revenue,
+                    "vat_collected": revenue.vat_collected,
                     "seller_revenue": revenue.seller_revenue,
                     "total_revenue": revenue.total_revenue,
                     "total_payments": revenue.total_payments,
@@ -606,7 +633,6 @@ def get_paid_payments(request):
                     ),
                     "amount": payment.amount,
                     "platform_fee_amount": payment.platform_fee_amount,
-                    "stripe_fee_amount": payment.stripe_fee_amount,
                     "buyer_total_amount": payment.buyer_total_amount,
                     "seller_net_amount": payment.seller_net_amount,
                     "status": payment.status,
@@ -664,4 +690,41 @@ def get_transfers(request):
         )
 
 
-0
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdminRole])
+def get_refunded_payments(request):
+    """
+    Get all refunded payments for admin management (Refund records)
+    """
+    try:
+
+        refunds = (
+            Refund.objects.filter(status="paid")
+            .select_related("project", "user")
+            .order_by("-created_at")
+        )
+        serializer = RefundSerializer(refunds, many=True)
+        # Enrich minimal user/project fields for admin table convenience
+        results = []
+        for r, s in zip(refunds, serializer.data):
+            s = dict(s)
+            s.update(
+                {
+                    "user_email": getattr(r.user, "email", None),
+                    "user_name": (
+                        (r.user.get_full_name() or r.user.username or r.user.email)
+                        if getattr(r, "user", None)
+                        else None
+                    ),
+                    "project_title": getattr(r.project, "name", None),
+                }
+            )
+            results.append(s)
+
+        return Response({"results": results}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error getting refunded payments: {e}")
+        return Response(
+            {"error": "Failed to get refunded payments"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Eye, EyeOff, Info, Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ClipLoader } from "react-spinners";
 import { Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import LoginBg from "../../../assets/Circle Background/login-removed-bg.jpg";
 
 import {
   businessActivityStructure,
@@ -74,6 +75,72 @@ export default function SellerRegisterFlow({role = "seller"}) {
   const [siretError, setSiretError] = useState("");
   const [fieldsDisabled, setFieldsDisabled] = useState(true);
   const [siretVerified, setSiretVerified] = useState(false);
+  // Rehydrate SIRET from Redux on mount if available; also clear any legacy session key
+  useEffect(() => {
+    const reduxLast = siretVerification?.lastSiret;
+    // Cleanup legacy persisted key if present so refresh clears the field
+    try { sessionStorage.removeItem('lastSiret'); } catch (e) {}
+    const lastSiret = reduxLast;
+    if (lastSiret && lastSiret.length === 14) {
+      setFormData((prev) => ({ ...prev, businessNumber: lastSiret }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refs for click-outside handling on dropdowns
+  const businessActivityRef = useRef(null);
+  const categoriesRef = useRef(null);
+  const subcategoriesRef = useRef(null);
+  const serviceAreasRef = useRef(null);
+
+  // Close open dropdowns when clicking outside
+  useEffect(() => {
+    const handleDocumentClick = (event) => {
+      // Business Activity
+      if (
+        showBusinessActivityDropdown &&
+        businessActivityRef.current &&
+        !businessActivityRef.current.contains(event.target)
+      ) {
+        setShowBusinessActivityDropdown(false);
+      }
+
+      // Categories
+      if (
+        showCategoriesDropdown &&
+        categoriesRef.current &&
+        !categoriesRef.current.contains(event.target)
+      ) {
+        setShowCategoriesDropdown(false);
+      }
+
+      // Subcategories
+      if (
+        showSubcategoriesDropdown &&
+        subcategoriesRef.current &&
+        !subcategoriesRef.current.contains(event.target)
+      ) {
+        setShowSubcategoriesDropdown(false);
+      }
+
+      // Service Areas
+      if (
+        showServiceAreasDropdown &&
+        serviceAreasRef.current &&
+        !serviceAreasRef.current.contains(event.target)
+      ) {
+        setShowServiceAreasDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
+  }, [
+    showBusinessActivityDropdown,
+    showCategoriesDropdown,
+    showSubcategoriesDropdown,
+    showServiceAreasDropdown,
+  ]);
 
   // Password validation regex: at least 8 chars, one uppercase, one lowercase, one number, one special char
   const strongPasswordRegex =
@@ -133,7 +200,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
       if (!/^\d*$/.test(value)) {
         setErrors((prev) => ({
           ...prev,
-          [field]: t('registration.only_numbers_allowed_validation'),
+          [field]: t('seller_registration.only_numbers_allowed_validation'),
         }));
         return;
       } else {
@@ -198,7 +265,14 @@ export default function SellerRegisterFlow({role = "seller"}) {
       setFieldsDisabled(false);
       setSiretVerified(true);
     } else if (siretVerification.error) {
+      const rawError = String(siretVerification.error || '').toLowerCase();
+      if (rawError.includes('already in use')) {
+        setSiretError(t('seller_registration.siret_already_in_use'));
+      } else if (rawError.includes('must contain exactly 14') || rawError.includes('must be exactly 14')) {
+        setSiretError(t('seller_registration.siret_error'));
+      } else {
       setSiretError(siretVerification.error);
+      }
       setFieldsDisabled(true);
       setSiretVerified(false);
     }
@@ -211,13 +285,13 @@ export default function SellerRegisterFlow({role = "seller"}) {
     if (!formData.businessNumber.trim()) {
       newErrors.businessNumber = t('seller_registration.business_registration_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.businessNumber)) {
-      newErrors.businessNumber = t('registration.only_numbers_allowed_validation');
+      newErrors.businessNumber = t('seller_registration.only_numbers_allowed_validation');
     }
     // Integer validation for phoneNumber
     if (!formData.phoneNumber.trim()) {
       newErrors.phoneNumber = t('seller_registration.phone_number_label').replace(' *', '');
     } else if (!/^\d+$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = t('registration.only_numbers_allowed_validation');
+      newErrors.phoneNumber = t('seller_registration.only_numbers_allowed_validation');
     }
 
     // Password validation rules
@@ -399,18 +473,23 @@ export default function SellerRegisterFlow({role = "seller"}) {
   }, [success, error, dispatch, t]);
 
   const steps = [
-    { number: 1, title: t('seller_registration.basic_information_step'), active: currentStep >= 1 },
-    { number: 2, title: t('seller_registration.documents_step'), active: false },
-    { number: 3, title: t('seller_registration.verification_step'), active: false },
+    { number: 1, title: t('onboarding.basic_information_step'), active: currentStep >= 1 },
+    { number: 2, title: t('onboarding.connect_stripe_step'), active: false },
+    { number: 3, title: t('onboarding.verification_step'), active: false },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="relative min-h-screen py-8">
+      {/* Full-page background layer (does not affect layout) */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain"
+        style={{ backgroundImage: `url(${LoginBg})` }}
+      />
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-[#FFFFFF] rounded-lg shadow-sm p-8">
+        <div className="bg-[#FFFFFF] rounded-[20px] shadow-sm p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-[#111827] mb-2">
+            <h1 className="text-2xl font-semibold text-[#2E78A6] mb-2">
               {getTitle()}
             </h1>
             <p className="text-[#111827]">
@@ -738,7 +817,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('seller_registration.business_activity_label')}
                 </label>
-                <div className="relative">
+                <div className="relative" ref={businessActivityRef}>
                   <button
                     type="button"
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
@@ -811,7 +890,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('seller_registration.categories_optional_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative" ref={categoriesRef}>
                     <button
                       type="button"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -915,7 +994,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t('seller_registration.subcategories_optional_label')}
                   </label>
-                  <div className="relative">
+                  <div className="relative" ref={subcategoriesRef}>
                     <button
                       type="button"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
@@ -1019,7 +1098,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('seller_registration.service_areas_label')}
                 </label>
-                <div className="relative">
+                <div className="relative" ref={serviceAreasRef}>
                   <button
                     type="button"
                     className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between bg-white focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent ${
@@ -1268,7 +1347,7 @@ export default function SellerRegisterFlow({role = "seller"}) {
 
             <button
               onClick={handleSubmit}
-              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#01257D] text-white hover:bg-[#2346a0] ${
+              className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer flex items-center justify-center bg-[#2E78A6] text-white hover:bg-[#256a94] ${
                 loading ? "opacity-80" : ""
               }`}
               disabled={loading}

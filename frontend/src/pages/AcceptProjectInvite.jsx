@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import Footer from '../components/mutualComponents/Footer';
 import { Key, ArrowRight, AlertCircle } from 'lucide-react';
+import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function AcceptProjectInvite() {
   const { t } = useTranslation();
@@ -35,14 +37,19 @@ export default function AcceptProjectInvite() {
   return (
     <>
       <SafeBillHeader />
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md mx-auto">
+      <div className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-center md:bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="max-w-md mx-auto relative z-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#10B981] mb-4">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#3535AA] mb-4">
               <Key className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-[#2E78A6] mb-2">
               {t('accept_project_invite.title')}
             </h1>
             <p className="text-gray-600">
@@ -86,7 +93,7 @@ export default function AcceptProjectInvite() {
               <button
                 type="submit"
                 disabled={loading || !token.trim()}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#10B981] text-white rounded-lg font-medium hover:bg-[#059669] focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#2E78A6] text-white rounded-lg font-medium hover:bg-[#256a94] focus:outline-none focus:ring-2 focus:ring-[#2E78A6] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -110,13 +117,14 @@ export default function AcceptProjectInvite() {
             </p>
             <button
               onClick={() => navigate('/buyer-dashboard')}
-              className="mt-2 text-sm text-[#10B981] hover:text-[#059669] font-medium transition-colors"
+              className="mt-2 text-sm text-[#2E78A6] hover:text-[#256a94] font-medium transition-colors"
             >
               {t('accept_project_invite.back_to_dashboard')}
             </button>
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

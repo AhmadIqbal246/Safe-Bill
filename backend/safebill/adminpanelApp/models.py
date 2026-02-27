@@ -15,13 +15,16 @@ class PlatformRevenue(models.Model):
     month = models.IntegerField()  # 1-12
 
     # Revenue from buyers (platform_fee_amount from payments)
-    buyer_revenue = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0, help_text="Revenue from buyer fees"
+    seller_revenue = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, help_text="Revenue from seller fees"
     )
 
     # Revenue from sellers (seller fee deducted from their earnings)
-    seller_revenue = models.DecimalField(
-        max_digits=12, decimal_places=2, default=0, help_text="Revenue from seller fees"
+    vat_collected = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Revenue from vat collected",
     )
 
     # Total platform revenue
@@ -29,7 +32,7 @@ class PlatformRevenue(models.Model):
         max_digits=12,
         decimal_places=2,
         default=0,
-        help_text="Total platform revenue (buyer + seller)",
+        help_text="Total platform revenue (seller + vat)",
     )
 
     # Transaction counts
@@ -51,7 +54,7 @@ class PlatformRevenue(models.Model):
 
     def save(self, *args, **kwargs):
         # Auto-calculate total revenue
-        self.total_revenue = self.buyer_revenue + self.seller_revenue
+        self.total_revenue = self.seller_revenue
         super().save(*args, **kwargs)
 
     @classmethod
@@ -62,7 +65,7 @@ class PlatformRevenue(models.Model):
             year=now.year,
             month=now.month,
             defaults={
-                "buyer_revenue": Decimal("0.00"),
+                "vat_collected": Decimal("0.00"),
                 "seller_revenue": Decimal("0.00"),
                 "total_revenue": Decimal("0.00"),
                 "total_payments": 0,
@@ -82,12 +85,10 @@ class PlatformRevenue(models.Model):
     def get_total_revenue(cls):
         """Get total platform revenue across all months"""
         total = cls.objects.aggregate(
-            total_buyer=models.Sum("buyer_revenue"),
             total_seller=models.Sum("seller_revenue"),
             total_platform=models.Sum("total_revenue"),
         )
         return {
-            "buyer_revenue": total["total_buyer"] or Decimal("0.00"),
             "seller_revenue": total["total_seller"] or Decimal("0.00"),
             "total_revenue": total["total_platform"] or Decimal("0.00"),
         }

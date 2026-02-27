@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "../../../store/slices/AuthSlices";
+import { logoutUser, switchActiveRole } from "../../../store/slices/AuthSlices";
 import {
   fetchNotifications,
   markNotificationRead,
@@ -10,7 +10,10 @@ import {
 import { useNotificationWebSocket } from "../../../hooks/useNotificationWebSocket";
 import { formatDistanceToNow } from "date-fns";
 import SignUpPopup from "./SignUpPopup";
+import CallbackForm from "../CallbackForm";
 import { useTranslation } from "react-i18next";
+import { getStepTranslationKey } from "../../../utils/translationUtils";
+import Logo from "../../../assets/Safe_Bill_Dark.png";
 
 export const signedOutNavItems = [
   { label: "navbar.home", href: "/" },
@@ -49,6 +52,7 @@ export default function SafeBillHeader({
   const [isMobileNotifDropdownOpen, setIsMobileNotifDropdownOpen] =
     useState(false);
   const [isSignUpPopupOpen, setIsSignUpPopupOpen] = useState(false);
+  const [isCallbackOpen, setIsCallbackOpen] = useState(false);
 
   // i18n
   const { t, i18n } = useTranslation();
@@ -64,13 +68,12 @@ export default function SafeBillHeader({
   const computedProfilePic = profilePic
     ? profilePic.startsWith("http")
       ? profilePic
-      : `${BASE_URL}${
-          profilePic.startsWith("/") ? profilePic.slice(1) : profilePic
-        }`
+      : `${BASE_URL}${profilePic.startsWith("/") ? profilePic.slice(1) : profilePic
+      }`
     : null;
   const userAvatar =
     computedProfilePic || (user && user.avatar ? user.avatar : null);
-  console.log(userAvatar);
+  // Remove console.log to avoid null logging
   const userEmail = user && user.email ? user.email : "";
 
   // Determine admin panel visibility from session/user
@@ -85,12 +88,51 @@ export default function SafeBillHeader({
         user.is_admin === true))
   );
 
-  const canSeeProjectInvite = !!(
+  // Visibility based on current role
+  const canSeeProjectInvite = !!(user && (user.role === "professional-buyer" || user.role === "buyer"));
+  const canSeeSellerDashboard = !!(user && user.role === "seller");
+
+  // Toggle visibility: show only if both seller and professional-buyer are enabled
+  // AND user's current role is either seller or professional-buyer
+  const canToggleRoles = !!(
     user &&
-    (user.role === "buyer" || user.role === "professional-buyer")
+    Array.isArray(user.available_roles) &&
+    user.available_roles.includes("seller") &&
+    user.available_roles.includes("professional-buyer") &&
+    (user.role === "seller" || user.role === "professional-buyer")
   );
 
-  const canSeeSellerDashboard = !!(user && user.role === "seller");
+  const handleToggleRole = async () => {
+    if (!user) return;
+    const targetRole = user.role === "seller" ? "professional-buyer" : "seller";
+
+    try {
+      const action = await dispatch(switchActiveRole({ targetRole }));
+
+      if (action?.error) {
+        console.error('Role switch failed:', action.error);
+        return;
+      }
+
+      const updated = action?.payload?.user || null;
+      const role = updated?.role || user.role;
+      const sellerComplete = !!updated?.seller_onboarding_complete;
+      const proBuyerComplete = !!updated?.pro_buyer_onboarding_complete;
+
+      // Determine the target URL based on the new role
+      let targetUrl = '/';
+      if (role === 'seller') {
+        targetUrl = !sellerComplete ? '/onboarding' : '/seller-dashboard';
+      } else if (role === 'professional-buyer') {
+        targetUrl = !proBuyerComplete ? '/onboarding' : '/buyer-dashboard';
+      }
+
+      // Use React Router navigation - ProtectedRoute will automatically re-evaluate
+      navigate(targetUrl);
+    } catch (error) {
+      console.error('Error in role switch:', error);
+    }
+  };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -132,6 +174,7 @@ export default function SafeBillHeader({
   };
 
   const navItems = isSignedIn ? signedInNavItems : signedOutNavItems;
+  const pricingLabel = i18n.language.startsWith("fr") ? "Tarif" : "Pricing";
 
   // Example: use a default style if shiftNavbarLeft is true, or use the passed style/class
   const leftShiftStyle = shiftNavbarLeft
@@ -143,12 +186,83 @@ export default function SafeBillHeader({
     : navbarRightClassName || "justify-end";
 
   // Notification icon logic (reuse from dashboard)
-  function getNotificationIcon(message) {
-    if (message.toLowerCase().includes("project")) return "+";
-    if (message.toLowerCase().includes("approved")) return "✓";
-    if (message.toLowerCase().includes("deadline")) return "⏰";
-    if (message.toLowerCase().includes("payment")) return "$";
+  function getNotificationIconFromNotification(notification) {
+    // Prefer stable translation keys so icons don't depend on language
+    const key = notification?.translation_key || "";
+    if (key.startsWith("notifications.project_")) return "+";
+    if (key.startsWith("notifications.payment_")) return "$";
+    // Fallback to heuristic on translated text
+    const message = translateNotification(notification) || "";
+    const lower = message.toLowerCase();
+    if (lower.includes("project")) return "+";
+    if (lower.includes("approved")) return "✓";
+    if (lower.includes("deadline")) return "⏰";
+    if (lower.includes("payment")) return "$";
     return "!";
+  }
+
+  // Function to translate notification messages dynamically
+  function translateNotification(notification) {
+    // Check if notification has translation_key field (new format)
+    if (notification.translation_key) {
+      // Try to parse translation_variables if it's a string
+      let variables = notification.translation_variables || {};
+      if (typeof variables === 'string') {
+        try {
+          variables = JSON.parse(variables);
+        } catch (e) {
+          variables = {};
+        }
+      }
+
+      // Ensure variables object is mutable (it might be a read-only object from Redux state)
+      variables = { ...variables };
+
+      // Translate milestone status if present
+      if (variables.status) {
+        const statusMap = {
+          'Approved': t('notifications.milestone_status_approved'),
+          'Not Approved': t('notifications.milestone_status_not_approved'),
+          'Sent for Review': t('notifications.milestone_status_review_request'),
+          'Submitted for Approval': t('notifications.milestone_status_pending'),
+        };
+        // Create a copy to avoid mutating the original object
+        variables = { ...variables, status: statusMap[variables.status] || variables.status };
+      }
+
+      // Translate milestone name if present in variables
+      // Loop through all variables to find potential milestone names
+      Object.keys(variables).forEach(key => {
+        const value = variables[key];
+        if (typeof value === 'string') {
+          const translationKey = getStepTranslationKey(value);
+          if (translationKey) {
+            variables[key] = t(translationKey);
+          }
+        }
+      });
+
+      // Use the full key path with notifications namespace
+      return t(notification.translation_key, { ...variables });
+    }
+
+    // Fallback: Check if message is a translation key (backward compatibility)
+    if (notification.message && notification.message.startsWith('notifications.')) {
+      // For old notifications, we need to extract variables from the message or use defaults
+      // This is a fallback for notifications created before the new system
+      let variables = {};
+
+      // Try to extract project name from the message if it contains it
+      if (notification.message.includes('project_created') || notification.message.includes('invitation_generated')) {
+        // For old notifications, we can't get the actual project name, so we'll show a generic message
+        variables = { project_name: 'Projet' }; // Generic fallback
+      }
+
+      return t(notification.message, variables);
+    }
+
+    // Return plain text message (old notifications without translation)
+    return notification.message;
   }
 
   function renderNotifications(list = notifications) {
@@ -166,10 +280,10 @@ export default function SafeBillHeader({
         className="flex items-center gap-3 p-2 hover:bg-gray-50"
       >
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold flex-shrink-0">
-          {getNotificationIcon(n.message)}
+          {getNotificationIconFromNotification(n)}
         </div>
         <div className="flex-1 flex flex-col justify-center">
-          <div className="text-sm text-gray-800">{n.message}</div>
+          <div className="text-sm text-gray-800">{translateNotification(n)}</div>
           <div className="text-xs text-gray-400 mt-1">
             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
           </div>
@@ -196,32 +310,40 @@ export default function SafeBillHeader({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 xl:-ml-24">
             {showSafeBillHeaderOnMobile ? (
               <Link
                 to="/"
-                className="text-xl font-semibold text-gray-900 cursor-pointer md:hidden"
+                className="lg:hidden inline-flex items-center cursor-pointer pt-2 -ml-4 mr-1"
               >
-                Safe Bill
+                <img
+                  src={Logo}
+                  alt="Safe Bill"
+                  className="h-4 w-auto object-contain"
+                />
               </Link>
             ) : (
               !hideSafeBillHeader && (
                 <Link
                   to="/"
-                  className="text-xl font-semibold text-gray-900 cursor-pointer"
+                  className="inline-flex items-center cursor-pointer pt-4"
                 >
-                  Safe Bill
+                  <img
+                    src={Logo}
+                    alt="Safe Bill"
+                    className="h-6 w-auto object-contain"
+                  />
                 </Link>
               )
             )}
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8">
             {canSeeProjectInvite && (
               <Link
                 to="/find-professionals"
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
                 {t("navbar.find_professionals")}
               </Link>
@@ -229,23 +351,23 @@ export default function SafeBillHeader({
             {canSeeProjectInvite && (
               <Link
                 to="/buyer-dashboard"
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
-                Dashboard
+                {t("navbar.dashboard")}
               </Link>
             )}
             {canSeeSellerDashboard && (
               <Link
                 to="/seller-dashboard"
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
-                Dashboard
+                {t("navbar.dashboard")}
               </Link>
             )}
             {canSeeAdminPanel && (
               <Link
                 to="/admin"
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
                 Admin Panel
               </Link>
@@ -253,7 +375,7 @@ export default function SafeBillHeader({
             {canSeeProjectInvite && (
               <Link
                 to="/how-to-accept-project-invite"
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
                 {t("navbar.how_to_accept_project_invite")}
               </Link>
@@ -262,41 +384,75 @@ export default function SafeBillHeader({
               <Link
                 key={item.label}
                 to={item.href}
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap"
               >
                 {t(item.label)}
               </Link>
             ))}
+            {!isSignedIn && (
+              <button
+                type="button"
+                onClick={() => setIsCallbackOpen(true)}
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+              >
+                {pricingLabel}
+              </button>
+            )}
           </nav>
 
           {/* Right Side - Desktop */}
           <div
-            className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`}
+            className={`hidden lg:flex items-center space-x-4 ${leftShiftClass}`}
             style={leftShiftStyle}
           >
+            {/* Role Toggle Button */}
+            {canToggleRoles && (
+              <div className="flex items-center mr-2">
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => user.role !== 'seller' && handleToggleRole()}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${user.role === 'seller'
+                      ? 'bg-[#01257D] text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                  >
+                    {t("navbar.seller")}
+                  </button>
+                  <button
+                    onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 cursor-pointer ${user.role === 'professional-buyer'
+                      ? 'bg-[#01257D] text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                  >
+                    {t("navbar.pro_buyer")}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Language Switcher */}
-            <div className="flex items-center gap-1 mr-2">
-              <button
-                onClick={() => changeLanguage("en")}
-                className={`px-2 py-1 text-xs rounded-md border ${
-                  i18n.language.startsWith("en")
-                    ? "bg-[#01257D] text-white border-[#01257D]"
-                    : "border-gray-300 text-gray-700"
-                } cursor-pointer`}
-                title="English"
-              >
-                EN
-              </button>
+            <div className="flex items-center mr-2 border border-transparent rounded-md bg-white px-2 py-1">
               <button
                 onClick={() => changeLanguage("fr")}
-                className={`px-2 py-1 text-xs rounded-md border ${
-                  i18n.language.startsWith("fr")
-                    ? "bg-[#01257D] text-white border-[#01257D]"
-                    : "border-gray-300 text-gray-700"
-                } cursor-pointer`}
+                className={`text-xs cursor-pointer ${i18n.language.startsWith("fr")
+                  ? "text-[#01257D] font-bold"
+                  : "text-gray-400 font-bold"
+                  }`}
                 title="Français"
               >
                 FR
+              </button>
+              <span className="text-xs text-[#01257D] mx-2 font-bold">|</span>
+              <button
+                onClick={() => changeLanguage("en")}
+                className={`text-xs cursor-pointer ${i18n.language.startsWith("en")
+                  ? "text-[#01257D] font-bold"
+                  : "text-gray-400 font-bold"
+                  }`}
+                title="English"
+              >
+                ENG
               </button>
             </div>
             {isSignedIn ? (
@@ -356,22 +512,16 @@ export default function SafeBillHeader({
                         </button>
                         <Link
                           to={
-                            user.role === "seller"
+                            (user.role || user.active_role) === "seller"
                               ? "/profile"
                               : user.role === "admin"
-                              ? "/admin"
-                              : "/buyer-dashboard"
+                                ? "/admin"
+                                : "/buyer-dashboard"
                           }
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           {t("navbar.profile")}
                         </Link>
-                        <a
-                          href="#"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          {t("navbar.settings")}
-                        </a>
                         <Link
                           to="/billings"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -379,6 +529,12 @@ export default function SafeBillHeader({
                           {t("navbar.billing")}
                         </Link>
                         <div className="border-t border-gray-100">
+                          <Link
+                            to="/delete-account"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.delete_my_account")}
+                          </Link>
                           <button
                             onClick={handleSignOut}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
@@ -396,13 +552,13 @@ export default function SafeBillHeader({
                 {/* Sign In and Join Now Buttons */}
                 <button
                   onClick={onSignIn}
-                  className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  className="px-6 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-[15px] transition-colors cursor-pointer"
                 >
                   <Link to="/login">{t("navbar.sign_in")}</Link>
                 </button>
                 <button
                   onClick={() => setIsSignUpPopupOpen(true)}
-                  className="px-4 py-2 text-sm font-medium text_white text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
+                  className="px-6 py-2 text-sm font-medium text_white text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-[15px] transition-colors cursor-pointer"
                 >
                   {t("navbar.sign_up")}
                 </button>
@@ -412,30 +568,57 @@ export default function SafeBillHeader({
 
           {/* Mobile Right Side (avatar and bell only, no hamburger) */}
           {!showMobileMenuButton && (
-            <div className="flex md:hidden items-center space-x-4">
+            <div className="flex lg:hidden items-center space-x-4">
+              {/* Role Toggle Button - Mobile */}
+              {canToggleRoles && (
+                <div className="flex items-center">
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => user.role !== 'seller' && handleToggleRole()}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'seller'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                    >
+                      <span className="hidden sm:inline">{t("navbar.seller")}</span>
+                      <span className="sm:hidden">S</span>
+                    </button>
+                    <button
+                      onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'professional-buyer'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                    >
+                      <span className="hidden sm:inline">{t("navbar.pro_buyer")}</span>
+                      <span className="sm:hidden">P</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Language Switcher - Mobile */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => changeLanguage("en")}
-                  className={`px-2 py-1 text-xs rounded-md border ${
-                    i18n.language.startsWith("en")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
-                  title="English"
-                >
-                  EN
-                </button>
+              <div className="flex items-center border border-transparent rounded-md bg-white px-2 py-1">
                 <button
                   onClick={() => changeLanguage("fr")}
-                  className={`px-2 py-1 text-xs rounded-md border ${
-                    i18n.language.startsWith("fr")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("fr")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
                   title="Français"
                 >
                   FR
+                </button>
+                <span className="text-xs text-[#01257D] mx-2 font-bold">|</span>
+                <button
+                  onClick={() => changeLanguage("en")}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("en")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
+                  title="English"
+                >
+                  ENG
                 </button>
               </div>
               {isSignedIn ? (
@@ -496,22 +679,16 @@ export default function SafeBillHeader({
                           </button>
                           <Link
                             to={
-                              user.role === "seller"
+                              (user.role || user.active_role) === "seller"
                                 ? "/profile"
                                 : user.role === "admin"
-                                ? "/admin"
-                                : "/buyer-dashboard"
+                                  ? "/admin"
+                                  : "/buyer-dashboard"
                             }
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             {t("navbar.profile")}
                           </Link>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            {t("navbar.settings")}
-                          </a>
                           <Link
                             to="/billings"
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -519,6 +696,12 @@ export default function SafeBillHeader({
                             {t("navbar.billing")}
                           </Link>
                           <div className="border-t border-gray-100">
+                            <Link
+                              to="/delete-account"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              {t("navbar.delete_my_account")}
+                            </Link>
                             <button
                               onClick={handleSignOut}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -552,7 +735,7 @@ export default function SafeBillHeader({
 
           {/* Mobile Menu Button */}
           {showMobileMenuButton && (
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -569,7 +752,7 @@ export default function SafeBillHeader({
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
               {canSeeProjectInvite && (
                 <Link
@@ -584,7 +767,7 @@ export default function SafeBillHeader({
                   to="/seller-dashboard"
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
-                  Dashboard
+                  {t("navbar.dashboard")}
                 </Link>
               )}
               {canSeeAdminPanel && (
@@ -600,7 +783,7 @@ export default function SafeBillHeader({
                   to="/buyer-dashboard"
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
-                  Dashboard
+                  {t("navbar.dashboard")}
                 </Link>
               )}
               {canSeeProjectInvite && (
@@ -620,28 +803,67 @@ export default function SafeBillHeader({
                   {t(item.label)}
                 </Link>
               ))}
+              {!isSignedIn && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsCallbackOpen(true);
+                  }}
+                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  {pricingLabel}
+                </button>
+              )}
+
+              {/* Role Toggle Button - Mobile in menu */}
+              {canToggleRoles && (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <div className="flex bg-gray-100 rounded-lg p-1 w-full">
+                    <button
+                      onClick={() => user.role !== 'seller' && handleToggleRole()}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'seller'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                    >
+                      <span className="hidden min-[480px]:inline">{t("navbar.seller")}</span>
+                      <span className="min-[480px]:hidden">S</span>
+                    </button>
+                    <button
+                      onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${user.role === 'professional-buyer'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                    >
+                      <span className="hidden min-[480px]:inline">{t("navbar.pro_buyer")}</span>
+                      <span className="min-[480px]:hidden">P</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Language Switcher - Mobile in menu */}
-              <div className="flex items-center gap-2 px-3 py-2">
-                <button
-                  onClick={() => changeLanguage("en")}
-                  className={`px-3 py-1 text-xs rounded-md border ${
-                    i18n.language.startsWith("en")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
-                >
-                  English
-                </button>
+              <div className="flex items-center border border-transparent rounded-md bg-white px-3 py-1 mx-3">
                 <button
                   onClick={() => changeLanguage("fr")}
-                  className={`px-3 py-1 text-xs rounded-md border ${
-                    i18n.language.startsWith("fr")
-                      ? "bg-[#01257D] text-white border-[#01257D]"
-                      : "border-gray-300 text-gray-700"
-                  } cursor-pointer`}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("fr")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
                 >
-                  Français
+                  FR
+                </button>
+                <span className="text-xs text-[#01257D] mx-3 font-bold">|</span>
+                <button
+                  onClick={() => changeLanguage("en")}
+                  className={`text-xs cursor-pointer ${i18n.language.startsWith("en")
+                    ? "text-[#01257D] font-bold"
+                    : "text-gray-400 font-bold"
+                    }`}
+                >
+                  ENG
                 </button>
               </div>
 
@@ -699,6 +921,7 @@ export default function SafeBillHeader({
                       {isMobileNotifDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
                           <div className="py-2">{renderNotifications()}</div>
+                          <div className="py-2">{renderNotifications()}</div>
                         </div>
                       )}
                     </div>
@@ -717,19 +940,13 @@ export default function SafeBillHeader({
                               user.role === "seller"
                                 ? "/profile"
                                 : user.role === "admin"
-                                ? "/admin"
-                                : "/buyer-dashboard"
+                                  ? "/admin"
+                                  : "/buyer-dashboard"
                             }
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             {t("navbar.profile")}
                           </Link>
-                          <a
-                            href="#"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            {t("navbar.settings")}
-                          </a>
                           <Link
                             to="/billings"
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -737,6 +954,12 @@ export default function SafeBillHeader({
                             {t("navbar.billing")}
                           </Link>
                           <div className="border-t border-gray-100">
+                            <Link
+                              to="/delete-account"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              {t("navbar.delete_my_account")}
+                            </Link>
                             <button
                               onClick={handleSignOut}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -794,6 +1017,11 @@ export default function SafeBillHeader({
       <SignUpPopup
         isOpen={isSignUpPopupOpen}
         onClose={() => setIsSignUpPopupOpen(false)}
+      />
+      <CallbackForm
+        open={isCallbackOpen}
+        onClose={() => setIsCallbackOpen(false)}
+        defaultRole={user?.role}
       />
     </header>
   );

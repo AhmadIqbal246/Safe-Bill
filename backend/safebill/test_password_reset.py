@@ -65,7 +65,7 @@ def test_password_reset_template_rendering():
             'reset_url': 'https://example.com/reset-password?uid=test123&token=test456',
             'reset_code': 'ABC123XYZ',
             'frontend_reset_url': 'https://example.com/reset-password',
-            'site_name': 'SafeBill',
+            'site_name': 'Safe Bill',
             'support_email': 'support@safebill.com',
         }
         
@@ -131,7 +131,7 @@ def test_email_service_methods():
 
 def main():
     """Main test function"""
-    print("🚀 SafeBill Password Reset Email Service Test")
+    print("🚀 Safe Bill Password Reset Email Service Test")
     print("=" * 50)
     
     # Test password reset email

@@ -7,6 +7,7 @@ import Sidebar from '../components/SellerDashboard/Sidebar';
 import { Search, ChevronDown, Calendar, User, FileText } from 'lucide-react';
 import MainLayout from '../components/Layout/MainLayout';
 import { useTranslation } from 'react-i18next';
+import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function SellerDisputesPage() {
   const { t } = useTranslation();
@@ -90,50 +91,56 @@ export default function SellerDisputesPage() {
 
   if (disputesLoading) {
     return (
-      <>
-        <SafeBillHeader />
-        <div className="flex">
-          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-          <div className="flex-1 min-h-screen bg-gray-50 p-4">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center py-12">
-                <div className="text-lg text-gray-500">{t('seller_disputes.loading_disputes')}</div>
-              </div>
+      <MainLayout mainBackgroundClass="bg-transparent">
+        <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+          {/* Full-page background layer */}
+          <div
+            className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+            style={{ backgroundImage: `url(${LoginBg})` }}
+          />
+          <div className="max-w-7xl mx-auto relative z-10 p-6">
+            <div className="text-center py-12">
+              <div className="text-lg text-gray-500">{t('seller_disputes.loading_disputes')}</div>
             </div>
           </div>
         </div>
-      </>
+      </MainLayout>
     );
   }
 
   if (disputesError) {
     return (
-      <>
-        <SafeBillHeader />
-        <div className="flex">
-          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-          <div className="flex-1 min-h-screen bg-gray-50 p-4">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center py-12">
-                <div className="text-lg text-red-500">
-                  {typeof disputesError === 'string' ? disputesError : t('seller_disputes.failed_load_disputes')}
-                </div>
+      <MainLayout mainBackgroundClass="bg-transparent">
+        <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+          {/* Full-page background layer */}
+          <div
+            className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+            style={{ backgroundImage: `url(${LoginBg})` }}
+          />
+          <div className="max-w-7xl mx-auto relative z-10 p-6">
+            <div className="text-center py-12">
+              <div className="text-lg text-red-500">
+                {typeof disputesError === 'string' ? disputesError : t('seller_disputes.failed_load_disputes')}
               </div>
             </div>
           </div>
         </div>
-      </>
+      </MainLayout>
     );
   }
 
   return (
-        <MainLayout>
-      <div className="flex">
-        <div className="flex-1 min-h-screen bg-gray-50 p-2 sm:p-4">
-          <div className="max-w-7xl mx-auto">
+        <MainLayout mainBackgroundClass="bg-transparent">
+      <div className="relative -m-6 min-h-[calc(100vh-4rem)]">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="max-w-7xl mx-auto relative z-10 p-2 sm:p-4 lg:p-6">
             {/* Header */}
             <div className="mb-4 sm:mb-6 px-2 sm:px-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{t('seller_disputes.title')}</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#2E78A6] mb-2">{t('seller_disputes.title')}</h1>
               <p className="text-sm sm:text-base text-gray-600">{t('seller_disputes.subtitle')}</p>
             </div>
 
@@ -305,7 +312,6 @@ export default function SellerDisputesPage() {
                 </div>
               </div>
             )}
-          </div>
         </div>
       </div>
       </MainLayout>

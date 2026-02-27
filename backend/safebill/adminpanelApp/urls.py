@@ -16,6 +16,7 @@ from .views import (
     list_revenue_months,
     get_paid_payments,
     get_transfers,
+    get_refunded_payments,
 )
 
 app_name = "adminpanel"
@@ -75,4 +76,5 @@ urlpatterns = [
     # Payment Management Endpoints
     path("payments/paid/", get_paid_payments, name="paid-payments"),
     path("transfers/", get_transfers, name="transfers"),
+    path("payments/refunds/", get_refunded_payments, name="refunds"),
 ]

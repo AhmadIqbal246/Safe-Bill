@@ -1,29 +1,31 @@
 {
-  "navbar": { 
-    "home": "Accueil", 
-    "profile": "Profil", 
+  "navbar": {
+    "home": "Accueil",
+    "profile": "Profil",
     "logout": "Se déconnecter",
     "directory": "Annuaire",
     "contact": "Contact",
     "find_professionals": "Trouver des professionnels",
     "for_professionals": "Pour les professionnels",
-    "sign_in": "Se connecter",
-    "sign_up": "S'inscrire",
+    "sign_in": "SE CONNECTER",
+    "sign_up": "S'INSCRIRE",
     "sign_out": "Se déconnecter",
     "settings": "Paramètres",
     "billing": "Facturation",
     "no_unread_notifications": "Aucune notification non lue.",
-    "how_to_accept_project_invite": "Comment accepter un invité de projet"
+    "how_to_accept_project_invite": "Comment accepter un invité de projet",
+    "seller": "Vendeur",
+    "pro_buyer": "Acheteur",
+    "dashboard": "Tableau de bord",
+    "delete_my_account": "Supprimer mon compte"
   },
-  "chat": { 
-    "messages": "Messages", 
-    "type_message": "Écrivez votre message..." 
-  },
-  "actions": { 
-    "request_quote": "Demander un devis", 
-    "send": "Envoyer", 
+  "actions": {
     "cancel": "Annuler",
     "close": "Fermer",
+    "submit": "Soumettre",
+    "processing": "Traitement...",
+    "request_quote": "Demander un devis",
+    "send": "Envoyer",
     "download_view": "Télécharger/Voir",
     "search": "Rechercher",
     "find_professional": "Trouver un Professionnel",
@@ -37,6 +39,10 @@
     "sending": "Envoi en cours...",
     "id": "ID",
     "created": "Créé"
+  },
+  "chat": {
+    "messages": "Messages",
+    "type_message": "Écrivez votre message..."
   },
   "signup_popup": {
     "title": "Choisissez votre type d'inscription",
@@ -61,7 +67,59 @@
     "installments": "Échéances",
     "step": "Étape",
     "amount": "Montant",
-    "description": "Description"
+    "description": "Description",
+    "vat_rate": "Taux de TVA :",
+    "platform_fee": "Frais de Plateforme :"
+  },
+  "invite_view": {
+    "review_and_pay": "Examiner et Payer",
+    "project_information": "Informations du Projet",
+    "project_name": "Nom du Projet",
+    "client_email": "Email du Client",
+    "created_at": "Créé le",
+    "reference_number": "Numéro de Référence",
+    "status": "Statut",
+    "vat_rate": "Taux de TVA",
+    "quote": "Devis",
+    "quote_document": "Document de Devis",
+    "click_to_view_pdf": "Cliquez ci-dessous pour voir le document PDF complet",
+    "view_quote_pdf": "Voir le PDF du Devis",
+    "download_pdf": "Télécharger le PDF",
+    "no_quote_file": "Aucun fichier de devis disponible.",
+    "payment_validation": "Validation du Paiement",
+    "total_amount": "Montant Total",
+    "installment": "Échéance",
+    "total_payment_required": "Paiement Total Requis",
+    "project_amount": "Montant du Projet",
+    "vat": "TVA",
+    "agree_terms": "En cochant cette case, je m'engage à terminer le projet et renonce à mon droit de rétractation",
+    "processing_payment": "Traitement du Paiement",
+    "processing_payment_wait": "Traitement de votre paiement, veuillez patienter...",
+    "payment_status": "Statut du Paiement",
+    "payment_pending": "Paiement en Attente",
+    "payment_pending_message": "Veuillez effectuer un paiement pour démarrer le projet.",
+    "payment_processing_wait": "Veuillez patienter, votre paiement est en cours de traitement...",
+    "payment_failed": "Paiement Échoué",
+    "payment_failed_message": "Votre paiement n'a pas pu être traité. Veuillez réessayer.",
+    "retry_payment": "Réessayer le Paiement",
+    "payment_successful": "Paiement Réussi",
+    "payment_successful_message": "Votre paiement a été traité avec succès. Le projet sera mis à jour sous peu.",
+    "project_approval": "Approbation du Projet",
+    "project_approval_message": "Veuillez examiner les détails du projet ci-dessus. Vous pouvez approuver ou rejeter ce projet.",
+    "processing": "Traitement...",
+    "approve_project": "Approuver le Projet",
+    "reject_project": "Rejeter le Projet",
+    "payment_in_progress": "Paiement en Cours",
+    "payment_in_progress_message": "Votre paiement est actuellement en cours de traitement. Veuillez patienter pendant que nous confirmons votre paiement.",
+    "project_approved": "Projet Approuvé",
+    "project_approved_message": "Ce projet a été approuvé et est maintenant actif.",
+    "project_rejected": "Projet Rejeté",
+    "project_rejected_message": "Ce projet a été rejeté et n'est plus actif.",
+    "secured_ssl": "Sécurisé avec chiffrement SSL et traité via Stripe",
+    "loading_project": "Chargement du projet...",
+    "no_project_data": "Aucune donnée de projet à afficher.",
+    "project_approved_toast": "Projet approuvé avec succès",
+    "accept_terms_error": "Veuillez accepter les termes et conditions pour procéder au paiement."
   },
   "footer": {
     "tagline": "Connecter les clients avec des professionnels de confiance dans le monde entier grâce à des transactions sécurisées et vérifiées.",
@@ -74,11 +132,13 @@
     "legal_links": "Liens juridiques",
     "terms": "Conditions",
     "privacy": "Confidentialité",
-    "socials": "Réseaux sociaux",
-    "copyright": "© 2025 Safe Bill. Tous droits réservés."
+    "cookie_preferences": "Préférences Cookies",
+    "copyright": "© 2025 Safe Bill. Tous droits réservés.",
+    "socials": "Réseaux sociaux"
   },
   "homepage": {
-    "hero_title": "Plateforme de confiance pour vos projets",
+    "hero_title": "La confiance au cœur de vos projets",
+    "hero_subtitle_line": "Trouvez le professionnel parfait !",
     "hero_subtitle": "Paiements sécurisés, suivi transparent, médiation incluse",
     "service_label": "De quel service avez-vous besoin ?",
     "location_label": "Localisation",
@@ -92,7 +152,7 @@
     "hour": "heure",
     "reviews": "avis",
     "kyc_verified": "KYC Vérifié",
-    "features_title": "Fonctionnalités",
+    "features_title": "Les fonctionnalités incluses",
     "secure_payment_title": "Paiement sécurisé",
     "secure_payment_desc": "Payez en toute sécurité sur notre plateforme avec un chiffrement complet et une protection pour chaque transaction.",
     "real_time_tracking_title": "Suivi en temps réel",
@@ -104,7 +164,18 @@
     "browse_categories_title": "Parcourir les Catégories",
     "browse_categories_desc": "Explorez tous les services disponibles et trouvez le professionnel parfait pour vos besoins.",
     "dispute_resolution_title": "Résolution de Litiges",
-    "dispute_resolution_desc": "Ayez l'esprit tranquille avec notre système de médiation intégré pour résoudre équitablement tout litige de projet."
+    "dispute_resolution_desc": "Ayez l'esprit tranquille avec notre système de médiation intégré pour résoudre équitablement tout litige de projet.",
+    "how_it_works_title": "Comment ça marche ?",
+    "how_it_works_step1": "Le prestataire entre son devis sur la plateforme et l'envoie à son client",
+    "how_it_works_step2": "Si le client valide le projet, il doit payer le montant du devis",
+    "how_it_works_step3": "Le montant du devis reste en séquestre jusqu'à la fin du projet",
+    "how_it_works_step4": "Une fois le projet terminé le vendeur peut demander via la plateforme à la libération de la somme séquestrée",
+    "why_choose_title": "Pourquoi passer par Safe Bill ?",
+    "why_choose_benefit1": "Safe Bill a la particularité de pouvoir libérer des paiements échelonnés.",
+    "why_choose_benefit2": "Chaque libération de montant est effectué par l'acheteur qui valide l'étape du processus de la transaction.",
+    "why_choose_benefit3": "Tout le monde est sécurisé.",
+    "why_choose_benefit4": "Le vendeur est sûr d'être payé.",
+    "why_choose_benefit5": "L'acheteur garde le contrôle sur la transaction et ne paie que s'il est satisfait."
   },
   "professional_detail": {
     "professional_services": "Services Professionnels",
@@ -173,7 +244,8 @@
   "email_verification": {
     "verifying_email": "Vérification de votre email...",
     "email_verification": "Vérification de l'Email",
-    "email_verified": "Votre email a été vérifié !",
+    "email_verified": "Votre email a été vérifié avec succès !",
+    "verification_success_toast": "Votre compte a été vérifié avec succès. Vous allez être redirigé vers la page de connexion.",
     "verification_failed": "Échec de la Vérification",
     "verification_failed_message": "La vérification a échoué. Le lien peut être invalide ou expiré.",
     "invalid_link": "Lien de vérification invalide."
@@ -217,6 +289,7 @@
     "verifying": "Vérification...",
     "verified": "Vérifié",
     "siret_error": "Le SIRET doit contenir exactement 14 chiffres",
+    "siret_already_in_use": "Le SIRET est vérifié mais il est déjà utilisé.",
     "siret_success": "✓ Numéro SIRET vérifié avec succès",
     "company_name_label": "Nom de l'Entreprise *",
     "company_name_placeholder": "Nom de l'entreprise",
@@ -240,13 +313,12 @@
     "select_business_activity": "Sélectionner l'Activité Commerciale",
     "search_business_activity": "Rechercher une activité commerciale...",
     "categories_label": "Catégories (Optionnel)",
-    "select_categories": "Sélectionner les Catégories (Optionnel)",
+    "select_categories": "Sélectionner les Catégories",
     "search_categories": "Rechercher des catégories...",
-    "categories_selected": "catégorie(s) sélectionnée(s)",
+    "selected": "sélectionné(s)",
     "subcategories_label": "Sous-catégories (Optionnel)",
-    "select_subcategories": "Sélectionner les Sous-catégories (Optionnel)",
+    "select_subcategories": "Sélectionner les Sous-catégories",
     "search_subcategories": "Rechercher des sous-catégories...",
-    "subcategories_selected": "sous-catégorie(s) sélectionnée(s)",
     "service_areas_label": "Zones de Service *",
     "choose_service_areas": "Choisir les Zones de Service",
     "search_service_areas": "Rechercher des zones de service...",
@@ -312,6 +384,10 @@
     "verification_step": "Vérification"
   },
   "onboarding": {
+    "basic_information_step": "Informations de base",
+    "connect_stripe_step": "Connecter Stripe",
+    "verification_step": "Vérification",
+    "identity_verification_step": "Vérification d'identité",
     "title": "Complétez Votre Inscription",
     "description_documents": "Veuillez télécharger les documents requis pour terminer votre inscription.",
     "description_verification": "Documents téléchargés avec succès. Allez au Tableau de Bord pour commencer à utiliser la plateforme.",
@@ -341,24 +417,46 @@
     "connecting": "Connexion...",
     "connect_stripe": "Se connecter avec Stripe",
     "stripe_connect_note": "Vous serez redirigé vers Stripe pour terminer le processus de configuration",
+    "stripe_complete_title": "Configuration Stripe Terminée",
     "stripe_incomplete_title": "Configuration Stripe Incomplète",
     "stripe_incomplete_default": "La configuration de votre compte Stripe n'est pas encore terminée.",
     "complete_setup": "Terminer la Configuration",
     "checking": "Vérification...",
     "refresh_status": "Actualiser le Statut",
     "stripe_not_connected_title": "Compte Stripe Non Connecté",
-    "stripe_not_connected_description": "Vous devez connecter votre compte Stripe pour recevoir des paiements."
+    "stripe_not_connected_description": "Vous devez connecter votre compte Stripe pour recevoir des paiements.",
+    "description_stripe_connect": "Connectez votre compte Stripe pour commencer à recevoir des paiements",
+    "description_identity_verification": "Vérifiez votre identité pour accéder à toutes les fonctionnalités de la plateforme",
+    "stripe_identity_title": "Vérifiez Votre Identité",
+    "stripe_identity_description": "Complétez la vérification d'identité pour accéder à toutes les fonctionnalités de la plateforme en toute sécurité.",
+    "identity_benefits_title": "Pourquoi vérifier votre identité ?",
+    "secure_platform": "Sécurité renforcée pour votre compte",
+    "full_access": "Accès à toutes les fonctionnalités professionnelles",
+    "trusted_verification": "Processus de vérification fiable",
+    "compliance": "Respectez les exigences réglementaires",
+    "start_verification": "Démarrer la Vérification",
+    "creating_session": "Création de la session...",
+    "try_again": "Réessayer",
+    "processing": "Traitement en cours...",
+    "verification_canceled": "La vérification d'identité a été annulée. Veuillez réessayer.",
+    "verification_failed": "La vérification d'identité a échoué. Veuillez réessayer.",
+    "verification_processing": "Votre vérification d'identité est en cours de traitement. Veuillez patienter...",
+    "processing_note": "Veuillez patienter pendant que nous traitons votre vérification",
+    "identity_not_started_note": "Votre vérification d'identité n'a pas encore commencé. Cliquez sur le bouton ci-dessus pour commencer.",
+    "identity_verification_note": "Cliquez pour démarrer la vérification d'identité avec Stripe"
   },
   "sidebar": {
     "dashboard": "Tableau de Bord",
     "my_quotes": "Mes devis",
     "current_projects": "Projets en cours",
     "completed_projects": "Projets terminés",
+    "expired_tokens": " Invitations expirées",
     "disputes": "Litiges",
     "my_profile": "Mon profil",
     "billings": "Facturation",
     "documents": "Documents",
-    "support": "Support"
+    "support": "Support",
+    "receipts": "Factures"
   },
   "dashboard": {
     "title": "Tableau de Bord",
@@ -426,119 +524,144 @@
     "rejected": "Rejeté",
     "expired": "Expiré"
   },
-     "project_creation": {
-     "title": "Création de Projet",
-     "project_name_section": "Nom du Projet",
-     "project_name_placeholder": "Entrez le nom du projet",
-     "signed_quote_section": "Devis Signé",
-     "upload_signed_quote": "Télécharger le devis signé",
-     "drag_drop_message": "Glissez-déposez ou parcourez pour télécharger le devis signé.",
-     "upload": "Télécharger",
-     "change_file": "Changer de Fichier",
-     "only_pdf_allowed": "Seuls les fichiers PDF sont autorisés.",
-     "view": "Voir",
-     "remove": "Supprimer",
-     "payment_configuration": "Configuration des Paiements",
-     "installment": "échéance",
-     "installments": "échéances",
-     "amount": "Montant",
-     "trigger_step": "Étape de Déclenchement",
-     "description": "Description",
-     "edit": "Modifier",
-     "save": "Enregistrer",
-     "client_section": "Client",
-     "client_email_placeholder": "Email du client",
-     "send_payment_invitation": "Envoyer l'Invitation de Paiement",
-     "sending": "Envoi...",
-     "project_created_successfully": "Projet créé avec succès !",
-     "fill_all_fields": "Veuillez remplir tous les champs et télécharger le devis signé.",
-     "summary": "Résumé de paiement",
-     "review_before_send": "Vérifiez avant d'envoyer",
-     "subtotal": "Sous-total",
-     "platform_fee_label": "Frais de plateforme",
-     "stripe_fee": "Frais Stripe (2,9 % + 0,30 €)",
-     "final_total": "Total final"
-   },
-   "my_profile": {
-     "title": "Mon Profil",
-     "business_activity": "Activité Commerciale",
-     "not_specified": "Non spécifié",
-     "categories": "Catégories",
-     "subcategories": "Sous-catégories",
-     "service_areas": "Zones de Service",
-     "about": "À propos",
-     "no_about_info": "Aucune information fournie.",
-     "contact": "Contact",
-     "email": "Email",
-     "phone": "Téléphone",
-     "help_improve": "Aidez-nous à nous améliorer",
-     "select_rating": "Sélectionnez une note pour commencer, puis n'hésitez pas à ajouter vos propres réflexions ci-dessous !",
-     "feedback": "Retour d'expérience",
-     "your_email": "Votre adresse email",
-     "submit_feedback": "Soumettre le Retour",
-     "submitting": "Soumission...",
-     "edit_profile": "Modifier le Profil",
-     "required_fields_note": "* indique les champs obligatoires",
-     "upload_new_picture": "Télécharger une Nouvelle Photo",
-     "username_label": "Nom d'utilisateur *",
-     "business_activity_label": "Activité Commerciale *",
-     "choose_business_activity": "Choisir l'Activité Commerciale",
-     "search_business_activity": "Rechercher une activité commerciale...",
-     "categories_label": "Catégories (Optionnel)",
-     "choose_categories": "Choisir les Catégories",
-     "search_categories": "Rechercher des catégories...",
-     "selected": "sélectionné(s)",
-     "subcategories_label": "Sous-catégories (Optionnel)",
-     "choose_subcategories": "Choisir les Sous-catégories",
-     "search_subcategories": "Rechercher des sous-catégories...",
-     "service_areas_label": "Zones de Service *",
-     "choose_service_areas": "Choisir les Zones de Service",
-     "search_areas": "Rechercher des zones...",
-     "about_label": "À propos",
-     "submit": "Soumettre",
-     "profile_updated_successfully": "Profil mis à jour avec succès !",
-     "username_required": "Le nom d'utilisateur est requis",
-     "business_activity_required": "L'activité commerciale est requise",
-     "service_areas_required": "Au moins une zone de service est requise",
-     "please_select_rating": "Veuillez sélectionner une note d'abord",
-     "please_provide_email": "Veuillez fournir votre adresse email",
-     "feedback_submitted_successfully": "Retour soumis avec succès !",
-     "failed_submit_feedback": "Échec de la soumission du retour.",
-     "loading": "Chargement...",
-     "failed_load_profile": "Échec du chargement du profil.",
-     "no_profile_data": "Aucune donnée de profil disponible.",
-     "username_too_long": "Le nom d'utilisateur doit contenir moins de {{max}} caractères",
-     "about_too_long_chars": "À propos doit contenir moins de {{max}} caractères",
-     "about_too_many_words": "À propos doit contenir moins de {{max}} mots",
-     "about_placeholder": "Entrez votre à propos"
-   },
-   "documents": {
-     "title": "Documents",
-     "business_registration_certificate": "Certificat d'Enregistrement d'Entreprise",
-     "professional_liability_insurance": "Assurance Responsabilité Professionnelle",
-     "general_insurance_certificate": "Certificat d'Assurance Générale",
-     "contact_id_document": "Document d'Identité du Contact",
-     "company_bank_details": "Coordonnées Bancaires de l'Entreprise",
-     "coverage_area": "Zone de Couverture",
-     "nationwide": "Nationale",
-     "regional": "Régionale",
-     "local": "Locale",
-     "limitations": "Limitations",
-     "excludes_projects_over": "Exclut les projets de plus de 50 000 €",
-     "none": "Aucune",
-     "approved": "Approuvé",
-     "rejected": "Rejeté",
-     "not_uploaded": "Non Téléchargé",
-     "view_document": "Voir le Document",
-     "failed_load_documents": "Échec du chargement des documents."
-   },
-     "current_projects": {
+  "project_creation": {
+    "title": "Création de Projet",
+    "project_name_section": "Nom du Projet",
+    "project_name_placeholder": "Entrez le nom du projet",
+    "signed_quote_section": "Devis Signé",
+    "upload_signed_quote": "Télécharger le devis signé",
+    "drag_drop_message": "Glissez-déposez ou parcourez pour télécharger le devis signé.",
+    "upload": "Télécharger",
+    "change_file": "Changer de Fichier",
+    "only_pdf_allowed": "Seuls les fichiers PDF sont autorisés.",
+    "invalid_file_type": "Type de fichier invalide. Seuls les fichiers PDF et images (JPEG, PNG, WEBP) sont autorisés.",
+    "upload_quote_title": "Télécharger le Document de Devis",
+    "select_upload_method": "Choisissez comment vous souhaitez télécharger le document de devis :",
+    "take_photo": "Prendre une Photo",
+    "upload_from_device": "Télécharger depuis l'Appareil",
+    "capture_photo": "Capturer la Photo",
+    "retake": "Reprendre",
+    "use_photo": "Utiliser la Photo",
+    "camera_access_error": "Impossible d'accéder à la caméra. Veuillez vérifier vos autorisations ou essayez de télécharger depuis l'appareil.",
+    "view": "Voir",
+    "remove": "Supprimer",
+    "payment_configuration": "Configuration des Paiements",
+    "installment": "échéance",
+    "installments": "échéances",
+    "amount": "Montant",
+    "trigger_step": "Étapes",
+    "description": "Description",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "client_section": "Client",
+    "client_email_placeholder": "Email du client",
+    "send_payment_invitation": "Envoyer l'Invitation de Paiement",
+    "sending": "Envoi...",
+    "project_created_successfully": "Projet créé avec succès !",
+    "fill_all_fields": "Veuillez remplir tous les champs et télécharger le devis signé.",
+    "summary": "Résumé de paiement",
+    "review_before_send": "Vérifiez avant d'envoyer",
+    "subtotal": "Sous-total",
+    "platform_fee_label": "Frais de plateforme",
+    "stripe_fee": "Frais Stripe (2,9 % + 0,30 €)",
+    "final_total": "Total final",
+    "vat_section": "Taux de TVA",
+    "platform_fees": "Frais de plateforme",
+    "net_amount": "Montant Net",
+    "step_1": "Étape 1",
+    "step_2": "Étape 2",
+    "step_3": "Étape 3",
+    "desc_full_payment": "Paiement intégral à l'acceptation du devis.",
+    "desc_initial_payment": "Paiement initial à l'acceptation du devis.",
+    "desc_start_payment": "Paiement dû au début du projet.",
+    "desc_final_payment": "Paiement final à la fin du projet."
+  },
+  "my_profile": {
+    "title": "Mon Profil",
+    "business_activity": "Activité Commerciale",
+    "not_specified": "Non spécifié",
+    "categories": "Catégories",
+    "subcategories": "Sous-catégories",
+    "service_areas": "Zones de Service",
+    "about": "À propos",
+    "no_about_info": "Aucune information fournie.",
+    "contact": "Contact",
+    "email": "Email",
+    "phone": "Téléphone",
+    "help_improve": "Aidez-nous à nous améliorer",
+    "select_rating": "Sélectionnez une note pour commencer, puis n'hésitez pas à ajouter vos propres réflexions ci-dessous !",
+    "feedback": "Retour d'expérience",
+    "your_email": "Votre adresse email",
+    "submit_feedback": "Soumettre le Retour",
+    "submitting": "Soumission...",
+    "edit_profile": "Modifier le Profil",
+    "required_fields_note": "* indique les champs obligatoires",
+    "upload_new_picture": "Télécharger une Nouvelle Photo",
+    "username_label": "Nom d'utilisateur *",
+    "business_activity_label": "Activité Commerciale *",
+    "choose_business_activity": "Choisir l'Activité Commerciale",
+    "search_business_activity": "Rechercher une activité commerciale...",
+    "categories_label": "Catégories (Optionnel)",
+    "choose_categories": "Choisir les Catégories",
+    "search_categories": "Rechercher des catégories...",
+    "selected": "sélectionné(s)",
+    "subcategories_label": "Sous-catégories (Optionnel)",
+    "choose_subcategories": "Choisir les Sous-catégories",
+    "search_subcategories": "Rechercher des sous-catégories...",
+    "service_areas_label": "Zones de Service *",
+    "choose_service_areas": "Choisir les Zones de Service",
+    "search_areas": "Rechercher des zones...",
+    "about_label": "À propos",
+    "submit": "Soumettre",
+    "profile_updated_successfully": "Profil mis à jour avec succès !",
+    "username_required": "Le nom d'utilisateur est requis",
+    "business_activity_required": "L'activité commerciale est requise",
+    "service_areas_required": "Au moins une zone de service est requise",
+    "please_select_rating": "Veuillez sélectionner une note d'abord",
+    "please_provide_email": "Veuillez fournir votre adresse email",
+    "feedback_submitted_successfully": "Retour soumis avec succès !",
+    "failed_submit_feedback": "Échec de la soumission du retour.",
+    "loading": "Chargement...",
+    "failed_load_profile": "Échec du chargement du profil.",
+    "no_profile_data": "Aucune donnée de profil disponible.",
+    "username_too_long": "Le nom d'utilisateur doit contenir moins de {{max}} caractères",
+    "about_too_long_chars": "À propos doit contenir moins de {{max}} caractères",
+    "about_too_many_words": "À propos doit contenir moins de {{max}} mots",
+    "about_placeholder": "Entrez votre à propos",
+    "rating_excellent": "Excellent",
+    "rating_good": "Bien",
+    "rating_needs_improvement": "À améliorer",
+    "feedback_excellent": "La plateforme correspond parfaitement à mes besoins. Super expérience utilisateur et toutes les fonctionnalités marchent bien. ",
+    "feedback_good": "La plateforme est globalement bonne. Quelques améliorations mineures pourraient la rendre encore meilleure. ",
+    "feedback_needs_improvement": "J'ai rencontré quelques problèmes avec la plateforme. Plusieurs points nécessitent de l'attention et des améliorations. "
+  },
+  "documents": {
+    "title": "Documents",
+    "business_registration_certificate": "Certificat d'Enregistrement d'Entreprise",
+    "professional_liability_insurance": "Assurance Responsabilité Professionnelle",
+    "general_insurance_certificate": "Certificat d'Assurance Générale",
+    "contact_id_document": "Document d'Identité du Contact",
+    "company_bank_details": "Coordonnées Bancaires de l'Entreprise",
+    "coverage_area": "Zone de Couverture",
+    "nationwide": "Nationale",
+    "regional": "Régionale",
+    "local": "Locale",
+    "limitations": "Limitations",
+    "excludes_projects_over": "Exclut les projets de plus de 50 000 €",
+    "none": "Aucune",
+    "approved": "Approuvé",
+    "rejected": "Rejeté",
+    "not_uploaded": "Non Téléchargé",
+    "view_document": "Voir le Document",
+    "failed_load_documents": "Échec du chargement des documents."
+  },
+  "current_projects": {
     "title": "Projets en Cours",
     "in_progress_title": "Projets en Cours",
     "search_placeholder": "Rechercher par email client ou nom de projet",
     "client": "Client",
     "view_details": "Voir les Détails",
-    "view_milestones": "Voir les Jalons",
+    "view_milestones": "Voir les acomptes",
     "progress": "Progression",
     "other_projects": "Autres Projets",
     "milestones": "Jalons",
@@ -546,18 +669,18 @@
     "no_projects_matching_search": "Aucun projet trouvé correspondant à votre recherche.",
     "failed_load_projects": "Échec du chargement des projets."
   },
-   "completed_projects": {
-     "title": "Projets Terminés",
-     "subtitle": "Explorez une sélection de projets terminés avec succès par notre équipe, montrant notre expertise et notre engagement envers la qualité.",
-     "sort_by_date": "Trier par Date",
-     "filter_by_client": "Filtrer par Client",
-     "projects": "Projets",
-     "project_title": "Titre du Projet",
-     "client_name": "Nom du Client",
-     "price": "Prix",
-     "completion_date": "Date de Fin",
-     "failed_load_projects": "Échec du chargement des projets."
-   },
+  "completed_projects": {
+    "title": "Projets Terminés",
+    "subtitle": "Explorez une sélection de projets terminés avec succès par notre équipe, montrant notre expertise et notre engagement envers la qualité.",
+    "sort_by_date": "Trier par Date",
+    "filter_by_client": "Filtrer par Client",
+    "projects": "Projets",
+    "project_title": "Titre du Projet",
+    "client_name": "Nom du Client",
+    "price": "Prix",
+    "completion_date": "Date de Fin",
+    "failed_load_projects": "Échec du chargement des projets."
+  },
   "admin": {
     "title": "Administration",
     "loading_overview": "Chargement de l'aperçu administrateur...",
@@ -594,7 +717,7 @@
     "in_progress": "En Cours",
     "project_progress": "Progression du Projet",
     "milestones_payments": "Jalons et Paiements",
-    "milestone": "Jalon",
+    "milestone": "Acompte",
     "status": "Statut",
     "amount": "Montant",
     "paid": "Payé",
@@ -612,7 +735,7 @@
     "amount_paid": "Montant Payé",
     "pending_payments": "Paiements en Attente",
     "next_payment_due": "Prochain Paiement Dû",
-    "development_milestone": "Jalon de développement",
+    "development_milestone": "Acompte de développement",
     "pay_now": "Payer Maintenant",
     "project_details": "Détails du Projet",
     "project_id": "ID du Projet",
@@ -629,31 +752,88 @@
     "review_request": "Demande de Révision",
     "not_submitted": "Non Soumis",
     "pending": "En Attente",
-    "weeks": "semaines"
+    "weeks": "semaines",
+    "refund": {
+      "title": "Informations sur le remboursement",
+      "refundable_amount": "Montant remboursable",
+      "description": "Ce montant est disponible pour un remboursement en fonction des ajustements de jalons et des paiements.",
+      "request_refund": "Demander un remboursement",
+      "processing": "Traitement...",
+      "only_available_when_completed": "Le remboursement est disponible uniquement lorsque le statut du projet est « {{status}} »."
+    }
   },
   "buyer_dashboard": {
-    "active_projects": "Projets Actifs",
+    "title": "Tableau de bord acheteur",
+    "subtitle": "Aperçu de vos projets et paiements",
+    "active_projects": "Projets actifs",
+    "completed": "Terminés",
+    "successfully_finished": "Terminés avec succès",
     "in_progress": "En cours",
-    "completed": "Terminé",
-    "successfully_finished": "Terminé avec succès",
-    "pending_payment": "Paiement en Attente",
-    "awaiting_payment": "En attente de paiement",
-    "current_projects": "Projets en Cours",
-    "no_in_progress_projects": "Aucun projet en cours trouvé",
-    "pending_projects": "Projets en Attente",
+    "current_projects": "Projets en cours",
+    "view_all_disputes": "Voir tous les Discrets",
+    "accept_project_invite": "Accepter l'invitation du projet",
+    "contact_support": "Contacter le support",
+    "no_in_progress_projects": "Aucun projet en cours.",
+    "completed_projects": "Projets terminés",
+    "completed_on": "Terminé le",
+    "pending_projects": "Projets en attente",
     "no_pending_projects": "Aucun projet en attente à examiner",
     "search_projects": "Rechercher des projets...",
     "search_results": "Affichage de {found} sur {total} projets",
-    "no_search_results": "Aucun projet trouvé correspondant à votre recherche",
+    "no_search_results": "Aucun projet correspondant à votre recherche",
     "clear_search": "Effacer la recherche",
-    "title": "Tableau de Bord Acheteur",
-    "subtitle": "Gérez vos projets et suivez les progrès",
-    "view_all_disputes": "Voir Tous les Litiges",
-    "failed_load_dashboard": "Échec du chargement du tableau de bord",
-    "unexpected_error": "Une erreur inattendue s'est produite",
-    "try_again": "Réessayer",
-    "contact_support": "Contacter le Support",
-    "accept_project_invite": "Accepter l'Invitation de Projet"
+    "approve_project": "Approuver le projet",
+    "reject_project": "Rejeter le projet",
+    "review_and_pay": "Réviser et payer",
+    "seller": "Vendeur",
+    "ref": "Réf",
+    "created": "Créé",
+    "total_amount": "Montant total",
+    "installments_label": "Échéances",
+    "payments_count": "{{count}} paiement(s)",
+    "view_quote": "Voir le devis",
+    "download": "Télécharger"
+  },
+  "approved_projects": {
+    "header": "Projets approuvés",
+    "search_placeholder": "Rechercher des projets approuvés",
+    "view_quote": "Voir le devis",
+    "none": "Vous n'avez pas encore de projets approuvés.",
+    "seller": "Vendeur",
+    "ref": "Réf",
+    "approved": "Approuvé"
+  },
+  "callback": {
+    "title": "Demander un rappel",
+    "open_button": "Demander un rappel",
+    "company_name": "Nom de l'entreprise",
+    "siret": "SIRET",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "role": "Rôle",
+    "select_role": "Sélectionner un rôle",
+    "seller": "Vendeur",
+    "professional_buyer": "Acheteur professionnel",
+    "cancel": "Annuler",
+    "submit": "Envoyer",
+    "submitting": "Envoi...",
+    "error": "Échec de l'envoi. Veuillez réessayer.",
+    "success_toast": "Demande de rappel envoyée avec succès !",
+    "error_toast": "Échec de l'envoi de la demande de rappel.",
+    "siret_placeholder": "Entrez le numéro SIRET à 14 chiffres",
+    "siret_error": "Le numéro SIRET doit comporter exactement 14 chiffres"
+  },
+  "documents_section": {
+    "title": "Documents (Devis)",
+    "search_placeholder": "Rechercher par projet ou référence...",
+    "project_name": "Nom du projet",
+    "creation_date": "Date de création",
+    "action": "Action",
+    "ref": "Réf :",
+    "download": "Télécharger",
+    "no_documents": "Aucun document trouvé"
   },
   "dispute_submit": {
     "back": "← Retour",
@@ -760,7 +940,10 @@
     "sign_in": "Se connecter",
     "forgot_password": "Mot de passe oublié ?",
     "login_successful": "Connexion réussie !",
-    "invalid_redirect_url": "URL de redirection invalide :"
+    "invalid_redirect_url": "URL de redirection invalide :",
+    "no_active_account": "Aucun compte actif trouvé avec les identifiants fournis",
+    "invalid_credentials": "Identifiants invalides",
+    "email_verification": "Vérification de l'Email"
   },
   "contact_us": {
     "title": "Nous contacter",
@@ -876,6 +1059,38 @@
     "local_part_too_long": "La partie locale de l'e-mail est trop longue",
     "domain_part_too_long": "La partie domaine de l'e-mail est trop longue"
   },
+  "email_verification_success": {
+    "title": "Vérifiez votre e-mail",
+    "description": "Veuillez vérifier votre e-mail et entrer le code de vérification ci-dessous",
+    "verification_token": "Jeton de vérification",
+    "verification_token_placeholder": "Entrez votre jeton de vérification",
+    "verify_email": "Vérifier l'e-mail",
+    "verifying_email": "Vérification de votre e-mail...",
+    "email_verified": "E-mail vérifié !",
+    "verification_failed": "Échec de la vérification",
+    "resend_verification_to": "Renvoyer la vérification à",
+    "resend_verification": "Renvoyer la vérification",
+    "sending": "Envoi...",
+    "resend_in": "Renvoyer dans",
+    "seconds": "s",
+    "redirecting_to_login": "Redirection vers la page de connexion...",
+    "try_again": "Réessayer",
+    "security_notice": "Avis de sécurité",
+    "security_notice_description": "Les jetons de vérification expirent après 24 heures pour votre sécurité.",
+    "need_help": "Besoin d'aide ?",
+    "need_help_description": "Vérifiez votre dossier spam ou contactez le support si vous ne recevez pas l'e-mail.",
+    "please_enter_token": "Veuillez entrer un jeton de vérification",
+    "verification_failed_message": "La vérification a échoué. Veuillez vérifier votre jeton et réessayer.",
+    "please_enter_email": "Veuillez entrer votre adresse e-mail",
+    "verification_email_sent": "E-mail de vérification envoyé avec succès !",
+    "verification_success_toast": "Votre compte a été vérifié avec succès. Vous allez être redirigé vers la page de connexion.",
+    "failed_to_send_verification": "Échec de l'envoi de l'e-mail de vérification. Veuillez réessayer.",
+    "email_required": "L'adresse e-mail est requise",
+    "email_invalid": "Veuillez entrer une adresse e-mail valide (ex : utilisateur@domaine.com)",
+    "email_too_long": "L'adresse e-mail est trop longue",
+    "local_part_too_long": "La partie locale de l'e-mail est trop longue",
+    "domain_part_too_long": "La partie domaine de l'e-mail est trop longue"
+  },
   "project_status": {
     "pending": "En attente",
     "payment_in_progress": "Paiement en cours",
@@ -890,6 +1105,8 @@
     "pending_quotes": "Devis en attente",
     "current_projects": "Projets en cours",
     "monthly_revenue": "Revenus mensuels",
+    "total_projects_created": "Total des Projets Créés",
+    "monthly_projects": "Projets Mensuels",
     "view": "Voir",
     "notifications": "Notifications",
     "mark_all_as_read": "Tout marquer comme lu",
@@ -913,6 +1130,12 @@
   "quote_management": {
     "title": "Gestion des devis",
     "new_quote": "Nouveau devis",
+    "filters": {
+      "status": "Statut",
+      "date": "Date",
+      "amount": "Montant",
+      "client": "Client"
+    },
     "search_placeholder": "Rechercher des projets...",
     "quote_reference": "Référence du devis",
     "project_name": "Nom du projet",
@@ -954,12 +1177,14 @@
     "processing": "Traitement...",
     "enter_token_error": "Veuillez entrer un code d'invitation valide",
     "general_error": "Une erreur s'est produite. Veuillez réessayer.",
+    "invite_expired": "Le lien d'invitation a expiré.",
+    "invalid_or_expired": "Lien d'invitation invalide ou expiré.",
     "help_text": "Vous n'avez pas de code d'invitation ? Vérifiez votre email ou contactez le créateur du projet.",
     "back_to_dashboard": "Retour au Tableau de Bord"
   },
   "how_to_accept_project_invite": {
     "title": "Comment Accepter une Invitation de Projet",
-    "subtitle": "Suivez ces étapes simples pour accepter et gérer vos invitations de projet sur SafeBill",
+    "subtitle": "Suivez ces étapes simples pour accepter et gérer vos invitations de projet sur Safe Bill",
     "quick_actions": "Actions Rapides",
     "accept_invite_button": "Accepter l'Invitation de Projet",
     "go_to_dashboard_button": "Aller au Tableau de Bord",
@@ -970,7 +1195,7 @@
     "email_preview_code": "Votre code d'invitation apparaîtra ici dans une boîte bleue mise en évidence",
     "email_preview_note": "L'email contiendra les détails du projet, les informations de devis et votre code d'invitation unique",
     "step2_title": "Accéder à Votre Tableau de Bord Acheteur",
-    "step2_description": "Connectez-vous à votre compte SafeBill et naviguez vers votre tableau de bord acheteur où vous trouverez le bouton 'Accepter l'Invitation de Projet'.",
+    "step2_description": "Connectez-vous à votre compte Safe Bill et naviguez vers votre tableau de bord acheteur où vous trouverez le bouton 'Accepter l'Invitation de Projet'.",
     "dashboard_button_preview_title": "Bouton du Tableau de Bord",
     "accept_project_invite": "Accepter l'Invitation de Projet",
     "dashboard_button_note": "Cela vous redirigera vers votre tableau de bord acheteur",
@@ -1006,137 +1231,29 @@
     "get_started_button": "Commencer Maintenant",
     "get_started_note": "Prêt à accepter votre première invitation de projet ? Cliquez sur le bouton ci-dessus pour commencer !"
   },
-  "privacy_policy": {
-    "title": "Politique de Confidentialité",
-    "subtitle": "Votre confidentialité est importante pour nous. Cette politique explique comment SafeBill collecte, utilise et protège vos informations.",
-    "last_updated": "Dernière mise à jour :",
-    "introduction": {
-      "title": "Introduction",
-      "content1": "SafeBill (\"nous\", \"notre\" ou \"nos\") s'engage à protéger votre confidentialité. Cette Politique de Confidentialité explique comment nous collectons, utilisons, divulguons et protégeons vos informations lorsque vous utilisez notre plateforme pour la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
-      "content2": "En utilisant SafeBill, vous acceptez la collecte et l'utilisation d'informations conformément à cette politique."
-    },
-    "information_collection": {
-      "title": "Informations que Nous Collectons",
-      "personal_info": {
-        "title": "Informations Personnelles",
-        "items": [
-          "Nom, adresse e-mail et informations de contact",
-          "Informations commerciales (nom de l'entreprise, numéro SIRET, type d'entreprise)",
-          "Informations de profil et préférences",
-          "Informations de paiement et de facturation (traitées de manière sécurisée via Stripe)"
-        ]
-      },
-      "project_info": {
-        "title": "Informations sur les Projets",
-        "items": [
-          "Détails, descriptions et exigences des projets",
-          "Devis, propositions et documents de projet",
-          "Informations sur les étapes et statut d'achèvement",
-          "Historique des communications entre acheteurs et vendeurs"
-        ]
-      },
-      "technical_info": {
-        "title": "Informations Techniques",
-        "items": [
-          "Adresse IP, type de navigateur et informations sur l'appareil",
-          "Modèles d'utilisation et interactions avec la plateforme",
-          "Cookies et technologies de suivi similaires",
-          "Fichiers journaux et données d'analyse"
-        ]
-      }
-    },
-    "how_we_use": {
-      "title": "Comment Nous Utilisons Vos Informations",
-      "service_provision": {
-        "title": "Prestation de Services",
-        "content": "Pour fournir, maintenir et améliorer nos services de plateforme, y compris la gestion de projets, le suivi des étapes et le traitement sécurisé des paiements."
-      },
-      "communication": {
-        "title": "Communication",
-        "content": "Pour vous envoyer des mises à jour importantes, des notifications et répondre à vos demandes et demandes de support."
-      },
-      "security_compliance": {
-        "title": "Sécurité et Conformité",
-        "content": "Pour assurer la sécurité de la plateforme, prévenir la fraude et se conformer aux obligations légales et réglementaires."
-      },
-      "analytics_improvement": {
-        "title": "Analyse et Amélioration",
-        "content": "Pour analyser les modèles d'utilisation, améliorer l'expérience utilisateur et développer de nouvelles fonctionnalités et services."
-      }
-    },
-    "information_sharing": {
-      "title": "Partage d'Informations",
-      "content": "Nous ne vendons, n'échangeons ni ne louons vos informations personnelles à des tiers. Nous ne pouvons partager vos informations que dans les circonstances suivantes :",
-      "service_providers": "Prestataires de Services : Avec des prestataires de services tiers de confiance qui assistent dans les opérations de la plateforme (par exemple, Stripe pour les paiements, services e-mail)",
-      "legal_requirements": "Exigences Légales : Lorsque requis par la loi, ordonnance du tribunal ou pour protéger nos droits et notre sécurité",
-      "business_transfers": "Transferts d'Entreprise : En relation avec une fusion, acquisition ou vente d'actifs",
-      "consent": "Consentement : Lorsque vous consentez explicitement au partage de vos informations"
-    },
-    "data_security": {
-      "title": "Sécurité des Données",
-      "content": "Nous mettons en œuvre des mesures de sécurité standard de l'industrie pour protéger vos informations :",
-      "ssl_encryption": "Chiffrement SSL/TLS pour la transmission de données",
-      "secure_storage": "Stockage sécurisé de base de données avec chiffrement",
-      "security_audits": "Audits de sécurité et mises à jour réguliers",
-      "access_controls": "Contrôles d'accès et authentification"
-    },
-    "your_rights": {
-      "title": "Vos Droits",
-      "access_portability": {
-        "title": "Accès et Portabilité",
-        "content": "Demander l'accès à vos données personnelles et les recevoir dans un format portable"
-      },
-      "correction": {
-        "title": "Correction",
-        "content": "Demander la correction d'informations personnelles inexactes ou incomplètes"
-      },
-      "deletion": {
-        "title": "Suppression",
-        "content": "Demander la suppression de vos données personnelles dans certaines circonstances"
-      },
-      "objection": {
-        "title": "Objection",
-        "content": "Vous opposer au traitement de vos données personnelles à certaines fins"
-      }
-    },
-    "cookies": {
-      "title": "Cookies et Suivi",
-      "content": "Nous utilisons des cookies et des technologies similaires pour améliorer votre expérience :",
-      "essential_cookies": "Cookies Essentiels : Requis pour la fonctionnalité et la sécurité de la plateforme",
-      "analytics_cookies": "Cookies d'Analyse : Nous aident à comprendre comment vous utilisez notre plateforme",
-      "preference_cookies": "Cookies de Préférence : Se souviennent de vos paramètres et préférences",
-      "browser_control": "Vous pouvez contrôler les paramètres des cookies via les préférences de votre navigateur."
-    },
-    "contact": {
-      "title": "Nous Contacter",
-      "content": "Si vous avez des questions sur cette Politique de Confidentialité ou nos pratiques de données, veuillez nous contacter :",
-      "email": "privacy@safebill.com",
-      "phone": "+1 (555) 123-4567",
-      "address": "123 Business Street, City, State 12345"
-    },
-    "updates": {
-      "title": "Mises à Jour de la Politique",
-      "content": "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement en publiant la nouvelle Politique de Confidentialité sur cette page et en mettant à jour la date de \"Dernière mise à jour\". Votre utilisation continue de SafeBill après toute modification constitue une acceptation de la politique mise à jour."
-    },
-    "copyright": "© {year} SafeBill. Tous droits réservés."
-  },
   "terms_of_service": {
     "title": "Conditions d'Utilisation",
-    "subtitle": "Veuillez lire attentivement ces conditions avant d'utiliser SafeBill. Ces conditions régissent votre utilisation de notre plateforme et de nos services.",
+    "subtitle": "Veuillez lire attentivement ces conditions avant d'utiliser Safe Bill. Ces conditions régissent votre utilisation de notre plateforme et de nos services.",
     "last_updated": "Dernière mise à jour :",
     "introduction": {
       "title": "Introduction",
-      "content1": "Bienvenue sur SafeBill (\"nous\", \"notre\" ou \"nos\"). Ces Conditions d'Utilisation (\"Conditions\") régissent votre utilisation de notre plateforme qui facilite la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
-      "content2": "En accédant ou en utilisant SafeBill, vous acceptez d'être lié par ces Conditions. Si vous n'acceptez pas ces Conditions, veuillez ne pas utiliser nos services."
+      "content1": "Bienvenue sur Safe Bill (\"nous\", \"notre\" ou \"nos\"). Ces Conditions d'Utilisation (\"Conditions\") régissent votre utilisation de notre plateforme qui facilite la gestion de projets, le suivi des étapes et les paiements sécurisés entre acheteurs et vendeurs.",
+      "content2": "En accédant ou en utilisant Safe Bill, vous acceptez d'être lié par ces Conditions. Si vous n'acceptez pas ces Conditions, veuillez ne pas utiliser nos services."
     },
     "acceptance": {
       "title": "Acceptation des Conditions",
       "content": "En créant un compte, en accédant à notre plateforme ou en utilisant l'un de nos services, vous reconnaissez avoir lu, compris et accepté d'être lié par ces Conditions d'Utilisation et notre Politique de Confidentialité.",
-      "agreement": "Votre utilisation continue de SafeBill constitue votre acceptation de toute mise à jour ou modification de ces Conditions."
+      "agreement": "Votre utilisation continue de Safe Bill constitue votre acceptation de toute mise à jour ou modification de ces Conditions."
+    },
+    "consent_requirements": {
+      "title": "Exigences de Consentement",
+      "content": "En utilisant Safe Bill, vous consentez à notre collecte et utilisation de vos informations telles que décrites dans notre Politique de Confidentialité. Vous devez fournir un consentement valide pour toutes les activités de traitement des données conformément aux réglementations GDPR.",
+      "cookie_consent": "Notre plateforme utilise des cookies et des technologies similaires. Vous devez fournir votre consentement pour les cookies non essentiels via notre plateforme de gestion du consentement alimentée par Axeptio.",
+      "withdrawal": "Vous pouvez retirer votre consentement à tout moment, mais cela peut limiter votre capacité à utiliser certaines fonctionnalités de notre plateforme."
     },
     "service_description": {
       "title": "Description du Service",
-      "content": "SafeBill fournit une plateforme complète pour la gestion de projets et les transactions sécurisées entre acheteurs et vendeurs. Nos services incluent :",
+      "content": "Safe Bill fournit une plateforme complète pour la gestion de projets et les transactions sécurisées entre acheteurs et vendeurs. Nos services incluent :",
       "features": {
         "project_management": "Gestion de Projets",
         "project_management_desc": "Créer, gérer et suivre des projets avec des exigences et spécifications détaillées",
@@ -1171,7 +1288,7 @@
     },
     "payment_terms": {
       "title": "Conditions de Paiement",
-      "content": "SafeBill facilite les paiements sécurisés entre acheteurs et vendeurs. Tout le traitement des paiements est géré par nos partenaires de paiement intégrés.",
+      "content": "Safe Bill facilite les paiements sécurisés entre acheteurs et vendeurs. Tout le traitement des paiements est géré par nos partenaires de paiement intégrés.",
       "payment_processing": {
         "title": "Traitement des Paiements",
         "items": [
@@ -1185,7 +1302,7 @@
     },
     "prohibited_uses": {
       "title": "Utilisations Interdites",
-      "content": "Vous acceptez de ne pas utiliser SafeBill pour des activités illégales ou interdites. Les activités suivantes sont strictement interdites :",
+      "content": "Vous acceptez de ne pas utiliser Safe Bill pour des activités illégales ou interdites. Les activités suivantes sont strictement interdites :",
       "illegal_activities": {
         "title": "Activités Illégales",
         "items": [
@@ -1208,19 +1325,19 @@
     "intellectual_property": {
       "title": "Propriété Intellectuelle",
       "safebill_content": {
-        "title": "Contenu SafeBill",
-        "content": "Tout le contenu, les fonctionnalités et la fonctionnalité de SafeBill, y compris mais sans s'y limiter le texte, les graphiques, les logos et les logiciels, sont la propriété de SafeBill et sont protégés par les lois internationales de droit d'auteur, de marque de commerce et autres lois de propriété intellectuelle."
+        "title": "Contenu Safe Bill",
+        "content": "Tout le contenu, les fonctionnalités et la fonctionnalité de Safe Bill, y compris mais sans s'y limiter le texte, les graphiques, les logos et les logiciels, sont la propriété de Safe Bill et sont protégés par les lois internationales de droit d'auteur, de marque de commerce et autres lois de propriété intellectuelle."
       },
       "user_content": {
         "title": "Contenu Utilisateur",
-        "content": "Vous conservez la propriété du contenu que vous téléchargez sur SafeBill. En téléchargeant du contenu, vous accordez à SafeBill une licence non exclusive et sans redevance d'utiliser, d'afficher et de distribuer votre contenu selon les besoins pour fournir nos services."
+        "content": "Vous conservez la propriété du contenu que vous téléchargez sur Safe Bill. En téléchargeant du contenu, vous accordez à Safe Bill une licence non exclusive et sans redevance d'utiliser, d'afficher et de distribuer votre contenu selon les besoins pour fournir nos services."
       }
     },
     "disclaimers": {
       "title": "Avertissements",
       "service_availability": {
         "title": "Disponibilité du Service",
-        "content": "SafeBill est fourni \"tel quel\" et \"tel que disponible\". Nous ne garantissons pas que nos services seront ininterrompus, sans erreur ou complètement sécurisés. Nous nous réservons le droit de modifier ou d'interrompre les services à tout moment."
+        "content": "Safe Bill est fourni \"tel quel\" et \"tel que disponible\". Nous ne garantissons pas que nos services seront ininterrompus, sans erreur ou complètement sécurisés. Nous nous réservons le droit de modifier ou d'interrompre les services à tout moment."
       },
       "third_party_services": {
         "title": "Services Tiers",
@@ -1229,7 +1346,7 @@
     },
     "limitation_liability": {
       "title": "Limitation de Responsabilité",
-      "content": "Dans la mesure maximale permise par la loi, SafeBill ne sera pas responsable de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris mais sans s'y limiter :",
+      "content": "Dans la mesure maximale permise par la loi, Safe Bill ne sera pas responsable de tout dommage indirect, accessoire, spécial, consécutif ou punitif, y compris mais sans s'y limiter :",
       "direct_damages": "Perte de profits ou de revenus",
       "indirect_damages": "Perte de données ou d'informations",
       "consequential_damages": "Interruption d'activité ou perte d'opportunités commerciales",
@@ -1237,7 +1354,7 @@
     },
     "termination": {
       "title": "Résiliation",
-      "content": "Chaque partie peut résilier ces Conditions à tout moment. Lors de la résiliation, votre droit d'utiliser SafeBill cessera immédiatement.",
+      "content": "Chaque partie peut résilier ces Conditions à tout moment. Lors de la résiliation, votre droit d'utiliser Safe Bill cessera immédiatement.",
       "user_termination": {
         "title": "Résiliation par l'Utilisateur",
         "content": "Vous pouvez résilier votre compte à tout moment en contactant notre équipe de support ou en utilisant la fonctionnalité de suppression de compte dans vos paramètres."
@@ -1254,21 +1371,21 @@
     "contact": {
       "title": "Nous Contacter",
       "content": "Si vous avez des questions sur ces Conditions d'Utilisation, veuillez nous contacter :",
-      "email": "legal@safebill.com",
-      "phone": "+1 (555) 123-4567",
-      "address": "123 Business Street, City, State 12345"
+      "email": "contact@safebill.fr",
+      "address": "Safe Bill 66 avenue des Champs Elysées 75008 Paris"
     },
     "updates": {
       "title": "Mises à Jour des Conditions",
-      "content": "Nous pouvons mettre à jour ces Conditions d'Utilisation de temps à autre. Nous informerons les utilisateurs de tout changement important par e-mail ou via notre plateforme. Votre utilisation continue de SafeBill après toute modification constitue une acceptation des Conditions mises à jour."
+      "content": "Nous pouvons mettre à jour ces Conditions d'Utilisation de temps à autre. Nous informerons les utilisateurs de tout changement important par e-mail ou via notre plateforme. Votre utilisation continue de Safe Bill après toute modification constitue une acceptation des Conditions mises à jour."
     },
-    "copyright": "© {year} SafeBill. Tous droits réservés."
+    "copyright": "©  2025 Safe Bill. Tous droits réservés."
   },
   "billings": {
     "title": "Facturation et Paiements",
     "subtitle": "Suivez votre historique de paiements et gérez votre solde",
     "loading": "Chargement des informations de facturation...",
     "common_loading": "Chargement...",
+    "payment_tracking": "Suivi des paiements",
     "balance_summary": "Résumé du Solde",
     "payment_history": "Historique des Paiements",
     "current_balance": "Solde Actuel",
@@ -1347,9 +1464,666 @@
     "completed": "Terminé",
     "transfer_id": "ID de Transfert"
   },
+  "payment_tracking": {
+    "title": "Suivi des paiements",
+    "project_name": "Nom du projet",
+    "project_amount": "Montant du projet",
+    "paid_amount": "Montant payé",
+    "date": "Date",
+    "status": "Statut",
+    "search_placeholder": "Rechercher par nom de projet",
+    "no_payments": "Aucun paiement trouvé"
+  },
+  "geo_filter": {
+    "search_placeholder": "Rechercher une ville ou un code postal (limité aux zones prises en charge)",
+    "map_instruction": "Cliquez n'importe où sur la carte pour obtenir l'adresse et filtrer les professionnels pour cette zone",
+    "selected_location": "Emplacement sélectionné :",
+    "click_to_select": "Cliquez sur la carte pour sélectionner un emplacement"
+  },
+  "find_professional": {
+    "hero_line1": "Trouvez",
+    "hero_line2_part1": "un",
+    "hero_line2_part2": "professionnel",
+    "hero_line3": "près de chez vous !",
+    "find_local": "Trouver des professionnels locaux",
+    "service_type": "Type de service",
+    "area": "Zone",
+    "apply_filters": "Appliquer les filtres",
+    "clear_all": "Tout effacer",
+    "results": "Résultats"
+  },
   "common": {
     "error": "Erreur",
     "error_loading_data": "Erreur lors du chargement des données",
-    "unexpected_error": "Une erreur inattendue s'est produite"
+    "unexpected_error": "Une erreur inattendue s'est produite",
+    "expired_tokens_description": "Ces projets ont des liens d'invitation expirés. Renvoyez pour générer une nouvelle invitation à votre client.",
+    "resend_invite": "Renvoyer l'invitation",
+    "no_expired_tokens": "Aucun jeton expiré",
+    "invite_resent": "Lien d'invitation renvoyé avec succès",
+    "loading": "Chargement...",
+    "actions": "Actions",
+    "project": "Projet",
+    "client_email": "Email du client",
+    "created_at": "Créé le",
+    "prev": "Précédent",
+    "next": "Suivant"
+  },
+  "milestones": {
+    "page_title": "Jalons pour",
+    "back_to_projects": "Retour aux projets",
+    "loading": "Chargement des jalons...",
+    "load_failed": "Échec du chargement des jalons.",
+    "empty_state": "Aucun acompte trouvé pour ce projet.",
+    "status_label": "Statut",
+    "you_receive_prefix": "Vous recevez",
+    "platform_fee": "Frais de plateforme",
+    "review_comment": "Commentaire de révision",
+    "view_full_comment": "Voir le commentaire complet",
+    "description_label": "Description",
+    "view_full_description": "Voir la description complète",
+    "view_supporting_doc": "Voir le document justificatif",
+    "completion_notice": "Avis d'achèvement",
+    "created_label": "Créé",
+    "completed_label": "Terminé",
+    "edit_tooltip": "Modifier l'acompte",
+    "edit_title": "Modifier l'acompte",
+    "name_label": "Nom de l'acompte",
+    "name_placeholder": "Entrez le nom de l'acompte",
+    "description_placeholder": "Entrez la description de l'acompte",
+    "payment_amount_label": "Montant du paiement (€)",
+    "payment_amount_placeholder": "Entrez le montant du paiement",
+    "supporting_documents": "Documents justificatifs",
+    "current_document": "Document actuel",
+    "view_current_document": "Voir le document actuel",
+    "upload_instructions": "Téléchargez des photos, rapports ou autres preuves",
+    "drag_drop_hint": "Glissez-déposez les fichiers ici ou cliquez pour parcourir",
+    "choose_files": "Choisir des fichiers",
+    "file_selected": "Fichier sélectionné",
+    "size_label": "Taille",
+    "update_button": "Mettre à jour l'acompte",
+    "confirm_submission_title": "Confirmer la soumission",
+    "confirm_submission_body": "Êtes-vous sûr de vouloir soumettre cet acompte pour approbation ? Une fois soumis, vous ne pourrez plus le modifier jusqu'à la réponse de l'acheteur.",
+    "status_tooltip_submitted": "Soumis pour approbation",
+    "status_tooltip_approved": "Approuvé",
+    "status_not_submitted": "Non soumis",
+    "status_review_request": "Demande de révision",
+    "update_success": "Acompte mis à jour avec succès !",
+    "update_failed_default": "Échec de la mise à jour de l'acompte. Veuillez réessayer.",
+    "submit_success": "Acompte soumis pour approbation !",
+    "submit_failed_default": "Échec de la soumission de l'acompte pour approbation.",
+    "submit_for_approval": "Soumettre pour validation",
+    "submitting": "Soumission en cours..."
+  },
+  "milestone_approval": {
+    "success_approved": "Acompte approuvé avec succès !",
+    "success_not_approved": "Acompte marqué comme non approuvé.",
+    "success_review": "Demande de révision envoyée au vendeur.",
+    "failed_update": "Échec de la mise à jour de l'acompte. Veuillez réessayer.",
+    "confirm_approve": "Êtes-vous sûr de vouloir approuver cet acompte ?",
+    "confirm_not_approved": "Êtes-vous sûr de vouloir marquer cet acompte comme non approuvé ?",
+    "confirm_review": "Envoyer une demande de révision avec votre commentaire ?",
+    "confirm_generic": "Êtes-vous sûr de vouloir effectuer cette action ?",
+    "title_single": "Validation d’acompte",
+    "title_plural": "Validations de jalons",
+    "loading_pending": "Chargement des jalons en attente...",
+    "load_failed": "Échec du chargement des jalons",
+    "empty_pending": "Aucun acompte en attente d'approbation",
+    "search_placeholder": "Rechercher par nom de projet ou d'acompte...",
+    "no_search_results": "Aucun acompte correspondant à votre recherche.",
+    "awaiting_review": "En attente d'examen",
+    "project_label": "Projet :",
+    "seller_label": "Vendeur :",
+    "submitted_label": "Soumis :",
+    "description_label": "Description :",
+    "view_full_description": "Voir la description complète",
+    "view_supporting_doc": "Voir le document justificatif",
+    "approve": "Approuver",
+    "not_approve": "Refuser",
+    "request_review": "Demander une révision",
+    "action_generic": "Action",
+    "confirm_action_title": "Confirmer l'action",
+    "milestone_label": "Acompte :",
+    "review_comment_label": "Commentaire de révision (facultatif)",
+    "review_comment_placeholder": "Veuillez indiquer ce qui doit être modifié ou amélioré...",
+    "review_comment_hint": "Ce commentaire sera visible par le vendeur pour comprendre votre retour.",
+    "review_comment_title": "Commentaire de révision",
+    "milestone_description_title": "Description de l'acompte"
+  },
+  "receipts": {
+    "title": "Factures",
+    "search_placeholder": "Rechercher par nom du projet",
+    "no_completed": "Aucun projet terminé.",
+    "loading": "Chargement...",
+    "none_found": "Aucun reçu trouvé.",
+    "ref": "Réf :",
+    "start": "Début :",
+    "completed": "Terminé",
+    "hide": "Masquer",
+    "details": "Détails",
+    "download_pdf": "Télécharger le PDF",
+    "total_amount": "Montant total",
+    "platform_fee": "Frais de plateforme",
+    "seller_receives": "Facture vendeur",
+    "milestone": "Étape",
+    "completed_at": "Terminé le",
+    "amount": "Montant",
+    "after_fee": "Après frais",
+    "brand": "Safe Bill",
+    "seller_copy": "Facture vendeur",
+    "buyer_copy": "Reçu acheteur",
+    "total": "Total",
+    "vat": "TVA",
+    "paid": "Payé",
+    "milestones": "Étapes",
+    "generated_by": "Généré par Safe Bill",
+    "showing": "Affichage",
+    "of": "sur",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "name": "Nom",
+    "seller_label": "Vendeur",
+    "buyer_label": "Acheteur",
+    "project_amount": "Montant du projet",
+    "service_fees_excl_vat": "Frais de service (HT)",
+    "vat_rate": "TVA",
+    "vat_on_service_fees": "TVA sur les frais de service",
+    "total_service_fees": "Total des frais de service",
+    "platform_invoice": "Facture plateforme",
+    "invoice_date": "Date de facturation",
+    "issued_to": "Émis à",
+    "invoice_details": "Détails de la facture plateforme",
+    "my_receipts": "Mes Reçus",
+    "platform_invoices": "Factures Plateforme",
+    "payment_status": "Statut de paiement",
+    "project_type": "Type de projet",
+    "date_range": "Période",
+    "all_statuses": "Tous les statuts",
+    "all_types": "Tous les types",
+    "all_time": "Tout le temps",
+    "last_7_days": "7 derniers jours",
+    "last_30_days": "30 derniers jours",
+    "last_90_days": "90 derniers jours",
+    "receipt_type": "Type de reçu",
+    "net_amount": "Montant net",
+    "previous": "Précédent",
+    "pending": "En attente",
+    "failed": "Échoué",
+    "seller_receipt": "Facture vendeur",
+    "platform_invoice": "Facture plateforme",
+    "date": "Date",
+    "project_name": "Nom du projet",
+    "reference": "Référence",
+    "amount": "Montant",
+    "vat": "TVA",
+    "payment_id": "ID de paiement",
+    "status": "Statut",
+    "actions": "Actions",
+    "net": "Net",
+    "clear_filters": "Effacer les filtres",
+    "showing": "Affichage",
+    "of": "sur",
+    "buyer_receipt": "Reçu acheteur",
+    "buyer_copy": "Copie acheteur",
+    "start": "Début",
+    "total": "Total",
+    "milestones": "Étapes",
+    "name": "Nom",
+    "completed_at": "Terminé le",
+    "generated_by": "Généré par Safe Bill",
+    "receipts": "reçus",
+    "seller_info": "Informations vendeur",
+    "seller_information": "Informations vendeur",
+    "buyer_info": "Informations acheteur",
+    "buyer_information": "Informations acheteur",
+    "address": "Adresse",
+    "siret": "SIRET",
+    "phone": "Téléphone",
+    "email_label": "E-mail",
+    "amount_with_vat": "Montant TTC",
+    "platform_fees": "Frais de plateforme",
+    "seller_invoice": "Facture vendeur",
+    "paid": "Payé",
+    "completed_at": "Terminé le",
+    "subscription_invoice": "Facture d'abonnement",
+    "monthly_subscription_invoice": "Facture d'abonnement mensuel",
+    "monthly_subscription": "Abonnement mensuel",
+    "invoice_number": "Numéro de facture",
+    "invoice_date": "Date de facturation",
+    "billing_period": "Période de facturation",
+    "to": "à",
+    "status": "Statut",
+    "status_paid": "Payé",
+    "status_pending": "En attente",
+    "subscription_amount": "Montant de l'abonnement",
+    "generated_by_safe_bill": "Généré par Safe Bill"
+  },
+  "not_found": {
+    "page_not_found": "La page que vous recherchez n'existe pas.",
+    "go_back_home": "Retour à l'accueil"
+  },
+  "support": {
+    "title": "Support",
+    "contact_us": "Nous contacter",
+    "contact_help": "Nous sommes là pour vous aider. Soumettez une demande et notre équipe vous répondra.",
+    "submit_request": "Soumettre une demande"
+  },
+  "notifications": {
+    "project_created": "Nouveau projet '{{project_name}}' créé.",
+    "project_approved": "Le projet '{{project_name}}' a été approuvé.",
+    "project_started_buyer": "Le projet '{{project_name}}' a été démarré et est maintenant en cours.",
+    "project_started_seller": "Vous avez démarré le projet '{{project_name}}' et il est maintenant en cours.",
+    "project_completed_buyer": "Le projet '{{project_name}}' a été terminé par {{seller_name}}.",
+    "project_completed_seller": "Vous avez terminé avec succès le projet '{{project_name}}'.",
+    "project_added": "Vous avez été ajouté au projet '{{project_name}}' par {{seller_name}}.",
+    "invitation_generated": "Un nouveau lien d'invitation a été généré pour le projet '{{project_name}}'.",
+    "project_approved_seller": "Le client {{client_email}} a approuvé le projet '{{project_name}}'.",
+    "project_approved_buyer": "Vous avez approuvé avec succès le projet '{{project_name}}' de {{seller_name}}.",
+    "project_rejected_seller": "Le client {{client_email}} a rejeté le projet '{{project_name}}'.",
+    "project_rejected_buyer": "Vous avez rejeté le projet '{{project_name}}' de {{seller_name}}.",
+    "project_completed_milestone": "Le projet '{{project_name}}' est maintenant terminé. Dernier acompte : {{milestone_name}}, approuvé.",
+    "project_completed_final": "Le projet '{{project_name}}' est maintenant terminé.",
+    "milestone_status_seller": "L'acompte '{{milestone_name}}' pour le projet '{{project_name}}' a été {{status}}",
+    "milestone_status_buyer": "L'acompte '{{milestone_name}}' pour le projet '{{project_name}}' a été {{status}}",
+    "payment_processed": "Votre paiement de {{amount}} pour le projet '{{project_name}}' a été traité avec succès.",
+    "payment_session_expired": "Votre session de paiement pour le projet '{{project_name}}' a expiré.",
+    "payment_failed": "Le paiement pour le projet '{{project_name}}' a échoué.",
+    "refund_balance_updated": "Solde de remboursement mis à jour avec succès",
+    "stripe_verified": "Votre compte Stripe a été vérifié avec succès et est maintenant actif. Vous pouvez maintenant recevoir des paiements.",
+    "stripe_disconnected": "Votre compte Stripe a été déconnecté. Vous ne pourrez plus recevoir de paiements jusqu'à ce que vous vous reconnectiez.",
+    "identity_verified": "Votre identité a été vérifiée avec succès !",
+    "identity_verification_failed": "La vérification de votre identité a échoué. Veuillez réessayer !",
+    "funds_released": "Excellente nouvelle ! {{amount}} a été libéré de la retenue et est maintenant disponible pour le paiement.",
+    "transfer_sent": "Le transfert de {{amount}} {{currency}} a été envoyé à votre compte Stripe.",
+    "transfer_reversed": "Le transfert de {{amount}} {{currency}} a été annulé. Raison : {{reason}}. Les fonds ont été retournés à votre solde.",
+    "dispute_mediator_assigned": "Le médiateur {{mediator_name}} a été assigné au litige {{dispute_id}}",
+    "dispute_created": "Un nouveau litige a été créé pour le projet '{{project_name}}'",
+    "dispute_responded": "Réponse reçue pour le litige {{dispute_id}}",
+    "dispute_resolved": "Le litige {{dispute_id}} a été résolu",
+    "dispute_escalated": "Le litige {{dispute_id}} a été escaladé pour révision administrative",
+    "milestone_status_approved": "approuvé",
+    "milestone_status_not_approved": "non approuvé",
+    "milestone_status_review_request": "envoyé pour révision",
+    "milestone_status_pending": "soumis pour approbation",
+    "dispute_created_respondent": "Un litige a été déposé pour le projet '{{project_name}}' par {{username}}. ID du litige : {{dispute_id}}",
+    "dispute_created_initiator": "Votre litige pour le projet '{{project_name}}' a été créé avec succès. ID du litige : {{dispute_id}}",
+    "dispute_mediator_assigned_initiator": "Le médiateur {{mediator_username}} a été assigné au litige {{dispute_id}}",
+    "dispute_mediator_assigned_respondent": "Le médiateur {{mediator_username}} a été assigné au litige {{dispute_id}}",
+    "dispute_resolved_initiator": "Le litige {{dispute_id}} a été résolu",
+    "dispute_resolved_respondent": "Le litige {{dispute_id}} a été résolu",
+    "dispute_status_changed_initiator": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}",
+    "dispute_status_changed_respondent": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}",
+    "dispute_comment_added": "{{username}} a ajouté un commentaire au litige {{dispute_id}}",
+    "dispute_mediator_assigned_admin_initiator": "Le médiateur {{mediator_name}} ({{mediator_email}}) a été assigné à votre litige : {{dispute_title}}",
+    "dispute_mediator_assigned_admin_respondent": "Le médiateur {{mediator_name}} ({{mediator_email}}) a été assigné à votre litige : {{dispute_title}}",
+    "dispute_mediator_assigned_admin_mediator": "Vous avez été assigné comme médiateur pour le litige : {{dispute_title}}",
+    "dispute_status_changed_admin_initiator": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}",
+    "dispute_status_changed_admin_respondent": "Le statut du litige {{dispute_id}} a changé de {{old_status}} à {{new_status}}",
+    "refund_balance_updated": "Solde de remboursement mis à jour avec succès",
+    "transfer_sent": "Transfert de {{amount}} {{currency}} a été envoyé vers votre compte Stripe.",
+    "transfer_reversed": "Transfert de {{amount}} {{currency}} a été annulé. Raison : {{reason}}. Les fonds ont été retournés à votre solde.",
+    "funds_released": "Excellente nouvelle ! {{amount}} $ a été libéré de la retenue et est maintenant disponible pour le paiement.",
+    "stripe_onboarding_complete": "Votre compte Stripe a été vérifié avec succès et est maintenant actif. Vous pouvez maintenant recevoir des paiements.",
+    "stripe_account_disconnected": "Votre compte Stripe a été déconnecté. Vous ne pourrez plus recevoir de paiements jusqu'à ce que vous vous reconnectiez.",
+    "identity_verification_success": "Votre identité a été vérifiée avec succès !",
+    "identity_verification_failed": "Votre vérification d'identité a échoué. Veuillez réessayer !",
+    "project_approved_seller": "Le projet '{{project_name}}' a été approuvé.",
+    "payment_processed_buyer": "Votre paiement de {{amount}} pour le projet '{{project_name}}' a été traité avec succès.",
+    "payment_session_expired": "Votre session de paiement pour le projet '{{project_name}}' a expiré.",
+    "payment_failed": "Le paiement pour le projet '{{project_name}}' a échoué."
+  },
+  "account_deletion": {
+    "title": "Supprimer Mon Compte",
+    "subtitle": "Supprimer définitivement votre compte et toutes les données associées",
+    "checking_eligibility": "Vérification de l'éligibilité",
+    "please_wait": "Veuillez patienter pendant que nous vérifions le statut de votre compte...",
+    "error_title": "Erreur",
+    "failed_to_check": "Échec de la vérification de l'éligibilité",
+    "retry": "Réessayer",
+    "back_to_dashboard": "Retour au tableau de bord",
+    "initializing": "Initialisation de la suppression de compte",
+    "preparing": "Préparation de la vérification du statut de votre compte...",
+    "eligible_title": "Éligible à la suppression de compte",
+    "eligible_message": "Votre compte répond à tous les critères de suppression.",
+    "eligibility_criteria_met": "Critères d'éligibilité remplis",
+    "no_active_projects": "Aucun projet actif",
+    "no_pending_payments": "Aucun paiement en attente",
+    "no_active_disputes": "Aucun litige actif",
+    "no_outstanding_balances": "Aucun solde impayé",
+    "continue_to_deletion": "Continuer vers la suppression",
+    "confirm_deletion": "Confirmer la suppression du compte",
+    "enter_password": "Veuillez entrer votre mot de passe pour confirmer cette action irréversible.",
+    "warning_title": "Avertissement : Cette action est irréversible",
+    "warning_data_deleted": "Toutes vos données seront définitivement supprimées",
+    "warning_cannot_recover": "Vous ne pourrez pas récupérer votre compte",
+    "warning_lost": "Tous les projets, paiements et messages seront perdus",
+    "warning_cannot_undo": "Cette action ne peut pas être annulée",
+    "password_label": "Mot de passe *",
+    "enter_your_password": "Entrez votre mot de passe",
+    "confirm_password_label": "Confirmer le mot de passe *",
+    "confirm_your_password": "Confirmez votre mot de passe",
+    "passwords_not_match": "Les mots de passe ne correspondent pas",
+    "cancel": "Annuler",
+    "continue_to_confirmation": "Continuer vers la confirmation",
+    "final_confirmation_title": "Confirmation finale",
+    "final_confirmation_message": "Êtes-vous absolument sûr de vouloir supprimer votre compte ? Cette action est irréversible et toutes vos données seront définitivement perdues.",
+    "will_delete": "Cela supprimera définitivement :",
+    "delete_account": "Votre compte et votre profil",
+    "delete_projects": "Tous les projets et paiements",
+    "delete_messages": "Tous les messages et communications",
+    "delete_data": "Toutes les données associées",
+    "go_back": "Retour",
+    "yes_delete_account": "Oui, supprimer mon compte",
+    "deleting": "Suppression en cours...",
+    "deleting_account": "Suppression de votre compte",
+    "processing_deletion": "Veuillez patienter pendant que nous traitons la suppression de votre compte...",
+    "deleted_successfully": "Compte supprimé avec succès",
+    "account_permanently_deleted": "Votre compte a été définitivement supprimé.",
+    "redirecting": "Redirection vers la page d'accueil...",
+    "not_eligible_title": "Suppression de compte non éligible",
+    "not_eligible_message": "Votre compte ne peut pas être supprimé pour le moment en raison des restrictions suivantes :",
+    "active_projects": "Projets actifs",
+    "pending_payments": "Paiements en attente",
+    "active_disputes": "Litiges actifs",
+    "to_delete_need_to": "Pour supprimer votre compte, vous devez :",
+    "complete_projects": "Terminer ou annuler tous les projets actifs",
+    "wait_payments": "Attendre que tous les paiements en attente soient traités",
+    "resolve_disputes": "Résoudre tous les litiges actifs",
+    "password_required": "Le mot de passe est requis",
+    "confirm_password_required": "La confirmation du mot de passe est requise"
+  },
+  "subscription_card": {
+    "title": "Activez votre abonnement",
+    "subtitle": "Débloquez la création de projets pour les 30 prochains jours",
+    "plan_title": "Abonnement à 3 €/mois",
+    "feature_create_more": "Créez de nouveaux projets au-delà du premier",
+    "feature_auto_renews": "Renouvellement mensuel automatique ; résiliation à tout moment",
+    "feature_realtime": "Mises à jour du statut en temps réel après le paiement",
+    "cta": "Activer pour 3 €/mois",
+    "membership_required": "Abonnement requis pour continuer à créer des projets.",
+    "secure_payment": "Paiement sécurisé via Stripe. Vous serez redirigé pour finaliser votre abonnement.",
+    "status": "Statut :",
+    "current_period_ends": "La période en cours se termine le :"
+  },
+  "subscription": {
+    "errors": {
+      "precheck": "Veuillez activer votre abonnement pour créer des projets supplémentaires.",
+      "required_backend": "Abonnement requis pour créer des projets supplémentaires. Veuillez activer votre abonnement."
+    }
+  },
+  "steps": {
+    "step_1": "Étape 1",
+    "step_2": "Étape 2",
+    "step_3": "Étape 3"
+  },
+  "privacy_policy": {
+    "title": "Politique de confidentialité – Safe Bill",
+    "subtitle": "Comment Safe Bill collecte et traite vos données personnelles",
+    "last_updated": "Dernière mise à jour :",
+    "copyright": "© 2025 Safe Bill. Tous droits réservés.",
+    "introduction": {
+      "title": "Responsable de traitement",
+      "content1": "La présente politique de confidentialité décrit la manière dont Safe Bill collecte et traite vos données personnelles dans le cadre de l'utilisation de sa marketplace.",
+      "content2": "Safe Bill est responsable du traitement des données personnelles collectées via le site, l'application et les services associés.",
+      "company_info": {
+        "name": "Safe Bill",
+        "legal_form": "Forme juridique : SASU",
+        "capital": "Capital social : 10 000 €",
+        "address": "Siège social : 66 avenue des Champs-Élysées, 75008 Paris, France",
+        "email": "Email de contact : contact@safebill.fr"
+      }
+    },
+    "information_collection": {
+      "title": "Données collectées",
+      "subtitle": "Safe Bill collecte uniquement les données nécessaires à la fourniture de ses services de tiers de confiance et à la gestion de la marketplace.",
+      "personal_info": {
+        "title": "Données d'identification et de contact",
+        "items": [
+          "Nom, prénom",
+          "Adresse email, numéro de téléphone",
+          "Adresse postale",
+          "Mot de passe (stocké sous forme chiffrée)"
+        ]
+      },
+      "project_info": {
+        "title": "Données professionnelles (vendeurs/professionnels)",
+        "items": [
+          "Raison sociale, forme juridique",
+          "SIRET/SIREN, numéro de TVA intracommunautaire",
+          "Adresse du siège social",
+          "Fonction, secteur d'activité, spécialités"
+        ]
+      },
+      "technical_info": {
+        "title": "Données techniques et de navigation",
+        "items": [
+          "Adresse IP, type de navigateur, système d'exploitation",
+          "Logs de connexion, horodatages",
+          "Données de navigation sur la marketplace (pages consultées, clics, etc.)",
+          "Cookies et traceurs"
+        ]
+      }
+    },
+    "cookie_policy": {
+      "title": "Politique Cookies",
+      "subtitle": "Safe Bill utilise des cookies et autres traceurs sur la marketplace à diverses fins.",
+      "essential_cookies": {
+        "title": "Cookies essentiels",
+        "description": "Ces cookies sont nécessaires au bon fonctionnement du site web.",
+        "examples": [
+          "Gestion des sessions",
+          "Sécurité et prévention de la fraude",
+          "Préférences utilisateur"
+        ]
+      },
+      "analytics_cookies": {
+        "title": "Cookies d'analyse",
+        "description": "Ces cookies nous aident à mesurer l'audience et à améliorer les performances de la plateforme.",
+        "examples": [
+          "Pages vues et comportement utilisateur",
+          "Métriques de performance",
+          "Données d'engagement utilisateur"
+        ]
+      },
+      "marketing_cookies": {
+        "title": "Cookies marketing",
+        "description": "Ces cookies nous aident à diffuser de la publicité ciblée et du contenu marketing.",
+        "examples": [
+          "Publicité ciblée",
+          "Suivi des campagnes",
+          "Préférences utilisateur pour le contenu"
+        ]
+      },
+      "consent_management": {
+        "title": "Gestion du consentement",
+        "description": "Lors de votre première visite, un bandeau de cookies vous informe des finalités de ces traceurs et vous permet d'accepter, de refuser ou de personnaliser vos choix.",
+        "withdrawal": "Vous pouvez modifier vos préférences à tout moment via le lien de gestion des cookies disponible sur le site."
+      }
+    },
+    "how_we_use": {
+      "title": "Comment nous utilisons vos informations",
+      "service_provision": {
+        "title": "Fourniture de services",
+        "content": "Vos données sont traitées pour créer et gérer votre compte utilisateur, fournir l'accès à la marketplace et gérer les projets, devis, commandes, acomptes et livraisons."
+      },
+      "communication": {
+        "title": "Communication",
+        "content": "Nous répondons à vos demandes (support, service client, litiges), envoyons des notifications liées à vos projets et paiements, et améliorons la qualité du service."
+      },
+      "security_compliance": {
+        "title": "Sécurité et conformité",
+        "content": "Nous vérifions l'identité des vendeurs/professionnels, prévenons la fraude et le blanchiment d'argent, gérons les litiges et sécurisons les transactions."
+      },
+      "analytics_improvement": {
+        "title": "Analyse et amélioration",
+        "content": "Nous mesurons l'audience et les performances, améliorons l'ergonomie de la plateforme et personnalisons l'expérience utilisateur."
+      }
+    },
+    "information_sharing": {
+      "title": "Partage des informations",
+      "content": "Vos données peuvent être partagées avec les destinataires suivants :",
+      "service_providers": "Prestataires de services : hébergement technique, outils CRM, services email, ticketing support, outils d'analyse de données",
+      "legal_requirements": "Obligations légales : autorités administratives ou judiciaires lorsque requis par la loi",
+      "business_transfers": "Transferts commerciaux : en cas de fusion, acquisition ou vente d'actifs",
+      "consent": "Consentement : lorsque vous autorisez explicitement le partage avec des tiers"
+    },
+    "data_security": {
+      "title": "Sécurité des données",
+      "content": "Safe Bill met en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données personnelles contre la destruction, la perte, l'altération, la divulgation ou l'accès non autorisé.",
+      "ssl_encryption": "Chiffrement SSL/TLS pour toutes les communications",
+      "secure_storage": "Stockage sécurisé avec sauvegardes régulières",
+      "security_audits": "Audits de sécurité réguliers et surveillance",
+      "access_controls": "Contrôles d'accès stricts et permissions basées sur les rôles"
+    },
+    "your_rights": {
+      "title": "Vos droits",
+      "access_portability": {
+        "title": "Accès et portabilité",
+        "content": "Obtenir la confirmation que vos données sont traitées et recevoir une copie dans un format structuré et lisible par machine."
+      },
+      "correction": {
+        "title": "Rectification",
+        "content": "Corriger les données inexactes ou incomplètes vous concernant."
+      },
+      "deletion": {
+        "title": "Suppression",
+        "content": "Demander la suppression de vos données, dans les limites prévues par la loi."
+      },
+      "objection": {
+        "title": "Opposition",
+        "content": "Vous opposer à certains traitements fondés sur l'intérêt légitime ou la prospection commerciale."
+      }
+    },
+    "cookies": {
+      "title": "Cookies",
+      "content": "Safe Bill utilise des cookies et autres traceurs pour assurer le bon fonctionnement du site, mesurer l'audience et les performances, améliorer l'expérience utilisateur et diffuser de la publicité ciblée le cas échéant.",
+      "essential_cookies": "Cookies essentiels (nécessaires au fonctionnement du site)",
+      "analytics_cookies": "Cookies d'analyse (mesurer l'audience et les performances)",
+      "preference_cookies": "Cookies de préférence (mémoriser les préférences utilisateur)",
+      "browser_control": "Vous pouvez contrôler les cookies via les paramètres de votre navigateur et modifier vos préférences à tout moment via le lien de gestion des cookies sur le site."
+    },
+    "contact": {
+      "title": "Informations de contact",
+      "content": "Si vous avez des questions concernant cette politique de confidentialité ou souhaitez exercer vos droits, veuillez nous contacter :",
+      "email": "contact@safebill.fr",
+      "address": "66 avenue des Champs-Élysées, 75008 Paris, France"
+    },
+    "updates": {
+      "title": "Mises à jour de la politique",
+      "content": "Safe Bill se réserve le droit de modifier la présente politique de confidentialité à tout moment pour tenir compte des évolutions légales, réglementaires, techniques ou organisationnelles. En cas de modification importante, nous vous en informerons par tout moyen approprié et vous inviterons à en prendre connaissance."
+    }
+  },
+  "cookie_policy_page": {
+    "title": "Politique Cookies – Safe Bill",
+    "last_updated": "Dernière mise à jour :",
+    "copyright": "© 2025 Safe Bill. Tous droits réservés.",
+    "section1": {
+      "title": "Objet de la présente politique",
+      "content": "La présente politique explique comment Safe Bill utilise des cookies et autres traceurs sur sa marketplace accessible depuis le site https://safebill.fr. Elle vient en complément de la Politique de confidentialité et a pour objectif de vous informer sur :\n- les types de cookies utilisés ;\n- leurs finalités ;\n- la manière dont vous pouvez les accepter, les refuser ou les paramétrer.\n\nEn poursuivant votre navigation ou en paramétrant vos choix via le bandeau et le module de gestion des cookies, vous consentez à l'utilisation des cookies conformément à la présente politique. Vous pouvez retirer votre consentement à tout moment."
+    },
+    "section2": {
+      "title": "Qu'est-ce qu'un cookie ?",
+      "content": "Un cookie est un petit fichier texte déposé sur votre terminal (ordinateur, tablette, smartphone) lors de la consultation d'un site internet ou d'une application. Il permet, pendant sa durée de validité, de reconnaître votre terminal et de mémoriser certaines informations (préférences, langue, session, etc.).\n\nD'autres technologies similaires peuvent être utilisées (pixels, tags, local storage, etc.) et sont désignées collectivement comme « cookies » ou « traceurs » dans la présente politique."
+    },
+    "section3": {
+      "title": "Qui dépose les cookies sur le site Safe Bill ?",
+      "content": "Les cookies peuvent être déposés :\n\n- Par Safe Bill (cookies internes / first-party) : nécessaires au fonctionnement de la marketplace et à l'amélioration du service.\n- Par des tiers (cookies tiers / third-party) : par exemple nos prestataires d'analyse d'audience, de paiement, ou de services intégrés (comme certains outils de mesure ou de support).\n\nLa liste détaillée des principaux partenaires déposant des cookies sur le site est disponible dans le module de gestion des cookies accessible depuis le bandeau ou le pied de page."
+    },
+    "section4": {
+      "title": "Types de cookies utilisés et finalités",
+      "subsection4_1": {
+        "title": "Cookies strictement nécessaires (exemptés de consentement)",
+        "content": "Ces cookies sont indispensables au bon fonctionnement du site et au bon déroulement des services (connexion au compte, sécurité, gestion de session). Ils ne requièrent pas votre consentement préalable.\n\nIls permettent notamment :\n- d'authentifier les utilisateurs et sécuriser l'accès à leur espace ;\n- de maintenir votre session active ;\n- de mémoriser vos choix techniques (langue, paramètres d'affichage) ;\n- d'assurer la sécurité (prévention des usages frauduleux, protection contre certaines attaques).\n\nSans ces cookies, la navigation et l'utilisation de la marketplace peuvent être grandement dégradées ou impossibles."
+      },
+      "subsection4_2": {
+        "title": "Cookies de mesure d'audience et de performance (soumis à consentement)",
+        "content": "Ces cookies permettent de mesurer la fréquentation et l'utilisation du site (pages les plus consultées, temps passé, erreurs techniques, parcours utilisateur) afin d'améliorer le fonctionnement et l'ergonomie de la marketplace.\n\nSauf exception prévue par la CNIL (configuration très stricte et anonymisation avancée), ces cookies ne sont déposés qu'avec votre consentement.\n\nExemples de finalités :\n- statistiques de fréquentation ;\n- analyse des parcours utilisateurs ;\n- détection d'anomalies techniques."
+      },
+      "subsection4_3": {
+        "title": "Cookies de fonctionnalité",
+        "content": "Ces cookies permettent d'améliorer votre expérience utilisateur en mémorisant certains choix et préférences (par exemple, sauvegarde de certaines informations de formulaire, personnalisation légère de l'interface).\n\nIls peuvent également être utilisés pour intégrer des services tiers améliorant l'expérience (chat en ligne, outils de support, etc.). Leur dépôt peut nécessiter votre consentement en fonction de leur nature et des données collectées."
+      },
+      "subsection4_4": {
+        "title": "Cookies de publicité et de personnalisation (le cas échéant)",
+        "content": "Si Safe Bill met en place des campagnes publicitaires ou de reciblage (par exemple via des plateformes externes), des cookies de publicité peuvent être utilisés pour :\n- afficher des publicités pertinentes en fonction de votre navigation ;\n- limiter le nombre d'affichages d'une même publicité ;\n- mesurer l'efficacité des campagnes.\n\nCes cookies sont toujours soumis à votre consentement préalable. Vous pouvez les refuser sans que cela n'affecte l'accès au service."
+      }
+    },
+    "section5": {
+      "title": "Durée de conservation des cookies",
+      "content": "La durée de conservation des cookies varie selon leur type et leur finalité. En tout état de cause :\n- les cookies de session sont conservés le temps de la session de navigation ;\n- les cookies soumis à consentement ont une durée de vie maximale généralement inférieure ou égale à 13 mois ;\n- les informations collectées via ces cookies ne sont pas conservées au-delà de 25 mois sous forme identifiable, sauf obligation légale contraire.\n\nLes durées exactes de conservation pour chaque cookie sont indiquées, lorsque cela est possible, dans le module de gestion des cookies."
+    },
+    "section6": {
+      "title": "Gestion de vos préférences cookies",
+      "subsection6_1": {
+        "title": "Bandeau de consentement",
+        "content": "Lors de votre première visite sur la marketplace Safe Bill (et à intervalles réguliers), un bandeau de cookies apparaît pour :\n- vous informer de l'usage de cookies ;\n- vous permettre d'accepter tout, de refuser tout ou de personnaliser vos choix, avec un niveau d'information clair et accessible.\n\nRefuser les cookies non nécessaires doit être aussi simple qu'accepter l'ensemble des cookies."
+      },
+      "subsection6_2": {
+        "title": "Module de gestion des cookies",
+        "content": "Vous pouvez à tout moment :\n- revenir sur vos choix ;\n- modifier vos préférences par catégorie ;\n- retirer votre consentement pour les cookies non nécessaires, via un lien permanent du type « Gérer mes cookies » disponible en pied de page du site.\n\nLes choix que vous exprimez (acceptation ou refus) sont conservés pendant une durée limitée, après laquelle nous pourrons vous redemander votre consentement."
+      },
+      "subsection6_3": {
+        "title": "Paramétrage via votre navigateur",
+        "content": "Vous pouvez également configurer votre navigateur pour :\n- accepter ou refuser les cookies au cas par cas ;\n- supprimer les cookies déjà enregistrés sur votre terminal ;\n- être informé de tout dépôt de nouveau cookie.\n\nLa configuration de chaque navigateur est différente. Elle est généralement décrite dans les menus d'aide de votre navigateur (Chrome, Firefox, Safari, Edge, etc.)."
+      }
+    },
+    "section7": {
+      "title": "Cookies déposés par des tiers",
+      "content": "Certaines fonctionnalités du site reposent sur des services proposés par des tiers (par exemple : outil d'analytics, services de chat, lecteurs vidéo, boutons de partage, solutions de paiement). Ces tiers peuvent déposer des cookies lorsque vous utilisez ces fonctionnalités.\n\nDans ce cas :\n- ces tiers agissent parfois comme responsables de traitement autonomes ;\n- leurs politiques de confidentialité et de cookies s'appliquent en complément de la présente politique ;\n- vous êtes invité à consulter directement les politiques de ces prestataires pour plus d'informations."
+    },
+    "section8": {
+      "title": "Mise à jour de la Politique Cookies",
+      "content": "La présente Politique Cookies peut être amenée à évoluer, notamment pour tenir compte des recommandations de la CNIL, des évolutions légales ou des modifications techniques et fonctionnelles apportées à la marketplace Safe Bill.\n\nToute modification substantielle fera l'objet d'une information appropriée (bandeau, pop-up, mise à jour de la date d'entrée en vigueur)."
+    },
+    "section9": {
+      "title": "Contact",
+      "content": "Pour toute question relative à l'utilisation des cookies par Safe Bill ou à l'exercice de vos droits en matière de données personnelles, vous pouvez contacter :\n\nSafe Bill\nAdresse : 66 avenue des Champs-Élysées, 75008 Paris, France\nEmail : contact@safebill.fr\n\nVous pouvez également consulter notre Politique de confidentialité pour en savoir plus sur la manière dont Safe Bill traite vos données personnelles et sur vos droits."
+    }
+  },
+  "milestones": {
+    "page_title": "Jalons pour",
+    "back_to_projects": "Retour aux projets",
+    "loading": "Chargement des jalons...",
+    "load_failed": "Échec du chargement des jalons",
+    "empty_state": "Aucun jalon trouvé pour ce projet.",
+    "status_label": "Statut",
+    "status_tooltip_submitted": "Jalon soumis pour approbation",
+    "status_tooltip_approved": "Jalon approuvé",
+    "you_receive_prefix": "Vous recevez",
+    "edit_tooltip": "Modifier le jalon",
+    "submit_for_approval": "Soumettre pour validation",
+    "submitting": "Soumission...",
+    "description_label": "Description",
+    "view_full_description": "Voir la description complète",
+    "view_supporting_doc": "Voir le document justificatif",
+    "completion_notice": "Avis d'achèvement",
+    "platform_fee": "Frais de plateforme",
+    "review_comment": "Commentaire de révision",
+    "view_full_comment": "Voir le commentaire complet",
+    "created_label": "Créé",
+    "completed_label": "Terminé",
+    "edit_title": "Modifier le Jalon",
+    "name_label": "Nom",
+    "payment_amount_label": "Montant du paiement",
+    "payment_amount_placeholder": "Entrer le montant",
+    "supporting_documents": "Documents justificatifs",
+    "current_document": "Document actuel",
+    "view_current_document": "Voir",
+    "upload_instructions": "Cliquez pour télécharger ou glisser-déposer",
+    "drag_drop_hint": "PDF, DOC, DOCX, JPG ou PNG (MAX. 5Mo)",
+    "choose_files": "Choisir des fichiers",
+    "file_selected": "Fichier sélectionné",
+    "size_label": "Taille",
+    "update_button": "Mettre à jour le jalon",
+    "update_success": "Jalon mis à jour avec succès",
+    "update_failed_default": "Échec de la mise à jour du jalon",
+    "submit_success": "Jalon soumis avec succès",
+    "submit_failed_default": "Échec de la soumission du jalon",
+    "confirm_submission_title": "Confirmer la soumission",
+    "confirm_submission_body": "Êtes-vous sûr de vouloir soumettre ce jalon pour approbation ? Vous ne pourrez pas le modifier tant qu'il est en attente d'approbation.",
+    "status_not_submitted": "Non Soumis",
+    "status_pending": "En Attente",
+    "status_approved": "Approuvé",
+    "status_not_approved": "Non Approuvé",
+    "status_review_request": "Demande de Révision"
   }
 }

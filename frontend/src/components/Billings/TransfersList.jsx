@@ -104,7 +104,7 @@ export default function TransfersList({ transfers, loading, error }) {
             <ArrowUpRight className="w-10 h-10 text-gray-400" />
           </div>
           <h4 className="text-lg font-semibold text-gray-700 mb-2">{t('transfers.no_transfers')}</h4>
-          <p className="text-gray-500">Your transfer history will appear here once you initiate transfers.</p>
+          <p className="text-gray-500">{t('transfers.no_transfers_description')}</p>
         </div>
       </div>
     );
@@ -124,7 +124,7 @@ export default function TransfersList({ transfers, loading, error }) {
           <span>{transfers.length} {transfers.length === 1 ? 'transfer' : 'transfers'}</span>
         </div>
       </div>
-      
+
       <div className="space-y-4">
         {transfers.map((transfer, index) => (
           <div
@@ -172,7 +172,7 @@ export default function TransfersList({ transfers, loading, error }) {
                 </span>
               </div>
             </div>
-            
+
             <div className="pt-4 border-t border-gray-100">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 text-sm">

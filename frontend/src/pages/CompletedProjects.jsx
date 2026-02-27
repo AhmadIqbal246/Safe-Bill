@@ -4,7 +4,7 @@ import MainLayout from '../components/Layout/MainLayout'
 
 export default function CompletedProjects() {
   return (
-    <MainLayout>
+    <MainLayout mainBackgroundClass="bg-transparent">
         <CompletedProjectsComp/>
     </MainLayout>
   )

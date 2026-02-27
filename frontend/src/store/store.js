@@ -12,6 +12,7 @@ import adminReducer from './slices/AdminSlice';
 import stripeReducer from './slices/ConnectStripe';
 import paymentReducer from './slices/PaymentSlice';
 import fundsTransferReducer from './slices/FundsTransferSlice';
+import subscriptionReducer from './slices/SubscriptionSlice';
 
 
 // Example: import your reducers here
@@ -32,6 +33,7 @@ export const store = configureStore({
     stripe: stripeReducer,
     payment: paymentReducer,
     fundsTransfer: fundsTransferReducer,
+    subscription: subscriptionReducer,
   },
 });
 

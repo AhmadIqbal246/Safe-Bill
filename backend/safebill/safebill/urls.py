@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -32,6 +33,8 @@ urlpatterns = [
     path("api/admin/", include("adminpanelApp.urls")),
     path("api/connect-stripe/", include("connect_stripe.urls")),
     path("api/payments/", include("payments.urls")),
+    path("api/hubspot/", include("hubspot.urls")),
+    path("api/subscription/", include("subscription.urls")),
     # Add other app urls here
 ]
 
@@ -40,3 +43,5 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT,
     )
+    # Serve static files in development
+    urlpatterns += staticfiles_urlpatterns()

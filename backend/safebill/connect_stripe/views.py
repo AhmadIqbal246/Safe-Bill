@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from hubspot.tasks import sync_deal_task
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.conf import settings
 import stripe
@@ -10,16 +11,22 @@ from django.db import transaction
 from django.utils import timezone
 from .models import StripeAccount, StripeIdentity
 from projects.models import Project
-from payments.models import Payment
+from payments.models import Payment, Refund, Balance
 from payments.utils import send_payment_websocket_update
-from utils.email_service import EmailService
 from notifications.services import NotificationService
+from .tasks import (
+    send_payment_success_email_task,
+    send_payment_failed_email_task,
+)
+from payments.tasks import send_payment_success_email_seller_task
 from payments.services import BalanceService
 from payments.transfer_service import TransferService
 from adminpanelApp.services import RevenueService
-
+from adminpanelApp.models import PlatformRevenue
+from hubspot.tasks import sync_contact_task, sync_revenue_task
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -30,6 +37,10 @@ User = get_user_model()
 def connect_stripe(request):
     stripe.api_key = settings.STRIPE_API_KEY
     user = request.user
+
+    # Added: restrict Connect onboarding to users with seller role enabled
+    if not (getattr(user, "role", None) == "seller"):
+        return Response({"detail": "Seller role not enabled for this account."}, status=409)
 
     # Get or create StripeAccount for the user
     stripe_account, created = StripeAccount.objects.get_or_create(
@@ -87,7 +98,12 @@ def stripe_connect_webhook(request):
 
     # Verify webhook signature (optional for development, required for production)
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        if sig_header:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        else:
+            # Fallback for local development without stripe-cli/ngrok signature
+            event = json.loads(payload)
+            logger.warning("No Stripe signature found, using raw payload (Dev mode)")
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
         return Response({"error": "Invalid payload"}, status=400)
@@ -129,13 +145,18 @@ def stripe_connect_webhook(request):
             if is_onboarding_complete:
                 stripe_account.account_status = "active"
                 user.onboarding_complete = True
+                user.seller_onboarding_complete = True
                 user.save()
                 stripe_account.onboarding_complete = True
+
+                # Sync with HubSpot after Stripe onboarding completion
+                from hubspot.sync_utils import safe_contact_sync
+                safe_contact_sync(user.id, "stripe_onboarding_complete")
 
                 # Send notification for successful Stripe onboarding
                 NotificationService.create_notification(
                     user,
-                    "Your Stripe account has been successfully verified and is now active. You can now receive payments.",
+                    message="notifications.stripe_onboarding_complete"
                 )
 
                 logger.info(
@@ -201,7 +222,7 @@ def stripe_connect_webhook(request):
             # Send notification for Stripe account disconnection
             NotificationService.create_notification(
                 stripe_account.user,
-                "Your Stripe account has been disconnected. You will no longer be able to receive payments until you reconnect.",
+                message="notifications.stripe_account_disconnected"
             )
 
             logger.info(
@@ -269,7 +290,12 @@ def check_stripe_status(request):
                 stripe_account.account_status = "active"
                 stripe_account.onboarding_complete = True
                 user.onboarding_complete = True
+                user.seller_onboarding_complete = True
                 user.save()
+
+                # Sync with HubSpot after Stripe onboarding completion
+                from hubspot.sync_utils import safe_contact_sync
+                safe_contact_sync(user.id, "stripe_onboarding_complete_flow2")
             else:
                 # Only change to "pending" if user has started onboarding (details_submitted is True)
                 # Otherwise keep the current status (likely "onboarding")
@@ -298,6 +324,7 @@ def check_stripe_status(request):
                 {
                     "stripe_connected": True,
                     "onboarding_complete": stripe_account.onboarding_complete,
+                    "seller_onboarding_complete": getattr(user, "seller_onboarding_complete", False),
                     "account_status": stripe_account.account_status,
                     "charges_enabled": charges_enabled,
                     "payouts_enabled": payouts_enabled,
@@ -317,6 +344,7 @@ def check_stripe_status(request):
                 {
                     "stripe_connected": True,
                     "onboarding_complete": stripe_account.onboarding_complete,
+                    "seller_onboarding_complete": getattr(user, "seller_onboarding_complete", False),
                     "account_status": stripe_account.account_status,
                     "error": "Failed to fetch latest account status from Stripe",
                     "account_data": stripe_account.account_data,
@@ -328,6 +356,7 @@ def check_stripe_status(request):
             {
                 "stripe_connected": False,
                 "onboarding_complete": False,
+                "seller_onboarding_complete": getattr(user, "seller_onboarding_complete", False),
                 "account_status": stripe_account.account_status,
                 "message": "No Stripe account ID found",
             },
@@ -345,6 +374,10 @@ def create_stripe_identity_session(request):
     stripe.api_key = settings.STRIPE_API_KEY
     user = request.user
 
+    # Added: restrict Identity verification to users with professional-buyer role enabled
+    if not (getattr(user, "role", None) == "professional-buyer"):
+        return Response({"detail": "Professional-buyer role not enabled for this account."}, status=409)
+
     try:
         # Get or create StripeIdentity for the user
         stripe_identity, created = StripeIdentity.objects.get_or_create(
@@ -353,7 +386,13 @@ def create_stripe_identity_session(request):
 
         # Create a Stripe Identity verification session
         verification_session = stripe.identity.VerificationSession.create(
-            verification_flow=settings.STRIPE_VERIFICATION_FLOW_ID,
+            type="document",
+            options={
+                "document": {
+                    "require_live_capture": True,
+                    "require_matching_selfie": True,
+                }
+            },
             provided_details={"email": user.email},
             metadata={
                 "user_id": str(user.id),
@@ -406,6 +445,7 @@ def check_stripe_identity_status(request):
             {
                 "identity_verified": stripe_identity.identity_verified,
                 "identity_status": stripe_identity.identity_status,
+                "pro_buyer_onboarding_complete": getattr(user, "pro_buyer_onboarding_complete", False),
                 "verification_data": stripe_identity.verification_data,
             },
             status=200,
@@ -415,6 +455,7 @@ def check_stripe_identity_status(request):
             {
                 "identity_verified": False,
                 "identity_status": "not_started",
+                "pro_buyer_onboarding_complete": getattr(user, "pro_buyer_onboarding_complete", False),
                 "verification_data": {},
             },
             status=200,
@@ -443,7 +484,12 @@ def stripe_identity_webhook(request):
 
     # Verify webhook signature
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        if sig_header:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        else:
+            # Fallback for local development
+            event = json.loads(payload)
+            logger.warning("No Stripe signature found, using raw payload (Dev mode)")
     except ValueError as e:
         logger.error(f"Invalid payload: {e}")
         return Response({"error": "Invalid payload"}, status=400)
@@ -491,14 +537,19 @@ def stripe_identity_webhook(request):
             stripe_identity.verification_data = event
 
             user.onboarding_complete = True
+            user.pro_buyer_onboarding_complete = True
             user.save()
             stripe_identity.verified_at = timezone.now()
             stripe_identity.save()
 
+            # Sync with HubSpot after identity verification completion
+            from hubspot.sync_utils import safe_contact_sync
+            safe_contact_sync(user.id, "identity_verification_complete")
+
             # Send notification for successful identity verification
             NotificationService.create_notification(
                 user,
-                "Your identity has been successfully verified!",
+                message="notifications.identity_verification_success"
             )
 
             logger.info(
@@ -549,7 +600,7 @@ def stripe_identity_webhook(request):
             # Send notification for failed identity verification
             NotificationService.create_notification(
                 stripe_identity.user,
-                "Your identity verification has failed. Please try again!",
+                message="notifications.identity_verification_failed"
             )
 
             logger.info(
@@ -590,30 +641,47 @@ def stripe_identity_webhook(request):
         project = Project.objects.get(id=project_id)
         project.status = "approved"
         project.save()
+        # HubSpot sync now handled automatically by Django signals
         payment = Payment.objects.get(stripe_payment_id=payment_id)
+        if payment.status != "paid":
+            platform_revenue = PlatformRevenue.objects.all().first()
+            platform_revenue.vat_collected += (
+                payment.buyer_total_amount - payment.amount
+            )
+            platform_revenue.save()
         payment.status = "paid"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task (keeps Payments object in sync)
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
+
+        # Enqueue HubSpot Revenue monthly sync for payment metrics only
+        from hubspot.sync_utils import sync_revenue_to_hubspot
+        from django.db import transaction
+        now = timezone.now()
+        
+        # Ensure revenue sync only happens after database commit
+        # Only sync payment-related metrics (VAT collected + total payments)
+        transaction.on_commit(
+            lambda: sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success", sync_type="payment")
+        )
 
         try:
             # The payment is held in escrow until milestones are approved
             if project.client:
                 BalanceService.update_buyer_balance_on_payment(
-                    buyer=project.client, payment_amount=payment.amount
+                    buyer=project.client, payment_amount=payment.buyer_total_amount
                 )
         except Exception as e:
             logger.error(f"Error updating buyer balance: {e}")
             # Don't break the webhook flow if balance update fails
 
-        # Track buyer revenue (platform fee from buyer)
-        try:
-            RevenueService.add_buyer_revenue(
-                payment_amount=payment.amount,
-                platform_fee_amount=payment.platform_fee_amount,
-            )
-        except Exception as e:
-            logger.error(f"Error tracking buyer revenue: {e}")
-            # Don't break the webhook flow if revenue tracking fails
+        # Buyer revenue tracking removed: buyers are only charged VAT
 
         # Email: notify client of successful payment
         try:
@@ -628,12 +696,31 @@ def stripe_identity_webhook(request):
                         else "User"
                     )
                 )
-                EmailService.send_client_payment_success_email(
+                send_payment_success_email_task.delay(
                     user_email=client.email,
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
+                    language="fr",
                 )
+                # Also notify the seller in French
+                try:
+                    seller = project.user
+                    if seller and getattr(seller, "email", None):
+                        seller_name = (
+                            seller.get_full_name()
+                            or getattr(seller, "username", None)
+                            or seller.email
+                        )
+                        send_payment_success_email_seller_task.delay(
+                            seller.email,
+                            seller_name,
+                            project.name,
+                            float(payment.buyer_total_amount or payment.amount),
+                            "fr",
+                        )
+                except Exception:
+                    pass
         except Exception:
             # Avoid breaking webhook flow if email fails
             pass
@@ -641,11 +728,14 @@ def stripe_identity_webhook(request):
         # Send notifications for successful payment
         NotificationService.create_notification(
             project.user,
-            f"Project '{project.name}' has been approved.",
+            message="notifications.project_approved_seller",
+            project_name=project.name
         )
         NotificationService.create_notification(
             project.client,
-            f"Your payment of {payment.amount} for project '{project.name}' has been processed successfully.",
+            message="notifications.payment_processed_buyer",
+            amount=str(payment.amount),
+            project_name=project.name
         )
 
         # Send WebSocket update
@@ -657,6 +747,87 @@ def stripe_identity_webhook(request):
             updated_at=payment.updated_at,
         )
 
+    # Handle async success for bank transfers (customer_balance)
+    elif event["type"] == "checkout.session.async_payment_succeeded":
+        payment = event["data"]["object"]
+        payment_id = payment["id"]
+        project_id = payment["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.status = "approved"
+        project.save()
+        # HubSpot sync now handled automatically by Django signals
+
+        payment_obj = Payment.objects.get(stripe_payment_id=payment_id)
+        if payment_obj.status != "paid":
+            platform_revenue = PlatformRevenue.objects.all().first()
+            platform_revenue.vat_collected += (
+                payment_obj.buyer_total_amount - payment_obj.amount
+            )
+            platform_revenue.save()
+        payment_obj.status = "paid"
+        payment_obj.webhook_response = event
+        payment_obj.save()
+
+        try:
+            if project.client:
+                client = project.client
+                client_name = (
+                    client.get_full_name()
+                    or getattr(client, "username", None)
+                    or (
+                        client.email.split("@")[0]
+                        if getattr(client, "email", None)
+                        else "User"
+                    )
+                )
+                send_payment_success_email_task.delay(
+                    user_email=client.email,
+                    user_name=client_name,
+                    project_name=project.name,
+                    amount=str(payment_obj.amount),
+                    language="fr",
+                )
+                # Notify seller in French
+                try:
+                    seller = project.user
+                    if seller and getattr(seller, "email", None):
+                        seller_name = (
+                            seller.get_full_name()
+                            or getattr(seller, "username", None)
+                            or seller.email
+                        )
+                        send_payment_success_email_seller_task.delay(
+                            seller.email,
+                            seller_name,
+                            project.name,
+                            float(payment_obj.buyer_total_amount or payment_obj.amount),
+                            "fr",
+                        )
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        NotificationService.create_notification(
+            project.user,
+            message="notifications.project_approved_seller",
+            project_name=project.name
+        )
+        NotificationService.create_notification(
+            project.client,
+            message="notifications.payment_processed_buyer",
+            amount=str(payment_obj.amount),
+            project_name=project.name
+        )
+
+        send_payment_websocket_update(
+            project_id=project.id,
+            payment_status="paid",
+            payment_amount=payment_obj.amount,
+            project_status="approved",
+            updated_at=payment_obj.updated_at,
+        )
+
     # Handle checkout.session.expired event
     elif event["type"] == "checkout.session.expired":
         payment = event["data"]["object"]
@@ -666,6 +837,13 @@ def stripe_identity_webhook(request):
         payment.status = "pending"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
         project = Project.objects.get(id=project_id)
         project.status = "pending"
         project.save()
@@ -673,7 +851,8 @@ def stripe_identity_webhook(request):
         # Send notifications for expired payment session
         NotificationService.create_notification(
             project.client,
-            f"Your payment session for project '{project.name}' has expired.",
+            message="notifications.payment_session_expired",
+            project_name=project.name
         )
 
         # Send WebSocket update
@@ -694,6 +873,13 @@ def stripe_identity_webhook(request):
         payment.status = "failed"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
         project = Project.objects.get(id=project_id)
         project.status = "pending"
         project.save()
@@ -711,11 +897,12 @@ def stripe_identity_webhook(request):
                         else "User"
                     )
                 )
-                EmailService.send_client_payment_failed_email(
+                send_payment_failed_email_task.delay(
                     user_email=client.email,
                     user_name=client_name,
                     project_name=project.name,
                     amount=str(payment.amount),
+                    language="fr",
                 )
         except Exception:
             # Avoid breaking webhook flow if email fails
@@ -724,7 +911,8 @@ def stripe_identity_webhook(request):
         # Send notifications for failed payment
         NotificationService.create_notification(
             project.client,
-            f"Payment for project '{project.name}' has failed.",
+            message="notifications.payment_failed",
+            project_name=project.name
         )
 
         # Send WebSocket update
@@ -755,6 +943,45 @@ def stripe_identity_webhook(request):
         reason = "Transfer failed"
         TransferService.handle_transfer_reversal(transfer_id, reason)
 
+    elif event["type"] == "refund.created":
+        refund = event["data"]["object"]
+        refund_id = refund["metadata"]["refund_id"]
+        project_id = refund["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.refundable_amount = 0.00
+        project.save()
+        refund = Refund.objects.get(id=refund_id)
+        # client = refund.project.client
+        # balance = Balance.objects.get(user=client)
+        # balance.total_spent -= refund.amount
+        # balance.save()
+
+        refund.status = "paid"
+        refund.save()
+
+    elif event["type"] == "refund.updated":
+        refund = event["data"]["object"]
+        refund_id = refund["metadata"]["refund_id"]
+        project_id = refund["metadata"]["project_id"]
+        project = Project.objects.get(id=project_id)
+        project.refundable_amount = 0.00
+        project.save()
+        refund = Refund.objects.get(id=refund_id)
+        refund.status = "paid"
+        refund.save()
+        # client = refund.project.client
+        # balance = Balance.objects.get(user=client)
+        # balance.total_spent -= refund.amount
+        # balance.save()
+
+    elif event["type"] == "refund.failed":
+        refund = event["data"]["object"]
+        refund_id = refund["metadata"]["refund_id"]
+        refund = Refund.objects.get(id=refund_id)
+        refund.status = "failed"
+        refund.save()
+
+    # Handle REFUND events
     else:
         logger.info(f"Unhandled Stripe Identity event type: {event['type']}")
 

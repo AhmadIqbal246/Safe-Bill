@@ -1,15 +1,15 @@
 {% extends "emails/base.html" %}
 
 {% block content %}
-<tr>
-    <td style="padding: 40px 20px;">
+<div>
+    <div style="padding: 40px 20px;">
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 40px;">
             <h1 style="color: #1e3a8a; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
                 Project Invitation
             </h1>
             <p style="color: #6b7280; font-size: 16px; margin: 0;">
-                You've been invited to join a project on SafeBill
+                You've been invited to join a project on Safe Bill
             </p>
         </div>
 
@@ -19,7 +19,7 @@
                 🔑 Your Project Invitation Code
             </h2>
             <p style="color: #0369a1; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                Copy this code and use it on the SafeBill dashboard to view your project:
+                Copy this code and use it on the Safe Bill dashboard to view your project:
             </p>
             <div style="background: #ffffff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: inline-block;">
                 <p style="color: #0369a1; font-size: 18px; font-family: monospace; font-weight: 600; margin: 0; letter-spacing: 1px;">
@@ -37,7 +37,7 @@
                 Hello there! 👋
             </p>
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">
-                We hope this email finds you well. We're excited to have you join us on SafeBill!
+                We hope this email finds you well. We're excited to have you join us on Safe Bill!
             </p>
         </div>
 
@@ -47,7 +47,7 @@
                 🎯 Project Invitation
             </h2>
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
-                You have been invited to the SafeBill portal as a <strong>buyer</strong> on the 
+                You have been invited to the Safe Bill portal as a <strong>buyer</strong> on the 
                 <strong>"{{ project_name }}"</strong> project.
             </p>
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
@@ -61,17 +61,17 @@
                 ⚡ Action Required
             </h3>
             <p style="color: #92400e; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
-                <strong>In order to accept this invitation, you must be logged in as a buyer on SafeBill.</strong>
+                <strong>In order to accept this invitation, you must be logged in as a buyer on Safe Bill.</strong>
             </p>
         </div>
 
         <!-- New User Section -->
         <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
             <h3 style="color: #065f46; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
-                🆕 New to SafeBill?
+                🆕 New to Safe Bill?
             </h3>
             <p style="color: #065f46; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                If you're new to SafeBill, you'll need to sign up as an <strong>individual buyer</strong> first.
+                If you're new to Safe Bill, you'll need to sign up as an <strong>individual buyer</strong> first.
             </p>
             <div style="text-align: center;">
                 <a href="{{ frontend_url }}/buyer-register" 
@@ -79,16 +79,25 @@
                     🚀 Sign Up as Individual Buyer
                 </a>
             </div>
+            <p style="color: #065f46; font-size: 16px; line-height: 1.6; margin: 20px 0 20px 0;">
+                Alternatively, you can register as a <strong>professional buyer</strong> using your <strong>SIRET</strong> number.
+            </p>
+            <div style="text-align: center; margin-bottom: 0;">
+                <a href="{{ frontend_url }}/professional-buyer" 
+                   style="display: inline-block; background: #0ea5e9; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    🧾 Register as Professional Buyer (SIRET)
+                </a>
+            </div>
             <p style="color: #065f46; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
-                <strong>Note:</strong> To onboard as a professional buyer, please visit the 
-                <a href="{{ frontend_url }}" style="color: #065f46; text-decoration: underline;">SafeBill portal</a>.
+                <strong>Note:</strong> You may also visit the 
+                <a href="{{ frontend_url }}" style="color: #065f46; text-decoration: underline;">Safe Bill portal</a> to onboard as a professional buyer with your SIRET number.
             </p>
         </div>
 
         <!-- Existing User Section -->
         <div style="background: #eff6ff; border: 1px solid #3b82f6; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
             <h3 style="color: #1e40af; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
-                ✅ Already on SafeBill?
+                ✅ Already on Safe Bill?
             </h3>
             <p style="color: #1e40af; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                 If you're not new and have already completed onboarding, you can directly open the invitation:
@@ -147,12 +156,12 @@
         <!-- Footer -->
         <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
             <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
-                Welcome to SafeBill! We're excited to have you on board.
+                Welcome to Safe Bill! We're excited to have you on board.
             </p>
             <p style="color: #6b7280; font-size: 14px; margin: 0;">
                 If you have any questions, please don't hesitate to contact our support team.
             </p>
         </div>
-    </td>
-</tr>
+    </div>
+</div>
 {% endblock %}

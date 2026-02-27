@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 export default function DocumentsSection({ projects = [] }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
   // Extract quotes from all projects the buyer is part of
@@ -38,10 +41,11 @@ export default function DocumentsSection({ projects = [] }) {
 
   const formatDate = (dateString) => {
     try {
-      return new Date(dateString).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      const language = i18n.language || 'en';
+      return new Date(dateString).toLocaleDateString(language, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       });
     } catch (_) {
       return '';
@@ -57,12 +61,12 @@ export default function DocumentsSection({ projects = [] }) {
   return (
     <div style={{ flex: 1, borderRadius: 12, boxShadow: '0 1px 4px #e5e7eb', padding: 24, minWidth: 340 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontWeight: 600, fontSize: 18 }}>Documents (Quotes)</div>
+        <div style={{ fontWeight: 600, fontSize: 18 }}>{t('documents_section.title')}</div>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by project or reference..."
+          placeholder={t('documents_section.search_placeholder')}
           style={{
             border: '1px solid #e5e7eb',
             borderRadius: 8,
@@ -87,15 +91,15 @@ export default function DocumentsSection({ projects = [] }) {
         fontWeight: 600,
         marginBottom: 8
       }}>
-        <div>Project name</div>
-        <div>Creation date</div>
-        <div style={{ textAlign: 'right' }}>Action</div>
+        <div>{t('documents_section.project_name')}</div>
+        <div>{t('documents_section.creation_date')}</div>
+        <div style={{ textAlign: 'right' }}>{t('documents_section.action')}</div>
       </div>
 
       {filteredDocuments.length > 0 ? (
         <div style={{ marginBottom: 8, maxHeight: 280, overflowY: 'auto' }}>
           {filteredDocuments.map((doc, index) => (
-            <div key={`${doc.id}-${index}`} style={{ 
+            <div key={`${doc.id}-${index}`} style={{
               display: 'grid',
               gridTemplateColumns: '1fr 170px 70px',
               gap: 12,
@@ -111,7 +115,7 @@ export default function DocumentsSection({ projects = [] }) {
                     {doc.name}
                   </span>
                   {doc.reference_number && (
-                    <span style={{ color: '#6b7280', fontSize: 12 }}>Ref: {doc.reference_number}</span>
+                    <span style={{ color: '#6b7280', fontSize: 12 }}>{t('documents_section.ref')} {doc.reference_number}</span>
                   )}
                 </div>
               </div>
@@ -123,19 +127,19 @@ export default function DocumentsSection({ projects = [] }) {
 
               {/* Action */}
               <div style={{ textAlign: 'right' }}>
-                <button 
-                  style={{ 
-                    background: 'none', 
+                <button
+                  style={{
+                    background: 'none',
                     border: '1px solid #e5e7eb',
                     borderRadius: 8,
-                    cursor: 'pointer', 
+                    cursor: 'pointer',
                     fontSize: 14,
                     padding: '6px 10px'
                   }}
-                  title="Download"
+                  title={t('documents_section.download')}
                   onClick={() => handleDownload(doc.file)}
                 >
-                  Download
+                  {t('documents_section.download')}
                 </button>
               </div>
             </div>
@@ -143,7 +147,7 @@ export default function DocumentsSection({ projects = [] }) {
         </div>
       ) : (
         <div style={{ color: '#6b7280', fontSize: 14, textAlign: 'center', padding: '20px 0' }}>
-          No documents found
+          {t('documents_section.no_documents')}
         </div>
       )}
     </div>

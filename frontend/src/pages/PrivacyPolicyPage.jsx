@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, Eye, Database, Users, Mail, Phone, MapPin } from 'lucide-react';
+import { Shield, Lock, Eye, Database, Users, Mail, MapPin } from 'lucide-react';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
 import { useTranslation } from 'react-i18next';
 
@@ -43,10 +43,19 @@ export default function PrivacyPolicyPage() {
                 <p className="text-gray-700 leading-relaxed mt-4">
                   {t('privacy_policy.introduction.content2')}
                 </p>
+                <div className="bg-blue-50 rounded-lg p-6 mt-6 border-l-4 border-blue-400">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-3">{t('privacy_policy.introduction.company_info.name')}</h3>
+                  <ul className="space-y-2 text-blue-800">
+                    <li><strong>{t('privacy_policy.introduction.company_info.legal_form')}</strong></li>
+                    <li><strong>{t('privacy_policy.introduction.company_info.capital')}</strong></li>
+                    <li><strong>{t('privacy_policy.introduction.company_info.address')}</strong></li>
+                    <li><strong>{t('privacy_policy.introduction.company_info.email')}</strong></li>
+                  </ul>
+                </div>
               </div>
             </section>
 
-            {/* Information We Collect */}
+            {/* Information Collection */}
             <section>
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Database className="w-6 h-6 mr-3 text-[#1e3a8a]" />
@@ -78,6 +87,57 @@ export default function PrivacyPolicyPage() {
                       <li key={index}>{item}</li>
                     ))}
                   </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* Cookie Policy */}
+            <section>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Shield className="w-6 h-6 mr-3 text-[#1e3a8a]" />
+                {t('privacy_policy.cookie_policy.title')}
+              </h2>
+              <div className="prose prose-gray max-w-none">
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  {t('privacy_policy.cookie_policy.subtitle')}
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">{t('privacy_policy.cookie_policy.essential_cookies.title')}</h3>
+                    <p className="text-gray-700 leading-relaxed mb-3">{t('privacy_policy.cookie_policy.essential_cookies.description')}</p>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                      {t('privacy_policy.cookie_policy.essential_cookies.examples', { returnObjects: true }).map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">{t('privacy_policy.cookie_policy.analytics_cookies.title')}</h3>
+                    <p className="text-gray-700 leading-relaxed mb-3">{t('privacy_policy.cookie_policy.analytics_cookies.description')}</p>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                      {t('privacy_policy.cookie_policy.analytics_cookies.examples', { returnObjects: true }).map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">{t('privacy_policy.cookie_policy.marketing_cookies.title')}</h3>
+                    <p className="text-gray-700 leading-relaxed mb-3">{t('privacy_policy.cookie_policy.marketing_cookies.description')}</p>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700">
+                      {t('privacy_policy.cookie_policy.marketing_cookies.examples', { returnObjects: true }).map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">{t('privacy_policy.cookie_policy.consent_management.title')}</h3>
+                    <p className="text-gray-700 leading-relaxed mb-3">{t('privacy_policy.cookie_policy.consent_management.description')}</p>
+                    <p className="text-gray-700 leading-relaxed">{t('privacy_policy.cookie_policy.consent_management.withdrawal')}</p>
+                  </div>
                 </div>
               </div>
             </section>
@@ -226,10 +286,6 @@ export default function PrivacyPolicyPage() {
                     <span>{t('privacy_policy.contact.email')}</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5" />
-                    <span>{t('privacy_policy.contact.phone')}</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
                     <MapPin className="w-5 h-5" />
                     <span>{t('privacy_policy.contact.address')}</span>
                   </div>
@@ -251,7 +307,7 @@ export default function PrivacyPolicyPage() {
           {/* Footer */}
           <div className="text-center mt-8">
             <p className="text-gray-500 text-sm">
-              {t('privacy_policy.copyright', { year: new Date().getFullYear() })}
+              {t('privacy_policy.copyright')}
             </p>
           </div>
         </div>

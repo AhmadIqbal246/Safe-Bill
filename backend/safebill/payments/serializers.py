@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Payment, Balance, Payout, PayoutHold, PlatformFeeConfig
+from .models import Payment, Balance, Payout, PayoutHold, Refund
 from projects.models import Project
 
 
@@ -13,9 +13,6 @@ class PaymentSerializer(serializers.ModelSerializer):
     project = ProjectSlimSerializer(read_only=True)
     currency = serializers.SerializerMethodField()
     platform_fee_amount = serializers.DecimalField(
-        max_digits=10, decimal_places=2, read_only=True
-    )
-    stripe_fee_amount = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
     buyer_total_amount = serializers.DecimalField(
@@ -35,7 +32,6 @@ class PaymentSerializer(serializers.ModelSerializer):
             "project",
             "stripe_payment_id",
             "platform_fee_amount",
-            "stripe_fee_amount",
             "buyer_total_amount",
             "seller_net_amount",
             "created_at",
@@ -104,10 +100,17 @@ class PayoutHoldSerializer(serializers.ModelSerializer):
         return days
 
 
-class PlatformFeeConfigSerializer(serializers.ModelSerializer):
+class RefundSerializer(serializers.ModelSerializer):
+    project = ProjectSlimSerializer(read_only=True)
+
     class Meta:
-        model = PlatformFeeConfig
+        model = Refund
         fields = [
-            "buyer_fee_pct",
-            "seller_fee_pct",
+            "id",
+            "amount",
+            "status",
+            "stripe_refund_id",
+            "created_at",
+            "updated_at",
+            "project",
         ]

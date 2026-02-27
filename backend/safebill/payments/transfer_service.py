@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.utils import timezone
 from decimal import Decimal
 import logging
 import stripe
@@ -8,6 +7,11 @@ from .models import Balance, Payout
 from .services import BalanceService
 from connect_stripe.models import StripeAccount
 from notifications.services import NotificationService
+from .tasks import (
+    send_transfer_initiated_email_task,
+    send_transfer_paid_email_task,
+    send_transfer_reversed_email_task,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,14 +100,24 @@ class TransferService:
             balance.save()
 
             logger.info(
-                f"Transfer created for user {user.id}: {transfer_amount_decimal} {currency} - "
-                f"Balance deducted immediately: current={balance.current_balance}, available={balance.available_for_payout}"
+                (
+                    f"Transfer created for user {user.id}: {transfer_amount_decimal} {currency} - "
+                    f"Balance deducted immediately: current={balance.current_balance}, "
+                    f"available={balance.available_for_payout}"
+                )
             )
 
             # Send notification
             NotificationService.create_notification(
                 user,
-                f"Transfer of {transfer_amount_decimal} {currency} has been sent to your Stripe account.",
+                message="notifications.transfer_sent",
+                amount=str(transfer_amount_decimal),
+                currency=currency
+            )
+
+            # Send email asynchronously
+            send_transfer_initiated_email_task.delay(
+                user.email, float(transfer_amount_decimal), currency
             )
 
             logger.info(
@@ -147,9 +161,15 @@ class TransferService:
             # Send notification to user
             NotificationService.create_notification(
                 payout.user,
-                f"Transfer of {payout.amount} {payout.currency} was reversed. Reason: {reason}. "
-                f"Funds have been returned to your balance.",
-                notification_type="transfer_reversal",
+                message="notifications.transfer_reversed",
+                amount=str(payout.amount),
+                currency=payout.currency,
+                reason=reason
+            )
+
+            # Send email asynchronously
+            send_transfer_reversed_email_task.delay(
+                payout.user.email, float(payout.amount), payout.currency
             )
 
             logger.info(
@@ -273,6 +293,15 @@ class TransferService:
             logger.info(
                 f"Updated payout {payout.id} status to 'paid' for transfer {transfer_id}"
             )
+
+            # Send email asynchronously
+            try:
+                user_email = payout.user.email
+                amount = float(payout.amount)
+                currency = payout.currency
+                send_transfer_paid_email_task.delay(user_email, amount, currency)
+            except Exception as e:
+                logger.error(f"Failed to enqueue transfer paid email: {e}")
 
         except Payout.DoesNotExist:
             logger.warning(f"Payout not found for transfer {transfer_id}")

@@ -85,9 +85,9 @@ export default function TrustedProfessionals() {
   }, [sellers]);
 
   return (
-    <section className="w-full bg-white py-14 px-4 border-t border-[#01257D]">
-      <h2 className="text-2xl md:text-3xl font-semibold text-[#111827] text-center mb-2">{t('homepage.trusted_professionals_title')}</h2>
-      <p className="text-base md:text-lg text-[#96C2DB] text-center mb-10">{t('homepage.trusted_professionals_subtitle')}</p>
+    <section className="w-full py-14 px-4 border-t border-[#01257D]" style={{ backgroundColor: '#E8E8F5' }}>
+      <h2 className="text-3xl md:text-4xl font-semibold text-[#2E78A6] text-center mb-2">{t('homepage.trusted_professionals_title')}</h2>
+      <p className="text-base md:text-lg text-black text-center mb-10">{t('homepage.trusted_professionals_subtitle')}</p>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
         {(featured.length > 0 ? featured : []).map((pro) => {
@@ -97,11 +97,11 @@ export default function TrustedProfessionals() {
             ? formatServiceArea(pro.selected_service_areas[0])
             : (pro.full_address || '');
           return (
-            <div key={pro.id} className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center border border-gray-100">
+            <Link key={pro.id} to={`/professional/${pro.id}`} className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center text-center border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer">
               <img src={avatar} alt={pro.name} className="w-16 h-16 rounded-full mb-4 object-cover" />
               <div className="font-semibold text-[#111827] text-lg mb-1">{pro.name}</div>
               <div className="text-[#96C2DB] text-sm mb-2">{serviceType}</div>
-              <StarRating value={pro.average_rating} />
+              {/* <StarRating value={pro.average_rating} /> */}
               <div className="flex items-center justify-center mb-3">
                 <span className="flex items-center gap-1 bg-[#178582] text-white text-xs font-semibold px-3 py-1 rounded-full">
                   <CheckCircle className="w-4 h-4" /> {t('homepage.kyc_verified')}
@@ -111,7 +111,7 @@ export default function TrustedProfessionals() {
                 <MapPin className="w-4 h-4" />
                 {firstArea}
               </div>
-            </div>
+            </Link>
           );
         })}
 
@@ -123,7 +123,7 @@ export default function TrustedProfessionals() {
       </div>
 
       <div className="flex justify-center">
-        <Link to="/find-professionals" className="px-8 py-2 bg-[#01257D] text-white font-semibold rounded-md shadow-sm hover:bg-[#2346a0] transition-colors text-base inline-block">{t('actions.view_all_professionals')}</Link>
+        <Link to="/find-professionals" className="px-8 py-2 bg-[#2E78A6] text-white font-semibold rounded-[15px] shadow-sm hover:bg-[#256699] transition-colors text-base inline-block">{t('actions.view_all_professionals')}</Link>
       </div>
     </section>
   );

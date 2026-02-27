@@ -43,6 +43,46 @@ class Project(models.Model):
         default="real_project",
         help_text="Type of project - real project or quote chat",
     )
+    invite_token_used = models.BooleanField(
+        default=False,
+        help_text="Whether the invite token has been used by the client",
+    )
+    refundable_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text=(
+            "Calculated refundable amount based on milestone adjustments and "
+            "payments"
+        ),
+    )
+    vat_rate = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        default=20.0,
+        help_text="Applicable VAT rate percentage (e.g. 20.0 for 20%)",
+    )
+    platform_fee_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=7.0,
+        help_text="Platform fee percentage applied to this project (e.g. 7.0 for 7%)",
+    )
+    hubspot_payment_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="HubSpot payment record ID for this project",
+    )
+
+    class Meta:
+        # Added: prevent self-projects where seller and client are the same user
+        constraints = [
+            models.CheckConstraint(
+                check=(models.Q(client__isnull=True) | ~models.Q(user=models.F("client"))),
+                name="project_seller_not_equal_client",
+            )
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"
@@ -54,9 +94,54 @@ class Quote(models.Model):
     )
     file = models.FileField(upload_to="quotes/")
     reference_number = models.CharField(max_length=20, unique=True)
+    platform_invoice_reference = models.CharField(
+        max_length=20,
+        unique=False,
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="Permanent platform invoice reference number (auto-generated, non-editable)"
+    )
 
     def __str__(self):
         return f"{self.reference_number} for {self.project.name}"
+
+
+    def save(self, *args, **kwargs):
+        # Auto-generate platform_invoice_reference if not already set
+        if not self.platform_invoice_reference:
+            from django.utils import timezone
+            year = timezone.now().year
+            
+            # Get the highest existing platform_invoice_reference GLOBALLY in current year
+            latest = Quote.objects.filter(
+                platform_invoice_reference__startswith=f"{year}-"
+            ).order_by("-platform_invoice_reference").first()
+            
+            # Calculate next sequential number
+            if latest:
+                latest_num = int(latest.platform_invoice_reference.split("-")[1])
+                next_num = latest_num + 1
+            else:
+                next_num = 1
+            
+            # Generate reference in format YYYY-0001
+            self.platform_invoice_reference = f"{year}-{str(next_num).zfill(4)}"
+        else:
+            # Validate uniqueness per user when platform_invoice_reference is provided
+            from django.core.exceptions import ValidationError
+            existing = Quote.objects.filter(
+                project__user=self.project.user,
+                platform_invoice_reference=self.platform_invoice_reference
+            ).exclude(pk=self.pk).exists()
+            
+            if existing:
+                raise ValidationError(
+                    f"Platform invoice reference '{self.platform_invoice_reference}' "
+                    f"already exists for this user."
+                )
+        
+        super().save(*args, **kwargs)
 
 
 class PaymentInstallment(models.Model):
@@ -77,6 +162,7 @@ class Milestone(models.Model):
         ("pending", "Pending"),
         ("not_approved", "Not Approved"),
         ("not_submitted", "Not Submitted"),
+        ("payment_withdrawal", "Payment Withdrawal"),
     ]
 
     project = models.ForeignKey(

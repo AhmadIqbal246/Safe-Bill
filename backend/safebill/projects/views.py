@@ -1,10 +1,12 @@
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
+from datetime import timedelta
 from .models import Project, Quote, PaymentInstallment, Milestone
 from .serializers import (
     ProjectCreateSerializer,
@@ -12,13 +14,28 @@ from .serializers import (
     ClientProjectSerializer,
     MilestoneSerializer,
     MilestoneUpdateSerializer,
+    SellerReceiptProjectSerializer,
 )
 from notifications.models import Notification
+from utils.email_service import EmailService
+from django.conf import settings
+import secrets
 from notifications.services import NotificationService
+from decimal import Decimal
 from payments.services import BalanceService
 from chat.models import ChatContact, Conversation
 from adminpanelApp.services import RevenueService
 import logging
+from .tasks import (
+    send_project_invitation_email_task,
+    send_milestone_approval_request_email_task,
+)
+from django.db import transaction
+# HubSpot syncing is now handled automatically by Django signals
+# No need to manually import sync functions
+from hubspot.sync_utils import sync_project_to_hubspot
+from subscription.models import Subscription
+from payments.models import Payment
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +47,31 @@ class ProjectCreateAPIView(generics.CreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
-        # Check if user has seller role
-        if not hasattr(self.request.user, "role") or self.request.user.role not in [
-            "seller"
-        ]:
-            raise permissions.PermissionDenied(
-                "Only users with seller role can create projects."
-            )
+        # Check if user has seller role (supports legacy role, flags, and active_role)
+        user = self.request.user
+        has_seller = getattr(user, "role", None) == "seller"
+        if not has_seller:
+            raise PermissionDenied("Only users with seller role can create projects.")
+
+        # Membership gate: allow first project without membership; require active membership thereafter
+        # Count distinct paid projects for this seller
+        paid_projects_count = (
+            Payment.objects.filter(project__user=user, status="paid")
+            .values("project")
+            .distinct()
+            .count()
+        )
+        if paid_projects_count >= 1:
+            sub = Subscription.objects.filter(user=user).first()
+            is_active_member = bool(sub and sub.membership_active)
+            if not is_active_member:
+                return Response(
+                    {
+                        "detail": "Subscription required to create additional projects.",
+                        "code": "subscription_required",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Extract and process the form data
         data = {}
@@ -76,6 +111,29 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         else:
             data["quote"] = {}
 
+        # Handle VAT rate (optional, defaults server-side)
+        vat_rate_val = request.data.get("vat_rate")
+        if vat_rate_val is not None and vat_rate_val != "":
+            try:
+                data["vat_rate"] = float(vat_rate_val)
+            except (TypeError, ValueError):
+                return Response({"vat_rate": ["Invalid VAT rate value"]}, status=400)
+
+        # Handle platform fee percentage (optional, defaults server-side)
+        platform_fee_pct_val = request.data.get("platform_fee_percentage")
+        if platform_fee_pct_val is not None and platform_fee_pct_val != "":
+            try:
+                data["platform_fee_percentage"] = float(platform_fee_pct_val)
+            except (TypeError, ValueError):
+                return Response(
+                    {
+                        "platform_fee_percentage": [
+                            "Invalid platform fee percentage value"
+                        ]
+                    },
+                    status=400,
+                )
+
         # Create serializer with processed data
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -85,8 +143,7 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         return Response(serializer.data, status=201, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save()
-
+        project = serializer.save()
 
 class ProjectListAPIView(generics.ListAPIView):
     serializer_class = ProjectListSerializer
@@ -108,7 +165,10 @@ class ClientProjectListAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(client=self.request.user).order_by("-id")
+        from django.db.models import Q
+        return Project.objects.filter(
+            Q(client=self.request.user) | Q(client__isnull=True, client_email__iexact=self.request.user.email)
+        ).order_by("-id")
 
 
 class ProjectDeleteAPIView(generics.DestroyAPIView):
@@ -140,7 +200,8 @@ class ProjectStatusUpdateAPIView(APIView):
             )
 
         # Check if user has seller role
-        if not hasattr(request.user, "role") or request.user.role not in ["seller"]:
+        user_is_seller = getattr(request.user, "role", None) == "seller"
+        if not user_is_seller:
             return Response(
                 {"detail": "Only sellers can update project status."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -158,18 +219,21 @@ class ProjectStatusUpdateAPIView(APIView):
         # Update status to in_progress
         project.status = "in_progress"
         project.save()
+        # HubSpot sync now handled automatically by Django signals
 
-        # Create notification for the client
+        # Create notification for the client (translated)
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Project '{project.name}' has been started and is now in progress.",
+                user=project.client,
+                message="notifications.project_started_buyer",
+                project_name=project.name,
             )
 
-        # Create notification for the seller
+        # Create notification for the seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"You have started project '{project.name}' and it is now in progress.",
+            user=request.user,
+            message="notifications.project_started_seller",
+            project_name=project.name,
         )
 
         return Response(
@@ -203,7 +267,8 @@ class ProjectCompletionAPIView(APIView):
             )
 
         # Check if user has seller role
-        if not hasattr(request.user, "role") or request.user.role not in ["seller"]:
+        user_is_seller = getattr(request.user, "role", None) == "seller"
+        if not user_is_seller:
             return Response(
                 {"detail": "Only sellers can complete projects."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -246,21 +311,38 @@ class ProjectCompletionAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Verify payment is completed before marking project as completed
+        from payments.models import Payment
+        payment = Payment.objects.filter(project=project).order_by("-created_at").first()
+        if payment and payment.status != "paid":
+            return Response(
+                {
+                    "detail": "Project cannot be completed. Payment is not yet completed.",
+                    "error_type": "payment_not_completed",
+                    "payment_status": payment.status,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Update status to completed
         project.status = "completed"
         project.save()
+        # HubSpot sync now handled automatically by Django signals
 
-        # Create notification for the client
+        # Create notification for the client (translated)
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Project '{project.name}' has been completed by {request.user.username}.",
+                user=project.client,
+                message="notifications.project_completed_buyer",
+                project_name=project.name,
+                seller_name=request.user.username,
             )
 
-        # Create notification for the seller
+        # Create notification for the seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"You have successfully completed project '{project.name}'.",
+            user=request.user,
+            message="notifications.project_completed_seller",
+            project_name=project.name,
         )
 
         return Response(
@@ -301,16 +383,20 @@ class MilestoneDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             return MilestoneUpdateSerializer
         return MilestoneSerializer
 
+    def perform_update(self, serializer):
+        """After a milestone is updated, sync is handled automatically by Django signals."""
+        milestone = serializer.save()
+        # HubSpot sync now handled automatically by Django signals
+        # milestone.save() will trigger the milestone signal
+
 
 class ProjectInviteAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def check_buyer_permission(self, request):
         """Check if user has buyer role"""
-        if not hasattr(request.user, "role") or request.user.role not in [
-            "buyer",
-            "professional-buyer",
-        ]:
+        # Allow both individual buyer and professional-buyer roles
+        if not (getattr(request.user, "role", None) in ["buyer", "professional-buyer"]):
             raise permissions.PermissionDenied(
                 "Only users with buyer or professional-buyer role can approve/reject projects."
             )
@@ -338,24 +424,119 @@ class ProjectInviteAPIView(APIView):
                 {"detail": "You are not authorized to view this project."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        # Added: prevent seller self-accept/view via invite
+        if getattr(project, "user_id", None) == getattr(request.user, "id", None):
+            return Response({"detail": "You cannot accept your own project invite."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Add the client to the project if not already added
         if not project.client:
             project.client = request.user
-            project.save()
+            project.invite_token_used = True
+            project.save(update_fields=["client", "invite_token_used"])
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have been added to the project '{project.name}' by {project.user.username}.",
+                user=request.user,
+                message="notifications.project_added",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
         # Return project details
         serializer = ProjectListSerializer(project)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, token):
+        """
+        Regenerate and resend an invite token for a project IF the previous one is expired.
+        Only the project owner (seller) can request a resend.
+        """
+        try:
+            project = Project.objects.get(invite_token=token)
+        except Project.DoesNotExist:
+            return Response(
+                {"detail": "Invalid invite token."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Only project owner can resend
+        if project.user != request.user:
+            return Response(
+                {"detail": "You do not have permission to resend this invitation."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Disallow resend if the invite has already been used
+        if project.invite_token_used:
+            return Response(
+                {"detail": "Invitation already used by client. Cannot resend."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Only allow resending for projects that are still pending
+        if project.status != "pending":
+            return Response(
+                {
+                    "detail": "Invitation can only be resent for projects with status 'pending'."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Only allow resend if previous token is expired
+        if project.invite_token_expiry and project.invite_token_expiry > timezone.now():
+            return Response(
+                {"detail": "Invitation link has not expired yet."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Generate new token and expiry
+        new_token = secrets.token_urlsafe(32)
+        new_expiry = timezone.now() + timedelta(days=2)
+        project.invite_token = new_token
+        project.invite_token_expiry = new_expiry
+        project.invite_token_used = False
+        project.save(
+            update_fields=["invite_token", "invite_token_expiry", "invite_token_used"]
+        )
+
+        # Send invite email to client asynchronously via Celery
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+        invite_link = f"{frontend_url}/project-invite?token={new_token}"
+        try:
+            # Try to get preferred language from request header, default to 'en'
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get(
+                "HTTP_ACCEPT_LANGUAGE", "en"
+            )
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "en"
+
+            send_project_invitation_email_task.delay(
+                client_email=project.client_email,
+                project_name=project.name,
+                invitation_url=invite_link,
+                invitation_token=new_token,
+                language=language,
+            )
+        except Exception:
+            # Don't fail resend if email sending fails
+            pass
+
+        # Notify seller (translated)
+        NotificationService.create_notification(
+            user=request.user,
+            message="notifications.invitation_generated",
+            project_name=project.name,
+        )
+
+        return Response(
+            {
+                "detail": "New invitation link generated and sent.",
+                "invite_token": new_token,
+                "invite_token_expiry": new_expiry,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, token):
         """
@@ -395,6 +576,9 @@ class ProjectInviteAPIView(APIView):
                 {"detail": "You are not authorized to accept this project."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        # Added: prevent seller from approving their own project invite
+        if getattr(project, "user_id", None) == getattr(request.user, "id", None):
+            return Response({"detail": "You cannot approve your own project invite."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get the action from request data
         action = request.data.get("action")
@@ -415,9 +599,11 @@ class ProjectInviteAPIView(APIView):
                 self._create_chat_contacts(project)
 
                 # Create notification for the buyer
-                Notification.objects.create(
+                NotificationService.create_notification(
                     user=request.user,
-                    message=f"You have been added to the project '{project.name}' by {project.user.username}.",
+                    message="notifications.project_added",
+                    project_name=project.name,
+                    seller_name=project.user.username
                 )
 
             return Response(
@@ -429,20 +615,26 @@ class ProjectInviteAPIView(APIView):
             project.status = "approved"
             project.client = request.user
             project.save()
+            # HubSpot sync now handled automatically by Django signals
+            # Project status update will trigger project sync signal automatically
 
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
 
-            # Create notification for the seller
+            # Create notification for the seller (translated)
             NotificationService.create_notification(
-                project.user,
-                f"Client {request.user.email} has approved the project '{project.name}'.",
+                user=project.user,
+                message="notifications.project_approved_seller",
+                client_email=request.user.email,
+                project_name=project.name,
             )
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have successfully approved the project '{project.name}' from {project.user.username}.",
+                user=request.user,
+                message="notifications.project_approved_buyer",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
             return Response(
@@ -455,17 +647,22 @@ class ProjectInviteAPIView(APIView):
             if project.client == request.user:
                 project.client = None
             project.save()
+            # HubSpot sync now handled automatically by Django signals
 
-            # Create notification for the seller
+            # Create notification for the seller (translated)
             NotificationService.create_notification(
-                project.user,
-                f"Client {request.user.email} has rejected the project '{project.name}'.",
+                user=project.user,
+                message="notifications.project_rejected_seller",
+                client_email=request.user.email,
+                project_name=project.name,
             )
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have rejected the project '{project.name}' from {project.user.username}.",
+                user=request.user,
+                message="notifications.project_rejected_buyer",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
             return Response(
@@ -539,6 +736,8 @@ class MilestoneApprovalAPIView(APIView):
         if action_type not in ["approve", "not_approved", "review_request", "pending"]:
             return Response({"detail": "Invalid action."}, status=400)
 
+        old_status = milestone.status
+
         if action_type == "approve":
             milestone.status = "approved"
             milestone.completion_date = timezone.now()
@@ -554,7 +753,9 @@ class MilestoneApprovalAPIView(APIView):
                         seller=project.user,
                         buyer=project.client,
                         project=project,
-                        milestone_amount=milestone.relative_payment,
+                        milestone_amount=milestone.relative_payment
+                        + (milestone.relative_payment * project.vat_rate)
+                        / Decimal("100"),
                     )
             except Exception as e:
                 logger.error(
@@ -565,12 +766,28 @@ class MilestoneApprovalAPIView(APIView):
             try:
                 RevenueService.add_seller_revenue(
                     milestone_amount=milestone.relative_payment,
+                    platform_fee_percentage=project.platform_fee_percentage,
+                    vat_rate=project.vat_rate,
                 )
             except Exception as e:
                 logger.error(
                     f"Error tracking seller revenue for milestone {milestone.id}: {e}"
                 )
                 # Don't break the milestone approval flow if revenue tracking fails
+
+            # Sync milestone-related revenue metrics to HubSpot
+            try:
+                from hubspot.sync_utils import sync_revenue_to_hubspot
+                from django.db import transaction
+                now = timezone.now()
+                
+                # Sync milestone-related metrics (seller revenue + total revenue + milestones approved)
+                transaction.on_commit(
+                    lambda: sync_revenue_to_hubspot(now.year, now.month, "milestone_approved", sync_type="milestone")
+                )
+            except Exception as e:
+                logger.error(f"Error syncing milestone revenue to HubSpot: {e}")
+                # Don't break the milestone approval flow if HubSpot sync fails
 
         elif action_type == "not_approved":
             milestone.status = "not_approved"
@@ -584,27 +801,119 @@ class MilestoneApprovalAPIView(APIView):
         elif action_type == "pending":
             milestone.status = "pending"
             milestone.completion_date = None
+        # Persist change
         milestone.save()
 
+        # Notify buyer if milestone just entered pending state (regardless of action source)
+        if milestone.status == "pending" and old_status != "pending":
+            try:
+                project = milestone.project
+                if project.client and project.client.email:
+                    preferred_lang = self.request.headers.get(
+                        "X-User-Language"
+                    ) or self.request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                    language = (
+                        preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+                    )
+                    buyer_name = (
+                        getattr(project.client, "username", None)
+                        or project.client.email.split("@")[0]
+                    )
+                    send_milestone_approval_request_email_task.delay(
+                        user_email=project.client.email,
+                        user_name=buyer_name,
+                        project_name=project.name,
+                        milestone_name=milestone.name,
+                        amount=str(milestone.relative_payment),
+                        language=language,
+                    )
+            except Exception:
+                # Do not fail the flow if email cannot be sent
+                pass
+
+        # If milestone was approved, check if all milestones are now approved
+        if action_type == "approve":
+            try:
+                project = milestone.project
+                # If no milestone is non-approved, mark project completed
+                has_unapproved = (
+                    Milestone.objects.filter(project=project)
+                    .exclude(status="approved")
+                    .exists()
+                )
+                if not has_unapproved and project.status != "completed":
+                    # Verify payment is completed before auto-completing project
+                    from payments.models import Payment
+                    payment = Payment.objects.filter(project=project).order_by("-created_at").first()
+                    if payment and payment.status == "paid":
+                        project.status = "completed"
+                        project.save(update_fields=["status"])
+                    elif payment and payment.status != "paid":
+                        logger.warning(f"Project {project.id} has all milestones approved but payment is not completed (status: {payment.status}). Not auto-completing project.")
+                    else:
+                        logger.warning(f"Project {project.id} has all milestones approved but no payment record found. Not auto-completing project.")
+                    # Best-effort notifications; do not break flow on failure
+                    try:
+                        if project.user:
+                            NotificationService.create_notification(
+                                user=project.user,
+                                message="notifications.project_completed_milestone",
+                                project_name=project.name,
+                                milestone_name=milestone.name,
+                            )
+                        if project.client:
+                            NotificationService.create_notification(
+                                user=project.client,
+                                message="notifications.project_completed_final",
+                                project_name=project.name,
+                            )
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.error(
+                    (
+                        "Error auto-completing project %s after milestone %s "
+                        "approval: %s"
+                    ),
+                    getattr(milestone.project, "id", "?"),
+                    getattr(milestone, "id", "?"),
+                    e,
+                )
+        # HubSpot sync now handled automatically by Django signals
+        # Milestone save() will trigger milestone signal for HubSpot sync
+        # Revenue sync will be triggered automatically on project completion
+
         project = milestone.project
-        status_msg = {
-            "approve": "approved",
-            "not_approved": "not approved",
-            "review_request": "sent for review",
-            "pending": "submitted for approval",
-        }.get(action_type, milestone.status)
+        
+        # Map action_type to human-readable status text (in English)
+        # The frontend will translate this based on the user's selected language
+        status_text_map = {
+            "approve": "Approved",
+            "not_approved": "Not Approved",
+            "review_request": "Sent for Review",
+            "pending": "Submitted for Approval",
+        }
+        
+        # Get the status text (in English)
+        status_text = status_text_map.get(action_type, milestone.status)
 
         # Notify seller
         if project.user:
             NotificationService.create_notification(
-                project.user,
-                f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}.",
+                user=project.user,
+                message="notifications.milestone_status_seller",
+                project_name=project.name,
+                milestone_name=milestone.name,
+                status=status_text
             )
         # Notify buyer/client
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}.",
+                user=project.client,
+                message="notifications.milestone_status_buyer",
+                project_name=project.name,
+                milestone_name=milestone.name,
+                status=status_text
             )
 
         return Response(
@@ -621,9 +930,11 @@ class ClientProjectsWithPendingMilestonesAPIView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        from django.db.models import Q
         return (
             Project.objects.filter(
-                client=self.request.user, milestones__status="pending"
+                Q(client=self.request.user) | Q(client__isnull=True, client_email__iexact=self.request.user.email),
+                milestones__status="pending"
             )
             .distinct()
             .order_by("-id")
@@ -639,7 +950,10 @@ class ClientProjectDetailAPIView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Project.objects.filter(client=self.request.user)
+        from django.db.models import Q
+        return Project.objects.filter(
+            Q(client=self.request.user) | Q(client__isnull=True, client_email__iexact=self.request.user.email)
+        )
 
 
 @api_view(["GET"])
@@ -651,7 +965,7 @@ def get_completed_projects(request):
     user = request.user
 
     # Only sellers can access this endpoint
-    if user.role != "seller":
+    if not (getattr(user, "role", None) == "seller"):
         return Response(
             {"detail": "Only sellers can access completed projects."},
             status=status.HTTP_403_FORBIDDEN,
@@ -666,3 +980,76 @@ def get_completed_projects(request):
     serializer = ProjectListSerializer(completed_projects, many=True)
 
     return Response({"projects": serializer.data, "count": completed_projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def seller_receipts(request):
+    """
+    Return completed projects for the authenticated seller with milestone details
+    for receipts.
+    """
+    user = request.user
+    # Allow for legacy role OR new flags/active_role
+    if not (getattr(user, "role", None) == "seller"):
+        return Response(
+            {"detail": "Only sellers can access this endpoint."}, status=403
+        )
+
+    projects = (
+        Project.objects.filter(user=user, status="completed")
+        .prefetch_related("milestones", "installments", "quote", "payment_set")
+        .select_related("user__business_detail", "client__business_detail", "client__buyer_profile")
+        .order_by("-created_at")
+    )
+    serializer = SellerReceiptProjectSerializer(projects, many=True)
+    return Response({"projects": serializer.data, "count": projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def buyer_receipts(request):
+    """
+    Return completed projects for the authenticated buyer with milestone details
+    for receipts.
+    """
+    user = request.user
+    # Allow both individual buyer and professional-buyer roles
+    if not (getattr(user, "role", None) in ["buyer", "professional-buyer"]):
+        return Response({"detail": "Only buyers can access this endpoint."}, status=403)
+
+    projects = (
+        Project.objects.filter(client=user, status="completed")
+        .prefetch_related("milestones", "installments", "quote", "payment_set")
+        .select_related("user__business_detail", "client__business_detail", "client__buyer_profile")
+        .order_by("-created_at")
+    )
+    serializer = SellerReceiptProjectSerializer(projects, many=True)
+    return Response({"projects": serializer.data, "count": projects.count()})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_expired_project_invites(request):
+    """
+    List projects for the authenticated seller that have expired invite tokens.
+    """
+    user = request.user
+    # Only sellers can access this endpoint
+    if not (getattr(user, "role", None) == "seller"):
+        return Response(
+            {"detail": "Only sellers can access expired invitations."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    expired = Project.objects.filter(
+        user=user,
+        invite_token__isnull=False,
+        invite_token_expiry__isnull=False,
+        invite_token_expiry__lt=timezone.now(),
+        invite_token_used=False,
+        status="pending",
+    ).order_by("-created_at")
+
+    serializer = ProjectListSerializer(expired, many=True)
+    return Response({"projects": serializer.data, "count": expired.count()})

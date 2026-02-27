@@ -2,6 +2,10 @@ from rest_framework import serializers
 from .models import Dispute, DisputeDocument, DisputeEvent, DisputeComment
 from projects.serializers import ProjectListSerializer
 from notifications.models import Notification
+from notifications.services import NotificationService
+from utils.email_service import EmailService
+from .tasks import send_dispute_created_email_task
+from hubspot.tasks import sync_dispute_ticket_task
 
 
 class DisputeDocumentSerializer(serializers.ModelSerializer):
@@ -135,16 +139,49 @@ class DisputeCreateSerializer(serializers.ModelSerializer):
         
         # Send notifications to both parties
         # Notification to respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=validated_data['respondent'],
-            message=f"A dispute has been filed for project '{project.name}' by {request.user.username}. Dispute ID: {dispute.dispute_id}"
+            message="notifications.dispute_created_respondent",
+            project_name=project.name,
+            username=request.user.username,
+            dispute_id=dispute.dispute_id
         )
         
         # Notification to initiator (confirmation)
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=request.user,
-            message=f"Your dispute for project '{project.name}' has been created successfully. Dispute ID: {dispute.dispute_id}"
+            message="notifications.dispute_created_initiator",
+            project_name=project.name,
+            dispute_id=dispute.dispute_id
         )
+
+        # Email seller (project owner) with localization (asynchronously via Celery)
+        try:
+            preferred_lang = request.headers.get('X-User-Language') or request.META.get('HTTP_ACCEPT_LANGUAGE', 'en')
+            language = preferred_lang.split(',')[0][:2] if preferred_lang else 'en'
+
+            seller = project.user
+            seller_name = (
+                seller.get_full_name() or getattr(seller, 'username', None) or seller.email.split('@')[0]
+            )
+
+            # Send asynchronously
+            send_dispute_created_email_task.delay(
+                seller_email=seller.email,
+                seller_name=seller_name,
+                project_name=project.name,
+                dispute_id=dispute.dispute_id,
+                language=language,
+            )
+            # Also create a HubSpot ticket directly (signals disabled for disputes)
+            try:
+                sync_dispute_ticket_task.delay(dispute.id)
+            except Exception:
+                # Do not fail dispute creation if HubSpot enqueue fails
+                pass
+        except Exception:
+            # Do not fail dispute creation if email sending fails
+            pass
         
         return dispute
 
@@ -171,6 +208,12 @@ class DisputeUpdateSerializer(serializers.ModelSerializer):
             
             # Send notification for status change
             self._send_status_change_notification(instance, old_status, validated_data['status'])
+            
+            # Update HubSpot ticket explicitly (signals disabled for disputes)
+            try:
+                sync_dispute_ticket_task.delay(instance.id)
+            except Exception:
+                pass
         
         # Create event for mediator assignment
         if 'assigned_mediator' in validated_data and validated_data['assigned_mediator'] != old_mediator:
@@ -184,39 +227,51 @@ class DisputeUpdateSerializer(serializers.ModelSerializer):
             
             # Send notification for mediator assignment
             self._send_mediator_assignment_notification(instance, new_mediator)
+            
+            # Update HubSpot ticket explicitly (signals disabled for disputes)
+            try:
+                sync_dispute_ticket_task.delay(instance.id)
+            except Exception:
+                pass
         
         return instance
     
     def _send_status_change_notification(self, dispute, old_status, new_status):
         """Send notifications to both parties about status change"""
-        message = f"Dispute {dispute.dispute_id} status changed from {old_status} to {new_status}"
-        
         # Notify initiator
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.initiator,
-            message=message
+            message="notifications.dispute_status_changed_initiator",
+            dispute_id=dispute.dispute_id,
+            old_status=old_status,
+            new_status=new_status
         )
         
         # Notify respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.respondent,
-            message=message
+            message="notifications.dispute_status_changed_respondent",
+            dispute_id=dispute.dispute_id,
+            old_status=old_status,
+            new_status=new_status
         )
     
     def _send_mediator_assignment_notification(self, dispute, mediator):
         """Send notifications about mediator assignment"""
-        message = f"Mediator {mediator.username} has been assigned to dispute {dispute.dispute_id}"
-        
         # Notify initiator
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.initiator,
-            message=message
+            message="notifications.dispute_mediator_assigned_initiator",
+            mediator_username=mediator.username,
+            dispute_id=dispute.dispute_id
         )
         
         # Notify respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.respondent,
-            message=message
+            message="notifications.dispute_mediator_assigned_respondent",
+            mediator_username=mediator.username,
+            dispute_id=dispute.dispute_id
         )
 
 
@@ -242,9 +297,11 @@ class DisputeCommentCreateSerializer(serializers.ModelSerializer):
         # Send notification to the other party
         other_party = comment.dispute.respondent if comment.author == comment.dispute.initiator else comment.dispute.initiator
         
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=other_party,
-            message=f"{comment.author.username} added a comment to dispute {comment.dispute.dispute_id}"
+            message="notifications.dispute_comment_added",
+            username=comment.author.username,
+            dispute_id=comment.dispute.dispute_id
         )
         
         return comment 

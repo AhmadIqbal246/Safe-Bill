@@ -6,7 +6,7 @@ import Chat from '../components/mutualComponents/Chat/Chat';
 export default function DashboardPage() {
 
   return (
-    <MainLayout>
+    <MainLayout mainBackgroundClass="bg-transparent">
         <Dashboard/>
         <Chat />
     </MainLayout>

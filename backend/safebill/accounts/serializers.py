@@ -7,6 +7,9 @@ from .models import BankAccount
 import json
 from connect_stripe.models import StripeAccount, StripeIdentity
 from payments.models import Balance
+from subscription.models import Subscription
+from django.db import transaction
+from hubspot.tasks import sync_company_task
 
 
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -92,8 +95,17 @@ class SellerRegistrationSerializer(serializers.Serializer):
             is_active=False,
         )
 
+        # Seed available roles and set initial active_role mirroring role
+        if role in ["seller", "professional-buyer"]:
+            user.available_roles = ["seller", "professional-buyer"]
+            # Set active_role to mirror the primary role field
+            user.active_role = role
+            # Use system flag to allow setting available_roles
+            user._skip_available_roles_check = True
+            user.save(update_fields=["available_roles", "active_role"])
+
         # Create business detail
-        BusinessDetail.objects.create(
+        bd = BusinessDetail.objects.create(
             user=user,
             company_name=business_info["company_name"],
             siret_number=business_info["siret_number"],
@@ -111,6 +123,8 @@ class SellerRegistrationSerializer(serializers.Serializer):
                 "company_contact_person_last_name", ""
             ),
         )
+
+        # HubSpot company sync now handled automatically by Django signals
 
         if role == "seller":
             StripeAccount.objects.create(
@@ -161,6 +175,11 @@ class BuyerRegistrationSerializer(serializers.ModelSerializer):
             role="buyer",
             is_active=False,
         )
+        
+        # Set available_roles for individual buyer
+        user.available_roles = ["buyer"]
+        user._skip_available_roles_check = True
+        user.save(update_fields=["available_roles"])
         BuyerModel.objects.create(
             user=user, first_name=first_name, last_name=last_name, address=address
         )
@@ -188,6 +207,26 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["is_email_verified"] = user.is_email_verified
         token["phone_number"] = user.phone_number
         token["is_admin"] = user.is_admin
+        # Added: expose role selection and availability in token for client-side guards
+        # Note: user.role is the primary field, active_role mirrors it for session context
+        token["active_role"] = getattr(user, "active_role", None)
+        token["available_roles"] = getattr(user, "available_roles", []) or []
+
+        # Use stored onboarding completion fields
+        token["seller_onboarding_complete"] = user.seller_onboarding_complete
+        token["pro_buyer_onboarding_complete"] = user.pro_buyer_onboarding_complete
+
+        # Add subscription data to token
+        try:
+            subscription = Subscription.objects.get(user=user)
+            token["membership_active"] = subscription.membership_active
+            token["subscription_status"] = subscription.status
+            token["subscription_current_period_end"] = subscription.current_period_end.isoformat() if subscription.current_period_end else None
+        except Subscription.DoesNotExist:
+            token["membership_active"] = False
+            token["subscription_status"] = ""
+            token["subscription_current_period_end"] = None
+
         return token
 
 
@@ -316,10 +355,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
     profile_pic = serializers.ImageField(required=False, allow_null=True)
     average_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
+    seller_onboarding_complete = serializers.BooleanField(read_only=True)
+    pro_buyer_onboarding_complete = serializers.BooleanField(read_only=True)
+    membership_active = serializers.SerializerMethodField()
+    subscription_status = serializers.SerializerMethodField()
+    subscription_current_period_end = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
+            "id",
             "username",
             "email",
             "phone_number",
@@ -331,8 +376,24 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "profile_pic",
             "average_rating",
             "rating_count",
+            "available_roles",
+            "active_role",
+            "seller_onboarding_complete",
+            "pro_buyer_onboarding_complete",
+            "membership_active",
+            "subscription_status",
+            "subscription_current_period_end",
         ]
-        read_only_fields = ["email"]  # Only email is read-only now
+        read_only_fields = [
+            "email",
+            "available_roles",
+            "active_role",
+            "seller_onboarding_complete",
+            "pro_buyer_onboarding_complete",
+            "membership_active",
+            "subscription_status",
+            "subscription_current_period_end",
+        ]
 
     def get_type_of_activity(self, obj):
         try:
@@ -370,7 +431,33 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_rating_count(self, obj):
         return obj.rating_count
 
+    def get_membership_active(self, obj):
+        try:
+            subscription = Subscription.objects.get(user=obj)
+            return subscription.membership_active
+        except Subscription.DoesNotExist:
+            return False
+
+    def get_subscription_status(self, obj):
+        try:
+            subscription = Subscription.objects.get(user=obj)
+            return subscription.status
+        except Subscription.DoesNotExist:
+            return ""
+
+    def get_subscription_current_period_end(self, obj):
+        try:
+            subscription = Subscription.objects.get(user=obj)
+            return subscription.current_period_end
+        except Subscription.DoesNotExist:
+            return None
+
+
     def update(self, instance, validated_data):
+        # Remove system-managed fields to prevent user modification
+        validated_data.pop('available_roles', None)
+        validated_data.pop('active_role', None)
+        
         # Allow username update with uniqueness check
         new_username = validated_data.get("username", instance.username)
         if new_username != instance.username:
@@ -423,11 +510,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
                             value = []
                 business_data[backend_field] = value
 
-        if business_data:
+        if business_data and getattr(instance, "role", None) in ["seller", "professional-buyer"]:
             business_detail, created = BusinessDetail.objects.get_or_create(
                 user=instance
             )
             for field, value in business_data.items():
                 setattr(business_detail, field, value)
             business_detail.save()
+            # Enqueue HubSpot company sync and association after commit
+            from hubspot.sync_utils import safe_company_sync
+            safe_company_sync(business_detail.id, "business_detail_update")
         return instance

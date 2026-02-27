@@ -1,11 +1,12 @@
 from django.urls import path
-from .views import FeedbackCreateAPIView, QuoteRequestCreateAPIView, ContactMessageCreateAPIView
+from .views import FeedbackCreateAPIView, QuoteRequestCreateAPIView, ContactMessageCreateAPIView, CallbackRequestCreateAPIView
 
 app_name = 'feedback'
 
 urlpatterns = [
-    path('create/', FeedbackCreateAPIView.as_view(), name='feedback-create'),
+    path('submit/', FeedbackCreateAPIView.as_view(), name='feedback-create'),
     path('quote-request/', QuoteRequestCreateAPIView.as_view(), 
          name='quote-request-create'),
     path('contact/', ContactMessageCreateAPIView.as_view(), name='contact-create'),
+    path('callback-request/', CallbackRequestCreateAPIView.as_view(), name='callback-request-create'),
 ]

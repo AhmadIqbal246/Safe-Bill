@@ -99,6 +99,8 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                         {
                             "id": n.id,
                             "message": n.message,
+                            "translation_key": getattr(n, "translation_key", None),
+                            "translation_variables": getattr(n, "translation_variables", None),
                             "created_at": n.created_at.isoformat(),
                             "is_read": n.is_read,
                         }
@@ -117,6 +119,8 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
                     {
                         "id": n.id,
                         "message": n.message,
+                        "translation_key": getattr(n, "translation_key", None),
+                        "translation_variables": getattr(n, "translation_variables", None),
                         "created_at": n.created_at.isoformat(),
                         "is_read": n.is_read,
                     }

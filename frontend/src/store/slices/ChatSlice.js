@@ -6,10 +6,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const authHeader = () => ({ Authorization: `Bearer ${sessionStorage.getItem('access')}` });
 
-// Helper function to get current user ID
+// Helper function to get current user ID (use only id)
 const getCurrentUserId = () => {
   const user = sessionStorage.getItem('user');
-  return user ? JSON.parse(user).user_id : null;
+  if (!user) return null;
+  const parsed = JSON.parse(user);
+  return parsed?.id ?? null;
 };
 
 export const fetchMessages = createAsyncThunk(
@@ -180,7 +182,7 @@ const chatSlice = createSlice({
         state.messages[projectId].push(message);
         
         // Only update unread count if the message is not from the current user
-        if (message.sender !== currentUserId) {
+        if (Number(message.sender) !== Number(currentUserId)) {
           const isChatOpenForProject = (
             state.isChatOpen &&
             state.selectedContact &&

@@ -21,7 +21,10 @@ from .views import (
     get_seller_details,
     SellerRatingCreateView,
     EligibleProjectsForRating,
-    filter_sellers_by_region
+    filter_sellers_by_region,
+    RoleSwitchView,
+    deletion_eligibility,
+    delete_account,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -30,6 +33,7 @@ app_name = 'accounts'
 urlpatterns = [
     path('seller-register/', SellerRegisterView.as_view(), name='seller-register'),
     path('buyer-register/', BuyerRegistrationView.as_view(), name='buyer-register'),
+    # Use standard token obtain view (no role selection at login)
     path('login/', UserTokenObtainPairView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -85,4 +89,9 @@ urlpatterns = [
     path('rate-seller/', SellerRatingCreateView.as_view(), name='rate-seller'),
     path('eligible-projects/<int:seller_id>/', EligibleProjectsForRating.as_view(), name='eligible-projects'),
     path('verify-siret/', verify_siret_api, name='verify-siret'),
+    # Added: switch active role (seller <-> professional-buyer) for current session/user
+    path('role/switch/', RoleSwitchView.as_view(), name='role-switch'),
+    # User Account Deletion endpoints
+    path('deletion-eligibility/', deletion_eligibility, name='deletion-eligibility'),
+    path('delete-account/', delete_account, name='delete-account'),
 ] 

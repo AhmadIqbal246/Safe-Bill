@@ -1,0 +1,88 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Vérifiez Votre Email - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Vérification d'Email Requise{% endblock %}
+
+{% block content %}
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Vérifiez Votre Adresse Email
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Complétez votre inscription pour commencer
+        </p>
+    </div>
+
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Bonjour {{ first_name }} ! 👋
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">
+            Bienvenue sur {{ site_name }} ! Pour terminer votre inscription, veuillez vérifier votre adresse email en utilisant l'une des méthodes ci-dessous.
+        </p>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ verification_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Vérifier l'Adresse Email
+        </a>
+    </div>
+
+    <!-- Important Notice - Gray Background -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            ⚠️ Important
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+            Ce lien de vérification et ce code expireront dans <strong>24 heures</strong> pour des raisons de sécurité.
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :
+        </p>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 12px;">
+            <p style="word-break: break-all; color: #6b7280; font-family: monospace; font-size: 14px; margin: 0;">
+                {{ verification_url }}
+            </p>
+        </div>
+    </div>
+
+    <!-- What You Can Do - Gray Background -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            ✨ Une fois vérifié, vous pourrez :
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+            <li>Accéder à votre tableau de bord</li>
+            <li>Créer et gérer des projets</li>
+            <li>Vous connecter avec d'autres professionnels</li>
+            <li>Sécuriser vos transactions commerciales</li>
+        </ul>
+    </div>
+
+    <!-- Security Notice - Gray Background -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🔒 Avis de Sécurité
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Si vous n'avez pas créé de compte avec {{ site_name }}, vous pouvez ignorer cet email en toute sécurité. Votre adresse email ne sera pas utilisée sans vérification.
+        </p>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
+            Si vous avez des difficultés avec le lien de vérification, veuillez contacter notre équipe de support à <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Cordialement,<br>
+            L'Équipe {{ site_name }}
+        </p>
+    </div>
+</div>
+{% endblock %}

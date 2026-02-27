@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Dialog } from '@headlessui/react';
 import { Search, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   filterSellersByServiceType,
   filterSellersByServiceArea,
@@ -55,10 +56,7 @@ function getProfilePicture(professional) {
 
 const filters = [
   'Service type',
-  'Area',
-  'Radius',
-  'Rating',
-  'Availability',
+  'Area'
 ];
 
 const RESULTS_PER_PAGE = 5;
@@ -66,6 +64,7 @@ const RESULTS_PER_PAGE = 5;
 export default function ProfFilterComponent({ initialFilters = {} }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { sellers, loading, error } = useSelector((state) => state.filter);
   const [currentPage, setCurrentPage] = useState(1);
   const [openFilter, setOpenFilter] = useState(null); // 'serviceType' | 'area' | null
@@ -187,7 +186,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
         setSearchTerm(''); 
       };
       selected = selectedServiceTypeLabel;
-      label = 'Select Service Type';
+      label = t('find_professional.select_service_type');
     } else if (openFilter === 'area') {
       options = serviceAreaOptions.map(option => option.label); // Show labels in dropdown
       onSelect = (val) => { 
@@ -198,7 +197,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
         setSearchTerm(''); 
       };
       selected = selectedAreaLabel;
-      label = 'Select Area';
+      label = t('find_professional.select_area');
     } else if (openFilter === 'rating') {
       options = [
         { value: '1', label: '1+ stars' },
@@ -239,7 +238,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={t('find_professional.search_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#01257D] focus:border-transparent"
@@ -308,7 +307,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
               className="mt-4 w-full py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold hover:bg-[#d1e6f5] transition-colors cursor-pointer"
               onClick={() => { setOpenFilter(null); setSearchTerm(''); }}
             >
-              Close
+              {t('find_professional.close')}
             </button>
           </Dialog.Panel>
         </div>
@@ -319,7 +318,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
   return (
     <section className="w-full max-w-7xl mx-auto py-10 px-4">
       {renderDialog()}
-      <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">Find local professionals</h2>
+      <h2 className="text-xl md:text-2xl font-bold text-[#111827] mb-4">{t('find_professional.find_local')}</h2>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {filters.map((f) => {
@@ -333,6 +332,11 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             isActive = true;
             display = selectedAreaLabel;
           }
+          // Localize default labels when not active
+          if (!isActive) {
+            if (f === 'Service type') display = t('find_professional.service_type');
+            if (f === 'Area') display = t('find_professional.area');
+          }
           if (f === 'Rating' && selectedRating) {
             isActive = true;
             display = `${selectedRating}+ stars`;
@@ -340,10 +344,12 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
           return (
             <button
               key={f}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors focus:outline-none cursor-pointer ${
-                (f === 'Service type' || f === 'Area' || f === 'Rating')
-                  ? 'bg-[#E6F0FA] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
-                  : 'bg-[#E6F0FA] text-[#01257D] cursor-not-allowed opacity-70'
+              className={`py-2 rounded-full text-sm font-medium transition-colors focus:outline-none cursor-pointer ${
+                (f === 'Service type' || f === 'Area')
+                  ? 'px-6 bg-[#C1E7FF] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
+                  : (f === 'Rating')
+                  ? 'px-4 bg-[#E6F0FA] text-[#01257D] ' + (isActive ? 'font-bold ring-2 ring-[#01257D]' : '')
+                  : 'px-4 bg-[#E6F0FA] text-[#01257D] cursor-not-allowed opacity-70'
               }`}
               onClick={() => {
                 if (f === 'Service type') setOpenFilter('serviceType');
@@ -359,17 +365,17 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
       </div>
       <div className="flex flex-wrap gap-3 mb-6">
         <button
-          className="px-5 py-2 rounded-md bg-[#01257D] text-white font-semibold text-sm hover:bg-[#2346a0] transition-colors cursor-pointer"
+          className="px-5 py-2 rounded-[15px] bg-[#2E78A6] text-white font-semibold text-sm hover:bg-[#256a94] transition-colors cursor-pointer"
           onClick={() => {
             setAppliedServiceType(selectedServiceType);
             setAppliedArea(selectedArea);
             setAppliedRating(selectedRating);
           }}
-        >
-          Apply Filters
+>
+          {t('find_professional.apply_filters')}
         </button>
         <button
-          className="px-5 py-2 rounded-md bg-[#E6F0FA] text-[#01257D] font-semibold text-sm cursor-pointer"
+          className="px-5 py-2 rounded-[15px] bg-[#B0B0DB] text-white font-semibold text-sm hover:bg-[#9a9ac9] transition-colors cursor-pointer"
           onClick={() => {
             setSelectedServiceType('');
             setSelectedServiceTypeLabel(''); // Clear the label
@@ -382,11 +388,11 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
             dispatch(resetFilterState());
             dispatch(fetchAllSellersComplete());
           }}
-        >
-          Clear All
+>
+          {t('find_professional.clear_all')}
         </button>
       </div>
-      <h3 className="text-lg font-bold text-[#111827] mb-4">Results</h3>
+      <h3 className="text-lg font-bold text-[#2E78A6] mb-4">{t('find_professional.results')}</h3>
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div className="w-8 h-8 border-4 border-[#E6F0FA] border-t-[#01257D] rounded-full animate-spin" />
@@ -411,12 +417,12 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                     alt={pro.name}
                     className="w-36 h-36 object-cover rounded-xl mb-3"
                   />
-                  <div className="font-semibold text-[#111827] text-base">{pro.name}</div>
+                  <div className="font-semibold text-[#2E78A6] text-base">{pro.name}</div>
                   <div className="text-[#6B7280] text-sm mb-1">{getBusinessActivityLabel(pro.business_type)}</div>
-                  <div className="text-[#178582] text-sm font-semibold flex items-center gap-1">
+                  {/* <div className="text-[#178582] text-sm font-semibold flex items-center gap-1">
                     <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
                     {rating > 0 ? rating.toFixed(1) : 'No ratings'} 
-                  </div>
+                  </div> */}
                 </div>
               );
             })}
@@ -435,7 +441,7 @@ export default function ProfFilterComponent({ initialFilters = {} }) {
                 <button
                   key={i + 1}
                   className={`w-8 h-8 flex items-center justify-center rounded-full text-[#111827] font-semibold cursor-pointer ${
-                    currentPage === i + 1 ? 'bg-[#E6F0FA]' : ''
+                    currentPage === i + 1 ? 'bg-[#C1E7FF]' : ''
                   }`}
                   onClick={() => setCurrentPage(i + 1)}
                 >

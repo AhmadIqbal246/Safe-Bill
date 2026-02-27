@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { UploadCloud, X, CheckCircle } from "lucide-react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { UploadCloud, X, CheckCircle } from "lucide-react";
 import {
   uploadBusinessDocuments,
   resetBusinessDetailState,
@@ -14,6 +14,7 @@ import {
   createStripeIdentitySession,
   checkStripeIdentityStatus,
 } from "../../../store/slices/ConnectStripe";
+import { setUser } from "../../../store/slices/AuthSlices";
 
 // const documents = [
 //   { key: "kbis", labelKey: "onboarding.upload_kbis" },
@@ -42,7 +43,6 @@ const requiredDocs = [
 
 export default function OnBoardingComp() {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState(2);
   const [files] = useState({});
   // const [bank] = useState({
   //   account_holder: "",
@@ -59,7 +59,55 @@ export default function OnBoardingComp() {
 
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const role = user?.role;
+
+  // Added error handling for user object
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  // Added: prefer role for onboarding branching; fallback to active_role
+  const role = user?.role || user?.active_role;
+  const proBuyerComplete = user?.pro_buyer_onboarding_complete === true;
+  const sellerComplete = user?.seller_onboarding_complete === true;
+
+  // Calculate the correct step based on current role and onboarding status
+  const correctStep = useMemo(() => {
+    try {
+      if (!role) return 1;
+
+      if (role === "seller" && sellerComplete) {
+        return 3; // Show completion for sellers
+      } else if (role === "professional-buyer" && proBuyerComplete) {
+        return 3; // Show completion for pro buyers
+      } else if (role === "seller" && !sellerComplete) {
+        return 2; // Show Stripe Connect for sellers
+      } else if (role === "professional-buyer" && !proBuyerComplete) {
+        return 2; // Show Stripe Identity for pro buyers
+      } else {
+        return 1; // Default to step 1
+      }
+    } catch (error) {
+      console.error('Error calculating correctStep:', error);
+      return 1; // Fallback to step 1
+    }
+  }, [role, sellerComplete, proBuyerComplete]);
+
+  // Use derived state instead of local state to prevent re-renders
+  const currentStep = correctStep;
+
+  // Debug logging for onboarding status (only when values change)
+  useEffect(() => {
+    console.log('OnBoardingComp Debug:', {
+      role,
+      sellerComplete,
+      proBuyerComplete,
+      currentStep,
+      user: user ? {
+        seller_onboarding_complete: user.seller_onboarding_complete,
+        pro_buyer_onboarding_complete: user.pro_buyer_onboarding_complete
+      } : null
+    });
+  }, [role, sellerComplete, proBuyerComplete, currentStep, user]);
   const { loading, error, success } = useSelector(
     (state) => state.businessDetail
   );
@@ -96,14 +144,27 @@ export default function OnBoardingComp() {
 
   const navigate = useNavigate();
 
-  const handleRoleBasedNavigation = () => {
+  // Added: immediately redirect verified users away from onboarding
+  useEffect(() => {
+    if (role === "professional-buyer" && proBuyerComplete) {
+      navigate("/");
+    }
+    if (role === "seller" && sellerComplete) {
+      // Optional: redirect sellers with completed onboarding straight to dashboard
+      // navigate("/seller-dashboard");
+    }
+  }, [role, proBuyerComplete, sellerComplete, navigate]);
+
+  // No need for useEffect since we're using derived state
+
+  const handleRoleBasedNavigation = useCallback(() => {
     const userStr = sessionStorage.getItem("user");
     if (userStr) {
       try {
         const userObj = JSON.parse(userStr);
-        if (userObj.role === "seller") {
+        if ((userObj.role || userObj.active_role) === "seller") {
           navigate("/seller-dashboard");
-        } else if (userObj.role === "professional-buyer") {
+        } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
           navigate("/");
         } else {
           // Default fallback
@@ -117,7 +178,7 @@ export default function OnBoardingComp() {
       // Fallback if no user in session
       navigate("/seller-dashboard");
     }
-  };
+  }, [navigate]);
 
   // const validateFileTypeAndSize = (key, file) => {
   //   const maxSize = 7 * 1024 * 1024; // 7 MB
@@ -187,7 +248,7 @@ export default function OnBoardingComp() {
     if (
       role === "seller" &&
       stripeStatusData &&
-      !stripeStatusData.onboarding_complete
+      !sellerComplete
     ) {
       return;
     }
@@ -226,26 +287,12 @@ export default function OnBoardingComp() {
 
   useEffect(() => {
     if (success) {
-      // Only auto-advance after documents for sellers
-      if (role === "seller") {
-        setCurrentStep(3);
-      }
+      // Reset business detail state after successful upload
       dispatch(resetBusinessDetailState());
-      // Update onboarding_complete only for sellers
-      const userStr = sessionStorage.getItem("user");
-      if (userStr) {
-        try {
-          const userObj = JSON.parse(userStr);
-          if (role === "seller") {
-            userObj.onboarding_complete = true;
-          }
-          sessionStorage.setItem("user", JSON.stringify(userObj));
-        } catch {
-          // Ignore parsing errors
-        }
-      }
+      // Note: currentStep is now derived from role and onboarding status
+      // No need to manually set it
     }
-  }, [success, dispatch, role]);
+  }, [success, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -258,13 +305,13 @@ export default function OnBoardingComp() {
   }, [error, t]);
 
   const steps = [
-    { number: 1, title: "Basic Information", active: currentStep >= 1 },
+    { number: 1, title: t('onboarding.basic_information_step'), active: currentStep >= 1 },
     {
       number: 2,
-      title: role == "seller" ? "Connect Stripe" : "Identity Verification",
+      title: role === "seller" ? t('onboarding.connect_stripe_step') : t('onboarding.identity_verification_step'),
       active: false,
     },
-    { number: 3, title: "Verification", active: false },
+    { number: 3, title: t('onboarding.verification_step'), active: false },
   ];
 
   const handleStripeConnect = () => {
@@ -346,9 +393,24 @@ export default function OnBoardingComp() {
       console.log("Account Status:", stripeStatusData.account_status);
       console.log("Onboarding Complete:", stripeStatusData.onboarding_complete);
 
-      if (stripeStatusData.onboarding_complete) {
-        // Stripe onboarding is complete, move to step 3
-        setCurrentStep(3);
+      // If backend reports completion, immediately merge into auth.user to refresh UI
+      if (stripeStatusData.onboarding_complete === true || stripeStatusData.seller_onboarding_complete === true) {
+        try {
+          const currentUserStr = sessionStorage.getItem("user");
+          const currentUser = currentUserStr ? JSON.parse(currentUserStr) : user;
+          const mergedUser = {
+            ...(currentUser || {}),
+            seller_onboarding_complete: true,
+          };
+          dispatch(setUser(mergedUser));
+        } catch (e) {
+          // no-op if session storage parsing fails
+        }
+      }
+
+      if (sellerComplete) {
+        // Stripe onboarding is complete, step will be automatically set to 3
+        // No need to manually set currentStep
       } else if (
         stripeStatusData.account_status &&
         stripeStatusData.account_status.toLowerCase() === "onboarding"
@@ -381,9 +443,24 @@ export default function OnBoardingComp() {
         stripeIdentityStatusData.identity_status
       );
 
+      // If backend reports identity verified, immediately merge into auth.user to refresh UI
+      if (stripeIdentityStatusData.identity_verified === true || stripeIdentityStatusData.pro_buyer_onboarding_complete === true) {
+        try {
+          const currentUserStr = sessionStorage.getItem("user");
+          const currentUser = currentUserStr ? JSON.parse(currentUserStr) : user;
+          const mergedUser = {
+            ...(currentUser || {}),
+            pro_buyer_onboarding_complete: true,
+          };
+          dispatch(setUser(mergedUser));
+        } catch (e) {
+          // no-op if session storage parsing fails
+        }
+      }
+
       if (stripeIdentityStatusData.identity_verified) {
-        // Identity verification is complete, move to step 3
-        setCurrentStep(3);
+        // Identity verification is complete, step will be automatically set to 3
+        // No need to manually set currentStep
       } else if (stripeIdentityStatusData.identity_status === "failed") {
         toast.error("Identity verification failed. Please try again.");
       } else if (stripeIdentityStatusData.identity_status === "canceled") {
@@ -412,16 +489,16 @@ export default function OnBoardingComp() {
             {currentStep === 2
               ? role === "seller"
                 ? t(
-                    "onboarding.description_stripe_connect",
-                    "Connect your Stripe account to start receiving payments"
-                  )
+                  "onboarding.description_stripe_connect",
+                  "Connect your Stripe account to start receiving payments"
+                )
                 : t(
-                    "onboarding.description_identity_verification",
-                    "Verify your identity to access all platform features"
-                  )
+                  "onboarding.description_identity_verification",
+                  "Verify your identity to access all platform features"
+                )
               : currentStep === 3
-              ? t("onboarding.description_verification")
-              : ""}
+                ? t("onboarding.description_verification")
+                : ""}
           </p>
         </div>
         {/* Progress Steps */}
@@ -473,21 +550,19 @@ export default function OnBoardingComp() {
               >
                 <div
                   className={`flex items-center justify-center w-10 h-10 rounded-full text-base font-bold transition-all duration-200
-                      ${
-                        currentStep === step.number
-                          ? "bg-[#01257D] text-white shadow-lg"
-                          : step.active
-                          ? "bg-white border-2 border-[#01257D] text-[#01257D]"
-                          : "bg-white border-2 border-[#01257D] text-[#01257D]"
-                      }
+                      ${currentStep === step.number
+                      ? "bg-[#01257D] text-white shadow-lg"
+                      : step.active
+                        ? "bg-white border-2 border-[#01257D] text-[#01257D]"
+                        : "bg-white border-2 border-[#01257D] text-[#01257D]"
+                    }
                     `}
                 >
                   {step.number}
                 </div>
                 <span
-                  className={`mt-2 text-xs font-semibold text-center ${
-                    step.active ? "text-[#01257D]" : "text-[#01257D]"
-                  }`}
+                  className={`mt-2 text-xs font-semibold text-center ${step.active ? "text-[#01257D]" : "text-[#01257D]"
+                    }`}
                 >
                   {step.title}
                 </span>
@@ -569,49 +644,46 @@ export default function OnBoardingComp() {
                   stripeStatusData.account_status &&
                   stripeStatusData.account_status !== "onboarding" &&
                   stripeStatusData.account_status.toLowerCase() !==
-                    "onboarding" && (
+                  "onboarding" && (
                     <div className="mb-6">
                       <div
-                        className={`border rounded-lg p-4 ${
-                          stripeStatusData.onboarding_complete
+                        className={`border rounded-lg p-4 ${sellerComplete
                             ? "border-green-200 bg-green-50"
                             : "border-yellow-200 bg-yellow-50"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
                             <h4
-                              className={`font-semibold ${
-                                stripeStatusData.onboarding_complete
+                              className={`font-semibold ${sellerComplete
                                   ? "text-green-800"
                                   : "text-yellow-800"
-                              }`}
+                                }`}
                             >
-                              {stripeStatusData.onboarding_complete
+                              {sellerComplete
                                 ? t(
-                                    "onboarding.stripe_complete_title",
-                                    "Stripe Setup Complete"
-                                  )
+                                  "onboarding.stripe_complete_title",
+                                  "Stripe Setup Complete"
+                                )
                                 : t(
-                                    "onboarding.stripe_incomplete_title",
-                                    "Stripe Setup Incomplete"
-                                  )}
+                                  "onboarding.stripe_incomplete_title",
+                                  "Stripe Setup Incomplete"
+                                )}
                             </h4>
                             <p
-                              className={`text-sm mt-1 ${
-                                stripeStatusData.onboarding_complete
+                              className={`text-sm mt-1 ${sellerComplete
                                   ? "text-green-700"
                                   : "text-yellow-700"
-                              }`}
+                                }`}
                             >
-                              {stripeStatusData.onboarding_complete
+                              {sellerComplete
                                 ? "Your Stripe account is ready to receive payments"
                                 : t(
-                                    "onboarding.stripe_incomplete_default",
-                                    "Your Stripe account setup is not yet complete."
-                                  )}
+                                  "onboarding.stripe_incomplete_default",
+                                  "Your Stripe account setup is not yet complete."
+                                )}
                             </p>
-                            {!stripeStatusData.onboarding_complete && (
+                            {!sellerComplete && (
                               <div className="mt-2 text-sm text-yellow-700">
                                 <p className="font-medium">
                                   Missing requirements:
@@ -628,7 +700,7 @@ export default function OnBoardingComp() {
                                   )}
                                   {stripeStatusData.currently_due &&
                                     stripeStatusData.currently_due.length >
-                                      0 && (
+                                    0 && (
                                       <li>
                                         <span className="font-medium">
                                           Currently due:
@@ -649,7 +721,7 @@ export default function OnBoardingComp() {
                                     )}
                                   {stripeStatusData.eventually_due &&
                                     stripeStatusData.eventually_due.length >
-                                      0 && (
+                                    0 && (
                                       <li>
                                         <span className="font-medium">
                                           Eventually due:
@@ -675,9 +747,9 @@ export default function OnBoardingComp() {
                             {stripeStatusLoading
                               ? t("onboarding.checking", "Checking...")
                               : t(
-                                  "onboarding.refresh_status",
-                                  "Refresh Status"
-                                )}
+                                "onboarding.refresh_status",
+                                "Refresh Status"
+                              )}
                           </button>
                         </div>
                       </div>
@@ -759,9 +831,8 @@ export default function OnBoardingComp() {
                   {/* Stripe Connect Button */}
                   <div className="text-center">
                     <button
-                      className={`bg-[#01257D] cursor-pointer text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] transition-colors flex items-center gap-2 mx-auto ${
-                        stripeLoading ? "opacity-80" : ""
-                      }`}
+                      className={`bg-[#01257D] cursor-pointer text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#2346a0] transition-colors flex items-center gap-2 mx-auto ${stripeLoading ? "opacity-80" : ""
+                        }`}
                       onClick={handleStripeConnect}
                       disabled={stripeLoading}
                     >
@@ -858,21 +929,21 @@ export default function OnBoardingComp() {
                     {stripeIdentityStatusData &&
                       (stripeIdentityStatusData.identity_status === "failed" ||
                         stripeIdentityStatusData.identity_status ===
-                          "canceled" ||
+                        "canceled" ||
                         stripeIdentityStatusData.identity_status ===
-                          "requires_input") && (
+                        "requires_input") && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                           <p className="text-red-700 text-sm">
                             {stripeIdentityStatusData.identity_status ===
-                            "canceled"
+                              "canceled"
                               ? t(
-                                  "onboarding.verification_canceled",
-                                  "Identity verification was canceled. Please try again."
-                                )
+                                "onboarding.verification_canceled",
+                                "Identity verification was canceled. Please try again."
+                              )
                               : t(
-                                  "onboarding.verification_failed",
-                                  "Identity verification failed. Please try again."
-                                )}
+                                "onboarding.verification_failed",
+                                "Identity verification failed. Please try again."
+                              )}
                           </p>
                         </div>
                       )}
@@ -880,7 +951,7 @@ export default function OnBoardingComp() {
                     {/* Show processing message if verification is in progress */}
                     {stripeIdentityStatusData &&
                       stripeIdentityStatusData.identity_status ===
-                        "processing" && (
+                      "processing" && (
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                           <p className="text-blue-700 text-sm">
                             {t(
@@ -894,24 +965,22 @@ export default function OnBoardingComp() {
                     {/* Note: requires_input handled above as failure */}
 
                     <button
-                      className={`${
-                        stripeIdentityStatusData &&
-                        (stripeIdentityStatusData.identity_status ===
-                          "failed" ||
-                          stripeIdentityStatusData.identity_status ===
+                      className={`${stripeIdentityStatusData &&
+                          (stripeIdentityStatusData.identity_status ===
+                            "failed" ||
+                            stripeIdentityStatusData.identity_status ===
                             "canceled" ||
-                          stripeIdentityStatusData.identity_status ===
+                            stripeIdentityStatusData.identity_status ===
                             "requires_input")
                           ? "bg-red-600 hover:bg-red-700"
                           : "bg-[#01257D] hover:bg-[#2346a0]"
-                      } cursor-pointer text-white px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto ${
-                        stripeIdentityLoading ? "opacity-80" : ""
-                      }`}
+                        } cursor-pointer text-white px-8 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 mx-auto ${stripeIdentityLoading ? "opacity-80" : ""
+                        }`}
                       onClick={handleStripeIdentityVerification}
                       disabled={stripeIdentityLoading}
                     >
                       {stripeIdentityStatusData &&
-                      stripeIdentityStatusData.identity_status ===
+                        stripeIdentityStatusData.identity_status ===
                         "processing" ? (
                         <svg
                           className="w-5 h-5 animate-spin"
@@ -931,40 +1000,40 @@ export default function OnBoardingComp() {
                       )}
                       {stripeIdentityLoading
                         ? t(
-                            "onboarding.creating_session",
-                            "Creating Session..."
-                          )
+                          "onboarding.creating_session",
+                          "Creating Session..."
+                        )
                         : stripeIdentityStatusData &&
                           (stripeIdentityStatusData.identity_status ===
                             "failed" ||
                             stripeIdentityStatusData.identity_status ===
-                              "canceled" ||
+                            "canceled" ||
                             stripeIdentityStatusData.identity_status ===
-                              "requires_input")
-                        ? t("onboarding.try_again", "Try Again")
-                        : stripeIdentityStatusData &&
-                          stripeIdentityStatusData.identity_status ===
+                            "requires_input")
+                          ? t("onboarding.try_again", "Try Again")
+                          : stripeIdentityStatusData &&
+                            stripeIdentityStatusData.identity_status ===
                             "processing"
-                        ? t("onboarding.processing", "Processing...")
-                        : t(
-                            "onboarding.start_verification",
-                            "Start Verification"
-                          )}
+                            ? t("onboarding.processing", "Processing...")
+                            : t(
+                              "onboarding.start_verification",
+                              "Start Verification"
+                            )}
                     </button>
                     <p className="text-xs text-gray-500 mt-3">
                       {stripeIdentityStatusData &&
-                      stripeIdentityStatusData.identity_status === "processing"
+                        stripeIdentityStatusData.identity_status === "processing"
                         ? t(
-                            "onboarding.processing_note",
-                            "Please wait while we process your verification"
-                          )
+                          "onboarding.processing_note",
+                          "Please wait while we process your verification"
+                        )
                         : stripeIdentityStatusData &&
                           stripeIdentityStatusData.identity_status === "not_started"
-                        ? t(
+                          ? t(
                             "onboarding.identity_not_started_note",
                             "Your identity verification has not started. Click the button above to begin."
                           )
-                        : t(
+                          : t(
                             "onboarding.identity_verification_note",
                             "Click to start identity verification with Stripe"
                           )}
@@ -974,52 +1043,7 @@ export default function OnBoardingComp() {
               </div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
-              <button
-                className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors bg-[#E6F0FA] text-[#01257D] opacity-60 cursor-not-allowed`}
-                disabled
-              >
-                Previous
-              </button>
-              <button
-                className={`px-6 py-2 text-sm font-semibold rounded-md transition-colors cursor-pointer bg-[#01257D] text-white hover:bg-[#2346a0] ${
-                  loading ||
-                  (role === "seller" &&
-                    stripeStatusData &&
-                    !stripeStatusData.onboarding_complete) ||
-                  (role === "professional-buyer" &&
-                    stripeIdentityStatusData &&
-                    !stripeIdentityStatusData.identity_verified) ||
-                  (role === "professional-buyer" &&
-                    stripeIdentityStatusData &&
-                    (stripeIdentityStatusData.identity_status === "failed" ||
-                      stripeIdentityStatusData.identity_status === "canceled" ||
-                      stripeIdentityStatusData.identity_status ===
-                        "requires_input"))
-                    ? "opacity-80"
-                    : ""
-                }`}
-                onClick={handleContinue}
-                disabled={
-                  loading ||
-                  (role === "seller" &&
-                    stripeStatusData &&
-                    !stripeStatusData.onboarding_complete) ||
-                  (role === "professional-buyer" &&
-                    stripeIdentityStatusData &&
-                    !stripeIdentityStatusData.identity_verified) ||
-                  (role === "professional-buyer" &&
-                    stripeIdentityStatusData &&
-                    (stripeIdentityStatusData.identity_status === "failed" ||
-                      stripeIdentityStatusData.identity_status === "canceled" ||
-                      stripeIdentityStatusData.identity_status ===
-                        "requires_input"))
-                }
-              >
-                {loading ? t("onboarding.uploading") : t("onboarding.continue")}
-              </button>
-            </div>
+
           </>
         )}
         {/* SubStep 3: Verification Success */}
@@ -1041,9 +1065,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if (userObj.role === "seller") {
+                    if ((userObj.role || userObj.active_role) === "seller") {
                       return t("onboarding.go_to_dashboard_seller");
-                    } else if (userObj.role === "professional-buyer") {
+                    } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
                       return t("onboarding.go_to_home_professional_buyer");
                     }
                   } catch {
@@ -1062,9 +1086,9 @@ export default function OnBoardingComp() {
                 if (userStr) {
                   try {
                     const userObj = JSON.parse(userStr);
-                    if (userObj.role === "seller") {
+                    if ((userObj.role || userObj.active_role) === "seller") {
                       return t("onboarding.go_to_dashboard");
-                    } else if (userObj.role === "professional-buyer") {
+                    } else if ((userObj.role || userObj.active_role) === "professional-buyer") {
                       return t("onboarding.go_to_home");
                     }
                   } catch {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
-import { DollarSign, ExternalLink, ArrowRight, CheckCircle } from 'lucide-react';
+import { ExternalLink, ArrowRight, CheckCircle } from 'lucide-react';
 import {
   fetchTransferInfo,
   createTransfer,
@@ -146,7 +146,7 @@ export default function TransferFunds({ balance, onTransferComplete }) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6 mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-primary-100 rounded-lg">
-            <DollarSign className="w-6 h-6 text-primary-600" />
+            <span className="text-2xl font-bold text-primary-600">€</span>
           </div>
           <h3 className="text-xl font-bold text-gray-900">{t('billings.transfer_funds')}</h3>
         </div>
@@ -167,7 +167,7 @@ export default function TransferFunds({ balance, onTransferComplete }) {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-primary-100 rounded-lg">
-          <DollarSign className="w-6 h-6 text-primary-600" />
+          <span className="text-2xl font-bold text-primary-600">€</span>
         </div>
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900">{t('billings.transfer_funds')}</h3>
@@ -183,7 +183,6 @@ export default function TransferFunds({ balance, onTransferComplete }) {
           <div>
             <p className="text-success-700 font-medium mb-2">{t('billings.available_for_transfer')}</p>
             <div className="flex items-center gap-2">
-              <DollarSign className="w-8 h-8 text-success-600" />
               <span className="text-3xl font-bold text-success-900">
                 {formatCurrency(availableBalance, balance?.currency)}
               </span>

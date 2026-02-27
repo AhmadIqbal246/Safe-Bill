@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 import { fetchUserProfile } from './UserProfileSlice';
+import i18n from '../../i18n';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -21,6 +22,15 @@ const initialState = {
     loading: false,
     error: null,
     result: null,
+    lastSiret: null,
+  },
+  accountDeletion: {
+    eligibility: null,
+    loading: false,
+    error: null,
+    deletionLoading: false,
+    deletionError: null,
+    deletionSuccess: false,
   },
 };
 
@@ -30,7 +40,13 @@ export const registerSellerWithBasicAndBussiness = createAsyncThunk(
     try {
       const response = await axios.post(
         `${BASE_URL}api/accounts/seller-register/`,
-        payload
+        payload,
+        {
+          headers: {
+            'X-User-Language': (i18n.language || 'en'),
+            'Accept-Language': (i18n.language || 'en'),
+          },
+        }
       );
       return response.data; 
     } catch (err) {
@@ -45,11 +61,14 @@ export const registerSellerWithBasicAndBussiness = createAsyncThunk(
 // Login thunk
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ email, password }, { rejectWithValue }) => {
+  // Added: optional desiredRole to log in as a specific role (seller | professional-buyer)
+  async ({ email, password, desiredRole }, { rejectWithValue }) => {
     try {
+      const payload = { email, password };
+      if (desiredRole) payload.desired_role = desiredRole; // Added: send desired role to backend
       const response = await axios.post(
         `${BASE_URL}api/accounts/login/`,
-        { email, password }
+        payload
       );
       // Decode user info from access token
       const decodedUser = jwtDecode(response.data.access);
@@ -145,7 +164,13 @@ export const registerBuyer = createAsyncThunk(
     try {
       const response = await axios.post(
         `${BASE_URL}api/accounts/buyer-register/`,
-        payload
+        payload,
+        {
+          headers: {
+            'X-User-Language': (i18n.language || 'en'),
+            'Accept-Language': (i18n.language || 'en'),
+          },
+        }
       );
       return response.data;
     } catch (err) {
@@ -156,6 +181,8 @@ export const registerBuyer = createAsyncThunk(
     }
   }
 );
+
+// Removed in-app role switcher: switching roles occurs only via login with desired_role
 
 const authSlice = createSlice({
   name: 'auth',
@@ -243,6 +270,7 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.success = false;
       })
+      // In-app role switching disabled by requirement
       .addCase(verifySiret.pending, (state) => {
         state.siretVerification.loading = true;
         state.siretVerification.error = null;
@@ -251,13 +279,182 @@ const authSlice = createSlice({
       .addCase(verifySiret.fulfilled, (state, action) => {
         state.siretVerification.loading = false;
         state.siretVerification.result = action.payload;
+        if (action.payload?.valid && action.meta?.arg) {
+          state.siretVerification.lastSiret = action.meta.arg;
+        }
       })
       .addCase(verifySiret.rejected, (state, action) => {
         state.siretVerification.loading = false;
         state.siretVerification.error = action.payload?.detail || 'Failed to verify SIRET.';
-      });
+      })
+      // Role switching cases
+      .addCase(switchActiveRole.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(switchActiveRole.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.error = null;
+        // Force update sessionStorage with the complete user data
+        sessionStorage.setItem('user', JSON.stringify(action.payload.user));
+      })
+      .addCase(switchActiveRole.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to switch role';
+      })
+      // Account deletion reducers
+      .addCase(checkDeletionEligibility.pending, (state) => {
+        state.accountDeletion.loading = true;
+        state.accountDeletion.error = null;
+      })
+      .addCase(checkDeletionEligibility.fulfilled, (state, action) => {
+        state.accountDeletion.loading = false;
+        state.accountDeletion.eligibility = action.payload;
+        state.accountDeletion.error = null;
+      })
+      .addCase(checkDeletionEligibility.rejected, (state, action) => {
+        state.accountDeletion.loading = false;
+        state.accountDeletion.error = action.payload;
+      })
+      .addCase(deleteUserAccount.pending, (state) => {
+        state.accountDeletion.deletionLoading = true;
+        state.accountDeletion.deletionError = null;
+        state.accountDeletion.deletionSuccess = false;
+      })
+      .addCase(deleteUserAccount.fulfilled, (state, action) => {
+        state.accountDeletion.deletionLoading = false;
+        state.accountDeletion.deletionSuccess = true;
+        state.accountDeletion.deletionError = null;
+      })
+      .addCase(deleteUserAccount.rejected, (state, action) => {
+        state.accountDeletion.deletionLoading = false;
+        state.accountDeletion.deletionError = action.payload;
+        state.accountDeletion.deletionSuccess = false;
+      })
+      // Sync subscription data to user object (must be after all addCase calls)
+      .addMatcher(
+        (action) => action.type === 'subscription/fetchSubscriptionStatus/fulfilled',
+        (state, action) => {
+          if (state.user && action.payload) {
+            const updatedUser = {
+              ...state.user,
+              membership_active: action.payload.membership_active || false,
+              subscription_status: action.payload.status || "",
+              subscription_current_period_end: action.payload.current_period_end || null,
+            };
+            state.user = updatedUser;
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type === 'subscription/fetchSubscriptionEligibility/fulfilled',
+        (state, action) => {
+          if (state.user && action.payload) {
+            const updatedUser = {
+              ...state.user,
+              membership_active: action.payload.membership_active || false,
+              subscription_status: action.payload.status || "",
+              subscription_current_period_end: action.payload.current_period_end || null,
+            };
+            state.user = updatedUser;
+            sessionStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      );
   },
 });
+
+// Role switching thunk
+export const switchActiveRole = createAsyncThunk(
+  'auth/switchActiveRole',
+  async ({ targetRole }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}api/accounts/role/switch/`, {
+        target_role: targetRole
+      }, {
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
+      });
+      
+      if (response.data) {
+        // Fetch updated profile to get latest onboarding status
+        const profileResponse = await axios.get(`${BASE_URL}api/accounts/profile/`, {
+          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access')}` }
+        });
+        
+        const updatedUser = {
+          ...profileResponse.data,
+          role: response.data.role,
+          active_role: response.data.active_role,
+          available_roles: response.data.available_roles
+        };
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        return {
+          user: updatedUser,
+          role: response.data.role,
+          active_role: response.data.active_role,
+          available_roles: response.data.available_roles
+        };
+      }
+      
+      throw new Error('Invalid response from server');
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Failed to switch role');
+    }
+  }
+);
+
+// Account deletion thunks
+export const checkDeletionEligibility = createAsyncThunk(
+  'auth/checkDeletionEligibility',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const response = await axios.get(
+        `${BASE_URL}api/accounts/deletion-eligibility/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${state.auth.access}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Failed to check deletion eligibility' });
+    }
+  }
+);
+
+export const deleteUserAccount = createAsyncThunk(
+  'auth/deleteUserAccount',
+  async (formData, { rejectWithValue, getState }) => {
+    try {
+      const state = getState();
+      const response = await axios.post(
+        `${BASE_URL}api/accounts/delete-account/`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${state.auth.access}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+        return rejectWithValue(err.response.data);
+      }
+      return rejectWithValue({ detail: 'Failed to delete account' });
+    }
+  }
+);
 
 export const { resetAuthState, logout, setUser, resetSiretVerification } = authSlice.actions;
 export default authSlice.reducer;

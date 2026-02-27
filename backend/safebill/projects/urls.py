@@ -13,6 +13,9 @@ from .views import (
     ProjectStatusUpdateAPIView,
     ProjectCompletionAPIView,
     get_completed_projects,
+    list_expired_project_invites,
+    seller_receipts,
+    buyer_receipts,
 )
 
 urlpatterns = [
@@ -35,6 +38,7 @@ urlpatterns = [
     ),
     path("delete/<int:pk>/", ProjectDeleteAPIView.as_view(), name="project-delete"),
     path("invite/<str:token>/", ProjectInviteAPIView.as_view(), name="project-invite"),
+    # Resend invite uses same view with PUT on same route
     path(
         "status-update/<int:project_id>/",
         ProjectStatusUpdateAPIView.as_view(),
@@ -46,6 +50,14 @@ urlpatterns = [
         name="project-complete",
     ),
     path("completed-projects/", get_completed_projects, name="completed-projects"),
+    path(
+        "expired-invites/",
+        list_expired_project_invites,
+        name="expired-project-invites",
+    ),
+    # Receipts endpoints
+    path("receipts/seller/", seller_receipts, name="seller-receipts"),
+    path("receipts/buyer/", buyer_receipts, name="buyer-receipts"),
     # Milestone endpoints
     path(
         "projects/<int:project_id>/milestones/",

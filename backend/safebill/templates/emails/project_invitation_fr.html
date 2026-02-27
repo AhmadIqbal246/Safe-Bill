@@ -1,0 +1,169 @@
+{% extends "emails/base.html" %}
+
+{% block header_subtitle %}{% if language == 'fr' %}Transactions Commerciales Sécurisées{% else %}Secure Business Transactions{% endif %}{% endblock %}
+
+{% block content %}
+<div>
+    <div style="padding: 40px 20px;">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: #1e3a8a; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+                Invitation au Projet
+            </h1>
+            <p style="color: #6b7280; font-size: 16px; margin: 0;">
+                Vous avez été invité à rejoindre un projet sur Safe Bill
+            </p>
+        </div>
+
+        <!-- Invitation Code Box - Prominent Display -->
+        <div style="background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px; padding: 25px; margin-bottom: 30px; text-align: center;">
+            <h2 style="color: #0369a1; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                🔑 Votre Code d'Invitation au Projet
+            </h2>
+            <p style="color: #0369a1; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                Copiez ce code et utilisez-le sur le tableau de bord Safe Bill pour voir votre projet :
+            </p>
+            <div style="background: #ffffff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: inline-block;">
+                <p style="color: #0369a1; font-size: 18px; font-family: monospace; font-weight: 600; margin: 0; letter-spacing: 1px;">
+                    {{ invitation_token }}
+                </p>
+            </div>
+            <p style="color: #0369a1; font-size: 14px; line-height: 1.6; margin: 0;">
+                <strong>Accès Rapide :</strong> Allez sur votre tableau de bord acheteur et cliquez sur "Accepter l'Invitation au Projet" pour entrer ce code.
+            </p>
+        </div>
+
+        <!-- Greeting -->
+        <div style="margin-bottom: 30px;">
+            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+                Bonjour ! 👋
+            </p>
+            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">
+                Nous espérons que cet email vous trouve en bonne santé. Nous sommes ravis de vous accueillir sur Safe Bill !
+            </p>
+        </div>
+
+        <!-- Project Details -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h2 style="color: #1e3a8a; font-size: 20px; font-weight: 600; margin: 0 0 15px 0;">
+                🎯 Invitation au Projet
+            </h2>
+            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+                Vous avez été invité sur le portail Safe Bill en tant qu'<strong>acheteur</strong> pour le 
+                projet <strong>"{{ project_name }}"</strong>.
+            </p>
+            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+                Ce projet a été créé spécialement pour vous, et nous avons hâte de travailler ensemble !
+            </p>
+        </div>
+
+        <!-- Action Required -->
+        <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #92400e; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                ⚡ Action Requise
+            </h3>
+            <p style="color: #92400e; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+                <strong>Pour accepter cette invitation, vous devez être connecté en tant qu'acheteur sur Safe Bill.</strong>
+            </p>
+        </div>
+
+        <!-- New User Section -->
+        <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #065f46; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                🆕 Nouveau sur Safe Bill ?
+            </h3>
+            <p style="color: #065f46; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                Si vous êtes nouveau sur Safe Bill, vous devrez d'abord vous inscrire en tant qu'<strong>acheteur particulier</strong>.
+            </p>
+            <div style="text-align: center;">
+                <a href="{{ frontend_url }}/buyer-register" 
+                   style="display: inline-block; background: #10b981; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    🚀 S'inscrire en tant qu'Acheteur Particulier
+                </a>
+            </div>
+            <p style="color: #065f46; font-size: 16px; line-height: 1.6; margin: 20px 0 20px 0;">
+                Vous pouvez également vous inscrire en tant qu'<strong>acheteur professionnel</strong> avec votre numéro <strong>SIRET</strong>.
+            </p>
+            <div style="text-align: center; margin-bottom: 0;">
+                <a href="{{ frontend_url }}/professional-buyer" 
+                   style="display: inline-block; background: #0ea5e9; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    🧾 S'inscrire en tant qu'Acheteur Professionnel (SIRET)
+                </a>
+            </div>
+            <p style="color: #065f46; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+                <strong>Note :</strong> Vous pouvez également visiter le 
+                <a href="{{ frontend_url }}" style="color: #065f46; text-decoration: underline;">portail Safe Bill</a> pour vous inscrire en tant qu'acheteur professionnel avec votre numéro SIRET.
+            </p>
+        </div>
+
+        <!-- Existing User Section -->
+        <div style="background: #eff6ff; border: 1px solid #3b82f6; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #1e40af; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                ✅ Déjà sur Safe Bill ?
+            </h3>
+            <p style="color: #1e40af; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                Si vous n'êtes pas nouveau et avez déjà terminé l'onboarding, vous pouvez ouvrir directement l'invitation :
+            </p>
+            <div style="text-align: center;">
+                <a href="{{ invitation_url }}" 
+                   style="display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    🔗 Ouvrir l'Invitation au Projet
+                </a>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div style="background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #374151; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                📋 Prochaines Étapes
+            </h3>
+            <ol style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0; padding-left: 20px;">
+                <li style="margin-bottom: 10px;">Terminez votre processus d'onboarding (si nouveau)</li>
+                <li style="margin-bottom: 10px;">Revenez et ouvrez le lien d'invitation</li>
+                <li style="margin-bottom: 10px;">Consultez les détails du projet et commencez !</li>
+            </ol>
+        </div>
+
+        <!-- Alternative Method -->
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #374151; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                🔑 Méthode Alternative
+            </h3>
+            <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+                Vous pouvez également copier et coller manuellement ce lien d'invitation :
+            </p>
+            <div style="background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <p style="color: #374151; font-size: 14px; font-family: monospace; margin: 0; word-break: break-all;">
+                    {{ invitation_url }}
+                </p>
+            </div>
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                <strong>Code d'Invitation :</strong> {{ invitation_token }}
+            </p>
+        </div>
+
+        <!-- Security Notice -->
+        <div style="background: #fef2f2; border: 1px solid #ef4444; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+            <h3 style="color: #991b1b; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                🔒 Avis de Sécurité
+            </h3>
+            <p style="color: #991b1b; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+                Ce lien d'invitation est sécurisé et expirera dans <strong>2 jours</strong> pour votre protection.
+            </p>
+            <p style="color: #991b1b; font-size: 16px; line-height: 1.6; margin: 0;">
+                Veuillez ne pas partager ce lien avec d'autres personnes. Si vous avez besoin d'une nouvelle invitation, veuillez contacter le créateur du projet.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
+                Bienvenue sur Safe Bill ! Nous sommes ravis de vous accueillir.
+            </p>
+            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                Si vous avez des questions, n'hésitez pas à contacter notre équipe de support.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

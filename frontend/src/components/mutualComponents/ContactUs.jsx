@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import SafeBillHeader from './Navbar/Navbar';
 import Footer from './Footer';
 import { useTranslation } from 'react-i18next';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux';
 import { submitContactMessage, resetFeedbackState } from '../../store/slices/FeedbackSlices';
+import ContactBg from '../../assets/Circle Background/contact-us-bg.jpg';
 
+const Email = import.meta.env.VITE_SAFE_BILL_EMAIL || 'contact@safebill.fr';
+const AddressLine = import.meta.env.VITE_SAFE_BILL_ADDRESS || 'Safe Bill 66 avenue des Champs Elysées 75008 Paris';
 export default function ContactUs() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
@@ -69,18 +72,30 @@ export default function ContactUs() {
   return (
     <div className="flex flex-col min-h-screen">
       <SafeBillHeader />
-      <div className="flex-grow bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-[#111827] sm:text-5xl sm:tracking-tight lg:text-6xl">
-              {t('contact_us.title')}
-            </h2>
-            <p className="mt-5 text-xl text-gray-500">
-              {t('contact_us.subtitle')}
-            </p>
+      <div className="flex-grow bg-gray-50">
+        {/* Header Section with Background */}
+        <div 
+          className="relative py-16 px-4 sm:px-6 lg:px-8 bg-center bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${ContactBg})` }}
+        >
+          <div className="max-w-7xl mx-auto relative z-10">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold sm:text-5xl sm:tracking-tight lg:text-6xl">
+                <span className="text-[#8989C9]">{t('contact_us.title').split(' ')[0]}</span>
+                {' '}
+                <span className="text-[#3535AA]">{t('contact_us.title').split(' ').slice(1).join(' ')}</span>
+              </h2>
+              <p className="mt-5 text-xl text-gray-500">
+                {t('contact_us.subtitle')}
+              </p>
+            </div>
           </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-10">
+        </div>
+        
+        {/* Content Section */}
+        <div className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {/* Contact Information */}
             <div className="bg-white rounded-lg shadow-sm p-8 border border-gray-200">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">{t('contact_us.contact_info_heading')}</h3>
@@ -89,22 +104,14 @@ export default function ContactUs() {
                   <Mail className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
                   <div className="text-sm sm:text-base text-gray-700">
                     <p className="font-medium">{t('contact_us.email_label')}</p>
-                    <p>Dummyemail@gmail.com</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Phone className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
-                  <div className="text-sm sm:text-base text-gray-700">
-                    <p className="font-medium">{t('contact_us.phone_label')}</p>
-                    <p>+1 234 567 890</p>
+                    <p>{Email}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-4">
                   <MapPin className="flex-shrink-0 w-6 h-6 text-[#01257D]" />
                   <div className="text-sm sm:text-base text-gray-700">
                     <p className="font-medium">{t('contact_us.address_label')}</p>
-                    <p>{t('contact_us.address_line_1')}</p>
-                    <p>{t('contact_us.address_line_2')}</p>
+                    <p>{AddressLine}</p>
                   </div>
                 </div>
               </div>
@@ -177,13 +184,14 @@ export default function ContactUs() {
                 <div>
                   <button
                     type="submit"
-                    className="px-6 py-3 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 bg-[#2E78A6] text-white rounded-md font-semibold hover:bg-[#256a94] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading}
                   >
                     {loading ? t('contact_us.sending') : t('contact_us.send_message')}
                   </button>
                 </div>
               </form>
+            </div>
             </div>
           </div>
         </div>

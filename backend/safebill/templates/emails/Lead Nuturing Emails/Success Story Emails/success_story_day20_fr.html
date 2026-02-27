@@ -1,0 +1,69 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ site_name }} - Votre histoire de succès commence ici{% endblock %}
+
+{% block header_subtitle %}Gagnez la confiance, sécurisez les paiements, grandissez sereinement{% endblock %}
+
+{% block content %}
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Votre success story commence ici
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Des milliers d’entrepreneurs grandissent avec {{ site_name }}
+        </p>
+    </div>
+
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Bonjour {{ first_name }} ! 👋
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 16px 0 0 0;">
+            Gagnez de meilleurs projets, sécurisez vos paiements et livrez sereinement grâce aux jalons.
+        </p>
+    </div>
+
+    <!-- Success Pillars -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🌟 Ce que font les meilleurs
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #3535AA; font-size: 16px; line-height: 1.8;">
+            <li><strong>Paiements sécurisés :</strong> les fonds restent en escrow jusqu’à validation</li>
+            <li><strong>Clarté totale :</strong> fichiers, commentaires et validations au même endroit</li>
+            <li><strong>Confiance immédiate :</strong> un parcours professionnel qui rassure vos clients</li>
+        </ul>
+    </div>
+
+    <!-- Steps -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🧭 Trois étapes vers votre prochaine réussite
+        </h3>
+        <ol style="margin: 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+            <li>Connectez-vous à votre compte</li>
+            <li>Créez un projet structuré avec des jalons</li>
+            <li>Invitez votre client et suivez tout en un seul endroit</li>
+        </ol>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ login_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Se connecter & progresser
+        </a>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Vous préférez explorer ? <a href="{{ dashboard_url }}" style="color: #3535AA; text-decoration: underline;">Ouvrez votre tableau de bord</a> ou écrivez-nous à <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+

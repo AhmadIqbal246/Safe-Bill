@@ -1,7 +1,8 @@
 from rest_framework import status
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
 from .serializers import (
     SellerRegistrationSerializer, UserTokenObtainPairSerializer,
@@ -17,13 +18,25 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import BankAccount, BusinessDetail
 from rest_framework.decorators import api_view, permission_classes
-from utils.email_service import EmailService
+from .services import UserDeletionService
+
 import re
 import unicodedata
 from rest_framework.generics import CreateAPIView
 from rest_framework.pagination import PageNumberPagination
 from .models import SellerRating
 from projects.models import Project
+from django.db import transaction
+# HubSpot sync now handled automatically by Django signals
+
+logger = logging.getLogger(__name__)
+
+# Import Celery tasks
+from .tasks import (
+    send_verification_email_task,
+    send_welcome_email_task,
+    send_password_reset_email_task
+)
 
 # Region to departments mapping (duplicate of frontend; backend needs minimal map)
 REGION_TO_DEPARTMENTS = {
@@ -107,28 +120,28 @@ class SellerRegisterView(APIView):
         serializer = SellerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Send verification email using the new email service
+            # HubSpot sync now handled automatically by Django signals
+            
+            # Generate verification token and URL
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             front_base_url = settings.FRONTEND_URL
             verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
             
-            # Get user name for email
-            user_name = user.get_full_name() or user.username or \
-                user.email.split('@')[0]
-
-            # Determine user_type based on user's role
+            # Determine user type
             role = getattr(user, 'role', 'seller')
-            user_type = 'Professional Buyer' if role == 'professional-buyer' \
-                else 'Seller'
+            user_type = 'Professional Buyer' if role == 'professional-buyer' else 'Seller'
             
-            # Send verification email
-            EmailService.send_verification_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+            
+            # Send verification email asynchronously
+            send_verification_email_task.delay(
+                user_id=user.id,
                 verification_url=verification_url,
                 user_type=user_type,
-                verification_code=token
+                language=language
             )
             
             return Response(
@@ -143,6 +156,7 @@ class BuyerRegistrationView(APIView):
         serializer = BuyerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            # HubSpot sync now handled automatically by Django signals
             # Send verification email using the new email service
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -152,13 +166,16 @@ class BuyerRegistrationView(APIView):
             # Get user name for email
             user_name = user.get_full_name() or user.username or user.email.split('@')[0]
             
-            # Send verification email
-            EmailService.send_verification_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+            
+            # Send verification email asynchronously via Celery
+            send_verification_email_task.delay(
+                user_id=user.id,
                 verification_url=verification_url,
                 user_type="buyer",
-                verification_code=token
+                language=language
             )
             
             return Response({'detail': 'Registration successful. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
@@ -178,13 +195,17 @@ class VerifyEmailView(APIView):
             user.is_active = True
             user.is_email_verified = True
             user.save()
+            # HubSpot sync now handled automatically by Django signals
             
-            # Send welcome email after successful verification
-            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
-            EmailService.send_welcome_email(
-                user_email=user.email,
-                user_name=user_name,
-                user_type=user.role
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+            
+            # Send welcome email asynchronously
+            send_welcome_email_task.delay(
+                user_id=user.id,
+                user_type=user.role,
+                language=language
             )
             
             return Response(
@@ -240,17 +261,26 @@ class VerifyEmailView(APIView):
                 user.is_active = True
                 user.is_email_verified = True
                 user.save()
+                # HubSpot sync now handled automatically by Django signals
+                # Defensive fallback to ensure contact is enqueued on verification
+                try:
+                    safe_contact_sync(user.id, 'email_verified_fallback')
+                except Exception:
+                    pass
                 
-                # Send welcome email after successful verification
-                user_name = user.get_full_name() or user.username or user.email.split('@')[0]
-                EmailService.send_welcome_email(
-                    user_email=user.email,
-                    user_name=user_name,
-                    user_type=user.role
+                # Extract language from request headers
+                preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+                language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
+                
+                # Send welcome email asynchronously via Celery
+                send_welcome_email_task.delay(
+                    user_id=user.id,
+                    user_type=user.role,
+                    language=language
                 )
                 
                 return Response(
-                    {'detail': 'Email verified successfully. Welcome to SafeBill!'},
+                    {'detail': 'Email verified successfully. Welcome to Safe Bill!'},
                     status=status.HTTP_200_OK
                 )
             elif user and user.is_email_verified:
@@ -308,16 +338,16 @@ class ResendVerificationView(APIView):
         front_base_url = settings.FRONTEND_URL
         verification_url = f"{front_base_url}email-verification/?uid={uid}&token={token}"
         
-        # Get user name for email
-        user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+        # Extract language from request headers
+        preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+        language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
         
-        # Send verification email
-        EmailService.send_verification_email(
-            user_email=user.email,
-            user_name=user_name,
+        # Send verification email asynchronously via Celery
+        send_verification_email_task.delay(
+            user_id=user.id,
             verification_url=verification_url,
             user_type=user.role,
-            verification_code=token
+            language=language
         )
         
         return Response(
@@ -325,6 +355,46 @@ class ResendVerificationView(APIView):
             status=status.HTTP_200_OK
         )
 
+
+# Added: login endpoint that accepts desired_role and sets active_role if available
+# Removed RoleLoginView; login handled by UserTokenObtainPairView in urls
+
+# Added: switch active_role for the authenticated user (seller <-> professional-buyer)
+class RoleSwitchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        target_role = (request.data.get("target_role") or "").strip()
+        if target_role not in ["seller", "professional-buyer"]:
+            return Response({"detail": "Invalid target_role."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+
+        # Explicit validation: Only seller and professional-buyer users can switch roles
+        if user.role not in ["seller", "professional-buyer"]:
+            return Response({
+                "detail": "Role switching is only available for seller and professional-buyer accounts."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate availability strictly via available_roles array
+        roles_list = getattr(user, "available_roles", []) or []
+        if target_role not in roles_list:
+            return Response({"detail": "Requested role not enabled for this account."}, status=status.HTTP_409_CONFLICT)
+
+        # Persist legacy role as primary and mirror to active_role
+        user.role = target_role
+        user.active_role = target_role
+        user.save(update_fields=["role", "active_role"])
+
+        return Response({
+            "detail": "Role switched successfully.",
+            "role": user.role,
+            "active_role": user.active_role,
+            "available_roles": roles_list,
+        }, status=status.HTTP_200_OK)
+
+
+# Removed MeView; profile and token already expose required info
 
 
 class OnboardingStatusView(APIView):
@@ -340,6 +410,8 @@ class OnboardingStatusView(APIView):
         if onboarding_complete is not None:
             request.user.onboarding_complete = onboarding_complete
             request.user.save()
+            # HubSpot sync now handled automatically by Django signals
+            
             return Response({'onboarding_complete': request.user.onboarding_complete})
         return Response({'detail': 'Missing onboarding_complete field.'}, status=400)
 
@@ -371,20 +443,22 @@ class PasswordResetRequestView(APIView):
                     {'detail': 'If the email exists, a reset link will be sent.'},
                     status=200
                 )
+        
+            # Generate reset token and URL
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             front_base_url = settings.FRONTEND_URL
             reset_url = f"{front_base_url}password-reset/?uid={uid}&token={token}"
             
-            # Get user name for email
-            user_name = user.get_full_name() or user.username or user.email.split('@')[0]
+            # Extract language from request headers
+            preferred_lang = request.headers.get("X-User-Language") or request.META.get("HTTP_ACCEPT_LANGUAGE", "fr")
+            language = preferred_lang.split(",")[0][:2] if preferred_lang else "fr"
             
-            # Send password reset email using the new email service
-            EmailService.send_password_reset_email(
-                user_email=user.email,
-                user_name=user_name,
+            # Send password reset email asynchronously
+            send_password_reset_email_task.delay(
+                user_id=user.id,
                 reset_url=reset_url,
-                reset_code=token
+                language=language
             )
             
             return Response(
@@ -468,7 +542,7 @@ def filter_sellers_by_service_type(request):
     
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -502,7 +576,7 @@ def filter_sellers_by_service_area(request):
     
     sellers = BusinessDetail.objects.filter(
         selected_service_areas__contains=[service_area],
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -538,7 +612,7 @@ def filter_sellers_by_type_and_area(request):
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         selected_service_areas__contains=[service_area],
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -574,7 +648,7 @@ def filter_sellers_by_type_area_and_skills(request):
     sellers = BusinessDetail.objects.filter(
         type_of_activity__iexact=service_type,
         selected_service_areas__contains=[service_area],
-        user__role='seller'
+        user__seller_onboarding_complete=True
     )
     
     # Apply rating filter if provided
@@ -607,7 +681,7 @@ def list_all_sellers(request):
     min_rating = request.GET.get('min_rating')
     
     # Base queryset
-    sellers = BusinessDetail.objects.filter(user__role='seller').select_related('user')
+    sellers = BusinessDetail.objects.filter(user__seller_onboarding_complete=True).select_related('user')
 
     # Apply rating filter if provided
     if min_rating:
@@ -634,7 +708,7 @@ def list_all_sellers(request):
 def get_seller_details(request, seller_id):
     """Get detailed information for a specific seller"""
     try:
-        seller = BusinessDetail.objects.get(user__id=seller_id, user__role='seller')
+        seller = BusinessDetail.objects.get(user__id=seller_id, user__seller_onboarding_complete=True)
         data = _get_seller_data(seller)
         return Response(data)
     except BusinessDetail.DoesNotExist:
@@ -725,7 +799,7 @@ def filter_sellers_by_location(request):
     min_rating = request.GET.get('min_rating')
 
     # Base queryset: sellers only
-    qs = BusinessDetail.objects.filter(user__role='seller')
+    qs = BusinessDetail.objects.filter(user__seller_onboarding_complete=True)
 
     # Apply rating filter if provided
     if min_rating:
@@ -778,7 +852,7 @@ def filter_sellers_by_region(request):
         return Response({'detail': 'Unknown region key.'}, status=400)
     # Filter sellers that have selected_service_areas containing ANY of the department values
     sellers = BusinessDetail.objects.filter(
-        user__role='seller',
+        user__seller_onboarding_complete=True,
         selected_service_areas__overlap=departments
     ).select_related('user').order_by('-user__average_rating', 'user__username')
     data = [_get_seller_data(seller) for seller in sellers]
@@ -791,6 +865,17 @@ def verify_siret_api(request):
     siret = request.data.get('siret')
     if not siret or not siret.isdigit() or len(siret) != 14:
         return Response({'detail': 'SIRET must be exactly 14 digits.'}, status=400)
+    
+    # Check if SIRET already exists in our database
+    from .models import BusinessDetail
+    existing_siret = BusinessDetail.objects.filter(siret_number=siret).first()
+    if existing_siret:
+        return Response({
+            'valid': False, 
+            'detail': 'SIRET is verified but it is already in use.',
+            'already_in_use': True,
+            'error_key': 'siret_already_in_use'
+        }, status=409)  # 409 Conflict status code
     
     import requests
     from django.conf import settings
@@ -844,5 +929,77 @@ def verify_siret_api(request):
         return Response(
             {'valid': False, 'detail': 'SIRET not found or invalid.'}, 
             status=404
+        )
+
+
+# User Account Deletion Endpoints
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def deletion_eligibility(request):
+    """Check if user can delete their account"""
+    user = request.user
+    
+    try:
+        eligibility = UserDeletionService.get_deletion_eligibility(user)
+        return Response(eligibility, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to check deletion eligibility: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """Delete user account permanently"""
+    user = request.user
+    password = request.data.get('password')
+    
+    # 1. Verify password
+    if not password:
+        return Response(
+            {'error': 'Password is required'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not authenticate(username=user.email, password=password):
+        return Response(
+            {'error': 'Invalid password'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # 2. Check if deletion is allowed
+    try:
+        can_delete, message = UserDeletionService.can_delete_user(user)
+        if not can_delete:
+            return Response(
+                {'error': message}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 3. Delete account
+        deleted_user_record = UserDeletionService.delete_user_account(user)
+
+        # Trigger Celery task to sync deleted user to HubSpot
+        from hubspot.tasks import sync_deleted_user_task
+        sync_deleted_user_task.delay(deleted_user_record.id)
+
+        return Response({
+            'message': 'Account deleted successfully',
+            'deletion_id': deleted_user_record.id,
+            'data_retention_until': deleted_user_record.data_retention_until
+        }, status=status.HTTP_200_OK)
+        
+    except ValueError as e:
+        return Response(
+            {'error': str(e)}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to delete account: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
