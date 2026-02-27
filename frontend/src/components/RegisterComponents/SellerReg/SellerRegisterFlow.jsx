@@ -473,9 +473,9 @@ export default function SellerRegisterFlow({role = "seller"}) {
   }, [success, error, dispatch, t]);
 
   const steps = [
-    { number: 1, title: t('seller_registration.basic_information_step'), active: currentStep >= 1 },
-    { number: 2, title: t('seller_registration.documents_step'), active: false },
-    { number: 3, title: t('seller_registration.verification_step'), active: false },
+    { number: 1, title: t('onboarding.basic_information_step'), active: currentStep >= 1 },
+    { number: 2, title: t('onboarding.connect_stripe_step'), active: false },
+    { number: 3, title: t('onboarding.verification_step'), active: false },
   ];
 
   return (

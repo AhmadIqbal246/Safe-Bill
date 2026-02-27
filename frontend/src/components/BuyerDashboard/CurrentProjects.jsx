@@ -5,7 +5,7 @@ import ProjectStatusBadge from '../common/ProjectStatusBadge';
 import { Search } from 'lucide-react';
 
 export default function CurrentProjects({ projects = [] }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = React.useState("");
 
@@ -96,7 +96,7 @@ export default function CurrentProjects({ projects = [] }) {
                 </div>
 
                 <div className="text-xs text-gray-600">
-                  Due: {new Date(project.created_at).toLocaleDateString('en-US', {
+                  {t('buyer_dashboard.due_label', 'Due')}: {new Date(project.created_at).toLocaleDateString(i18n.language || 'en-US', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric'

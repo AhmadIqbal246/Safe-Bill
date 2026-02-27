@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Mail, Check, Copy, AlertTriangle, Clock, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 function EmailVerificationComp() {
   const { t } = useTranslation();
@@ -60,7 +61,9 @@ function EmailVerificationComp() {
       
       setStatus('success');
       setShowSuccess(true);
-      setMessage(res.data.detail || t('email_verification.verification_email_sent'));
+      const successMessage = t('email_verification.verification_success_toast');
+      setMessage(successMessage);
+      toast.success(successMessage);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
       setStatus('error');

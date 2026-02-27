@@ -305,13 +305,13 @@ export default function OnBoardingComp() {
   }, [error, t]);
 
   const steps = [
-    { number: 1, title: "Basic Information", active: currentStep >= 1 },
+    { number: 1, title: t('onboarding.basic_information_step'), active: currentStep >= 1 },
     {
       number: 2,
-      title: role === "seller" ? "Connect Stripe" : "Identity Verification",
+      title: role === "seller" ? t('onboarding.connect_stripe_step') : t('onboarding.identity_verification_step'),
       active: false,
     },
-    { number: 3, title: "Verification", active: false },
+    { number: 3, title: t('onboarding.verification_step'), active: false },
   ];
 
   const handleStripeConnect = () => {

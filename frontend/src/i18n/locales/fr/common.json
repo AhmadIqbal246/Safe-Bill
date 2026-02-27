@@ -244,7 +244,8 @@
   "email_verification": {
     "verifying_email": "Vérification de votre email...",
     "email_verification": "Vérification de l'Email",
-    "email_verified": "Votre email a été vérifié !",
+    "email_verified": "Votre email a été vérifié avec succès !",
+    "verification_success_toast": "Votre compte a été vérifié avec succès. Vous allez être redirigé vers la page de connexion.",
     "verification_failed": "Échec de la Vérification",
     "verification_failed_message": "La vérification a échoué. Le lien peut être invalide ou expiré.",
     "invalid_link": "Lien de vérification invalide."
@@ -383,6 +384,10 @@
     "verification_step": "Vérification"
   },
   "onboarding": {
+    "basic_information_step": "Informations de base",
+    "connect_stripe_step": "Connecter Stripe",
+    "verification_step": "Vérification",
+    "identity_verification_step": "Vérification d'identité",
     "title": "Complétez Votre Inscription",
     "description_documents": "Veuillez télécharger les documents requis pour terminer votre inscription.",
     "description_verification": "Documents téléchargés avec succès. Allez au Tableau de Bord pour commencer à utiliser la plateforme.",
@@ -494,7 +499,7 @@
     "amount": "Montant",
     "creation_date": "Date de Création",
     "status": "Statut",
-    "actions": "Actes",
+    "actions": "Actions",
     "search_placeholder": "Rechercher par email client ou nom de projet",
     "no_projects_found": "Aucun projet trouvé.",
     "failed_load_projects": "Échec du chargement des projets.",
@@ -699,7 +704,7 @@
     "no_admins_found": "Aucun administrateur trouvé",
     "kyc_validation": "Validation KYC",
     "document_type": "Type de document",
-    "actions": "Actes",
+    "actions": "Actions",
     "validate": "Valider",
     "reject": "Rejeter",
     "request_info": "Demander des infos"
@@ -1106,7 +1111,7 @@
     "amount": "Montant",
     "creation_date": "Date de création",
     "status": "Statut",
-    "actions": "Actes",
+    "actions": "Actions",
     "view": "Voir",
     "download": "Télécharger",
     "edit": "Modifier",
@@ -1464,7 +1469,7 @@
     "no_expired_tokens": "Aucun jeton expiré",
     "invite_resent": "Lien d'invitation renvoyé avec succès",
     "loading": "Chargement...",
-    "actions": "Actes",
+    "actions": "Actions",
     "project": "Projet",
     "client_email": "Email du client",
     "created_at": "Créé le",

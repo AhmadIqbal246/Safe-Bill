@@ -243,6 +243,7 @@
     "verifying_email": "Verifying your email...",
     "email_verification": "Email Verification",
     "email_verified": "Your email has been verified!",
+    "verification_success_toast": "Your account has been successfully verified. You are being redirected to the login page.",
     "verification_failed": "Verification Failed",
     "verification_failed_message": "Verification failed. The link may be invalid or expired.",
     "invalid_link": "Invalid verification link."
@@ -381,6 +382,10 @@
     "verification_step": "Verification"
   },
   "onboarding": {
+    "basic_information_step": "Basic Information",
+    "connect_stripe_step": "Connect Stripe",
+    "verification_step": "Verification",
+    "identity_verification_step": "Identity Verification",
     "title": "Complete Your Registration",
     "description_documents": "Please upload the required documents to finish your registration.",
     "description_verification": "Documents uploaded successfully. Go to Dashboard to start using the platform.",
@@ -764,7 +769,8 @@
     "pending_payment": "Pending Payment",
     "awaiting_payment": "Awaiting payment",
     "current_projects": "Current Projects",
-    "no_in_progress_projects": "No in-progress projects found",
+    "no_in_progress_projects": "No projects in progress.",
+    "due_label": "Due",
     "pending_projects": "Pending Projects",
     "no_pending_projects": "No pending projects to review",
     "search_projects": "Search projects...",
