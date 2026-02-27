@@ -73,6 +73,9 @@ class EmailService:
             if not from_email:
                 from_email = settings.DEFAULT_FROM_EMAIL
 
+            # Fix language code for template logic (fr-FR -> fr)
+            language = (language or "fr").split("-")[0].lower()
+
             # Ensure language is available in context for base template
             if "language" not in context:
                 context["language"] = language
@@ -584,6 +587,7 @@ class EmailService:
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
             "logo_url": EmailService._get_logo_url(),
+            "language": language,
         }
 
         # Use Django's translation system

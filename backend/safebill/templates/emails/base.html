@@ -215,7 +215,7 @@
                     <div class="email-container">
                         <div class="email-header">
                             <h1 style="margin-top:0;">{{ site_name }}</h1>
-                            <p>{% block header_subtitle %}Secure Business Transactions{% endblock %}</p>
+                            <p>{% block header_subtitle %}{% if language == 'fr' %}Transactions Commerciales Sécurisées{% else %}Secure Business Transactions{% endif %}{% endblock %}</p>
                         </div>
                         
                         <div class="email-content">
