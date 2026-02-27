@@ -239,7 +239,7 @@
     "registration_success": "Registration successful. Please check your email to verify your Email.",
     "only_numbers_allowed": "Only numbers are Allowed"
   },
-  "email_verification": {
+  "email_verification_success": {
     "verifying_email": "Verifying your email...",
     "email_verification": "Email Verification",
     "email_verified": "Your email has been verified!",

@@ -61,7 +61,7 @@ function EmailVerificationComp() {
       
       setStatus('success');
       setShowSuccess(true);
-      const successMessage = t('email_verification.verification_success_toast');
+      const successMessage = t('email_verification_success.verification_success_toast');
       setMessage(successMessage);
       toast.success(successMessage);
       setTimeout(() => navigate('/login'), 3000);
