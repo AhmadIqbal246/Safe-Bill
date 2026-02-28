@@ -21,9 +21,15 @@ class Settings(BaseSettings):
     # Re-ranker (Cohere)
     COHERE_API_KEY: str
 
+    # Google API (For Embeddings)
+    GOOGLE_API_KEY: str
+    
+    # Hugging Face (Optional)
+    HF_TOKEN: Optional[str] = None
+
     # Local Embeddings (Sentence Transformers)
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"
-    EMBEDDING_DIMENSION: int = 384
+    EMBEDDING_DIMENSION: int = 768
 
     # Redis Cache
     REDIS_HOST: str = "localhost"

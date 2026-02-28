@@ -3,17 +3,18 @@ from app.core.config import settings
 
 class EmbeddingService:
     def __init__(self):
-        # Load the free, fast local embedding model automatically to save on API costs
-        # all-MiniLM-L6-v2 creates a 384-dimension vector
-        self.model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME)
+        # We use a high-accuracy 768-dimension local model
+        # This matches your existing Pinecone index dimension
+        self.model_name = "sentence-transformers/all-mpnet-base-v2"
+        self.model = SentenceTransformer(self.model_name)
     
     def embed_text(self, text: str) -> list[float]:
-        """Generate embeddings for a single string"""
+        """Generate 768-dimension embeddings locally"""
         embedding = self.model.encode(text)
         return embedding.tolist()
         
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        """Generate embeddings for multiple chunks at once (much faster)"""
+        """Generate 768-dimension embeddings for multiple chunks locally"""
         embeddings = self.model.encode(texts)
         return embeddings.tolist()
 
