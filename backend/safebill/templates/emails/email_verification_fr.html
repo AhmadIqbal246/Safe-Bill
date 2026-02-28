@@ -1,0 +1,57 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Vérifiez Votre Email - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Vérification d'Email Requise{% endblock %}
+
+{% block content %}
+<h2>Vérifiez Votre Adresse Email</h2>
+
+<p>Bonjour {{ user_name }} !</p>
+
+<p>Bienvenue sur {{ site_name }} ! Pour terminer votre inscription{% if user_type %} en tant que {{ user_type }}{% endif %}, veuillez vérifier votre adresse email en utilisant l'une des méthodes ci-dessous :</p>
+
+<!-- Method 1: Click the button -->
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ verification_url }}" class="btn">Vérifier l'Adresse Email</a>
+</div>
+
+<!-- Method 2: Manual verification code -->
+<div class="highlight">
+    <p><strong>Méthode Alternative :</strong> Vous pouvez également vérifier votre email en entrant ce code de vérification sur notre site web :</p>
+    <div style="background-color: #f8f9fa; padding: 16px; border-radius: 6px; text-align: center; margin: 16px 0;">
+        <p style="font-family: monospace; font-size: 18px; font-weight: bold; color: #1e3a8a; margin: 0; letter-spacing: 2px;">
+            {{ verification_code|default:"Cliquez sur le bouton ci-dessus" }}
+        </p>
+    </div>
+    <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0;">
+        Allez à : <a href="{{ frontend_verification_url }}" style="color: #3b82f6;">{{ frontend_verification_url }}</a>
+    </p>
+</div>
+
+<div class="highlight">
+    <p><strong>Important :</strong> Ce lien de vérification et ce code expireront dans 24 heures pour des raisons de sécurité.</p>
+</div>
+
+<p>Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :</p>
+<p style="word-break: break-all; background-color: #f3f4f6; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 14px;">
+    {{ verification_url }}
+</p>
+
+<div class="warning">
+    <p><strong>Avis de Sécurité :</strong> Si vous n'avez pas créé de compte avec {{ site_name }}, vous pouvez ignorer cet email en toute sécurité. Votre adresse email ne sera pas utilisée sans vérification.</p>
+</div>
+
+<p>Une fois vérifié, vous pourrez :</p>
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Accéder à votre tableau de bord</li>
+    <li>Créer et gérer des projets</li>
+    <li>Vous connecter avec d'autres professionnels</li>
+    <li>Sécuriser vos transactions commerciales</li>
+</ul>
+
+<p>Si vous avez des difficultés avec le lien de vérification, veuillez contacter notre équipe de support à <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Cordialement,<br>
+L'Équipe {{ site_name }}</p>
+{% endblock %}

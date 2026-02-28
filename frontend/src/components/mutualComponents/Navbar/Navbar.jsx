@@ -1,48 +1,235 @@
-import { useState } from "react"
-import { Bell, Menu, X } from "lucide-react"
+import React, { useState, useEffect } from "react";
+import { Bell, Menu, X, CheckCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../../store/slices/AuthSlices";
+import { logoutUser, switchActiveRole } from "../../../store/slices/AuthSlices";
+import {
+  fetchNotifications,
+  markNotificationRead,
+} from "../../../store/slices/NotificationSlice";
+import { useNotificationWebSocket } from "../../../hooks/useNotificationWebSocket";
+import { formatDistanceToNow } from "date-fns";
+import SignUpPopup from "./SignUpPopup";
+import { useTranslation } from "react-i18next";
+import Logo from "../../../assets/Safe_Bill_Logo_Bleu.svg";
+
+export const signedOutNavItems = [
+  { label: "navbar.home", href: "/" },
+  { label: "navbar.find_professionals", href: "/find-professionals" },
+  { label: "navbar.contact", href: "/contact-us" },
+];
+
+export const signedInNavItems = [
+  { label: "navbar.contact", href: "/contact-us" },
+];
+
+export const buyerNavItems = [
+  { label: "navbar.find_professionals", href: "/find-professionals" },
+  {
+    label: "navbar.how_to_accept_project_invite",
+    href: "/how-to-accept-project-invite",
+  },
+  { label: "navbar.contact", href: "/contact-us" },
+];
 
 export default function SafeBillHeader({
   onSignIn,
   onJoinNow,
   onSignOut,
+  hideSafeBillHeader,
+  showSafeBillHeaderOnMobile,
+  shiftNavbarLeft,
+  navbarRightStyle,
+  navbarRightClassName,
+  showMobileMenuButton = true,
 }) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
+  // Add separate state for mobile notification dropdown
+  const [isMobileNotifDropdownOpen, setIsMobileNotifDropdownOpen] =
+    useState(false);
+  const [isSignUpPopupOpen, setIsSignUpPopupOpen] = useState(false);
+
+  // i18n
+  const { t, i18n } = useTranslation();
+  const changeLanguage = (lng) => i18n.changeLanguage(lng);
 
   // Get auth state from Redux
-  const user = useSelector(state => state.auth.user);
+  const user = useSelector((state) => state.auth.user);
   const isSignedIn = !!user;
-  const userName = user ? (user.name || user.username || "User") : "User";
-  const userAvatar = user && user.avatar ? user.avatar : null;
+  const userName = user ? user.name || user.username || "User" : "User";
+  // Prefer uploaded profile picture if available, fallback to existing avatar or null
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const profilePic = user && user.profile_pic ? String(user.profile_pic) : null;
+  const computedProfilePic = profilePic
+    ? profilePic.startsWith("http")
+      ? profilePic
+      : `${BASE_URL}${
+          profilePic.startsWith("/") ? profilePic.slice(1) : profilePic
+        }`
+    : null;
+  const userAvatar =
+    computedProfilePic || (user && user.avatar ? user.avatar : null);
+  // Remove console.log to avoid null logging
   const userEmail = user && user.email ? user.email : "";
+
+  // Determine admin panel visibility from session/user
+  const adminRoleFlag =
+    typeof window !== "undefined" &&
+    sessionStorage.getItem("admin_role") === "true";
+  const canSeeAdminPanel = !!(
+    adminRoleFlag ||
+    (user &&
+      (user.role === "admin" ||
+        user.role === "super-admin" ||
+        user.is_admin === true))
+  );
+
+  // Visibility based on current role
+  const canSeeProjectInvite = !!(user && (user.role === "professional-buyer" || user.role === "buyer"));
+  const canSeeSellerDashboard = !!(user && user.role === "seller");
+
+  // Toggle visibility: show only if both seller and professional-buyer are enabled
+  // AND user's current role is either seller or professional-buyer
+  const canToggleRoles = !!(
+    user && 
+    Array.isArray(user.available_roles) &&
+    user.available_roles.includes("seller") &&
+    user.available_roles.includes("professional-buyer") &&
+    (user.role === "seller" || user.role === "professional-buyer")
+  );
+
+  const handleToggleRole = async () => {
+    if (!user) return;
+    const targetRole = user.role === "seller" ? "professional-buyer" : "seller";
+    
+    try {
+      const action = await dispatch(switchActiveRole({ targetRole }));
+      
+      if (action?.error) {
+        console.error('Role switch failed:', action.error);
+        return;
+      }
+      
+      const updated = action?.payload?.user || null;
+      const role = updated?.role || user.role;
+      const sellerComplete = !!updated?.seller_onboarding_complete;
+      const proBuyerComplete = !!updated?.pro_buyer_onboarding_complete;
+      
+      // Determine the target URL based on the new role
+      let targetUrl = '/';
+      if (role === 'seller') {
+        targetUrl = !sellerComplete ? '/onboarding' : '/seller-dashboard';
+      } else if (role === 'professional-buyer') {
+        targetUrl = !proBuyerComplete ? '/onboarding' : '/buyer-dashboard';
+      }
+      
+      // Use React Router navigation - ProtectedRoute will automatically re-evaluate
+      navigate(targetUrl);
+    } catch (error) {
+      console.error('Error in role switch:', error);
+    }
+  };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleSignOut = () => {
-    dispatch(logout());
+  // Notifications
+  const { notifications, websocketConnected } = useSelector(
+    (state) => state.notifications
+  );
+  const { markNotificationRead: wsMarkNotificationRead } =
+    useNotificationWebSocket();
+
+  useEffect(() => {
+    if (isSignedIn) {
+      dispatch(fetchNotifications());
+    }
+  }, [dispatch, isSignedIn]);
+  const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
+
+  const handleSignOut = async () => {
+    try {
+      await dispatch(logoutUser());
+    } catch (e) {
+      // ignore
+    }
+    try {
+      // Clear any auth-related storage flags
+      sessionStorage.removeItem("admin_role");
+      sessionStorage.removeItem("token");
+      // If redux-persist is used, clear persisted state to avoid stale user
+      localStorage.removeItem("persist:root");
+      localStorage.removeItem("token");
+    } catch (e) {
+      // ignore storage errors
+    }
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    navigate("/");
+    // Force a hard reload to fully reset any persisted UI state
+    window.location.replace("/");
   };
 
-  const signedOutNavItems = [
-    { label: "Home", href: "/" },
-    { label: "Directory", href: "#" },
-    { label: "How it works", href: "#" },
-    { label: "Contact", href: "#" },
-  ]
+  const navItems = isSignedIn ? signedInNavItems : signedOutNavItems;
 
-  const signedInNavItems = [
-    { label: "Find Professionals", href: "/find-professionals" },
-    { label: "How it Works", href: "#" },
-    { label: "For Professionals", href: "#" },
-  ]
+  // Example: use a default style if shiftNavbarLeft is true, or use the passed style/class
+  const leftShiftStyle = shiftNavbarLeft
+    ? navbarRightStyle || { marginLeft: 0, justifyContent: "flex-start" }
+    : navbarRightStyle;
 
-  const navItems = isSignedIn ? signedInNavItems : signedOutNavItems
+  const leftShiftClass = shiftNavbarLeft
+    ? navbarRightClassName || "pl-8 justify-start"
+    : navbarRightClassName || "justify-end";
+
+  // Notification icon logic (reuse from dashboard)
+  function getNotificationIcon(message) {
+    if (message.toLowerCase().includes("project")) return "+";
+    if (message.toLowerCase().includes("approved")) return "✓";
+    if (message.toLowerCase().includes("deadline")) return "⏰";
+    if (message.toLowerCase().includes("payment")) return "$";
+    return "!";
+  }
+
+  function renderNotifications(list = notifications) {
+    const unreadList = (list || []).filter((n) => !n.is_read);
+    if (!unreadList || unreadList.length === 0) {
+      return (
+        <div className="text-center text-gray-400 p-4">
+          {t("navbar.no_unread_notifications")}
+        </div>
+      );
+    }
+    return unreadList.slice(0, 5).map((n, idx) => (
+      <div
+        key={`notif-${n.id}-${idx}`}
+        className="flex items-center gap-3 p-2 hover:bg-gray-50"
+      >
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E6F0FA] text-[#01257D] text-lg font-bold flex-shrink-0">
+          {getNotificationIcon(n.message)}
+        </div>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="text-sm text-gray-800">{n.message}</div>
+          <div className="text-xs text-gray-400 mt-1">
+            {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+          </div>
+        </div>
+        <button
+          className="ml-1 mr-2 text-green-600 hover:text-green-800 self-center flex-shrink-0 cursor-pointer"
+          title="Mark as read"
+          onClick={() => {
+            if (websocketConnected) {
+              wsMarkNotificationRead(n.id);
+            } else {
+              dispatch(markNotificationRead(n.id));
+            }
+          }}
+        >
+          <CheckCircle size={18} />
+        </button>
+      </div>
+    ));
+  }
 
   return (
     <header className="w-full bg-white border-b border-gray-200">
@@ -50,32 +237,165 @@ export default function SafeBillHeader({
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="text-xl font-semibold text-gray-900 cursor-pointer">Safe Bill</Link>
+            {showSafeBillHeaderOnMobile ? (
+              <Link
+                to="/"
+                className="md:hidden inline-flex items-center cursor-pointer pt-4"
+              >
+                <img
+                  src={Logo}
+                  alt="Safe Bill"
+                  className="h-24 w-auto object-contain"
+                />
+              </Link>
+            ) : (
+              !hideSafeBillHeader && (
+                <Link
+                  to="/"
+                  className="inline-flex items-center cursor-pointer pt-4"
+                >
+                  <img
+                    src={Logo}
+                    alt="Safe Bill"
+                    className="h-24 w-auto object-contain"
+                  />
+                </Link>
+              )
+            )}
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
+            {canSeeProjectInvite && (
+              <Link
+                to="/find-professionals"
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
               >
-                {item.label}
-              </a>
+                {t("navbar.find_professionals")}
+              </Link>
+            )}
+            {canSeeProjectInvite && (
+              <Link
+                to="/buyer-dashboard"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </Link>
+            )}
+            {canSeeSellerDashboard && (
+              <Link
+                to="/seller-dashboard"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </Link>
+            )}
+            {canSeeAdminPanel && (
+              <Link
+                to="/admin"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                Admin Panel
+              </Link>
+            )}
+            {canSeeProjectInvite && (
+              <Link
+                to="/how-to-accept-project-invite"
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                {t("navbar.how_to_accept_project_invite")}
+              </Link>
+            )}
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              >
+                {t(item.label)}
+              </Link>
             ))}
           </nav>
 
           {/* Right Side - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div
+            className={`hidden md:flex items-center space-x-4 ${leftShiftClass}`}
+            style={leftShiftStyle}
+          >
+            {/* Role Toggle Button */}
+            {canToggleRoles && (
+              <div className="flex items-center mr-2">
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => user.role !== 'seller' && handleToggleRole()}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                      user.role === 'seller'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Seller
+                  </button>
+                  <button
+                    onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                    className={`px-3 py-1 text-xs rounded-md transition-all duration-200 ${
+                      user.role === 'professional-buyer'
+                        ? 'bg-[#01257D] text-white shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Pro Buyer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Language Switcher */}
+            <div className="flex items-center gap-1 mr-2">
+              <button
+                onClick={() => changeLanguage("en")}
+                className={`px-2 py-1 text-xs rounded-md border ${
+                  i18n.language.startsWith("en")
+                    ? "bg-[#01257D] text-white border-[#01257D]"
+                    : "border-gray-300 text-gray-700"
+                } cursor-pointer`}
+                title="English"
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLanguage("fr")}
+                className={`px-2 py-1 text-xs rounded-md border ${
+                  i18n.language.startsWith("fr")
+                    ? "bg-[#01257D] text-white border-[#01257D]"
+                    : "border-gray-300 text-gray-700"
+                } cursor-pointer`}
+                title="Français"
+              >
+                FR
+              </button>
+            </div>
             {isSignedIn ? (
               <>
-                {/* Notification Bell */}
-                <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-                  <Bell className="h-5 w-5" />
-
-                </button>
-
+                {/* Notification Bell with Dropdown */}
+                <div className="relative">
+                  <button
+                    className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                    onClick={() => setIsNotifDropdownOpen(!isNotifDropdownOpen)}
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  {isNotifDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max_h-80 max-h-80 overflow-y-auto">
+                      <div className="py-2">{renderNotifications()}</div>
+                    </div>
+                  )}
+                </div>
                 {/* User Avatar with Dropdown */}
                 <div className="relative">
                   <button
@@ -90,38 +410,56 @@ export default function SafeBillHeader({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="text-sm font-medium text-gray-600">{userName.charAt(0).toUpperCase()}</span>
+                        <span className="text-sm font-medium text-gray-600">
+                          {userName.charAt(0).toUpperCase()}
+                        </span>
                       )}
                     </div>
                   </button>
-
                   {/* Dropdown Menu */}
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                       <div className="py-1">
                         <button
                           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                          className="flex flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
-                          style={{ background: 'none', border: 'none' }}
+                          className="flex flex_col flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
+                          style={{ background: "none", border: "none" }}
                         >
-                          <p className="text-sm font-medium text-gray-900">{userName}</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {userName}
+                          </p>
                           <p className="text-xs text-gray-500">{userEmail}</p>
                         </button>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Profile
+                        <Link
+                          to={
+                            (user.role || user.active_role) === "seller"
+                              ? "/profile"
+                              : user.role === "admin"
+                              ? "/admin"
+                              : "/buyer-dashboard"
+                          }
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {t("navbar.profile")}
+                        </Link>
+                        <a
+                          href="#"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {t("navbar.settings")}
                         </a>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Settings
-                        </a>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                          Billing
-                        </a>
+                        <Link
+                          to="/billings"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {t("navbar.billing")}
+                        </Link>
                         <div className="border-t border-gray-100">
                           <button
                             onClick={handleSignOut}
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                           >
-                            Sign out
+                            {t("navbar.sign_out")}
                           </button>
                         </div>
                       </div>
@@ -136,42 +474,312 @@ export default function SafeBillHeader({
                   onClick={onSignIn}
                   className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
                 >
-                  <Link to="/login">Sign In</Link>
+                  <Link to="/login">{t("navbar.sign_in")}</Link>
                 </button>
                 <button
-                  onClick={onJoinNow}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
+                  onClick={() => setIsSignUpPopupOpen(true)}
+                  className="px-4 py-2 text-sm font-medium text_white text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
                 >
-                  <Link to="/seller-register">Sign Up</Link>
+                  {t("navbar.sign_up")}
                 </button>
               </>
             )}
           </div>
 
+          {/* Mobile Right Side (avatar and bell only, no hamburger) */}
+          {!showMobileMenuButton && (
+            <div className="flex md:hidden items-center space-x-4">
+              {/* Role Toggle Button - Mobile */}
+              {canToggleRoles && (
+                <div className="flex items-center">
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => user.role !== 'seller' && handleToggleRole()}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'seller'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Seller</span>
+                      <span className="sm:hidden">S</span>
+                    </button>
+                    <button
+                      onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                      className={`px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'professional-buyer'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">Pro Buyer</span>
+                      <span className="sm:hidden">P</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Language Switcher - Mobile */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => changeLanguage("en")}
+                  className={`px-2 py-1 text-xs rounded-md border ${
+                    i18n.language.startsWith("en")
+                      ? "bg-[#01257D] text-white border-[#01257D]"
+                      : "border-gray-300 text-gray-700"
+                  } cursor-pointer`}
+                  title="English"
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => changeLanguage("fr")}
+                  className={`px-2 py-1 text-xs rounded-md border ${
+                    i18n.language.startsWith("fr")
+                      ? "bg-[#01257D] text-white border-[#01257D]"
+                      : "border-gray-300 text-gray-700"
+                  } cursor-pointer`}
+                  title="Français"
+                >
+                  FR
+                </button>
+              </div>
+              {isSignedIn ? (
+                <>
+                  {/* Mobile Notification Bell with Dropdown */}
+                  <div className="relative">
+                    <button
+                      className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                      onClick={() =>
+                        setIsMobileNotifDropdownOpen(!isMobileNotifDropdownOpen)
+                      }
+                    >
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+                    {isMobileNotifDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                        <div className="py-2">{renderNotifications()}</div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                        {userAvatar ? (
+                          <img
+                            src={userAvatar || "/placeholder.svg"}
+                            alt={userName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-medium text-gray-600">
+                            {userName.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    {/* Dropdown Menu (reuse desktop logic) */}
+                    {isDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                        <div className="py-1">
+                          <button
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="flex flex-col items-start px-4 py-3 border-b border-gray-100 bg-transparent w-full text-left focus:outline-none"
+                            style={{ background: "none", border: "none" }}
+                          >
+                            <p className="text-sm font-medium text-gray-900">
+                              {userName}
+                            </p>
+                            <p className="text-xs text-gray-500">{userEmail}</p>
+                          </button>
+                          <Link
+                            to={
+                              (user.role || user.active_role) === "seller"
+                                ? "/profile"
+                                : user.role === "admin"
+                                ? "/admin"
+                                : "/buyer-dashboard"
+                            }
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.profile")}
+                          </Link>
+                          <a
+                            href="#"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.settings")}
+                          </a>
+                          <Link
+                            to="/billings"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.billing")}
+                          </Link>
+                          <div className="border-t border-gray-100">
+                            <button
+                              onClick={handleSignOut}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              {t("navbar.sign_out")}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={onSignIn}
+                    className="px-4 py-2 text-sm font-medium text-[#01257D] hover:text-[#2346a0] hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  >
+                    <Link to="/login">{t("navbar.sign_in")}</Link>
+                  </button>
+                  <button
+                    onClick={() => setIsSignUpPopupOpen(true)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md transition-colors cursor-pointer"
+                  >
+                    {t("navbar.sign_up")}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
+          {showMobileMenuButton && (
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
+              {canSeeProjectInvite && (
+                <Link
+                  to="/find-professionals"
                   className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                 >
-                  {item.label}
-                </a>
+                  {t("navbar.find_professionals")}
+                </Link>
+              )}
+              {canSeeSellerDashboard && (
+                <Link
+                  to="/seller-dashboard"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  Dashboard
+                </Link>
+              )}
+              {canSeeAdminPanel && (
+                <Link
+                  to="/admin"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  Admin Panel
+                </Link>
+              )}
+              {canSeeProjectInvite && (
+                <Link
+                  to="/buyer-dashboard"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  Dashboard
+                </Link>
+              )}
+              {canSeeProjectInvite && (
+                <Link
+                  to="/how-to-accept-project-invite"
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  {t("navbar.how_to_accept_project_invite")}
+                </Link>
+              )}
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
+                >
+                  {t(item.label)}
+                </Link>
               ))}
+
+              {/* Role Toggle Button - Mobile in menu */}
+              {canToggleRoles && (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <div className="flex bg-gray-100 rounded-lg p-1 w-full">
+                    <button
+                      onClick={() => user.role !== 'seller' && handleToggleRole()}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'seller'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden min-[480px]:inline">Seller</span>
+                      <span className="min-[480px]:hidden">S</span>
+                    </button>
+                    <button
+                      onClick={() => user.role !== 'professional-buyer' && handleToggleRole()}
+                      className={`flex-1 px-2 py-1 text-xs rounded-md transition-all duration-200 ${
+                        user.role === 'professional-buyer'
+                          ? 'bg-[#01257D] text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <span className="hidden min-[480px]:inline">Pro Buyer</span>
+                      <span className="min-[480px]:hidden">P</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Language Switcher - Mobile in menu */}
+              <div className="flex items-center gap-2 px-3 py-2">
+                <button
+                  onClick={() => changeLanguage("en")}
+                  className={`px-3 py-1 text-xs rounded-md border ${
+                    i18n.language.startsWith("en")
+                      ? "bg-[#01257D] text-white border-[#01257D]"
+                      : "border-gray-300 text-gray-700"
+                  } cursor-pointer`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => changeLanguage("fr")}
+                  className={`px-3 py-1 text-xs rounded-md border ${
+                    i18n.language.startsWith("fr")
+                      ? "bg-[#01257D] text-white border-[#01257D]"
+                      : "border-gray-300 text-gray-700"
+                  } cursor-pointer`}
+                >
+                  Français
+                </button>
+              </div>
 
               {/* Mobile Auth Section */}
               <div className="pt-4 pb-3 border-t border-gray-200">
@@ -189,44 +797,87 @@ export default function SafeBillHeader({
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <span className="text-sm font-medium text-gray-600">{userName.charAt(0).toUpperCase()}</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            {userName.charAt(0).toUpperCase()}
+                          </span>
                         )}
                       </button>
                     </div>
                     <button
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                       className="ml-3 flex flex-col items-start bg-transparent w-auto text-left focus:outline-none"
-                      style={{ background: 'none', border: 'none' }}
+                      style={{ background: "none", border: "none" }}
                     >
-                      <div className="text-base font-medium text-gray-800">{userName}</div>
-                      <div className="text-sm font-medium text-gray-500">{userEmail}</div>
+                      <div className="text-base font-medium text-gray-800">
+                        {userName}
+                      </div>
+                      <div className="text-sm font-medium text-gray-500">
+                        {userEmail}
+                      </div>
                     </button>
-                    <button className="ml-auto relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
-                      <Bell className="h-5 w-5" />
-                    </button>
+                    {/* Mobile Menu Notification Bell with Dropdown */}
+                    <div className="ml-auto relative">
+                      <button
+                        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded_full rounded-full cursor-pointer"
+                        onClick={() =>
+                          setIsMobileNotifDropdownOpen(
+                            !isMobileNotifDropdownOpen
+                          )
+                        }
+                      >
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full px-1">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </button>
+                      {isMobileNotifDropdownOpen && (
+                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-gray-200 z-50 max-h-80 overflow-y-auto">
+                          <div className="py-2">{renderNotifications()}</div>
+                        </div>
+                      )}
+                    </div>
                     {/* Mobile Dropdown Menu */}
                     {isDropdownOpen && (
                       <div className="absolute right-4 top-20 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                         <div className="py-1">
                           <div className="px-4 py-3 border-b border-gray-100">
-                            <p className="text-sm font-medium text-gray-900">{userName}</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {userName}
+                            </p>
                             <p className="text-xs text-gray-500">{userEmail}</p>
                           </div>
-                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Profile
+                          <Link
+                            to={
+                              user.role === "seller"
+                                ? "/profile"
+                                : user.role === "admin"
+                                ? "/admin"
+                                : "/buyer-dashboard"
+                            }
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.profile")}
+                          </Link>
+                          <a
+                            href="#"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.settings")}
                           </a>
-                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Settings
-                          </a>
-                          <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Billing
-                          </a>
+                          <Link
+                            to="/billings"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("navbar.billing")}
+                          </Link>
                           <div className="border-t border-gray-100">
                             <button
                               onClick={handleSignOut}
                               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              Sign out
+                              {t("navbar.sign_out")}
                             </button>
                           </div>
                         </div>
@@ -239,13 +890,13 @@ export default function SafeBillHeader({
                       onClick={onSignIn}
                       className="w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md"
                     >
-                      <Link to="/login">Sign In</Link>
+                      <Link to="/login">{t("navbar.sign_in")}</Link>
                     </button>
                     <button
-                      onClick={onJoinNow}
-                      className="w-full px-3 py-2 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-md"
+                      onClick={() => setIsSignUpPopupOpen(true)}
+                      className="w-full px-3 py-2 text-base font-medium text-white bg-[#01257D] hover:bg-[#2346a0]  rounded-md"
                     >
-                      <Link to="/seller-register">Sign Up</Link>
+                      {t("navbar.sign_up")}
                     </button>
                   </div>
                 )}
@@ -256,7 +907,30 @@ export default function SafeBillHeader({
       </div>
 
       {/* Overlay for dropdown */}
-      {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
+      {isDropdownOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsDropdownOpen(false)}
+        ></div>
+      )}
+      {isNotifDropdownOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsNotifDropdownOpen(false)}
+        ></div>
+      )}
+      {isMobileNotifDropdownOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsMobileNotifDropdownOpen(false)}
+        ></div>
+      )}
+
+      {/* Sign Up Popup */}
+      <SignUpPopup
+        isOpen={isSignUpPopupOpen}
+        onClose={() => setIsSignUpPopupOpen(false)}
+      />
     </header>
-  )
+  );
 }

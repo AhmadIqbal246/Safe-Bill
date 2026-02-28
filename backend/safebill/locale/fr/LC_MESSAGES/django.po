@@ -1,0 +1,35 @@
+# Django translation file for French
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fr\n"
+
+msgid "Verify Your Email - Safe Bill"
+msgstr "Vérifiez Votre Email - Safe Bill"
+
+msgid "Reset Your Password - Safe Bill"
+msgstr "Réinitialisez Votre Mot de Passe - Safe Bill"
+
+msgid "Welcome to Safe Bill!"
+msgstr "Bienvenue sur Safe Bill !"
+
+msgid "Payment Successful - {project_name}"
+msgstr "Paiement Réussi - {project_name}"
+
+msgid "Payment Failed - {project_name}"
+msgstr "Paiement Échoué - {project_name}"
+
+msgid "Quote Request Sent Successfully"
+msgstr "Demande de Devis Envoyée avec Succès"
+
+msgid "New Business Opportunity - Message from {buyer_name}"
+msgstr "Nouvelle Opportunité Commerciale - Message de {buyer_name}"
+
+msgid "You've been invited to join the '{project_name}' project on Safe Bill"
+msgstr "Vous avez été invité à rejoindre le projet '{project_name}' sur Safe Bill"
+
+msgid "New dispute opened - {project_name}"
+msgstr "Nouveau litige ouvert - {project_name}"
+
+msgid "A dispute ({dispute_id}) has been opened for project '{project_name}'."
+msgstr "Un litige ({dispute_id}) a été ouvert pour le projet '{project_name}'."
