@@ -1,3 +1,4 @@
+import os
 """
 Django settings for safebill project.
 
@@ -22,84 +23,176 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# Initialise environment variables
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l'
+SECRET_KEY = "django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+
+def _env_list(var_name, default_list):
+    value = os.environ.get(var_name)
+    if not value:
+        return default_list
+    # Support comma-separated values with optional spaces
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+ALLOWED_HOSTS = _env_list(
+    "ALLOWED_HOSTS",
+    [
+        "https://safebill.fr",
+        "http://safebill.fr",
+        "api.safebill.fr",
+        "https://www.safebill.fr",
+        "http://localhost:3000",  # For development
+        "http://127.0.0.1:3000", # For development
+    ],
+)
+
 
 # to allow all credentials (cookies, authorization headers, etc.) to be included in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = _env_list(
+    "CORS_ALLOWED_ORIGINS",
+    [
+        "https://safebill.fr",
+        "http://safebill.fr",
+        "api.safebill.fr",
+        "https://www.safebill.fr",
+        "http://localhost:3000",  # For development
+        "http://127.0.0.1:3000", # For development
+    ],
+)
 
-# Initialise environment variables
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = _env_list(
+    "CSRF_TRUSTED_ORIGINS",
+    [
+        "https://safebill.fr",
+        "https://api.safebill.fr",
+
+    ],
+)
+
+# For production, disable this
+#CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
+
+# Allow custom headers for language detection
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-user-language',  # Custom header for language detection
+]
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
+    "corsheaders",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # third-party-apps
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+    "accounts",
+    "bussiness_documents",
+    "projects",
+    "notifications",
+    "feedback",
+    "disputes",
+    # Chat
+    "chat",
+    "adminpanelApp",
+    "connect_stripe",
+    "payments",
+    "hubspot",
 
-    'corsheaders',
-
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    #third-party-apps
-    'rest_framework',
-    'accounts',
-    'bussiness_documents',
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "utils.language_middleware.LanguageMiddleware",  # Custom language middleware
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
 ]
 
-ROOT_URLCONF = 'safebill.urls'
+ROOT_URLCONF = "safebill.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'safebill.wsgi.application'
+# ASGI/WSGI
+WSGI_APPLICATION = "safebill.wsgi.application"
+ASGI_APPLICATION = "safebill.asgi.application"
 
+# Django Channels Configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env('REDIS_URL', default='redis://127.0.0.1:6379/1')],
+        },
+    },
+}
+
+# Ensure channels middleware is loaded
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for PDF iframe
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME'),
-        'USER': env('DB_USER'),
-        'PASSWORD': env('DB_PASSWORD'),
-        'HOST': env('DB_HOST'),
-        'PORT': env('DB_PORT'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST"),
+        "PORT": env("DB_PORT"),
     }
 }
 
@@ -109,28 +202,34 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = "accounts.User"
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+# Supported languages
+LANGUAGES = [
+    ('en', 'English'),
+    ('fr', 'Français'),
+]
+
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -140,36 +239,93 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_URL = "static/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Site URL for email templates
+SITE_URL = env('SITE_URL', default='https://safebill.fr')
+SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Logo_Bleu.png')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework configuration
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
 
 # Simple JWT settings (customize as needed)
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+}
+
+# Channels / Redis layer (use in-memory if REDIS_URL not provided)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
 }
 
 # Email backend for development
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-FRONTEND_URL = env('FRONTEND_URL')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-SIRET_VALIDATION_ACCESS_TOKEN = env('SIRET_VALIDATION_ACCESS_TOKEN')
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+FRONTEND_URL = env("FRONTEND_URL")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+SIRET_VALIDATION_ACCESS_TOKEN = env("SIRET_VALIDATION_ACCESS_TOKEN")
+STRIPE_API_KEY = env("STRIPE_API_KEY")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
+STRIPE_CONNECT_WEBHOOK_SECRET = env("STRIPE_CONNECT_WEBHOOK_SECRET")
+STRIPE_VERIFICATION_FLOW_ID = env("STRIPE_VERIFICATION_FLOW_ID")
+
+# X-Frame-Options disabled for PDF iframe embedding
+
+# Celery Configuration
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_DEFAULT_QUEUE = 'emails'
+
+# HubSpot Integration
+# Private App token for direct API access
+HUBSPOT_PRIVATE_APP_TOKEN = env("HUBSPOT_PRIVATE_APP_TOKEN", default="")
+# Base URL for HubSpot APIs (overrideable for testing/mocking)
+HUBSPOT_API_BASE = env("HUBSPOT_API_BASE", default="https://api.hubapi.com")
+# Tickets pipeline to use for disputes (string ID shown in HubSpot UI, often "0")
+HUBSPOT_TICKETS_PIPELINE = env("HUBSPOT_TICKETS_PIPELINE", default="0")
+HUBSPOT_MILESTONE_OBJECT = env("HUBSPOT_MILESTONE_OBJECT")
+HUBSPOT_REVENUE_OBJECT = env("HUBSPOT_REVENUE_OBJECT")
+HUBSPOT_FEEDBACK_OBJECT = env("HUBSPOT_FEEDBACK_OBJECT")
+HUBSPOT_CONTACT_MESSAGE_OBJECT = env("HUBSPOT_CONTACT_MESSAGE_OBJECT")
+# Core HubSpot settings
+HUBSPOT_SYNC_ENABLED = env.bool('HUBSPOT_SYNC_ENABLED')
+HUBSPOT_SYNC_DEBUG = env.bool('HUBSPOT_SYNC_DEBUG')
+HUBSPOT_SYNC_TIMEOUT = env.int('HUBSPOT_SYNC_TIMEOUT')
+
+# Feature flags for safe deployment
+HUBSPOT_USER_SIGNALS_ENABLED = env.bool('HUBSPOT_USER_SIGNALS_ENABLED', default=True)
+HUBSPOT_COMPANY_SIGNALS_ENABLED = env.bool('HUBSPOT_COMPANY_SIGNALS_ENABLED', default=True)
+HUBSPOT_PROJECT_SIGNALS_ENABLED = env.bool('HUBSPOT_PROJECT_SIGNALS_ENABLED', default=True)
+HUBSPOT_MILESTONE_SIGNALS_ENABLED = env.bool('HUBSPOT_MILESTONE_SIGNALS_ENABLED', default=True)
+HUBSPOT_SIGNALS_DEBUG = env.bool('HUBSPOT_SIGNALS_DEBUG', default=False)
+
+# Rate limiting and circuit breaker
+HUBSPOT_RATE_LIMIT_MAX = env.int('HUBSPOT_RATE_LIMIT_MAX')
+HUBSPOT_RATE_LIMIT_WINDOW = env.int('HUBSPOT_RATE_LIMIT_WINDOW')
+HUBSPOT_CIRCUIT_BREAKER_THRESHOLD = env.int('HUBSPOT_CIRCUIT_BREAKER_THRESHOLD')
+HUBSPOT_CIRCUIT_BREAKER_TIMEOUT = env.int('HUBSPOT_CIRCUIT_BREAKER_TIMEOUT')

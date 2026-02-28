@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from .serializers import MultiDocumentUploadSerializer
+from .serializers import MultiDocumentUploadSerializer, DocumentSerializer
 from .models import Document
 
 # Create your views here.
@@ -26,3 +26,12 @@ class MultiDocumentUploadView(APIView):
             user.save()
             return Response({'detail': 'Documents uploaded successfully.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserDocumentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        documents = Document.objects.filter(user=user)
+        serializer = DocumentSerializer(documents, many=True, context={'request': request})
+        return Response(serializer.data)

@@ -1,0 +1,32 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ notification_title }} - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}{{ notification_title }}{% endblock %}
+
+{% block content %}
+<h2>{{ notification_title }}</h2>
+
+<p>Hello {{ user_name }}!</p>
+
+<div class="highlight">
+    <p>{{ notification_message }}</p>
+</div>
+
+{% if action_url %}
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ action_url }}" class="btn">Take Action</a>
+</div>
+{% endif %}
+
+<p>This notification is related to your {{ site_name }} account. Please review the details above and take any necessary action.</p>
+
+<div class="warning">
+    <p><strong>Important:</strong> If you didn't expect this notification or if something seems unusual, please contact our support team immediately.</p>
+</div>
+
+<p>You can manage your notification preferences in your account settings or contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a> if you have any questions.</p>
+
+<p>Best regards,<br>
+The {{ site_name }} Team</p>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Bienvenue sur {{ site_name }} !{% endblock %}
+
+{% block header_subtitle %}Bienvenue dans Votre Nouveau Compte{% endblock %}
+
+{% block content %}
+<h2>Bienvenue sur {{ site_name }} !</h2>
+
+<p>Bonjour {{ user_name }} !</p>
+
+<div class="success">
+    <p><strong>Félicitations !</strong> Votre email a été vérifié et votre compte {{ site_name }} est maintenant actif.</p>
+</div>
+
+<p>Vous êtes maintenant prêt à commencer à utiliser {{ site_name }} pour sécuriser vos transactions commerciales{% if user_type %} en tant que {{ user_type }}{% endif %}.</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" class="btn">Aller au Tableau de Bord</a>
+</div>
+
+<h3 style="color: #1e3a8a; margin-top: 30px;">Ce que vous pouvez faire ensuite :</h3>
+
+{% if user_type == 'seller' %}
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Compléter votre profil professionnel et vérification</li>
+    <li>Télécharger vos documents d'entreprise</li>
+    <li>Configurer vos zones de service et catégories</li>
+    <li>Commencer à recevoir des invitations de projets</li>
+    <li>Créer et gérer vos projets</li>
+</ul>
+{% elif user_type == 'buyer' %}
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Compléter vos informations de profil</li>
+    <li>Parcourir les professionnels disponibles</li>
+    <li>Demander des devis pour vos projets</li>
+    <li>Gérer les jalons de vos projets</li>
+    <li>Suivre vos paiements en toute sécurité</li>
+</ul>
+{% else %}
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Compléter la configuration de votre profil</li>
+    <li>Explorer les fonctionnalités de la plateforme</li>
+    <li>Se connecter avec d'autres utilisateurs</li>
+    <li>Commencer votre premier projet</li>
+    <li>Gérer vos transactions commerciales</li>
+</ul>
+{% endif %}
+
+<div class="highlight">
+    <p><strong>Besoin d'aide pour commencer ?</strong> Consultez notre <a href="{{ dashboard_url }}/help" style="color: #3b82f6;">centre d'aide</a> ou contactez notre équipe de support.</p>
+</div>
+
+<h3 style="color: #1e3a8a; margin-top: 30px;">Pourquoi choisir {{ site_name }} ?</h3>
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li><strong>Paiements Sécurisés :</strong> Transactions protégées avec paiements basés sur les jalons</li>
+    <li><strong>Résolution de Conflits :</strong> Processus de médiation équitable pour tout problème</li>
+    <li><strong>Réseau Professionnel :</strong> Connectez-vous avec des professionnels vérifiés</li>
+    <li><strong>Gestion de Projet :</strong> Suivez les progrès et gérez les livrables</li>
+    <li><strong>Support 24/7 :</strong> Nous sommes là pour vous aider quand vous en avez besoin</li>
+</ul>
+
+<p>Si vous avez des questions ou besoin d'assistance, n'hésitez pas à contacter notre équipe de support à <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Bienvenue à bord !<br>
+L'Équipe {{ site_name }}</p>
+{% endblock %}

@@ -6,7 +6,7 @@ export default function SellerRegisterPage() {
   return (
     <div>
         <SafeBillHeader />
-        <SellerRegisterFlow />
+        <SellerRegisterFlow role="seller" />
     </div>
   )
 }

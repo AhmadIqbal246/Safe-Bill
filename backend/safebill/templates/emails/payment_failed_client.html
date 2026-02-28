@@ -1,0 +1,21 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Payment Failed - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Payment Issue{% endblock %}
+
+{% block content %}
+<h2>Payment Failed</h2>
+
+<p>Hello {{ user_name }},</p>
+
+<div class="warning">
+  <p>We could not process your payment of <strong>{{ amount }}</strong> for the project <strong>{{ project_name }}</strong>.</p>
+  <p>Please try again using the link below or contact support if the issue persists.</p>
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="{{ retry_url }}" class="btn btn-secondary">Retry Payment</a>
+  </div>
+  <p style="margin: 0;">If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+  <div class="divider"></div>
+  <p style="margin: 0; color:#6b7280; font-size: 14px;">This message was sent by {{ site_name }}.</p>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Verify Your Email - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Email Verification Required{% endblock %}
+
+{% block content %}
+<h2>Verify Your Email Address</h2>
+
+<p>Hello {{ user_name }}!</p>
+
+<p>Welcome to {{ site_name }}! To complete your registration{% if user_type %} as a {{ user_type }}{% endif %}, please verify your email address using one of the methods below:</p>
+
+<!-- Method 1: Click the button -->
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ verification_url }}" class="btn">Verify Email Address</a>
+</div>
+
+<!-- Method 2: Manual verification code -->
+<div class="highlight">
+    <p><strong>Alternative Method:</strong> You can also verify your email by entering this verification code on our website:</p>
+    <div style="background-color: #f8f9fa; padding: 16px; border-radius: 6px; text-align: center; margin: 16px 0;">
+        <p style="font-family: monospace; font-size: 18px; font-weight: bold; color: #1e3a8a; margin: 0; letter-spacing: 2px;">
+            {{ verification_code|default:"Click the button above" }}
+        </p>
+    </div>
+    <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0;">
+        Go to: <a href="{{ frontend_verification_url }}" style="color: #3b82f6;">{{ frontend_verification_url }}</a>
+    </p>
+</div>
+
+<div class="highlight">
+    <p><strong>Important:</strong> This verification link and code will expire in 24 hours for security reasons.</p>
+</div>
+
+<p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+<p style="word-break: break-all; background-color: #f3f4f6; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 14px;">
+    {{ verification_url }}
+</p>
+
+<div class="warning">
+    <p><strong>Security Notice:</strong> If you didn't create an account with {{ site_name }}, you can safely ignore this email. Your email address will not be used without verification.</p>
+</div>
+
+<p>Once verified, you'll be able to:</p>
+<ul style="margin-left: 20px; color: #4b5563;">
+    <li>Access your dashboard</li>
+    <li>Create and manage projects</li>
+    <li>Connect with other professionals</li>
+    <li>Secure your business transactions</li>
+</ul>
+
+<p>If you're having trouble with the verification link, please contact our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Best regards,<br>
+The {{ site_name }} Team</p>
+{% endblock %}

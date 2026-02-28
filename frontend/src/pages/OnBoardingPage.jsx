@@ -6,7 +6,7 @@ export default function OnBoardingPage() {
     return(
         <div>
             <SafeBillHeader/>
-            <OnBoardingComp/>
+            <OnBoardingComp />
         </div>
     );
 }

@@ -1,0 +1,21 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Paiement Échoué - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Problème de Paiement{% endblock %}
+
+{% block content %}
+<h2>Paiement Échoué</h2>
+
+<p>Bonjour {{ user_name }},</p>
+
+<div class="warning">
+  <p>Nous n'avons pas pu traiter votre paiement de <strong>{{ amount }}</strong> pour le projet <strong>{{ project_name }}</strong>.</p>
+  <p>Veuillez réessayer en utilisant le lien ci-dessous ou contactez le support si le problème persiste.</p>
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="{{ retry_url }}" class="btn btn-secondary">Réessayer le Paiement</a>
+  </div>
+  <p style="margin: 0;">Si vous avez des questions, veuillez nous contacter à <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+  <div class="divider"></div>
+  <p style="margin: 0; color:#6b7280; font-size: 14px;">Ce message a été envoyé par {{ site_name }}.</p>
+{% endblock %}

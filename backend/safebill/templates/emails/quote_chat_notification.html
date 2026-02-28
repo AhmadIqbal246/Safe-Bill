@@ -1,0 +1,40 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}New Business Opportunity - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}New Message Received{% endblock %}
+
+{% block content %}
+<h2>New Business Opportunity</h2>
+
+<p>Hello {{ seller_name }}!</p>
+
+<div class="success">
+    <p><strong>Great news!</strong> You have received a new message regarding a business opportunity on {{ site_name }}.</p>
+</div>
+
+<div class="highlight">
+    <p><strong>From:</strong> {{ buyer_name }} ({{ buyer_email }})</p>
+    <p><strong>Project:</strong> {{ project_name }}</p>
+</div>
+
+<h3>Message Preview:</h3>
+<div style="background-color: #f8f9fa; padding: 16px; border-radius: 6px; border-left: 4px solid #3b82f6; margin: 16px 0;">
+    <p style="font-style: italic; color: #4b5563;">"{{ message_preview }}"</p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" class="btn">View Full Conversation</a>
+</div>
+
+<p>This is a potential client reaching out to you through {{ site_name }}. Please log in to your dashboard to view the full conversation and respond to this business opportunity.</p>
+
+<div class="warning">
+    <p><strong>Tip:</strong> Quick responses often lead to better business relationships. Consider responding within 24 hours for the best results.</p>
+</div>
+
+<p>If you have any questions about this message or need assistance, please contact our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Best regards,<br>
+The {{ site_name }} Team</p>
+{% endblock %}

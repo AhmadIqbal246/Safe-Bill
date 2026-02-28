@@ -1,0 +1,21 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}Payment Successful - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Payment Confirmation{% endblock %}
+
+{% block content %}
+<h2>Payment Successful</h2>
+
+<p>Hello {{ user_name }},</p>
+
+<div class="success">
+  <p>We have received your payment of <strong>{{ amount }}</strong> for the project <strong>{{ project_name }}</strong>.</p>
+  <p>Your project is now moving forward. You can review the status and details from your dashboard.</p>
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="{{ dashboard_url }}" class="btn">Go to Dashboard</a>
+  </div>
+  <p style="margin: 0;">If you have any questions, please contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+  <div class="divider"></div>
+  <p style="margin: 0; color:#6b7280; font-size: 14px;">This message was sent by {{ site_name }}.</p>
+{% endblock %}
