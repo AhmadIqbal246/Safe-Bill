@@ -14,17 +14,36 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/accounts/', include('accounts.urls', namespace='accounts')),
-    path('api/business-documents/', include('bussiness_documents.urls')),
+    path("admin/", admin.site.urls),
+    path("api/accounts/", include("accounts.urls", namespace="accounts")),
+    path("api/business-documents/", include("bussiness_documents.urls")),
+    path("api/projects/", include("projects.urls")),
+    path("api/disputes/", include("disputes.urls")),
+    path("api/notifications/", include("notifications.urls")),
+    path("api/feedback/", include("feedback.urls")),
+    path("api/", include("chat.urls")),
+    path("api/admin/", include("adminpanelApp.urls")),
+    path("api/connect-stripe/", include("connect_stripe.urls")),
+    path("api/payments/", include("payments.urls")),
+    path("api/hubspot/", include("hubspot.urls")),
+    path("api/subscription/", include("subscription.urls")),
+    path("api/rag/", include("RAG.urls")),
     path('api/ai/', include('ai_assistant.urls')),
+    # Add other app urls here
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )
+    # Serve static files in development
+    urlpatterns += staticfiles_urlpatterns()

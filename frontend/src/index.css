@@ -1,1 +1,181 @@
 @import "tailwindcss";
+
+@theme {
+  /* Primary Colors (Blue) */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* Success Colors (Green) */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+
+  /* Warning Colors (Yellow) */
+  --color-warning-50: #fefce8;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+
+  /* Danger Colors (Red) */
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
+
+  /* Info Colors (Cyan) */
+  --color-info-50: #ecfeff;
+  --color-info-100: #cffafe;
+  --color-info-200: #a5f3fc;
+  --color-info-300: #67e8f9;
+  --color-info-400: #22d3ee;
+  --color-info-500: #06b6d4;
+  --color-info-600: #0891b2;
+  --color-info-700: #0e7490;
+  --color-info-800: #155e75;
+  --color-info-900: #164e63;
+
+  /* Secondary Colors (Purple) */
+  --color-secondary-50: #faf5ff;
+  --color-secondary-100: #f3e8ff;
+  --color-secondary-200: #e9d5ff;
+  --color-secondary-300: #d8b4fe;
+  --color-secondary-400: #c084fc;
+  --color-secondary-500: #a855f7;
+  --color-secondary-600: #9333ea;
+  --color-secondary-700: #7c3aed;
+  --color-secondary-800: #6b21a8;
+  --color-secondary-900: #581c87;
+}
+
+:root {
+  /* Shared positioning reference for floating chat UI + HubSpot widget */
+  --chat-fab-right: 5rem;
+  --chat-fab-bottom: 1.5rem;
+  --hubspot-icon-right: 0rem;
+  --hubspot-icon-bottom-desktop: 0.75rem;
+  --hubspot-icon-bottom-mobile: 0.4rem;
+}
+
+.chat-fab-anchor {
+  right: var(--chat-fab-right);
+  bottom: var(--chat-fab-bottom);
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --chat-fab-right: 2rem;
+    --chat-fab-bottom: 0.85rem;
+    --hubspot-icon-right: 0rem;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --chat-fab-right: 4.3rem;
+    --chat-fab-bottom: 0.7rem;
+    --hubspot-icon-right: 0rem;
+  }
+}
+
+
+/* Custom scrollbar styles for pending projects section */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Firefox scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Custom animations for billings */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* HubSpot widget offset to avoid overlapping with in-app chat button */
+#hubspot-messages-iframe-container,
+[id^="hubspot-messages-iframe-container"],
+iframe[data-hs-messages-widget] {
+  bottom: 90px !important; /* sit above 64px FAB + spacing */
+  right: var(--chat-fab-right) !important;
+  z-index: 999999 !important; /* ensure visibility */
+}
+
+html:not(.hs-chat-open) #hubspot-messages-iframe-container,
+html:not(.hs-chat-open) [id^="hubspot-messages-iframe-container"],
+html:not(.hs-chat-open) iframe[data-hs-messages-widget] {
+  bottom: var(--hubspot-icon-bottom-desktop) !important;
+  right: var(--hubspot-icon-right) !important;
+  top: auto !important;
+}
+
+@media (max-width: 640px) {
+  html:not(.hs-chat-open) #hubspot-messages-iframe-container,
+  html:not(.hs-chat-open) [id^="hubspot-messages-iframe-container"],
+  html:not(.hs-chat-open) iframe[data-hs-messages-widget] {
+    bottom: var(--hubspot-icon-bottom-mobile) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  #hubspot-messages-iframe-container,
+  [id^="hubspot-messages-iframe-container"],
+  iframe[data-hs-messages-widget] {
+    bottom: 160px !important; /* extra room on smaller screens */
+  }
+}

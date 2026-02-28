@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    
+    <div>
+        <h2>Test Connection</h2>
+        <button onclick="testConnection()">Test WebSocket Connection</button>
+        <div id="test-status"></div>
+    </div>
+    
+    <div>
+        <h2>Chat Connection</h2>
+        <input type="text" id="projectId" placeholder="Project ID" value="45">
+        <input type="text" id="token" placeholder="JWT Token">
+        <button onclick="testChatConnection()">Test Chat WebSocket</button>
+        <div id="chat-status"></div>
+    </div>
+    
+    <div>
+        <h2>Messages</h2>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        function testConnection() {
+            const statusDiv = document.getElementById('test-status');
+            statusDiv.innerHTML = 'Connecting to test WebSocket...';
+            
+            try {
+                const ws = new WebSocket('ws://127.0.0.1:8000/ws/test/');
+                
+                ws.onopen = function() {
+                    statusDiv.innerHTML = '✅ Test WebSocket connected successfully!';
+                    ws.send(JSON.stringify({type: 'test', message: 'Hello from test!'}));
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    addMessage('Test: ' + JSON.stringify(data));
+                };
+                
+                ws.onerror = function(error) {
+                    statusDiv.innerHTML = '❌ Test WebSocket error: ' + error;
+                };
+                
+                ws.onclose = function() {
+                    statusDiv.innerHTML = '🔌 Test WebSocket closed';
+                };
+                
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Failed to create WebSocket: ' + error;
+            }
+        }
+        
+        function testChatConnection() {
+            const projectId = document.getElementById('projectId').value;
+            const token = document.getElementById('token').value;
+            const statusDiv = document.getElementById('chat-status');
+            
+            if (!projectId || !token) {
+                statusDiv.innerHTML = '❌ Please enter both Project ID and Token';
+                return;
+            }
+            
+            statusDiv.innerHTML = 'Connecting to chat WebSocket...';
+            
+            try {
+                const ws = new WebSocket(`ws://127.0.0.1:8000/ws/chat/project/${projectId}/?token=${token}`);
+                
+                ws.onopen = function() {
+                    statusDiv.innerHTML = '✅ Chat WebSocket connected successfully!';
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    addMessage('Chat: ' + JSON.stringify(data));
+                };
+                
+                ws.onerror = function(error) {
+                    statusDiv.innerHTML = '❌ Chat WebSocket error: ' + error;
+                };
+                
+                ws.onclose = function() {
+                    statusDiv.innerHTML = '🔌 Chat WebSocket closed';
+                };
+                
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Failed to create chat WebSocket: ' + error;
+            }
+        }
+        
+        function addMessage(message) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            messagesDiv.appendChild(messageDiv);
+        }
+    </script>
+</body>
+</html>

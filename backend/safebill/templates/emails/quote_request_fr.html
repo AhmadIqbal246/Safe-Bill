@@ -1,0 +1,78 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}{{ subject }} - {{ site_name }}{% endblock %}
+
+{% block header_subtitle %}Nouvelle Demande de Devis{% endblock %}
+
+{% block content %}
+<div style="padding: 0 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="color: #3535AA; font-size: 28px; font-weight: bold; margin: 0 0 10px 0;">
+            Nouvelle Demande de Devis
+        </h1>
+        <p style="color: #6b7280; font-size: 16px; margin: 0;">
+            Un client potentiel vous a contacté via {{ site_name }}
+        </p>
+    </div>
+
+    <!-- Greeting -->
+    <div style="margin-bottom: 30px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            Bonjour ! 👋
+        </p>
+    </div>
+
+    <!-- Request Summary -->
+    <div style="background: #f0f9ff; border: 2px solid #3535AA; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            📩 Détails de la Demande
+        </h3>
+        <p style="color: #3535AA; font-size: 16px; line-height: 1.6; margin: 0;">
+            <strong>De :</strong> {{ from_email }}<br>
+            <strong>Sujet :</strong> {{ subject }}<br>
+            <strong>ID Professionnel :</strong> {{ professional_id }}
+        </p>
+    </div>
+
+    <!-- Request Body -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            📝 Détails de la Demande
+        </h3>
+        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+            {{ body }}
+        </p>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ dashboard_url }}" style="background-color: #3535AA; color: #ffffff !important; display: inline-block; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 2px 6px rgba(53, 53, 170, 0.2);">
+            Répondre à la Demande
+        </a>
+    </div>
+
+    <!-- Next Steps -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #3535AA; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+            🚀 Prochaines Étapes
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 16px; line-height: 1.8;">
+            <li>Consultez la demande dans votre tableau de bord</li>
+            <li>Répondez dans les 24–48 heures pour vous démarquer</li>
+            <li>Proposez des étapes claires et votre disponibilité</li>
+        </ul>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">
+            Besoin d'aide ? Contactez-nous à <a href="mailto:{{ support_email }}" style="color: #3535AA; text-decoration: underline;">{{ support_email }}</a>.
+        </p>
+        <p style="color: #6b7280; font-size: 14px; margin: 0;">
+            Cordialement,<br>
+            L'Équipe {{ site_name }}
+        </p>
+    </div>
+</div>
+{% endblock %}
