@@ -14,21 +14,25 @@ class LLMService:
     async def generate_response_stream(self, messages: list[MessagePrompt], context_chunks: list[str]):
         """Generates the RAG answer via OpenRouter and streams chunks back."""
         
-        # Inject the retrieved knowledge into the system prompt
-        system_msg = {
-            "role": "system",
-            "content": (
-                "You are an expert AI assistant for Safe-Bill. Answer the user's question accurately "
-                "using ONLY the provided context blocks below. If the answer is not in the context, "
-                "say you do not know. Do not hallucinate.\n\n"
-                "--- CONTEXT ---\n" + 
-                "\n\n".join(context_chunks) + "\n"
-                "--- END CONTEXT ---"
-            )
-        }
+        # We use a single-message strategy for Gemma 3 / Google AI Studio compatibility.
+        # We take the previous chat history but wrap the LAST user message inside the context.
         
-        # Prepare the final array
-        api_messages = [system_msg] + [m.model_dump() for m in messages]
+        history = [m.model_dump() for m in messages[:-1]]
+        last_query = messages[-1].content
+        
+        rag_prompt = (
+            "SYSTEM INSTRUCTIONS:\n"
+            "You are an expert AI assistant for Safe-Bill. Answer the user's question accurately "
+            "using ONLY the provided context blocks below. If the answer is not in the context, "
+            "say you do not know. Do not hallucinate. Citation: Mention the source file names when possible.\n\n"
+            "--- START CONTEXT ---\n"
+            f"{'\n'.join(context_chunks)}\n"
+            "--- END CONTEXT ---\n\n"
+            f"USER QUESTION: {last_query}"
+        )
+        
+        # The final set of messages: History (if any) + the new RAG-wrapped message
+        api_messages = history + [{"role": "user", "content": rag_prompt}]
         
         # Stream response
         stream = await self.client.chat.completions.create(

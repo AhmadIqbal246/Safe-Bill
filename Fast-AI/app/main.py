@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
-from app.api.routes.v1 import ingest
+from app.api.routes.v1 import ingest, chat
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,6 +21,7 @@ app.add_middleware(
 
 # Connect all our API endpoints to the main engine
 app.include_router(ingest.router, prefix=f"{settings.API_V1_STR}/ingest", tags=["ingestion"])
+app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
 
 @app.get("/health")
 def health_check():

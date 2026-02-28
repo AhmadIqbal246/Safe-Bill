@@ -1,6 +1,5 @@
 import os
 import yaml
-import uuid
 from pathlib import Path
 from typing import List
 
@@ -80,9 +79,8 @@ class DataIngestionPipeline:
                 "chunk_index": i
             }
             
-            # Cleanly hash an ID for Pinecone
-            random_id = uuid.uuid4().hex[:6]
-            chunk_id_str = f"{Path(file_path).stem}-chunk-{i}-{random_id}"
+            # 5. Deterministic ID for duplicate prevention (filename + index)
+            chunk_id_str = f"{Path(file_path).stem}-chunk-{i}"
             
             chunks.append(Chunk(
                 chunk_id=chunk_id_str,
