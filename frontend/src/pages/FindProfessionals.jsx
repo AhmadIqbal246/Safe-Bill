@@ -4,6 +4,7 @@ import ProfFilterComponent from '../components/FindProfessional/ProfFilterCompon
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar'
 import Footer from '../components/mutualComponents/Footer'
 import GeoFilterComponent from '../components/FindProfessional/GeoFilterComponent'
+import HeroSection from '../components/FindProfessional/HeroSection'
 
 export default function FindProfessionals() {
   const location = useLocation();
@@ -26,6 +27,7 @@ export default function FindProfessionals() {
   return (
     <div>
       <SafeBillHeader/>
+      <HeroSection/>
       <ProfFilterComponent initialFilters={initialFilters} />
       <GeoFilterComponent/>
       <Footer/>

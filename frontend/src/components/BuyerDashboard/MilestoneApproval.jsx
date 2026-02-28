@@ -19,6 +19,16 @@ export default function MilestoneApproval({ onMilestoneAction }) {
   const [viewDescriptionDialogOpen, setViewDescriptionDialogOpen] = useState(false);
   const [selectedDescription, setSelectedDescription] = useState('');
 
+  // Translate milestone name based on current language
+  const getDisplayMilestoneName = (name) => {
+    // Check if the name is a step identifier (step_1, step_2, step_3)
+    if (name && name.match(/^step_[123]$/)) {
+      return t(`project_creation.${name}`);
+    }
+    // Otherwise return the name as-is
+    return name;
+  };
+
   const {
     clientProjectsWithPending,
     clientProjectsWithPendingLoading,
@@ -205,7 +215,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
               {/* Header with name, status, and amount */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 text-sm">{milestone.name}</span>
+                  <span className="font-medium text-gray-900 text-sm">{getDisplayMilestoneName(milestone.name)}</span>
                   <span className="bg-yellow-500 text-white rounded-full px-2 py-0.5 text-xs">
                     {t('milestone_approval.awaiting_review')}
                   </span>
@@ -312,7 +322,7 @@ export default function MilestoneApproval({ onMilestoneAction }) {
               </p>
               {selectedMilestone && (
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="font-medium text-sm">{t('milestone_approval.milestone_label')} {selectedMilestone.name}</p>
+                  <p className="font-medium text-sm">{t('milestone_approval.milestone_label')} {getDisplayMilestoneName(selectedMilestone.name)}</p>
                   <p className="text-sm text-gray-600">{t('milestone_approval.project_label')} {selectedMilestone.project_name}</p>
                 </div>
               )}

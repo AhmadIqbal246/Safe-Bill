@@ -4,6 +4,7 @@ import { fetchExpiredInvites, resendExpiredInvite } from '../store/slices/Projec
 import MainLayout from '../components/Layout/MainLayout';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+import loginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 function ExpiredInvitesTable({ items, onResend, t, resendingToken }) {
   return (
@@ -107,10 +108,16 @@ export default function SellerExpiredInvitesPage() {
   }, [expiredInvites, page]);
 
   return (
-    <MainLayout>
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
+    <>
+      {/* Scrollable Background Image Layer - covers entire viewport */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-cover"
+        style={{ backgroundImage: `url(${loginBg})` }}
+      />
+      <MainLayout mainBackgroundClass="">
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold text-[#01257D] mb-2">
+          <h1 className="text-2xl font-bold text-[#2E78A6] mb-2">
             {t('sidebar.expired_tokens')}
           </h1>
           <p className="text-gray-600 mb-4">{t('common.expired_tokens_description')}</p>
@@ -136,7 +143,8 @@ export default function SellerExpiredInvitesPage() {
           )}
         </div>
       </div>
-    </MainLayout>
+      </MainLayout>
+    </>
   );
 }
 

@@ -34,6 +34,8 @@ from django.db import transaction
 # HubSpot syncing is now handled automatically by Django signals
 # No need to manually import sync functions
 from hubspot.sync_utils import sync_project_to_hubspot
+from subscription.models import Subscription
+from payments.models import Payment
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,26 @@ class ProjectCreateAPIView(generics.CreateAPIView):
         has_seller = getattr(user, "role", None) == "seller"
         if not has_seller:
             raise PermissionDenied("Only users with seller role can create projects.")
+
+        # Membership gate: allow first project without membership; require active membership thereafter
+        # Count distinct paid projects for this seller
+        paid_projects_count = (
+            Payment.objects.filter(project__user=user, status="paid")
+            .values("project")
+            .distinct()
+            .count()
+        )
+        if paid_projects_count >= 1:
+            sub = Subscription.objects.filter(user=user).first()
+            is_active_member = bool(sub and sub.membership_active)
+            if not is_active_member:
+                return Response(
+                    {
+                        "detail": "Subscription required to create additional projects.",
+                        "code": "subscription_required",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Extract and process the form data
         data = {}
@@ -196,17 +218,19 @@ class ProjectStatusUpdateAPIView(APIView):
         project.save()
         # HubSpot sync now handled automatically by Django signals
 
-        # Create notification for the client
+        # Create notification for the client (translated)
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Project '{project.name}' has been started and is now in progress.",
+                user=project.client,
+                message="notifications.project_started_buyer",
+                project_name=project.name,
             )
 
-        # Create notification for the seller
+        # Create notification for the seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"You have started project '{project.name}' and it is now in progress.",
+            user=request.user,
+            message="notifications.project_started_seller",
+            project_name=project.name,
         )
 
         return Response(
@@ -284,22 +308,38 @@ class ProjectCompletionAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Verify payment is completed before marking project as completed
+        from payments.models import Payment
+        payment = Payment.objects.filter(project=project).order_by("-created_at").first()
+        if payment and payment.status != "paid":
+            return Response(
+                {
+                    "detail": "Project cannot be completed. Payment is not yet completed.",
+                    "error_type": "payment_not_completed",
+                    "payment_status": payment.status,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         # Update status to completed
         project.status = "completed"
         project.save()
         # HubSpot sync now handled automatically by Django signals
 
-        # Create notification for the client
+        # Create notification for the client (translated)
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Project '{project.name}' has been completed by {request.user.username}.",
+                user=project.client,
+                message="notifications.project_completed_buyer",
+                project_name=project.name,
+                seller_name=request.user.username,
             )
 
-        # Create notification for the seller
+        # Create notification for the seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"You have successfully completed project '{project.name}'.",
+            user=request.user,
+            message="notifications.project_completed_seller",
+            project_name=project.name,
         )
 
         return Response(
@@ -394,10 +434,12 @@ class ProjectInviteAPIView(APIView):
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have been added to the project '{project.name}' by {project.user.username}.",
+                user=request.user,
+                message="notifications.project_added",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
         # Return project details
@@ -477,10 +519,11 @@ class ProjectInviteAPIView(APIView):
             # Don't fail resend if email sending fails
             pass
 
-        # Notify seller
+        # Notify seller (translated)
         NotificationService.create_notification(
-            request.user,
-            f"A new invitation link has been generated for project '{project.name}'.",
+            user=request.user,
+            message="notifications.invitation_generated",
+            project_name=project.name,
         )
 
         return Response(
@@ -553,9 +596,11 @@ class ProjectInviteAPIView(APIView):
                 self._create_chat_contacts(project)
 
                 # Create notification for the buyer
-                Notification.objects.create(
+                NotificationService.create_notification(
                     user=request.user,
-                    message=f"You have been added to the project '{project.name}' by {project.user.username}.",
+                    message="notifications.project_added",
+                    project_name=project.name,
+                    seller_name=project.user.username
                 )
 
             return Response(
@@ -573,16 +618,20 @@ class ProjectInviteAPIView(APIView):
             # Create chat contacts for both seller and buyer
             self._create_chat_contacts(project)
 
-            # Create notification for the seller
+            # Create notification for the seller (translated)
             NotificationService.create_notification(
-                project.user,
-                f"Client {request.user.email} has approved the project '{project.name}'.",
+                user=project.user,
+                message="notifications.project_approved_seller",
+                client_email=request.user.email,
+                project_name=project.name,
             )
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have successfully approved the project '{project.name}' from {project.user.username}.",
+                user=request.user,
+                message="notifications.project_approved_buyer",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
             return Response(
@@ -597,16 +646,20 @@ class ProjectInviteAPIView(APIView):
             project.save()
             # HubSpot sync now handled automatically by Django signals
 
-            # Create notification for the seller
+            # Create notification for the seller (translated)
             NotificationService.create_notification(
-                project.user,
-                f"Client {request.user.email} has rejected the project '{project.name}'.",
+                user=project.user,
+                message="notifications.project_rejected_seller",
+                client_email=request.user.email,
+                project_name=project.name,
             )
 
-            # Create notification for the buyer
+            # Create notification for the buyer (translated)
             NotificationService.create_notification(
-                request.user,
-                f"You have rejected the project '{project.name}' from {project.user.username}.",
+                user=request.user,
+                message="notifications.project_rejected_buyer",
+                project_name=project.name,
+                seller_name=project.user.username,
             )
 
             return Response(
@@ -719,6 +772,20 @@ class MilestoneApprovalAPIView(APIView):
                 )
                 # Don't break the milestone approval flow if revenue tracking fails
 
+            # Sync milestone-related revenue metrics to HubSpot
+            try:
+                from hubspot.sync_utils import sync_revenue_to_hubspot
+                from django.db import transaction
+                now = timezone.now()
+                
+                # Sync milestone-related metrics (seller revenue + total revenue + milestones approved)
+                transaction.on_commit(
+                    lambda: sync_revenue_to_hubspot(now.year, now.month, "milestone_approved", sync_type="milestone")
+                )
+            except Exception as e:
+                logger.error(f"Error syncing milestone revenue to HubSpot: {e}")
+                # Don't break the milestone approval flow if HubSpot sync fails
+
         elif action_type == "not_approved":
             milestone.status = "not_approved"
             milestone.completion_date = None
@@ -772,19 +839,30 @@ class MilestoneApprovalAPIView(APIView):
                     .exists()
                 )
                 if not has_unapproved and project.status != "completed":
-                    project.status = "completed"
-                    project.save(update_fields=["status"])
+                    # Verify payment is completed before auto-completing project
+                    from payments.models import Payment
+                    payment = Payment.objects.filter(project=project).order_by("-created_at").first()
+                    if payment and payment.status == "paid":
+                        project.status = "completed"
+                        project.save(update_fields=["status"])
+                    elif payment and payment.status != "paid":
+                        logger.warning(f"Project {project.id} has all milestones approved but payment is not completed (status: {payment.status}). Not auto-completing project.")
+                    else:
+                        logger.warning(f"Project {project.id} has all milestones approved but no payment record found. Not auto-completing project.")
                     # Best-effort notifications; do not break flow on failure
                     try:
                         if project.user:
                             NotificationService.create_notification(
-                                project.user,
-                                f"Project '{project.name}' is now completed. Last Milestone: {milestone.name}, approved.",
+                                user=project.user,
+                                message="notifications.project_completed_milestone",
+                                project_name=project.name,
+                                milestone_name=milestone.name,
                             )
                         if project.client:
                             NotificationService.create_notification(
-                                project.client,
-                                f"Project '{project.name}' is now completed.",
+                                user=project.client,
+                                message="notifications.project_completed_final",
+                                project_name=project.name,
                             )
                     except Exception:
                         pass
@@ -803,24 +881,36 @@ class MilestoneApprovalAPIView(APIView):
         # Revenue sync will be triggered automatically on project completion
 
         project = milestone.project
-        status_msg = {
-            "approve": "approved",
-            "not_approved": "not approved",
-            "review_request": "sent for review",
-            "pending": "submitted for approval",
-        }.get(action_type, milestone.status)
+        
+        # Map action_type to human-readable status text (in English)
+        # The frontend will translate this based on the user's selected language
+        status_text_map = {
+            "approve": "Approved",
+            "not_approved": "Not Approved",
+            "review_request": "Sent for Review",
+            "pending": "Submitted for Approval",
+        }
+        
+        # Get the status text (in English)
+        status_text = status_text_map.get(action_type, milestone.status)
 
         # Notify seller
         if project.user:
             NotificationService.create_notification(
-                project.user,
-                f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}.",
+                user=project.user,
+                message="notifications.milestone_status_seller",
+                project_name=project.name,
+                milestone_name=milestone.name,
+                status=status_text
             )
         # Notify buyer/client
         if project.client:
             NotificationService.create_notification(
-                project.client,
-                f"Milestone '{milestone.name}' for project '{project.name}' was {status_msg}.",
+                user=project.client,
+                message="notifications.milestone_status_buyer",
+                project_name=project.name,
+                milestone_name=milestone.name,
+                status=status_text
             )
 
         return Response(
@@ -900,7 +990,8 @@ def seller_receipts(request):
 
     projects = (
         Project.objects.filter(user=user, status="completed")
-        .prefetch_related("milestones", "installments", "quote")
+        .prefetch_related("milestones", "installments", "quote", "payment_set")
+        .select_related("user__business_detail", "client__business_detail", "client__buyer_profile")
         .order_by("-created_at")
     )
     serializer = SellerReceiptProjectSerializer(projects, many=True)
@@ -921,7 +1012,8 @@ def buyer_receipts(request):
 
     projects = (
         Project.objects.filter(client=user, status="completed")
-        .prefetch_related("milestones", "installments", "quote")
+        .prefetch_related("milestones", "installments", "quote", "payment_set")
+        .select_related("user__business_detail", "client__business_detail", "client__buyer_profile")
         .order_by("-created_at")
     )
     serializer = SellerReceiptProjectSerializer(projects, many=True)

@@ -3,41 +3,58 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { createProject, resetProjectState } from '../../store/slices/ProjectSlice';
 import { fetchNotifications } from '../../store/slices/NotificationSlice';
+import { fetchSubscriptionEligibility } from '../../store/slices/SubscriptionSlice';
 import { toast } from 'react-toastify';
 import { Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SubscriptionCard from '../RegisterComponents/SellerReg/SubscriptionCard';
+import loginRemovedBg from '../../assets/Circle Background/login-removed-bg.jpg';
+import QuoteUploadModal from './QuoteUploadModal';
 
-const paymentConfigs = [
+const getPaymentConfigs = (t) => [
   [
-    { amount: '€1000', step: 'Quote Acceptance', desc: 'Full payment upon quote acceptance.' },
+    { amount: '€1000', step: 'Step 1', desc: 'Full payment upon quote acceptance.' },
   ],
   [
-    { amount: '€600', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€400', step: 'Project Completion', desc: 'Final payment upon project completion.' },
+    { amount: '€600', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€400', step: 'Step 2', desc: 'Final payment upon project completion.' },
   ],
   [
-    { amount: '€500', step: 'Quote Acceptance', desc: 'Initial payment upon quote acceptance.' },
-    { amount: '€300', step: 'Project Start', desc: 'Payment due at the start of the project.' },
-    { amount: '€200', step: 'Project Completion', desc: 'Final payment upon project completion.' },
+    { amount: '€500', step: 'Step 1', desc: 'Initial payment upon quote acceptance.' },
+    { amount: '€300', step: 'Step 2', desc: 'Payment due at the start of the project.' },
+    { amount: '€200', step: 'Step 3', desc: 'Final payment upon project completion.' },
   ],
 ];
+
+// Helper function to map step names to translation keys
+const getStepTranslationKey = (stepName) => {
+  const mapping = {
+    'Step 1': 'steps.step_1',
+    'Step 2': 'steps.step_2',
+    'Step 3': 'steps.step_3',
+  };
+  return mapping[stepName] || stepName;
+};
 
 export default function ProjectCreation() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading, error, success } = useSelector((state) => state.project);
+  const eligibility = useSelector((state) => state.subscription.eligibility);
+  const eligibilityLoading = useSelector((state) => state.subscription.eligibilityLoading);
   const [installments, setInstallments] = useState(3);
   const [clientEmail, setClientEmail] = useState('');
   const [projectName, setProjectName] = useState('');
   const [vatRate, setVatRate] = useState('20.0');
   const [quoteFile, setQuoteFile] = useState(null);
   const [fileError, setFileError] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const fileInputRef = useRef(null);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editRow, setEditRow] = useState({ amount: '', step: '', desc: '' });
   const [installmentRows, setInstallmentRows] = useState(
-    paymentConfigs[installments - 1].map(row => ({ ...row }))
+    getPaymentConfigs(t)[installments - 1].map(row => ({ ...row }))
   );
 
   // Calculate platform fee percentage based on total project amount (tiered system)
@@ -85,9 +102,14 @@ export default function ProjectCreation() {
 
   // Update rows when installments count changes
   React.useEffect(() => {
-    setInstallmentRows(paymentConfigs[installments - 1].map(row => ({ ...row })));
+    setInstallmentRows(getPaymentConfigs(t)[installments - 1].map(row => ({ ...row })));
     setEditingIndex(null);
-  }, [installments]);
+  }, [installments, t]);
+
+  // Fetch subscription eligibility on mount
+  useEffect(() => {
+    dispatch(fetchSubscriptionEligibility());
+  }, [dispatch]);
 
   const handleEdit = (idx) => {
     setEditingIndex(idx);
@@ -100,7 +122,7 @@ export default function ProjectCreation() {
 
   const handleEditSave = (idx) => {
     const updated = [...installmentRows];
-    updated[idx] = { ...editRow };
+    updated[idx] = { ...editRow, step: installmentRows[idx].step };
     setInstallmentRows(updated);
     setEditingIndex(null);
   };
@@ -112,8 +134,23 @@ export default function ProjectCreation() {
   const handleFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      setFileError(t('project_creation.only_pdf_allowed'));
+    // Allow PDF and image files
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError(t('project_creation.invalid_file_type'));
+      setQuoteFile(null);
+      return;
+    }
+    setFileError('');
+    setQuoteFile(file);
+  };
+
+  const handleFileSelect = (file) => {
+    if (!file) return;
+    // Allow PDF and image files
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError(t('project_creation.invalid_file_type'));
       setQuoteFile(null);
       return;
     }
@@ -125,6 +162,11 @@ export default function ProjectCreation() {
     e.preventDefault();
     if (!projectName || !clientEmail || !quoteFile) {
       toast.error(t('project_creation.fill_all_fields'));
+      return;
+    }
+    // Check subscription eligibility before submitting
+    if (eligibility?.needs_subscription && !eligibility?.membership_active) {
+      toast.error(t('subscription.errors.precheck'));
       return;
     }
     const selectedConfig = installmentRows.map(row => ({
@@ -214,17 +256,39 @@ export default function ProjectCreation() {
       setClientEmail('');
       setQuoteFile(null);
       dispatch(fetchNotifications());
+      // Refresh eligibility after successful project creation
+      dispatch(fetchSubscriptionEligibility());
       navigate('/my-quotes');
     } else if (error) {
-      const message = normalizeError(error);
-      toast.error(message || t('common.unexpected_error'));
+      const errData = error?.response?.data || error;
+      const code = errData?.code || errData?.detail;
+      if (code === 'subscription_required' || (typeof code === 'string' && code.includes('subscription'))) {
+        toast.error(t('subscription.errors.required_backend'));
+        dispatch(fetchSubscriptionEligibility());
+      } else {
+        const message = normalizeError(error);
+        toast.error(message || t('common.unexpected_error'));
+      }
       dispatch(resetProjectState());
     }
   }, [success, error, dispatch, t, navigate, normalizeError]);
 
   return (
-    <div className="max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-4">
-      <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">{t('project_creation.title')}</h1>
+    <div className="relative -m-6 min-h-screen">
+      {/* Full-page background layer */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-[length:100%]"
+        style={{ backgroundImage: `url(${loginRemovedBg})` }}
+      />
+      <div className="max-w-5xl mx-auto relative z-10 py-4 sm:py-10 px-2 sm:px-4">
+        <h1 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8 text-[#2E78A6]">{t('project_creation.title')}</h1>
+
+      {/* Subscription Card - shown when needs_subscription is true */}
+      {eligibility?.needs_subscription && !eligibility?.membership_active && (
+        <div className="mb-6 sm:mb-8">
+          <SubscriptionCard />
+        </div>
+      )}
 
       {/* Project Name Section */}
       <div className="mb-6 sm:mb-10">
@@ -246,15 +310,15 @@ export default function ProjectCreation() {
           <div className="text-gray-500 mb-3 sm:mb-4 text-center text-xs sm:text-sm">{t('project_creation.drag_drop_message')}</div>
           <input
             type="file"
-            accept="application/pdf"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
             className="hidden"
             ref={fileInputRef}
             onChange={handleFileChange}
           />
           <button
             type="button"
-            className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors cursor-pointer text-sm sm:text-base"
-            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            className="px-4 sm:px-6 py-2 bg-[#2E78A6] text-white rounded-md font-semibold hover:bg-[#256a94] transition-colors cursor-pointer text-sm sm:text-base"
+            onClick={() => setShowUploadModal(true)}
           >
             {quoteFile ? t('project_creation.change_file') : t('project_creation.upload')}
           </button>
@@ -282,6 +346,13 @@ export default function ProjectCreation() {
           )}
         </div>
       </div>
+
+      {/* Quote Upload Modal */}
+      <QuoteUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onFileSelect={handleFileSelect}
+      />
 
       {/* Payment Configuration */}
       <div className="mb-6 sm:mb-10">
@@ -325,14 +396,8 @@ export default function ProjectCreation() {
                           className="w-16 sm:w-20 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
                         />
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
-                        <input
-                          type="text"
-                          name="step"
-                          value={editRow.step}
-                          onChange={handleEditChange}
-                          className="w-24 sm:w-32 px-1 sm:px-2 py-1 border rounded text-xs sm:text-sm"
-                        />
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-gray-700">
+                        {t(getStepTranslationKey(milestone.step))}
                       </td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3">
                         <input
@@ -363,7 +428,7 @@ export default function ProjectCreation() {
                   ) : (
                     <>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium">€{milestone.amount.toLocaleString()}</td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{milestone.step}</td>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#01257D] font-medium">{t(getStepTranslationKey(milestone.step))}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-gray-600">{milestone.desc}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-red-600">-€{(milestone.platformFee).toLocaleString()}</td>
                       <td className="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-green-600">€{milestone.netAmount.toLocaleString()}</td>
@@ -428,12 +493,13 @@ export default function ProjectCreation() {
           />
           <button
             type="submit"
-            className="px-4 sm:px-6 py-2 bg-[#01257D] text-white rounded-md font-semibold hover:bg-[#2346a0] transition-colors w-full sm:w-auto cursor-pointer text-sm sm:text-base"
+            className="px-4 sm:px-6 py-2 bg-[#2E78A6] text-white rounded-md font-semibold hover:bg-[#256a94] transition-colors w-full sm:w-auto cursor-pointer text-sm sm:text-base"
             disabled={loading}
           >
             {loading ? t('project_creation.sending') : t('project_creation.send_payment_invitation')}
           </button>
         </form>
+      </div>
       </div>
     </div>
   );

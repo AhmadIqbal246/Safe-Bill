@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchDisputes } from '../store/slices/DisputeSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import Footer from '../components/mutualComponents/Footer';
 import { Search, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function DisputesPage() {
   const { t } = useTranslation();
@@ -89,13 +91,19 @@ export default function DisputesPage() {
     return (
       <>
         <SafeBillHeader />
-        <div className="min-h-screen bg-gray-50 p-4">
-          <div className="max-w-7xl mx-auto">
+        <div className="relative min-h-screen p-4">
+          {/* Full-page background layer */}
+          <div
+            className="absolute inset-0 -z-10 bg-center md:bg-top bg-no-repeat bg-cover"
+            style={{ backgroundImage: `url(${LoginBg})` }}
+          />
+          <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center py-12">
               <div className="text-lg text-gray-500">{t('disputes.loading_disputes')}</div>
             </div>
           </div>
         </div>
+        <Footer />
       </>
     );
   }
@@ -104,8 +112,13 @@ export default function DisputesPage() {
     return (
       <>
         <SafeBillHeader />
-        <div className="min-h-screen bg-gray-50 p-4">
-          <div className="max-w-7xl mx-auto">
+        <div className="relative min-h-screen p-4">
+          {/* Full-page background layer */}
+          <div
+            className="absolute inset-0 -z-10 bg-center md:bg-top bg-no-repeat bg-cover"
+            style={{ backgroundImage: `url(${LoginBg})` }}
+          />
+          <div className="max-w-7xl mx-auto relative z-10">
             <div className="text-center py-12">
               <div className="text-lg text-red-500">
                 {typeof disputesError === 'string' ? disputesError : t('disputes.failed_load_disputes')}
@@ -113,6 +126,7 @@ export default function DisputesPage() {
             </div>
           </div>
         </div>
+        <Footer />
       </>
     );
   }
@@ -120,17 +134,22 @@ export default function DisputesPage() {
   return (
     <>
       <SafeBillHeader />
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="relative min-h-screen p-4">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-contain md:bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="max-w-7xl mx-auto relative z-10">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{t('disputes.title')}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#2E78A6] mb-2">{t('disputes.title')}</h1>
               <p className="text-gray-600">{t('disputes.subtitle')}</p>
             </div>
             <button
               onClick={() => navigate('/dispute-submit')}
-              className="mt-4 sm:mt-0 px-6 py-3 bg-[#01257D] text-white rounded-lg hover:bg-[#2346a0] transition-colors font-medium cursor-pointer"
+              className="mt-4 sm:mt-0 px-6 py-3 bg-[#2E78A6] text-white rounded-lg hover:bg-[#256a94] transition-colors font-medium cursor-pointer"
             >
               {t('disputes.create_new_dispute')}
             </button>
@@ -233,6 +252,7 @@ export default function DisputesPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 } 

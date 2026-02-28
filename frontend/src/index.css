@@ -74,6 +74,36 @@
   --color-secondary-900: #581c87;
 }
 
+:root {
+  /* Shared positioning reference for floating chat UI + HubSpot widget */
+  --chat-fab-right: 5rem;
+  --chat-fab-bottom: 1.5rem;
+  --hubspot-icon-right: 0rem;
+  --hubspot-icon-bottom-desktop: 0.75rem;
+  --hubspot-icon-bottom-mobile: 0.4rem;
+}
+
+.chat-fab-anchor {
+  right: var(--chat-fab-right);
+  bottom: var(--chat-fab-bottom);
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --chat-fab-right: 2rem;
+    --chat-fab-bottom: 0.85rem;
+    --hubspot-icon-right: 0rem;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --chat-fab-right: 4.3rem;
+    --chat-fab-bottom: 0.7rem;
+    --hubspot-icon-right: 0rem;
+  }
+}
+
 
 /* Custom scrollbar styles for pending projects section */
 .custom-scrollbar::-webkit-scrollbar {
@@ -115,4 +145,37 @@
 
 .fade-in-up {
   animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* HubSpot widget offset to avoid overlapping with in-app chat button */
+#hubspot-messages-iframe-container,
+[id^="hubspot-messages-iframe-container"],
+iframe[data-hs-messages-widget] {
+  bottom: 90px !important; /* sit above 64px FAB + spacing */
+  right: var(--chat-fab-right) !important;
+  z-index: 999999 !important; /* ensure visibility */
+}
+
+html:not(.hs-chat-open) #hubspot-messages-iframe-container,
+html:not(.hs-chat-open) [id^="hubspot-messages-iframe-container"],
+html:not(.hs-chat-open) iframe[data-hs-messages-widget] {
+  bottom: var(--hubspot-icon-bottom-desktop) !important;
+  right: var(--hubspot-icon-right) !important;
+  top: auto !important;
+}
+
+@media (max-width: 640px) {
+  html:not(.hs-chat-open) #hubspot-messages-iframe-container,
+  html:not(.hs-chat-open) [id^="hubspot-messages-iframe-container"],
+  html:not(.hs-chat-open) iframe[data-hs-messages-widget] {
+    bottom: var(--hubspot-icon-bottom-mobile) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  #hubspot-messages-iframe-container,
+  [id^="hubspot-messages-iframe-container"],
+  iframe[data-hs-messages-widget] {
+    bottom: 160px !important; /* extra room on smaller screens */
+  }
 }

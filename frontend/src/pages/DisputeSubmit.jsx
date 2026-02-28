@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAvailableProjects, createDispute, clearDisputeErrors } from '../store/slices/DisputeSlice';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import Footer from '../components/mutualComponents/Footer';
 import { Upload, X, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import LoginBg from '../assets/Circle Background/login-removed-bg.jpg';
 
 export default function DisputeSubmit() {
   const { t } = useTranslation();
@@ -159,11 +161,17 @@ export default function DisputeSubmit() {
     return (
       <>
         <SafeBillHeader />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
+        <div className="relative min-h-screen flex items-center justify-center">
+          {/* Full-page background layer */}
+          <div
+            className="absolute inset-0 -z-10 bg-center md:bg-top bg-no-repeat bg-cover"
+            style={{ backgroundImage: `url(${LoginBg})` }}
+          />
+          <div className="text-center relative z-10">
             <div className="text-lg text-gray-500">{t('dispute_submit.loading_projects')}</div>
           </div>
         </div>
+        <Footer />
       </>
     );
   }
@@ -171,8 +179,13 @@ export default function DisputeSubmit() {
   return (
     <>
       <SafeBillHeader />
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="relative min-h-screen p-4">
+        {/* Full-page background layer */}
+        <div
+          className="absolute inset-0 -z-10 bg-center md:bg-top bg-no-repeat bg-cover"
+          style={{ backgroundImage: `url(${LoginBg})` }}
+        />
+        <div className="max-w-4xl mx-auto relative z-10">
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
@@ -183,7 +196,7 @@ export default function DisputeSubmit() {
 
           {/* Form Container */}
           <div className="bg-white rounded-lg shadow-sm p-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-8">{t('dispute_submit.title')}</h1>
+            <h1 className="text-2xl font-bold text-[#2E78A6] mb-8">{t('dispute_submit.title')}</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Project Selection */}
@@ -376,6 +389,7 @@ export default function DisputeSubmit() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

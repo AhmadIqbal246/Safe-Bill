@@ -129,7 +129,7 @@ def create_stripe_payment(request, project_id):
         Payment.objects.filter(project=project, user=user).delete()
 
         # Create new payment record
-        Payment.objects.create(
+        payment = Payment.objects.create(
             user=user,
             amount=amount,
             platform_fee_amount=platform_fee,
@@ -139,6 +139,14 @@ def create_stripe_payment(request, project_id):
             project=project,
             stripe_payment_id=checkout_session.id,
         )
+
+        # Enqueue HubSpot update to apply real payment data to existing project-based record
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            # Do not block checkout on HubSpot task enqueue errors
+            pass
         project.status = "payment_in_progress"
         project.save()
         return Response(
@@ -812,8 +820,7 @@ def update_refund_balance(request, milestone_id):
 
         NotificationService.create_notification(
             user=project.client,
-            message="Refund balance updated successfully",
-            notification_type="refund_balance_updated",
+            message="notifications.refund_balance_updated"
         )
         return Response({"detail": "Refund updated successfully"}, status=200)
     except Exception as e:

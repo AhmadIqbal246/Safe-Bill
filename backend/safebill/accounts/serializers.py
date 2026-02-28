@@ -7,6 +7,7 @@ from .models import BankAccount
 import json
 from connect_stripe.models import StripeAccount, StripeIdentity
 from payments.models import Balance
+from subscription.models import Subscription
 from django.db import transaction
 from hubspot.tasks import sync_company_task
 
@@ -214,6 +215,18 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Use stored onboarding completion fields
         token["seller_onboarding_complete"] = user.seller_onboarding_complete
         token["pro_buyer_onboarding_complete"] = user.pro_buyer_onboarding_complete
+
+        # Add subscription data to token
+        try:
+            subscription = Subscription.objects.get(user=user)
+            token["membership_active"] = subscription.membership_active
+            token["subscription_status"] = subscription.status
+            token["subscription_current_period_end"] = subscription.current_period_end.isoformat() if subscription.current_period_end else None
+        except Subscription.DoesNotExist:
+            token["membership_active"] = False
+            token["subscription_status"] = ""
+            token["subscription_current_period_end"] = None
+
         return token
 
 
@@ -344,6 +357,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     rating_count = serializers.SerializerMethodField()
     seller_onboarding_complete = serializers.BooleanField(read_only=True)
     pro_buyer_onboarding_complete = serializers.BooleanField(read_only=True)
+    membership_active = serializers.SerializerMethodField()
+    subscription_status = serializers.SerializerMethodField()
+    subscription_current_period_end = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -364,6 +380,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "active_role",
             "seller_onboarding_complete",
             "pro_buyer_onboarding_complete",
+            "membership_active",
+            "subscription_status",
+            "subscription_current_period_end",
         ]
         read_only_fields = [
             "email",
@@ -371,6 +390,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "active_role",
             "seller_onboarding_complete",
             "pro_buyer_onboarding_complete",
+            "membership_active",
+            "subscription_status",
+            "subscription_current_period_end",
         ]
 
     def get_type_of_activity(self, obj):
@@ -408,6 +430,27 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_rating_count(self, obj):
         return obj.rating_count
+
+    def get_membership_active(self, obj):
+        try:
+            subscription = Subscription.objects.get(user=obj)
+            return subscription.membership_active
+        except Subscription.DoesNotExist:
+            return False
+
+    def get_subscription_status(self, obj):
+        try:
+            subscription = Subscription.objects.get(user=obj)
+            return subscription.status
+        except Subscription.DoesNotExist:
+            return ""
+
+    def get_subscription_current_period_end(self, obj):
+        try:
+            subscription = Subscription.objects.get(user=obj)
+            return subscription.current_period_end
+        except Subscription.DoesNotExist:
+            return None
 
 
     def update(self, instance, validated_data):

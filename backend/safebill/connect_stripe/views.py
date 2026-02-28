@@ -151,7 +151,7 @@ def stripe_connect_webhook(request):
                 # Send notification for successful Stripe onboarding
                 NotificationService.create_notification(
                     user,
-                    "Your Stripe account has been successfully verified and is now active. You can now receive payments.",
+                    message="notifications.stripe_onboarding_complete"
                 )
 
                 logger.info(
@@ -217,7 +217,7 @@ def stripe_connect_webhook(request):
             # Send notification for Stripe account disconnection
             NotificationService.create_notification(
                 stripe_account.user,
-                "Your Stripe account has been disconnected. You will no longer be able to receive payments until you reconnect.",
+                message="notifications.stripe_account_disconnected"
             )
 
             logger.info(
@@ -539,7 +539,7 @@ def stripe_identity_webhook(request):
             # Send notification for successful identity verification
             NotificationService.create_notification(
                 user,
-                "Your identity has been successfully verified!",
+                message="notifications.identity_verification_success"
             )
 
             logger.info(
@@ -590,7 +590,7 @@ def stripe_identity_webhook(request):
             # Send notification for failed identity verification
             NotificationService.create_notification(
                 stripe_identity.user,
-                "Your identity verification has failed. Please try again!",
+                message="notifications.identity_verification_failed"
             )
 
             logger.info(
@@ -643,14 +643,22 @@ def stripe_identity_webhook(request):
         payment.webhook_response = event
         payment.save()
 
-        # Enqueue HubSpot Revenue monthly sync with transaction safety
+        # Update HubSpot Payments record via task (keeps Payments object in sync)
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
+
+        # Enqueue HubSpot Revenue monthly sync for payment metrics only
         from hubspot.sync_utils import sync_revenue_to_hubspot
         from django.db import transaction
         now = timezone.now()
         
         # Ensure revenue sync only happens after database commit
+        # Only sync payment-related metrics (VAT collected + total payments)
         transaction.on_commit(
-            lambda: sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success")
+            lambda: sync_revenue_to_hubspot(now.year, now.month, "payment_webhook_success", sync_type="payment")
         )
 
         try:
@@ -710,11 +718,14 @@ def stripe_identity_webhook(request):
         # Send notifications for successful payment
         NotificationService.create_notification(
             project.user,
-            f"Project '{project.name}' has been approved.",
+            message="notifications.project_approved_seller",
+            project_name=project.name
         )
         NotificationService.create_notification(
             project.client,
-            f"Your payment of {payment.amount} for project '{project.name}' has been processed successfully.",
+            message="notifications.payment_processed_buyer",
+            amount=str(payment.amount),
+            project_name=project.name
         )
 
         # Send WebSocket update
@@ -789,11 +800,14 @@ def stripe_identity_webhook(request):
 
         NotificationService.create_notification(
             project.user,
-            f"Project '{project.name}' has been approved.",
+            message="notifications.project_approved_seller",
+            project_name=project.name
         )
         NotificationService.create_notification(
             project.client,
-            f"Your payment of {payment_obj.amount} for project '{project.name}' has been processed successfully.",
+            message="notifications.payment_processed_buyer",
+            amount=str(payment_obj.amount),
+            project_name=project.name
         )
 
         send_payment_websocket_update(
@@ -813,6 +827,13 @@ def stripe_identity_webhook(request):
         payment.status = "pending"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
         project = Project.objects.get(id=project_id)
         project.status = "pending"
         project.save()
@@ -820,7 +841,8 @@ def stripe_identity_webhook(request):
         # Send notifications for expired payment session
         NotificationService.create_notification(
             project.client,
-            f"Your payment session for project '{project.name}' has expired.",
+            message="notifications.payment_session_expired",
+            project_name=project.name
         )
 
         # Send WebSocket update
@@ -841,6 +863,13 @@ def stripe_identity_webhook(request):
         payment.status = "failed"
         payment.webhook_response = event
         payment.save()
+
+        # Update HubSpot Payments record via task
+        try:
+            from hubspot.tasks import sync_payment_to_hubspot
+            sync_payment_to_hubspot.delay(payment_id=payment.id)
+        except Exception:
+            pass
         project = Project.objects.get(id=project_id)
         project.status = "pending"
         project.save()
@@ -872,7 +901,8 @@ def stripe_identity_webhook(request):
         # Send notifications for failed payment
         NotificationService.create_notification(
             project.client,
-            f"Payment for project '{project.name}' has failed.",
+            message="notifications.payment_failed",
+            project_name=project.name
         )
 
         # Send WebSocket update

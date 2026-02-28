@@ -68,6 +68,12 @@ class Project(models.Model):
         default=10.0,
         help_text="Platform fee percentage applied to this project (e.g. 10.0 for 10%)",
     )
+    hubspot_payment_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="HubSpot payment record ID for this project",
+    )
 
     class Meta:
         # Added: prevent self-projects where seller and client are the same user
@@ -88,9 +94,41 @@ class Quote(models.Model):
     )
     file = models.FileField(upload_to="quotes/")
     reference_number = models.CharField(max_length=20, unique=True)
+    platform_invoice_reference = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="Permanent platform invoice reference number (auto-generated, non-editable)"
+    )
 
     def __str__(self):
         return f"{self.reference_number} for {self.project.name}"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate platform_invoice_reference if not already set
+        if not self.platform_invoice_reference:
+            from django.utils import timezone
+            year = timezone.now().year
+            
+            # Get the highest existing platform_invoice_reference for this seller in current year
+            latest = Quote.objects.filter(
+                project__user=self.project.user,
+                platform_invoice_reference__startswith=f"{year}-"
+            ).order_by("-platform_invoice_reference").first()
+            
+            # Calculate next sequential number
+            if latest:
+                latest_num = int(latest.platform_invoice_reference.split("-")[1])
+                next_num = latest_num + 1
+            else:
+                next_num = 1
+            
+            # Generate reference in format YYYY-0001
+            self.platform_invoice_reference = f"{year}-{str(next_num).zfill(4)}"
+        
+        super().save(*args, **kwargs)
 
 
 class PaymentInstallment(models.Model):

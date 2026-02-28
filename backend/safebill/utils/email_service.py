@@ -64,6 +64,7 @@ class EmailService:
         from_email: Optional[str] = None,
         fail_silently: bool = False,
         language: str = "fr",
+        connection=None,
     ) -> bool:
         """
         Send an HTML email using Django templates.
@@ -76,6 +77,7 @@ class EmailService:
             from_email: Sender email address (defaults to
             settings.DEFAULT_FROM_EMAIL)
             fail_silently: Whether to fail silently on errors
+            connection: Optional SMTP connection to reuse (for batch emails)
 
         Returns:
             bool: True if email was sent successfully, False otherwise
@@ -107,13 +109,22 @@ class EmailService:
             # Create plain text version by stripping HTML tags
             text_content = strip_tags(html_content)
 
-            # Create email message
-            msg = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
-                from_email=from_email,
-                to=recipient_list,
-            )
+            # Create email message (attach provided SMTP connection if any)
+            if connection:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_content,
+                    from_email=from_email,
+                    to=recipient_list,
+                    connection=connection,
+                )
+            else:
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_content,
+                    from_email=from_email,
+                    to=recipient_list,
+                )
 
             # Attach HTML version with proper MIME type
             msg.attach_alternative(html_content, "text/html; charset=UTF-8")
@@ -125,7 +136,8 @@ class EmailService:
                 "X-MSMail-Priority": "Normal",
             }
 
-            # Send email
+            # Send email (EmailMessage.send does not accept a 'connection' kwarg)
+            # When a connection is provided above, it's attached on the message instance
             msg.send(fail_silently=fail_silently)
 
             logger.info(
@@ -243,7 +255,7 @@ class EmailService:
             "user_type": user_type,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -382,7 +394,7 @@ class EmailService:
             "message_preview": message_preview,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -412,7 +424,7 @@ class EmailService:
         Notify the buyer that the seller has requested approval for a milestone.
         """
         if not dashboard_url:
-            dashboard_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+            dashboard_url = f"{settings.FRONTEND_URL}buyer-dashboard"
 
         context = {
             "user_name": user_name,
@@ -465,7 +477,7 @@ class EmailService:
             "professional_id": professional_id,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -499,7 +511,7 @@ class EmailService:
             "to_email": to_email,
             "site_name": "Safe Bill",
             "support_email": settings.DEFAULT_FROM_EMAIL,
-            "dashboard_url": f"{settings.FRONTEND_URL}/dashboard",
+            "dashboard_url": f"{settings.FRONTEND_URL}login",
             "logo_url": EmailService._get_logo_url(),
         }
 
@@ -511,6 +523,37 @@ class EmailService:
             subject=subject,
             recipient_list=[sender_email],
             template_name="quote_request_confirmation",
+            context=context,
+            language=language,
+        )
+
+    @staticmethod
+    def send_callback_request_confirmation(
+        user_email: str,
+        first_name: str,
+        language: str = 'fr',
+    ) -> bool:
+        """
+        Send confirmation email to a user who submitted a callback request.
+        """
+        contact_url = f"{settings.FRONTEND_URL}contact-us"
+
+        context = {
+            "first_name": first_name,
+            "contact_url": contact_url,
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        # Localize subject
+        with translation.override(language):
+            subject = translation.gettext("We received your callback request")
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="Lead Nuturing Emails/callback_request_confirmation",
             context=context,
             language=language,
         )
@@ -574,7 +617,7 @@ class EmailService:
         Send payment success email to client.
         """
         if not dashboard_url:
-            dashboard_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+            dashboard_url = f"{settings.FRONTEND_URL}buyer-dashboard"
 
         context = {
             "user_name": user_name,
@@ -611,7 +654,7 @@ class EmailService:
         Notify the seller that the buyer has credited the payment so the project can start.
         """
         if not dashboard_url:
-            dashboard_url = f"{settings.FRONTEND_URL}/seller-dashboard"
+            dashboard_url = f"{settings.FRONTEND_URL}seller-dashboard"
 
         context = {
             "user_name": user_name,
@@ -647,7 +690,7 @@ class EmailService:
         Send payment failed email to client.
         """
         if not retry_url:
-            retry_url = f"{settings.FRONTEND_URL}/buyer-dashboard"
+            retry_url = f"{settings.FRONTEND_URL}buyer-dashboard"
 
         context = {
             "user_name": user_name,
@@ -669,4 +712,107 @@ class EmailService:
             template_name="payment_failed_client",
             context=context,
             language=language,
+        )
+# Sending email to that user who is not involvced in any project
+    @staticmethod
+    def send_no_project_nurture_email(
+        user_email: str,
+        first_name: str,
+        step: str,
+        language: str = 'fr',
+        connection=None,
+    ) -> bool:
+        """Send lead nurturing email to users with no projects (day7/day14/day30)."""
+        # Choose CTA based on common flows
+        # Sellers: project creation; Buyers: find professionals; generic dashboard/home as fallback
+        login_url = f"{settings.FRONTEND_URL}login"
+        find_professionals_url = f"{settings.FRONTEND_URL}find-professionals"
+        dashboard_url = f"{settings.FRONTEND_URL}login"
+
+        context = {
+            "first_name": first_name,
+            "login_url": login_url,
+            "find_professionals_url": find_professionals_url,
+            "dashboard_url": dashboard_url,
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            if step == 'day14':
+                subject = translation.gettext("Explore what you can do with Safe Bill")
+                template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day14"
+            elif step == 'day30':
+                subject = translation.gettext("We’re here to help you get started")
+                template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day30"
+            else:
+                logger.info("Day 7 no-project nurture email temporarily disabled; skipping send")
+                return False
+                # subject = translation.gettext("Get started on Safe Bill today")
+                # template = "Lead Nuturing Emails/No Project Emails Nuturing/no_project_day7"
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name=template,
+            context=context,
+            language=language,
+            connection=connection,
+        )
+
+    @staticmethod
+    def send_reengage_login_email(
+        user_email: str,
+        first_name: str,
+        language: str = 'fr',
+        connection=None,
+    ) -> bool:
+        """Send a one-time re-login reminder email after inactivity."""
+        context = {
+            "first_name": first_name,
+            "login_url": f"{settings.FRONTEND_URL}login",
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            subject = translation.gettext("We miss you at Safe Bill - log in to continue")
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="Lead Nuturing Emails/Relogin emails/reengage_login_day10",
+            context=context,
+            language=language,
+            connection=connection,
+        )
+
+    @staticmethod
+    def send_success_story_email(
+        user_email: str,
+        first_name: str,
+        language: str = 'fr',
+        connection=None,
+    ) -> bool:
+        """Send the 20-day success story motivation email (localized)."""
+        context = {
+            "first_name": first_name,
+            "login_url": f"{settings.FRONTEND_URL}login",
+            "site_name": "Safe Bill",
+            "support_email": settings.DEFAULT_FROM_EMAIL,
+            "logo_url": EmailService._get_logo_url(),
+        }
+
+        with translation.override(language):
+            subject = translation.gettext("How others succeeded on Safe Bill — start your story")
+
+        return EmailService.send_email(
+            subject=subject,
+            recipient_list=[user_email],
+            template_name="Lead Nuturing Emails/Success Story Emails/success_story_day20",
+            context=context,
+            language=language,
+            connection=connection,
         )

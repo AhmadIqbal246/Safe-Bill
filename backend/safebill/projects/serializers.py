@@ -9,9 +9,14 @@ import secrets
 from utils.email_service import EmailService
 from django.conf import settings
 from notifications.models import Notification
+from notifications.services import NotificationService
 from django.db.models import Sum
 from .tasks import send_project_invitation_email_task
 from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
+
 # HubSpot syncing is now handled automatically by Django signals
 class PaymentInstallmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,6 +30,33 @@ class QuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
         fields = ["file", "reference_number"]
+
+    def validate_file(self, value):
+        """
+        Validate that the uploaded file is either a PDF or an image.
+        """
+        if value:
+            # Check file extension
+            allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png', '.webp']
+            file_name = value.name.lower()
+            if not any(file_name.endswith(ext) for ext in allowed_extensions):
+                raise serializers.ValidationError(
+                    "Only PDF and image files (JPEG, PNG, WEBP) are allowed."
+                )
+            # Check MIME type if available
+            if hasattr(value, 'content_type'):
+                allowed_types = [
+                    'application/pdf',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/webp'
+                ]
+                if value.content_type not in allowed_types:
+                    raise serializers.ValidationError(
+                        "Only PDF and image files (JPEG, PNG, WEBP) are allowed."
+                    )
+        return value
 
 
 class MilestoneSerializer(serializers.ModelSerializer):
@@ -254,21 +286,31 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         for inst in installments_data:
             # Create the payment installment
             installment = PaymentInstallment.objects.create(project=project, **inst)
-
+    
             # Create milestone based on the installment
+            # Keep step identifier as-is (step_1, step_2, step_3) - frontend will translate
             ms = Milestone.objects.create(
                 project=project,
                 related_installment=installment,  # Link to the installment
-                name=inst["step"],  # Use step as milestone name
+                name=inst["step"],  # Store step identifier (step_1, step_2, step_3)
                 description=inst["description"],  # Use description as
                 relative_payment=inst["amount"],  # Use amount as relative
                 status="not_submitted",  # Default status
                 # Other fields will be empty and can be edited later
             )
             created_milestones.append(ms.id)
-
-        # HubSpot sync now handled automatically by Django signals
-        # Project and milestone creation will trigger sync signals automatically
+    
+        # Trigger initial HubSpot deal sync AFTER installments are created
+        # to ensure the full project amount is available for the deal.
+        try:
+            from hubspot.sync_utils import sync_project_to_hubspot
+            sync_result = sync_project_to_hubspot(
+                project_id=project.id,
+                reason="project_created",
+            )
+            logger.info(f"Project {project.id} initial HubSpot sync result: {sync_result}")
+        except Exception as e:
+            logger.error(f"Failed to trigger initial HubSpot sync for project {project.id}: {e}")
 
         # Send invite email to client asynchronously via Celery
         frontend_url = settings.FRONTEND_URL.rstrip("/")
@@ -291,16 +333,15 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             )
         except Exception as e:
             # Log the error but don't fail project creation
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.error(
                 f"Failed to send project invitation email to "
                 f"{project.client_email}: {str(e)}"
             )
         # Create notification for the user
-        Notification.objects.create(
-            user=user, message=f"New project '{project.name}' created."
+        NotificationService.create_notification(
+            user=user, 
+            message="notifications.project_created",
+            project_name=project.name
         )
         return project
 
@@ -446,6 +487,7 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     """
 
     reference_number = serializers.SerializerMethodField()
+    platform_invoice_reference = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
     quote = QuoteSerializer()
     installments = PaymentInstallmentSerializer(many=True)
@@ -454,8 +496,17 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
     completion_date = serializers.SerializerMethodField()
     seller_username = serializers.CharField(source="user.username", read_only=True)
     seller_email = serializers.EmailField(source="user.email", read_only=True)
+    seller_address = serializers.SerializerMethodField()
+    seller_siret = serializers.SerializerMethodField()
+    seller_company = serializers.SerializerMethodField()
+    seller_phone = serializers.SerializerMethodField()
     buyer_username = serializers.CharField(source="client.username", read_only=True)
     buyer_email = serializers.EmailField(source="client.email", read_only=True)
+    buyer_full_name = serializers.SerializerMethodField()
+    buyer_address = serializers.SerializerMethodField()
+    payment_id = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
+    payment_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
@@ -466,6 +517,7 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "installments",
             "milestones",
             "reference_number",
+            "platform_invoice_reference",
             "total_amount",
             "created_at",
             "completion_date",
@@ -475,13 +527,27 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             "platform_fee_percentage",
             "seller_username",
             "seller_email",
+            "seller_address",
+            "seller_siret",
+            "seller_company",
+            "seller_phone",
             "buyer_username",
             "buyer_email",
+            "buyer_full_name",
+            "buyer_address",
+            "payment_id",
+            "payment_status",
+            "payment_date",
         ]
 
     def get_reference_number(self, obj):
         if hasattr(obj, "quote") and obj.quote:
             return obj.quote.reference_number
+        return None
+
+    def get_platform_invoice_reference(self, obj):
+        if hasattr(obj, "quote") and obj.quote:
+            return obj.quote.platform_invoice_reference
         return None
 
     def get_total_amount(self, obj):
@@ -495,3 +561,112 @@ class SellerReceiptProjectSerializer(serializers.ModelSerializer):
             .first()
         )
         return latest.completion_date.strftime("%Y-%m-%d %H:%M:%S") if latest else None
+
+    def get_payment_id(self, obj):
+        """Get the Stripe payment ID for this project"""
+        try:
+            from payments.models import Payment
+            payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
+            return payment.stripe_payment_id if payment else None
+        except Exception:
+            return None
+
+    def get_payment_status(self, obj):
+        """Get the payment status for this project"""
+        try:
+            from payments.models import Payment
+            payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
+            
+            # If project is completed, payment should be paid
+            if obj.status == "completed" and payment:
+                # Ensure payment status is consistent with project completion
+                if payment.status == "pending":
+                    # Log this inconsistency for debugging
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Project {obj.id} is completed but payment {payment.id} is still pending. This should not happen.")
+                    # Return "paid" since completed projects imply successful payment
+                    return "paid"
+                return payment.status
+            elif obj.status == "completed" and not payment:
+                # Project is completed but no payment record - this is an error
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Project {obj.id} is completed but has no payment record. This is a data inconsistency.")
+                return "paid"  # Assume paid since project is completed
+            
+            return payment.status if payment else None
+        except Exception:
+            return None
+
+    def get_payment_date(self, obj):
+        """Get the payment date for this project"""
+        try:
+            from payments.models import Payment
+            payment = Payment.objects.filter(project=obj).order_by("-created_at").first()
+            return payment.created_at.strftime("%Y-%m-%d %H:%M:%S") if payment else None
+        except Exception:
+            return None
+
+    def get_seller_address(self, obj):
+        """Get seller's address from business detail"""
+        try:
+            if hasattr(obj.user, 'business_detail') and obj.user.business_detail:
+                return obj.user.business_detail.full_address
+            return None
+        except Exception:
+            return None
+
+    def get_seller_siret(self, obj):
+        """Get seller's SIRET number from business detail"""
+        try:
+            if hasattr(obj.user, 'business_detail') and obj.user.business_detail:
+                return obj.user.business_detail.siret_number
+            return None
+        except Exception:
+            return None
+
+    def get_buyer_address(self, obj):
+        """Get buyer's address from buyer_profile or business_detail"""
+        try:
+            if obj.client:
+                # Try buyer_profile first (for individual buyers)
+                if hasattr(obj.client, 'buyer_profile') and obj.client.buyer_profile:
+                    return obj.client.buyer_profile.address
+                # Try business_detail (for professional buyers)
+                elif hasattr(obj.client, 'business_detail') and obj.client.business_detail:
+                    return obj.client.business_detail.full_address
+            return None
+        except Exception:
+            return None
+
+    def get_seller_company(self, obj):
+        """Return the seller's company name if available"""
+        try:
+            if hasattr(obj.user, "business_detail") and obj.user.business_detail:
+                return obj.user.business_detail.company_name
+            return obj.user.username
+        except Exception:
+            return obj.user.username
+
+    def get_seller_phone(self, obj):
+        """Return the seller's phone number"""
+        try:
+            return obj.user.phone_number
+        except Exception:
+            return None
+
+    def get_buyer_full_name(self, obj):
+        """Return buyer full name preferring buyer profile names"""
+        try:
+            if obj.client:
+                profile = getattr(obj.client, "buyer_profile", None)
+                if profile and (profile.first_name or profile.last_name):
+                    first = profile.first_name or ""
+                    last = profile.last_name or ""
+                    full = f"{first} {last}".strip()
+                    return full or obj.client.username
+                return obj.client.username
+            return None
+        except Exception:
+            return None

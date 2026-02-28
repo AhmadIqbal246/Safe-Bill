@@ -8,7 +8,7 @@ from django.db import transaction
 from django.conf import settings
 
 from disputes.models import Dispute
-from .tasks import create_dispute_ticket_task
+from .tasks import sync_dispute_ticket_task
 
 # Import for revenue syncing
 from payments.models import Payment
@@ -229,6 +229,23 @@ def auto_sync_company_to_hubspot(sender, instance, created, **kwargs):
         logger.error(f"Company {business_id} signal sync failed: {e}", exc_info=True)
 
 
+# Capture previous project state to detect client assignment changes
+@receiver(pre_save, sender='projects.Project')
+def capture_project_changes(sender, instance, **kwargs):
+    """Capture project state before save to detect client assignment changes"""
+    if instance.pk:  # Only for existing projects
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            instance._old_client_id = old_instance.client_id if old_instance.client else None
+            instance._old_user_id = old_instance.user_id if old_instance.user else None
+        except sender.DoesNotExist:
+            instance._old_client_id = None
+            instance._old_user_id = None
+    else:
+        instance._old_client_id = None
+        instance._old_user_id = None
+
+
 @receiver(post_save, sender='projects.Project')
 @safe_signal_handler('Project Sync', PROJECT_SIGNALS_ENABLED)
 def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
@@ -248,7 +265,7 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
         return
         
     # Always log signal entry for debugging
-    logger.info(f"🔍 DEBUG: Project signal fired for project_id={project_id}")
+    logger.info(f"DEBUG: Project signal fired for project_id={project_id}")
     
     # CRITICAL: Use thread-safe global lock to prevent duplicate syncs
     # This prevents multiple webhook calls from triggering duplicate syncs
@@ -264,17 +281,17 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
             
             # Skip if same status update within 10 seconds (likely duplicate)
             if time_diff < 10 and last_sync_status == current_status:
-                logger.info(f"❌ DEBUG: Project {project_id} duplicate sync detected (same status '{current_status}', {time_diff:.1f}s ago) - SKIPPING")
+                logger.info(f"DEBUG: Project {project_id} duplicate sync detected (same status '{current_status}', {time_diff:.1f}s ago) - SKIPPING")
                 return
             # Skip rapid duplicate only if status did not change
             elif time_diff < 1 and last_sync_status == current_status:
-                logger.info(f"❌ DEBUG: Project {project_id} rapid same-status sync ({time_diff:.1f}s ago) - SKIPPING")
+                logger.info(f"DEBUG: Project {project_id} rapid same-status sync ({time_diff:.1f}s ago) - SKIPPING")
                 return
         
         # Claim this project for syncing
         current_status = getattr(instance, 'status', None)
         _project_sync_locks[lock_key] = (current_time, current_status)
-        logger.info(f"✅ DEBUG: Acquired sync lock for project {project_id} (status: {current_status})")
+        logger.info(f"DEBUG: Acquired sync lock for project {project_id} (status: {current_status})")
         
         # Clean up old locks (older than 5 minutes)
         expired_keys = [k for k, v in _project_sync_locks.items() if current_time - v[0] > 300]
@@ -284,17 +301,65 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
     # Simple emoji indicator when signal fires
     print("💼 Django signal fired - Project sync")
     
-    reason = "signal_project_created" if created else "signal_project_updated"
-    logger.info(f"Auto-syncing project {project_id} to HubSpot via signal ({reason})")
-    
     try:
-        # Use immediate execution for maximum reliability (no transaction dependency)
-        result = sync_project_to_hubspot(
-            project_id=project_id,
-            reason=reason,
-            use_transaction_commit=True
-        )
-        logger.info(f"Project {project_id} sync result: {result}")
+        # For newly created projects, initial HubSpot deal sync is triggered
+        # explicitly AFTER installments are created (in ProjectCreateSerializer)
+        # to avoid race conditions where only partial installments exist.
+        if not created:
+            reason = "signal_project_updated"
+            logger.info(f"Auto-syncing project {project_id} to HubSpot via signal ({reason})")
+            # Use immediate execution for maximum reliability (no transaction dependency)
+            result = sync_project_to_hubspot(
+                project_id=project_id,
+                reason=reason,
+                use_transaction_commit=True
+            )
+            logger.info(f"Project {project_id} sync result: {result}")
+        
+        # Enqueue HubSpot payment record creation when project is created
+        if created:
+            try:
+                from .tasks import sync_payment_to_hubspot
+                # Use task to create Payments object record (status: pending)
+                sync_payment_to_hubspot.delay(project_id=project_id, create_from_project=True)
+                logger.info(f"Queued HubSpot payment creation for project {project_id}")
+            except Exception as e:
+                logger.error(f"Failed to queue HubSpot payment creation for project {project_id}: {e}", exc_info=True)
+                # Never block project creation on HubSpot queuing failures
+        
+        # Sync contacts for users involved in the project to update total_projects_count
+        # Only sync when project count actually changes: creation or client assignment changes
+        try:
+            old_client_id = getattr(instance, '_old_client_id', None)
+            current_client_id = instance.client_id if instance.client else None
+            client_changed = (old_client_id != current_client_id)
+            
+            # Sync project owner (seller) when:
+            # 1. Project is newly created (owner gets a new project)
+            # 2. Client assignment changes don't affect owner's count, so we skip for updates unless it's a new project
+            if created and hasattr(instance, 'user') and instance.user:
+                user_id = getattr(instance.user, 'id', None)
+                if user_id:
+                    safe_contact_sync(user_id, "project_created", use_transaction_commit=True)
+                    logger.info(f"Queued contact sync for project owner (user_id={user_id}) after project {project_id} creation")
+            
+            # Sync project client (buyer) when:
+            # 1. Project is newly created AND client is assigned (unlikely but possible)
+            # 2. Client assignment changes (client assigned, reassigned, or removed)
+            if (created or client_changed):
+                # Sync new/current client if assigned
+                if current_client_id:
+                    safe_contact_sync(current_client_id, "project_client_assigned", use_transaction_commit=True)
+                    logger.info(f"Queued contact sync for project client (user_id={current_client_id}) after project {project_id} client assignment")
+                
+                # Sync old client if client was removed or reassigned (count decreased for old client)
+                if old_client_id and old_client_id != current_client_id:
+                    safe_contact_sync(old_client_id, "project_client_removed", use_transaction_commit=True)
+                    logger.info(f"Queued contact sync for previous project client (user_id={old_client_id}) after project {project_id} client removal/reassignment")
+        except Exception as e:
+            # Never block project sync on contact sync failures
+            logger.error(f"Failed to sync contacts after project {project_id} update: {e}", exc_info=True)
+        
     except Exception as e:
         # Never let signal failures break the main application
         logger.error(f"Project {project_id} signal sync failed: {e}", exc_info=True)
@@ -303,7 +368,7 @@ def auto_sync_project_to_hubspot(sender, instance, created, **kwargs):
         with _project_lock:
             if lock_key in _project_sync_locks:
                 del _project_sync_locks[lock_key]
-                logger.info(f"🧹 DEBUG: Cleaned up failed project sync lock for project {project_id}")
+                logger.info(f"DEBUG: Cleaned up failed project sync lock for project {project_id}")
 
 
 @receiver(post_save, sender='projects.Milestone')
@@ -332,7 +397,7 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
         return
         
     # Always log signal entry for debugging
-    logger.info(f"🔍 DEBUG: Milestone signal fired for milestone_id={milestone_id}, project_id={project_id}")
+    logger.info(f"DEBUG: Milestone signal fired for milestone_id={milestone_id}, project_id={project_id}")
         
     # CRITICAL: Use thread-safe global lock to prevent duplicate syncs
     # This prevents multiple signals for the same project from running simultaneously
@@ -347,11 +412,11 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
             
             # For creation: be very strict - skip if ANY sync happened recently
             if created and time_diff < 30:  # 30 second window for milestone creation
-                logger.info(f"❌ DEBUG: Project {project_id} milestone creation sync already happened ({time_diff:.1f}s ago) - SKIPPING")
+                logger.info(f"DEBUG: Project {project_id} milestone creation sync already happened ({time_diff:.1f}s ago) - SKIPPING")
                 return
             # For rapid updates, apply stricter deduplication
             elif not created and time_diff < 10:  # 10 second window for milestone updates
-                logger.info(f"❌ DEBUG: Project {project_id} milestone sync already in progress ({time_diff:.1f}s ago) - SKIPPING")
+                logger.info(f"DEBUG: Project {project_id} milestone sync already in progress ({time_diff:.1f}s ago) - SKIPPING")
                 return
         
         # For creation: check if milestone links already exist (don't create duplicates)
@@ -362,12 +427,12 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
         ).exists()
         
         if created and existing_links:
-            logger.info(f"❌ DEBUG: Found existing milestone links for project {project_id} - SKIPPING creation sync")
+            logger.info(f"DEBUG: Found existing milestone links for project {project_id} - SKIPPING creation sync")
             return
         
         # Claim this project for syncing
         _milestone_sync_locks[lock_key] = current_time
-        logger.info(f"✅ DEBUG: Acquired sync lock for project {project_id} ({'creation' if created else 'update'})")
+        logger.info(f"DEBUG: Acquired sync lock for project {project_id} ({'creation' if created else 'update'})")
         
         # Clean up old locks (older than 5 minutes)
         expired_keys = [k for k, v in _milestone_sync_locks.items() if current_time - v > 300]
@@ -408,60 +473,64 @@ def auto_sync_milestone_to_hubspot(sender, instance, created, **kwargs):
                 milestone=instance,
                 priority='normal'
             )
-            logger.info(f"✅ Queued milestone creation sync for project {project_id} (queue_id: {queue_item.id})")
+            logger.info(f"Queued milestone creation sync for project {project_id} (queue_id: {queue_item.id})")
         else:
-            logger.info(f"⏭️ Skipping milestone creation sync for project {project_id} - already queued")
+            logger.info(f"Skipping milestone creation sync for project {project_id} - already queued")
     except Exception as e:
         logger.error(f"Failed to queue milestone creation sync for project {project_id}: {e}", exc_info=True)
         with _milestone_lock:
             if lock_key in _milestone_sync_locks:
                 del _milestone_sync_locks[lock_key]
-                logger.info(f"🧹 DEBUG: Cleaned up failed milestone sync lock for project {project_id}")
+                logger.info(f"DEBUG: Cleaned up failed milestone sync lock for project {project_id}")
 
 
-@receiver(post_save, sender=Payment)
-@safe_signal_handler('Revenue Sync', REVENUE_SIGNALS_ENABLED)
-def auto_sync_revenue_on_payment(sender, instance, created, **kwargs):
-    """
-    Automatically sync revenue to HubSpot when payments are marked as paid.
-    Provides backup/redundancy to webhook-based revenue sync.
-    """
-    # Only sync when payment status becomes 'paid'
-    if instance.status != 'paid':
-        return
-        
-    payment_id = getattr(instance, 'id', None)
-    if not payment_id:
-        return
-        
-    # Simple emoji indicator when signal fires
-    print("💰 Django signal fired - Revenue sync (Payment)")
-    
-    # Use transaction.on_commit for safety
-    from django.db import transaction
-    from django.utils import timezone
-    from hubspot.sync_utils import sync_revenue_to_hubspot
-    
-    now = timezone.now()
-    reason = "signal_payment_paid"
-    
-    logger.info(f"Auto-syncing revenue for payment {payment_id} via signal ({reason})")
-    
-    def _sync_revenue():
-        try:
-            result = sync_revenue_to_hubspot(
-                year=now.year,
-                month=now.month,
-                reason=reason,
-                use_transaction_commit=False  # Already in transaction.on_commit
-            )
-            logger.info(f"Payment {payment_id} revenue sync result: {result}")
-        except Exception as e:
-            # Never let signal failures break the main application
-            logger.error(f"Payment {payment_id} revenue sync failed: {e}", exc_info=True)
-    
-    # Queue after transaction commit
-    transaction.on_commit(_sync_revenue)
+# DISABLED: This signal was causing double revenue sync triggers
+# Revenue sync is now handled separately:
+# - Payment completion: syncs VAT collected + total payments (via webhook)
+# - Milestone approval: syncs seller revenue + total revenue + milestones approved
+# @receiver(post_save, sender=Payment)
+# @safe_signal_handler('Revenue Sync', REVENUE_SIGNALS_ENABLED)
+# def auto_sync_revenue_on_payment(sender, instance, created, **kwargs):
+#     """
+#     Automatically sync revenue to HubSpot when payments are marked as paid.
+#     Provides backup/redundancy to webhook-based revenue sync.
+#     """
+#     # Only sync when payment status becomes 'paid'
+#     if instance.status != 'paid':
+#         return
+#         
+#     payment_id = getattr(instance, 'id', None)
+#     if not payment_id:
+#         return
+#         
+#     # Simple emoji indicator when signal fires
+#     print("💰 Django signal fired - Revenue sync (Payment)")
+#     
+#     # Use transaction.on_commit for safety
+#     from django.db import transaction
+#     from django.utils import timezone
+#     from hubspot.sync_utils import sync_revenue_to_hubspot
+#     
+#     now = timezone.now()
+#     reason = "signal_payment_paid"
+#     
+#     logger.info(f"Auto-syncing revenue for payment {payment_id} via signal ({reason})")
+#     
+#     def _sync_revenue():
+#         try:
+#             result = sync_revenue_to_hubspot(
+#                 year=now.year,
+#                 month=now.month,
+#                 reason=reason,
+#                 use_transaction_commit=False  # Already in transaction.on_commit
+#             )
+#             logger.info(f"Payment {payment_id} revenue sync result: {result}")
+#         except Exception as e:
+#             # Never let signal failures break the main application
+#             logger.error(f"Payment {payment_id} revenue sync failed: {e}", exc_info=True)
+#     
+#     # Queue after transaction commit
+#     transaction.on_commit(_sync_revenue)
 
 
 # Health check function for monitoring

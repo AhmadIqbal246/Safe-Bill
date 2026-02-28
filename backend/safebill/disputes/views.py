@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Dispute, DisputeDocument, DisputeEvent, DisputeComment
 from django.db.models import Q
+from notifications.services import NotificationService
 from .serializers import (
     DisputeListSerializer, DisputeDetailSerializer, DisputeCreateSerializer,
     DisputeUpdateSerializer, DisputeCommentCreateSerializer
@@ -12,7 +13,7 @@ from .serializers import (
 from notifications.models import Notification
 from projects.models import Project
 from projects.serializers import ProjectListSerializer
-from hubspot.tasks import create_dispute_ticket_task
+from hubspot.tasks import sync_dispute_ticket_task
 
 
 class DisputeListAPIView(generics.ListAPIView):
@@ -207,22 +208,24 @@ class DisputeAssignMediatorAPIView(APIView):
         )
         
         # Send notifications to both parties
-        message = f"Mediator {mediator.username} has been assigned to dispute {dispute.dispute_id}"
-        
         # Notify initiator
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.initiator,
-            message=message
+            message="notifications.dispute_mediator_assigned_initiator",
+            mediator_username=mediator.username,
+            dispute_id=dispute.dispute_id
         )
         
         # Notify respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.respondent,
-            message=message
+            message="notifications.dispute_mediator_assigned_respondent",
+            mediator_username=mediator.username,
+            dispute_id=dispute.dispute_id
         )
         # Update HubSpot ticket asynchronously
         try:
-            create_dispute_ticket_task.delay(dispute.id)
+            sync_dispute_ticket_task.delay(dispute.id)
         except Exception:
             pass
         
@@ -265,22 +268,22 @@ class DisputeResolveAPIView(APIView):
         )
         
         # Send notifications to both parties
-        message = f"Dispute {dispute.dispute_id} has been resolved"
-        
         # Notify initiator
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.initiator,
-            message=message
+            message="notifications.dispute_resolved_initiator",
+            dispute_id=dispute.dispute_id
         )
         
         # Notify respondent
-        Notification.objects.create(
+        NotificationService.create_notification(
             user=dispute.respondent,
-            message=message
+            message="notifications.dispute_resolved_respondent",
+            dispute_id=dispute.dispute_id
         )
         # Update HubSpot ticket asynchronously
         try:
-            create_dispute_ticket_task.delay(dispute.id)
+            sync_dispute_ticket_task.delay(dispute.id)
         except Exception:
             pass
         

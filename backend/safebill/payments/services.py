@@ -206,7 +206,8 @@ class BalanceService:
                 try:
                     NotificationService.create_notification(
                         user,
-                        f"Great news! ${total_released} has been released from hold and is now available for payout.",
+                        message="notifications.funds_released",
+                        amount=str(total_released)
                     )
                 except Exception as e:
                     logger.error(f"Failed to send notification to {user.email}: {e}")

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SafeBillHeader from '../components/mutualComponents/Navbar/Navbar';
+import loginBg from '../assets/Circle Background/login-removed-bg.jpg';
 import { 
   Mail, 
   Copy, 
@@ -49,15 +50,21 @@ export default function HowToAcceptProjectInvite() {
 
   return (
     <>
+      {/* Scrollable Background Image Layer - covers entire viewport */}
+      <div
+        className="absolute inset-0 -z-10 bg-top bg-no-repeat bg-cover"
+        style={{ backgroundImage: `url(${loginBg})` }}
+      />
       <SafeBillHeader />
-      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="relative min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-[#10B981] mb-6">
+            <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-[#3535AA] mb-6">
               <Key className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#2E78A6] mb-4">
               {t('how_to_accept_project_invite.title')}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -68,20 +75,20 @@ export default function HowToAcceptProjectInvite() {
           {/* Quick Action Buttons */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-[#10B981]" />
+              <CheckCircle className="h-6 w-6 text-[#2E78A6]" />
               {t('how_to_accept_project_invite.quick_actions')}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 onClick={handleAcceptProjectInvite}
-                className="flex items-center justify-center gap-3 px-6 py-4 bg-[#10B981] text-white rounded-lg font-medium hover:bg-[#059669] transition-colors text-lg cursor-pointer"
+                className="flex items-center justify-center gap-3 px-6 py-4 bg-[#2E78A6] text-white rounded-lg font-medium hover:bg-[#256a94] transition-colors text-lg cursor-pointer"
               >
                 <Key className="h-5 w-5" />
                 {t('how_to_accept_project_invite.accept_invite_button')}
               </button>
               <button
                 onClick={handleGoToDashboard}
-                className="flex items-center justify-center gap-3 px-6 py-4 bg-[#01257D] text-white rounded-lg font-medium hover:bg-[#2346a0] transition-colors text-lg cursor-pointer"
+                className="flex items-center justify-center gap-3 px-6 py-4 bg-[#2E78A6] text-white rounded-lg font-medium hover:bg-[#256a94] transition-colors text-lg cursor-pointer"
               >
                 <Users className="h-5 w-5" />
                 {t('how_to_accept_project_invite.go_to_dashboard_button')}
@@ -133,13 +140,13 @@ export default function HowToAcceptProjectInvite() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-lg">2</span>
+                  <div className="w-10 h-10 bg-[#2E78A6] rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">2</span>
                   </div>
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-green-600" />
+                    <Users className="h-5 w-5 text-[#2E78A6]" />
                     {t('how_to_accept_project_invite.step2_title')}
                   </h3>
                   <p className="text-gray-600 mb-4">
@@ -147,21 +154,21 @@ export default function HowToAcceptProjectInvite() {
                   </p>
                   
                   {/* Dashboard Button Preview */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Users className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-900">
+                      <Users className="h-4 w-4 text-[#2E78A6]" />
+                      <span className="font-medium text-blue-900">
                         {t('how_to_accept_project_invite.dashboard_button_preview_title')}
                       </span>
                     </div>
                     <button
                       onClick={handleGoToDashboard}
-                      className="px-6 py-3 bg-[#01257D] text-white rounded-lg font-medium hover:bg-[#2346a0] transition-colors flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-3 bg-[#2E78A6] text-white rounded-lg font-medium hover:bg-[#256a94] transition-colors flex items-center gap-2 cursor-pointer"
                     >
                       <Users className="h-4 w-4" />
                       {t('how_to_accept_project_invite.dashboard_button')}
                     </button>
-                    <p className="text-xs text-green-700 mt-2">
+                    <p className="text-xs text-blue-700 mt-2">
                       {t('how_to_accept_project_invite.dashboard_button_note')}
                     </p>
                   </div>
@@ -212,7 +219,7 @@ export default function HowToAcceptProjectInvite() {
                       <button
                         type="submit"
                         disabled={!invitationCode.trim() || isSubmitting}
-                        className="w-full px-4 py-2 bg-[#10B981] text-white rounded-md font-medium hover:bg-[#059669] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="w-full px-4 py-2 bg-[#2E78A6] text-white rounded-md font-medium hover:bg-[#256a94] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         {isSubmitting ? (
                           <>
@@ -239,13 +246,13 @@ export default function HowToAcceptProjectInvite() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 font-bold text-lg">4</span>
+                  <div className="w-10 h-10 bg-[#C1E7FF] rounded-full flex items-center justify-center">
+                    <span className="text-gray-800 font-bold text-lg">4</span>
                   </div>
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-orange-600" />
+                    <FileText className="h-5 w-5 text-[#C1E7FF]" />
                     {t('how_to_accept_project_invite.step4_title')}
                   </h3>
                   <p className="text-gray-600 mb-4">
@@ -253,16 +260,16 @@ export default function HowToAcceptProjectInvite() {
                   </p>
                   
                   {/* Project Review Preview */}
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <FileText className="h-4 w-4 text-orange-600" />
-                      <span className="font-medium text-orange-900">
+                      <FileText className="h-4 w-4 text-[#C1E7FF]" />
+                      <span className="font-medium text-blue-900">
                         {t('how_to_accept_project_invite.project_review_title')}
                       </span>
                     </div>
                     <div className="space-y-3">
-                      <div className="bg-white border border-orange-200 rounded p-3">
-                        <div className="text-sm text-orange-800">
+                      <div className="bg-white border border-blue-200 rounded p-3">
+                        <div className="text-sm text-blue-800">
                           <div className="font-medium mb-1">{t('how_to_accept_project_invite.project_details')}</div>
                           <div className="text-xs space-y-1">
                             <div>• {t('how_to_accept_project_invite.project_name')}</div>
@@ -327,7 +334,7 @@ export default function HowToAcceptProjectInvite() {
                     </div>
                     <button
                       onClick={handleViewProjects}
-                      className="w-full mt-3 px-4 py-2 bg-[#01257D] text-white rounded-md font-medium hover:bg-[#2346a0] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full mt-3 px-4 py-2 bg-[#2E78A6] text-white rounded-md font-medium hover:bg-[#256a94] transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Users className="h-4 w-4" />
                       {t('how_to_accept_project_invite.view_my_projects')}
@@ -339,22 +346,22 @@ export default function HowToAcceptProjectInvite() {
           </div>
 
           {/* Important Notes */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-8">
-            <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-yellow-600" />
+          <div className="bg-[#C1E7FF] border border-blue-200 rounded-lg p-6 mt-8">
+            <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-700" />
               {t('how_to_accept_project_invite.important_notes_title')}
             </h3>
-            <div className="space-y-2 text-sm text-yellow-700">
+            <div className="space-y-2 text-sm text-blue-800">
               <div className="flex items-start gap-2">
-                <ChevronRight className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <ChevronRight className="h-4 w-4 text-blue-700 mt-0.5 flex-shrink-0" />
                 <span>{t('how_to_accept_project_invite.note1')}</span>
               </div>
               <div className="flex items-start gap-2">
-                <ChevronRight className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <ChevronRight className="h-4 w-4 text-blue-700 mt-0.5 flex-shrink-0" />
                 <span>{t('how_to_accept_project_invite.note2')}</span>
               </div>
               <div className="flex items-start gap-2">
-                <ChevronRight className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <ChevronRight className="h-4 w-4 text-blue-700 mt-0.5 flex-shrink-0" />
                 <span>{t('how_to_accept_project_invite.note3')}</span>
               </div>
             </div>
@@ -364,7 +371,7 @@ export default function HowToAcceptProjectInvite() {
           <div className="text-center mt-8">
             <button
               onClick={handleAcceptProjectInvite}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-[#10B981] text-white rounded-lg font-semibold hover:bg-[#059669] transition-colors text-lg shadow-lg cursor-pointer"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-[#2E78A6] text-white rounded-lg font-semibold hover:bg-[#256a94] transition-colors text-lg shadow-lg cursor-pointer"
             >
               <Key className="h-6 w-6" />
               {t('how_to_accept_project_invite.get_started_button')}
@@ -374,6 +381,7 @@ export default function HowToAcceptProjectInvite() {
               {t('how_to_accept_project_invite.get_started_note')}
             </p>
           </div>
+        </div>
         </div>
       </div>
     </>

@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 logger.propagate = True
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_payment_success_email_task(
     self,
     user_email,
@@ -28,7 +28,7 @@ def send_payment_success_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_payment_success_email_seller_task(
     self,
     user_email,
@@ -50,7 +50,7 @@ def send_payment_success_email_seller_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_payment_failed_email_task(
     self,
     user_email,
@@ -72,7 +72,7 @@ def send_payment_failed_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_transfer_initiated_email_task(
     self, user_email, amount, currency="EUR", language="fr"
 ):
@@ -92,7 +92,7 @@ def send_transfer_initiated_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_transfer_paid_email_task(
     self, user_email, amount, currency="EUR", language="fr"
 ):
@@ -112,7 +112,7 @@ def send_transfer_paid_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_transfer_reversed_email_task(
     self, user_email, amount, currency="EUR", language="fr"
 ):
@@ -132,7 +132,7 @@ def send_transfer_reversed_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_refund_created_email_task(
     self, user_email, project_name, amount, language="fr"
 ):
@@ -152,7 +152,7 @@ def send_refund_created_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_refund_paid_email_task(
     self, user_email, project_name, amount, language="fr"
 ):
@@ -172,7 +172,7 @@ def send_refund_paid_email_task(
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_refund_failed_email_task(
     self, user_email, project_name, amount, language="fr"
 ):
@@ -191,7 +191,7 @@ def send_refund_failed_email_task(
         logger.error(f"Error sending refund failed email: {exc}")
         self.retry(exc=exc, countdown=2 ** self.request.retries)
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, queue='emails')
 def send_hold_released_email_task(self, user_email, amount, language="fr"):
     try:
         message = (

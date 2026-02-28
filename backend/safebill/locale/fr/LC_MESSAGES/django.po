@@ -33,3 +33,15 @@ msgstr "Nouveau litige ouvert - {project_name}"
 
 msgid "A dispute ({dispute_id}) has been opened for project '{project_name}'."
 msgstr "Un litige ({dispute_id}) a été ouvert pour le projet '{project_name}'."
+
+msgid "Approved"
+msgstr "Approuvé"
+
+msgid "Not Approved"
+msgstr "Non Approuvé"
+
+msgid "Sent for Review"
+msgstr "Envoyé pour Examen"
+
+msgid "Submitted for Approval"
+msgstr "Soumis pour Approbation"

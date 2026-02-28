@@ -110,7 +110,9 @@ class TransferService:
             # Send notification
             NotificationService.create_notification(
                 user,
-                f"Transfer of {transfer_amount_decimal} {currency} has been sent to your Stripe account.",
+                message="notifications.transfer_sent",
+                amount=str(transfer_amount_decimal),
+                currency=currency
             )
 
             # Send email asynchronously
@@ -159,9 +161,10 @@ class TransferService:
             # Send notification to user
             NotificationService.create_notification(
                 payout.user,
-                f"Transfer of {payout.amount} {payout.currency} was reversed. Reason: {reason}. "
-                f"Funds have been returned to your balance.",
-                notification_type="transfer_reversal",
+                message="notifications.transfer_reversed",
+                amount=str(payout.amount),
+                currency=payout.currency,
+                reason=reason
             )
 
             # Send email asynchronously

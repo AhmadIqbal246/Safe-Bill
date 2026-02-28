@@ -6,6 +6,8 @@ import FeatureComp from '../components/HomePageComps/FeatureComp'
 import TrustedProfessionals from '../components/HomePageComps/TrustedProfessionals'
 import ServicesCards from '../components/HomePageComps/ServicesCards'
 import Footer from '../components/mutualComponents/Footer'
+import HowItWorks from '../components/HomePageComps/HowItWorks'
+import WhyChooseUs from '../components/HomePageComps/WhyChooseUs'
 
 export default function Home() {
     const [isSignedIn, setIsSignedIn] = useState(false)
@@ -33,6 +35,8 @@ export default function Home() {
           onSignOut={handleSignOut}
         />
         <IntroWithSearch/>
+        <HowItWorks/>
+        <WhyChooseUs/>
         <FeatureComp/>
         <TrustedProfessionals/>
         <ServicesCards/>
