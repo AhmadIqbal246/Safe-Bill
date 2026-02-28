@@ -1,0 +1,47 @@
+# Environments
+.env
+.env.*
+venv/
+env/
+ENV/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Data & Models
+data/
+*.db
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
