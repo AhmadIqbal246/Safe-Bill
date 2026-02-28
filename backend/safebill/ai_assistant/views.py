@@ -4,6 +4,7 @@ from django.conf import settings
 from django.http import StreamingHttpResponse, JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from asgiref.sync import sync_to_async
 from .models import AIChatSession, AIMessage
 
 @api_view(['POST'])
@@ -61,7 +62,7 @@ def chat_with_ai(request):
         
         # 5. Save the Full AI Response to DB after streaming finishes
         if full_ai_response:
-            AIMessage.objects.create(
+            await sync_to_async(AIMessage.objects.create)(
                 session=session, 
                 role='assistant', 
                 content=full_ai_response

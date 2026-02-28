@@ -7,7 +7,7 @@ export const aiApiService = {
    * Fetches the full chat history for a session from the Django backend.
    */
   async getChatHistory(sessionId) {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('access');
     const response = await axios.get(`${API_BASE_URL}api/ai/sessions/${sessionId}/`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -18,7 +18,7 @@ export const aiApiService = {
    * Fetches list of all chat sessions for the current user.
    */
   async listSessions() {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('access');
     const response = await axios.get(`${API_BASE_URL}api/ai/sessions/`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -30,8 +30,8 @@ export const aiApiService = {
    * Leverages browser's Fetch Stream API for real-time output.
    */
   async sendMessageStream(message, sessionId, onChunk, onComplete, onError) {
-    const token = localStorage.getItem('token');
-    
+    const token = sessionStorage.getItem('access');
+
     try {
       const response = await fetch(`${API_BASE_URL}api/ai/chat/`, {
         method: 'POST',
@@ -56,7 +56,7 @@ export const aiApiService = {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        
+
         const chunk = decoder.decode(value);
         fullText += chunk;
         if (onChunk) onChunk(chunk);

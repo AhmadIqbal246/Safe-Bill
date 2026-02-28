@@ -124,24 +124,12 @@ INSTALLED_APPS = [
     "hubspot",
     "subscription",
     'RAG',
-
-    'corsheaders',
-
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    #third-party-apps
-    'rest_framework',
-    'accounts',
-    'bussiness_documents',
     'ai_assistant',
+
 ]
 
-FAST_AI_URL = env('FAST_AI_URL', default="http://127.0.0.1:8001")
+# FastAPI RAG Service URL
+FAST_AI_URL = os.environ.get("FAST_AI_URL", "http://127.0.0.1:8001")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

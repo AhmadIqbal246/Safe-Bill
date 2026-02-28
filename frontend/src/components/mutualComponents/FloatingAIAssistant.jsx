@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Bot, X, Send, User, ChevronLeft, Trash2, PlusCircle, Loader2 } from "lucide-react"
-import { aiApiService } from "../../store/AIService"
+import { aiApiService } from "../../services/AIService"
 
 export default function FloatingAIAssistant() {
     const [isOpen, setIsOpen] = useState(false)
