@@ -5,7 +5,7 @@ from app.db.vector_store import vector_store
 from app.services.embeddings.embedder import embedding_service
 from app.services.retrieval.reranker import rerank_service
 from app.services.llm.generation import llm_service
-from app.schemas.chat import ChatRequest, RetrievedChunk, ChunkMetadata
+from app.schemas.chat import ChatRequest, MessagePrompt, RetrievedChunk, ChunkMetadata
 
 class QueryEngine:
     def __init__(self):
@@ -14,41 +14,51 @@ class QueryEngine:
         # Then we re-rank down to the absolute top 5 most relevant ones
         self.rerank_top_n = 5
 
-    async def _rewrite_query(self, query: str) -> str:
+    async def _rewrite_query(self, messages: List[MessagePrompt]) -> str:
         """
-        Extracts technical keywords from a user question to improve search results.
-        Example: 'how to create a project' -> 'project creation workflow'
+        Analyzes the chat history and the latest user question to create a 
+        standalone, search-optimized query. This handles follow-up questions
+        like 'how do I delete it?' by resolving 'it' from the history.
         """
+        if len(messages) == 1:
+            return messages[-1].content
+
+        # Create a prompt for the LLM to condense the history and question
+        history_text = "\n".join([f"{m.role}: {m.content}" for m in messages[:-3]]) # last 3 messages for context
+        last_query = messages[-1].content
+        
         prompt = (
-            f"Given the following user question, output 3-5 technical keywords "
-            f"that would be found in a documentation index. Output ONLY the keywords separated by spaces.\n"
-            f"Question: {query}"
+            "Given the following conversation history and a NEW user question, "
+            "rephrase the NEW question into a STANDALONE search query that contains all necessary context. "
+            "Internalize keywords from the history into the new query. Output ONLY the standalone query.\n\n"
+            f"HISTORY:\n{history_text}\n"
+            f"NEW QUESTION: {last_query}\n"
+            "STANDALONE SEARCH QUERY:"
         )
         
         try:
-            # We use a non-streaming call for the expansion
             response = await llm_service.client.chat.completions.create(
                 model=llm_service.model,
                 messages=[{"role": "user", "content": prompt}],
                 stream=False
             )
-            expanded_query = response.choices[0].message.content.strip()
-            return f"{query} {expanded_query}"
-        except:
-            return query
+            condensed_query = response.choices[0].message.content.strip()
+            # Clean up potential quotes or AI chatter
+            condensed_query = condensed_query.strip('"').strip("'")
+            return condensed_query if condensed_query else last_query
+        except Exception as e:
+            print(f"Warning: Query rewrite failed: {e}")
+            return last_query
 
     async def answer_query(self, request: ChatRequest) -> AsyncGenerator[str, None]:
         """
         Orchestrates the full RAG cycle:
         Rewrite -> Retrieve -> Rerank -> Generate Response
         """
-        # 1. Get the primary query
-        user_query = request.messages[-1].content
-        
-        # 2. Query Expansion (Ensures we hit the right keywords)
-        search_query = await self._rewrite_query(user_query)
-        
-        # 3. Vector Search (Pinecone)
+        # 1. Get the primary query (optimized for history context)
+        search_query = await self._rewrite_query(request.messages)
+        print(f"--- Search Optimized Query: '{search_query}' ---")
+        # 2. Vector Search (Pinecone)
         query_vector = embedding_service.embed_text(search_query)
         raw_matches = vector_store.similarity_search(
             query_vector=query_vector, 
@@ -73,7 +83,7 @@ class QueryEngine:
         # This fixes the "semantic drift" where Pinecone might give a noisy result
         if candidate_chunks:
             reranked_chunks = await rerank_service.rerank(
-                query=user_query, 
+                query=search_query, 
                 chunks=candidate_chunks, 
                 top_n=self.rerank_top_n
             )

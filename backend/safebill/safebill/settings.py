@@ -56,7 +56,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'bussiness_documents',
+    'ai_assistant',
 ]
+
+FAST_AI_URL = env('FAST_AI_URL', default="http://127.0.0.1:8001")
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

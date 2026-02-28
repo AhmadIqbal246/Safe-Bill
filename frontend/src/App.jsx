@@ -11,8 +11,13 @@ import ProtectedRoute from "./store/ProtectedRoute";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import FloatingAIAssistant from "./components/mutualComponents/FloatingAIAssistant";
+import { useSelector } from "react-redux";
 
 function App() {
+  const user = useSelector(state => state.auth.user);
+  const isAuthenticated = !!user;
+
   return (
     <>
       <ToastContainer
@@ -31,13 +36,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/seller-register" element={<SellerRegisterPage />} />
-          <Route path='/email-verification' element={<EmailVerificationPage/>}/>
-          <Route path='/login' element={<LogInPage/>}/>
-          <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage/></ProtectedRoute>}/>
-          <Route path='/find-professionals' element={<ProtectedRoute><FindProfessionals/></ProtectedRoute>}/>
+          <Route path='/email-verification' element={<EmailVerificationPage />} />
+          <Route path='/login' element={<LogInPage />} />
+          <Route path='/onboarding' element={<ProtectedRoute><OnBoardingPage /></ProtectedRoute>} />
+          <Route path='/find-professionals' element={<ProtectedRoute><FindProfessionals /></ProtectedRoute>} />
 
           {/* Add more routes as needed */}
         </Routes>
+        {isAuthenticated && <FloatingAIAssistant />}
       </Router>
     </>
   );

@@ -21,13 +21,15 @@ class LLMService:
         last_query = messages[-1].content
         
         rag_prompt = (
-            "SYSTEM INSTRUCTIONS:\n"
-            "You are an expert AI assistant for Safe-Bill. Answer the user's question accurately "
-            "using ONLY the provided context blocks below. If the answer is not in the context, "
-            "say you do not know. Do not hallucinate. Citation: Mention the source file names when possible.\n\n"
-            "--- START CONTEXT ---\n"
+            "ROLE: You are an expert AI assistant for Safe-Bill. \n"
+            "INSTRUCTIONS:\n"
+            "1. If the user greets you or introduces themselves (e.g. 'Hi, my name is...'), acknowledge them politely. "
+            "2. For all technical questions, you MUST answer ONLY from the provided context blocks. \n"
+            "3. Cite the source file names when providing information.\n"
+            "4. If the answer is not in the context, clearly stating you do not have that specific technical information.\n\n"
+            "--- CONTEXT START ---\n"
             f"{'\n'.join(context_chunks)}\n"
-            "--- END CONTEXT ---\n\n"
+            "--- CONTEXT END ---\n\n"
             f"USER QUESTION: {last_query}"
         )
         
