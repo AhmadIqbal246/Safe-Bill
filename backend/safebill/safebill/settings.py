@@ -13,25 +13,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-import environ
+from dotenv import load_dotenv
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# Initialise environment variables
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+# Load environment variables from .env file
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure--pd+&8025(uqd_97*s)=p1a+vp82y%1%zh)sp5y(p0a@66j38l"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', default=False)
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 
 def _env_list(var_name, default_list):
@@ -128,8 +123,13 @@ INSTALLED_APPS = [
     "payments",
     "hubspot",
     "subscription",
+    'RAG',
+    'ai_assistant',
 
 ]
+
+# FastAPI RAG Service URL
+FAST_AI_URL = os.environ.get("FAST_AI_URL", "http://127.0.0.1:8001")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -170,7 +170,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [env('REDIS_URL', default='redis://127.0.0.1:6379/1')],
+            "hosts": [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')],
         },
     },
 }
@@ -183,11 +183,11 @@ CHANNEL_LAYERS = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DB_NAME"),
-        "USER": env("DB_USER"),
-        "PASSWORD": env("DB_PASSWORD"),
-        "HOST": env("DB_HOST"),
-        "PORT": env("DB_PORT"),
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST"),
+        "PORT": os.environ.get("DB_PORT"),
     }
 }
 
@@ -248,8 +248,8 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Site URL for email templates
-SITE_URL = env('SITE_URL', default='https://safebill.fr')
-SITE_LOGO_URL = env('SITE_LOGO_URL', default='https://safebill.fr/static/images/Safe_Bill_Dark.png')
+SITE_URL = os.environ.get('SITE_URL', 'https://safebill.fr')
+SITE_LOGO_URL = os.environ.get('SITE_LOGO_URL', 'https://safebill.fr/static/images/Safe_Bill_Dark.png')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -280,28 +280,28 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # Hostinger SMTP settings for safebill.fr domain
 # SMTP Server: smtp.hostinger.com
-EMAIL_HOST = env("EMAIL_HOST", default="smtp.hostinger.com")
-EMAIL_PORT = int(env("EMAIL_PORT", default=587))
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.hostinger.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
 # Connection timeout and retry settings
-EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=60)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "contact@safebill.fr")
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", 60))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "contact@safebill.fr")
 # Server email (for error messages)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Additional email settings for better deliverability
 EMAIL_USE_LOCALTIME = False
-FRONTEND_URL = env("FRONTEND_URL")
-SIRET_VALIDATION_ACCESS_TOKEN = env("SIRET_VALIDATION_ACCESS_TOKEN")
-STRIPE_API_KEY = env("STRIPE_API_KEY")
-STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
-STRIPE_CONNECT_WEBHOOK_SECRET = env("STRIPE_CONNECT_WEBHOOK_SECRET")
-STRIPE_VERIFICATION_FLOW_ID = env("STRIPE_VERIFICATION_FLOW_ID")
-STRIPE_SUBSCRIPTION_WEBHOOK_SECRET = env("STRIPE_SUBSCRIPTION_WEBHOOK_SECRET", default="")
-STRIPE_SUBSCRIPTION_PRICE_ID = env("STRIPE_SUBSCRIPTION_PRICE_ID", default="")
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
+SIRET_VALIDATION_ACCESS_TOKEN = os.environ.get("SIRET_VALIDATION_ACCESS_TOKEN")
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_CONNECT_WEBHOOK_SECRET = os.environ.get("STRIPE_CONNECT_WEBHOOK_SECRET")
+STRIPE_VERIFICATION_FLOW_ID = os.environ.get("STRIPE_VERIFICATION_FLOW_ID")
+STRIPE_SUBSCRIPTION_WEBHOOK_SECRET = os.environ.get("STRIPE_SUBSCRIPTION_WEBHOOK_SECRET", "")
+STRIPE_SUBSCRIPTION_PRICE_ID = os.environ.get("STRIPE_SUBSCRIPTION_PRICE_ID", "")
 
 # X-Frame-Options disabled for PDF iframe embedding
 
@@ -364,8 +364,8 @@ LOGGING = {
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=env('REDIS_URL', default='redis://127.0.0.1:6379/0'))
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'))
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'))
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -458,36 +458,36 @@ CELERY_IMPORTS = [
 
 # HubSpot Integration
 # Private App token for direct API access
-HUBSPOT_PRIVATE_APP_TOKEN = env("HUBSPOT_PRIVATE_APP_TOKEN", default="")
+HUBSPOT_PRIVATE_APP_TOKEN = os.environ.get("HUBSPOT_PRIVATE_APP_TOKEN", "")
 # Base URL for HubSpot APIs (overrideable for testing/mocking)
-HUBSPOT_API_BASE = env("HUBSPOT_API_BASE", default="https://api.hubapi.com")
+HUBSPOT_API_BASE = os.environ.get("HUBSPOT_API_BASE", "https://api.hubapi.com")
 # Tickets pipeline to use for disputes (string ID shown in HubSpot UI, often "0")
-HUBSPOT_TICKETS_PIPELINE = env("HUBSPOT_TICKETS_PIPELINE", default="0")
-HUBSPOT_MILESTONE_OBJECT = env("HUBSPOT_MILESTONE_OBJECT")
-HUBSPOT_REVENUE_OBJECT = env("HUBSPOT_REVENUE_OBJECT")
-HUBSPOT_FEEDBACK_OBJECT = env("HUBSPOT_FEEDBACK_OBJECT")
-HUBSPOT_CONTACT_MESSAGE_OBJECT = env("HUBSPOT_CONTACT_MESSAGE_OBJECT")
-HUBSPOT_PAYMENTS_OBJECT = env("HUBSPOT_PAYMENTS_OBJECT")
+HUBSPOT_TICKETS_PIPELINE = os.environ.get("HUBSPOT_TICKETS_PIPELINE", "0")
+HUBSPOT_MILESTONE_OBJECT = os.environ.get("HUBSPOT_MILESTONE_OBJECT")
+HUBSPOT_REVENUE_OBJECT = os.environ.get("HUBSPOT_REVENUE_OBJECT")
+HUBSPOT_FEEDBACK_OBJECT = os.environ.get("HUBSPOT_FEEDBACK_OBJECT")
+HUBSPOT_CONTACT_MESSAGE_OBJECT = os.environ.get("HUBSPOT_CONTACT_MESSAGE_OBJECT")
+HUBSPOT_PAYMENTS_OBJECT = os.environ.get("HUBSPOT_PAYMENTS_OBJECT")
 # Custom Lead object (used for CallbackRequest → Lead)
-HUBSPOT_LEAD_OBJECT = env("HUBSPOT_LEAD_OBJECT", default="leads")
+HUBSPOT_LEAD_OBJECT = os.environ.get("HUBSPOT_LEAD_OBJECT", "leads")
 # Lead association type overrides (optional)
 HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID = env("HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID", default=None)
 HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID = env("HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID", default=None)
 HUBSPOT_DELETED_USER_OBJECT = env("HUBSPOT_DELETED_USER_OBJECT")
 # Core HubSpot settings
-HUBSPOT_SYNC_ENABLED = env.bool('HUBSPOT_SYNC_ENABLED')
-HUBSPOT_SYNC_DEBUG = env.bool('HUBSPOT_SYNC_DEBUG')
-HUBSPOT_SYNC_TIMEOUT = env.int('HUBSPOT_SYNC_TIMEOUT')
+HUBSPOT_SYNC_ENABLED = os.environ.get('HUBSPOT_SYNC_ENABLED', 'False').lower() == 'true'
+HUBSPOT_SYNC_DEBUG = os.environ.get('HUBSPOT_SYNC_DEBUG', 'False').lower() == 'true'
+HUBSPOT_SYNC_TIMEOUT = int(os.environ.get('HUBSPOT_SYNC_TIMEOUT', 30))
 
 # Feature flags for safe deployment
-HUBSPOT_USER_SIGNALS_ENABLED = env.bool('HUBSPOT_USER_SIGNALS_ENABLED', default=True)
-HUBSPOT_COMPANY_SIGNALS_ENABLED = env.bool('HUBSPOT_COMPANY_SIGNALS_ENABLED', default=True)
-HUBSPOT_PROJECT_SIGNALS_ENABLED = env.bool('HUBSPOT_PROJECT_SIGNALS_ENABLED', default=True)
-HUBSPOT_MILESTONE_SIGNALS_ENABLED = env.bool('HUBSPOT_MILESTONE_SIGNALS_ENABLED', default=True)
-HUBSPOT_SIGNALS_DEBUG = env.bool('HUBSPOT_SIGNALS_DEBUG', default=False)
+HUBSPOT_USER_SIGNALS_ENABLED = os.environ.get('HUBSPOT_USER_SIGNALS_ENABLED', 'True').lower() == 'true'
+HUBSPOT_COMPANY_SIGNALS_ENABLED = os.environ.get('HUBSPOT_COMPANY_SIGNALS_ENABLED', 'True').lower() == 'true'
+HUBSPOT_PROJECT_SIGNALS_ENABLED = os.environ.get('HUBSPOT_PROJECT_SIGNALS_ENABLED', 'True').lower() == 'true'
+HUBSPOT_MILESTONE_SIGNALS_ENABLED = os.environ.get('HUBSPOT_MILESTONE_SIGNALS_ENABLED', 'True').lower() == 'true'
+HUBSPOT_SIGNALS_DEBUG = os.environ.get('HUBSPOT_SIGNALS_DEBUG', 'False').lower() == 'true'
 
 # Rate limiting and circuit breaker
-HUBSPOT_RATE_LIMIT_MAX = env.int('HUBSPOT_RATE_LIMIT_MAX')
-HUBSPOT_RATE_LIMIT_WINDOW = env.int('HUBSPOT_RATE_LIMIT_WINDOW')
-HUBSPOT_CIRCUIT_BREAKER_THRESHOLD = env.int('HUBSPOT_CIRCUIT_BREAKER_THRESHOLD')
-HUBSPOT_CIRCUIT_BREAKER_TIMEOUT = env.int('HUBSPOT_CIRCUIT_BREAKER_TIMEOUT')
+HUBSPOT_RATE_LIMIT_MAX = int(os.environ.get('HUBSPOT_RATE_LIMIT_MAX', 100))
+HUBSPOT_RATE_LIMIT_WINDOW = int(os.environ.get('HUBSPOT_RATE_LIMIT_WINDOW', 60))
+HUBSPOT_CIRCUIT_BREAKER_THRESHOLD = int(os.environ.get('HUBSPOT_CIRCUIT_BREAKER_THRESHOLD', 5))
+HUBSPOT_CIRCUIT_BREAKER_TIMEOUT = int(os.environ.get('HUBSPOT_CIRCUIT_BREAKER_TIMEOUT', 300))

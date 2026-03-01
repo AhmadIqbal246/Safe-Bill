@@ -35,6 +35,8 @@ urlpatterns = [
     path("api/payments/", include("payments.urls")),
     path("api/hubspot/", include("hubspot.urls")),
     path("api/subscription/", include("subscription.urls")),
+    path("api/rag/", include("RAG.urls")),
+    path('api/ai/', include('ai_assistant.urls')),
     # Add other app urls here
 ]
 
