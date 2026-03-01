@@ -47,6 +47,7 @@ ALLOWED_HOSTS = _env_list(
         "http://127.0.0.1:3000", # For development
         "https://dea6eb7b074c.ngrok-free.app",
         "dea6eb7b074c.ngrok-free.app",
+        "37.60.228.213",
     ],
 )
 
@@ -401,7 +402,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'no-project-nurture-orchestrator': {
         'task': 'feedback.tasks.orchestrate_no_project_nurture_task',
-        'schedule': float(os.environ['NO_PROJECT_ORCHESTRATOR_INTERVAL']),
+        'schedule': float(os.environ.get('NO_PROJECT_ORCHESTRATOR_INTERVAL', 86400.0)),
         'options': {
             'queue': 'emails',
             'priority': 4,
@@ -409,7 +410,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'relogin-reminder-orchestrator': {
         'task': 'accounts.tasks.orchestrate_relogin_reminder_task',
-        'schedule': float(os.environ['RELOGIN_ORCHESTRATOR_INTERVAL']),
+        'schedule': float(os.environ.get('RELOGIN_ORCHESTRATOR_INTERVAL', 86400.0)),
         'options': {
             'queue': 'emails',
             'priority': 4,
@@ -417,7 +418,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'success-story-orchestrator': {
         'task': 'accounts.tasks.orchestrate_success_story_emails_task',
-        'schedule': float(os.environ['SUCCESS_STORY_ORCHESTRATOR_INTERVAL']),
+        'schedule': float(os.environ.get('SUCCESS_STORY_ORCHESTRATOR_INTERVAL', 86400.0)),
         'options': {
             'queue': 'emails',
             'priority': 4,
@@ -471,9 +472,9 @@ HUBSPOT_PAYMENTS_OBJECT = os.environ.get("HUBSPOT_PAYMENTS_OBJECT")
 # Custom Lead object (used for CallbackRequest → Lead)
 HUBSPOT_LEAD_OBJECT = os.environ.get("HUBSPOT_LEAD_OBJECT", "leads")
 # Lead association type overrides (optional)
-HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID = env("HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID", default=None)
-HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID = env("HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID", default=None)
-HUBSPOT_DELETED_USER_OBJECT = env("HUBSPOT_DELETED_USER_OBJECT")
+HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID = os.environ.get("HUBSPOT_LEAD_TO_PRIMARY_CONTACT_TYPE_ID", None)
+HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID = os.environ.get("HUBSPOT_LEAD_TO_PRIMARY_COMPANY_TYPE_ID", None)
+HUBSPOT_DELETED_USER_OBJECT = os.environ.get("HUBSPOT_DELETED_USER_OBJECT")
 # Core HubSpot settings
 HUBSPOT_SYNC_ENABLED = os.environ.get('HUBSPOT_SYNC_ENABLED', 'False').lower() == 'true'
 HUBSPOT_SYNC_DEBUG = os.environ.get('HUBSPOT_SYNC_DEBUG', 'False').lower() == 'true'
