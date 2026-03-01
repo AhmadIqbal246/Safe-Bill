@@ -5,7 +5,7 @@ from app.db.vector_store import vector_store
 from app.services.embeddings.embedder import embedding_service
 from app.services.retrieval.reranker import rerank_service
 from app.services.llm.generation import llm_service
-from app.schemas.chat import ChatRequest, RetrievedChunk, ChunkMetadata
+from app.schemas.chat import ChatRequest, MessagePrompt, RetrievedChunk, ChunkMetadata
 
 class QueryEngine:
     def __init__(self):
@@ -14,41 +14,81 @@ class QueryEngine:
         # Then we re-rank down to the absolute top 5 most relevant ones
         self.rerank_top_n = 5
 
-    async def _rewrite_query(self, query: str) -> str:
+    async def _rewrite_query(self, messages: List[MessagePrompt]) -> str:
         """
-        Extracts technical keywords from a user question to improve search results.
-        Example: 'how to create a project' -> 'project creation workflow'
+        Analyzes the chat history and the latest user question to create a 
+        standalone, search-optimized query.
         """
+        if len(messages) <= 1:
+            return messages[-1].content
+
+        # Limit context to last 10 messages for the rewriter to keep it lightning fast
+        context_messages = messages[-11:-1]
+        history_text = "\n".join([f"{m.role}: {m.content}" for m in context_messages])
+        last_query = messages[-1].content
+        
         prompt = (
-            f"Given the following user question, output 3-5 technical keywords "
-            f"that would be found in a documentation index. Output ONLY the keywords separated by spaces.\n"
-            f"Question: {query}"
+            "Given the following conversation history and a NEW user question, "
+            "perform one of two actions:\n"
+            "1. If the question is about the Safe-Bill PLATFORM (features, payments, rules), rephrase it into a standalone search query.\n"
+            "2. If the question is PERSONAL or CONVERSATIONAL (about the user's name, role, shared details, or previous chat history), "
+            "output 'CONVERSATIONAL_CONTEXT'. Do not search the manual for these questions.\n\n"
+            "Output ONLY the standalone query or the keyword.\n\n"
+            f"HISTORY:\n{history_text}\n"
+            f"NEW QUESTION: {last_query}\n"
+            "RESULT:"
         )
         
         try:
-            # We use a non-streaming call for the expansion
             response = await llm_service.client.chat.completions.create(
                 model=llm_service.model,
                 messages=[{"role": "user", "content": prompt}],
-                stream=False
+                stream=False,
+                temperature=0.0 # Strict classification
             )
-            expanded_query = response.choices[0].message.content.strip()
-            return f"{query} {expanded_query}"
-        except:
-            return query
-
+            result = response.choices[0].message.content.strip()
+            # Clean up potential quotes or AI chatter
+            result = result.strip('"').strip("'")
+            return result if result else last_query
+        except Exception as e:
+            print(f"Warning: Query rewrite failed: {e}")
+            return last_query
+        
     async def answer_query(self, request: ChatRequest) -> AsyncGenerator[str, None]:
         """
         Orchestrates the full RAG cycle:
         Rewrite -> Retrieve -> Rerank -> Generate Response
         """
-        # 1. Get the primary query
-        user_query = request.messages[-1].content
+        # 1. Get the primary query (optimized for history context or routed to memory)
+        search_query = await self._rewrite_query(request.messages)
         
-        # 2. Query Expansion (Ensures we hit the right keywords)
-        search_query = await self._rewrite_query(user_query)
-        
+        # Fallback if rewrite fails or returns empty
+        if not search_query or search_query.strip() == "":
+            search_query = request.messages[-1].content
+            
+        print(f"--- Search Optimized Query: '{search_query}' ---")
+
+        # 2. INTELIGENT ROUTING: If the query is marked as conversational, skip RAG search
+        if "CONVERSATIONAL_CONTEXT" in search_query:
+            print("--- INFO: Conversational Routing Active. Skipping Manual Retrieval. ---")
+            async for chunk in llm_service.generate_response_stream(
+                messages=request.messages,
+                context_chunks=[] # Send empty context to prioritize memory
+            ):
+                yield chunk
+            return
+
         # 3. Vector Search (Pinecone)
+        # Ensure we have a valid string for embedding
+        if not search_query.strip():
+            print("--- WARNING: Empty search query. Yielding fallback response. ---")
+            async for chunk in llm_service.generate_response_stream(
+                messages=request.messages,
+                context_chunks=[]
+            ):
+                yield chunk
+            return
+
         query_vector = embedding_service.embed_text(search_query)
         raw_matches = vector_store.similarity_search(
             query_vector=query_vector, 
@@ -69,19 +109,18 @@ class QueryEngine:
                 )
             ))
             
-        # 3. Intelligent Re-ranking (Cohere)
-        # This fixes the "semantic drift" where Pinecone might give a noisy result
+        # 4. Intelligent Re-ranking (Cohere)
         if candidate_chunks:
             reranked_chunks = await rerank_service.rerank(
-                query=user_query, 
+                query=search_query, 
                 chunks=candidate_chunks, 
                 top_n=self.rerank_top_n
             )
         else:
             reranked_chunks = []
             
-        # 4. Context Preparation
-        context_texts = [c.text for c in reranked_chunks]
+        # 5. Context Preparation
+        context_texts = [f"[Source: {c.metadata.source} | Section: {c.metadata.title}]\n{c.text}" for c in reranked_chunks]
         
         # DEBUG: Print retrieved context to terminal
         print("\n--- RETRIEVED CONTEXT ---")

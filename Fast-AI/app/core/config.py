@@ -1,3 +1,4 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
@@ -9,9 +10,10 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
 
-    # LLM (OpenRouter)
-    OPENROUTER_API_KEY: str
-    LLM_MODEL: str = "google/gemma-3-12b-it:free"
+    # LLM (Multi-Provider Support)
+    GROQ_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
 
     # Vector Store (Pinecone)
     PINECONE_API_KEY: str
@@ -44,3 +46,7 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Set HF_TOKEN in system environment so Hugging Face libraries can find it
+if settings.HF_TOKEN:
+    os.environ["HF_TOKEN"] = settings.HF_TOKEN
