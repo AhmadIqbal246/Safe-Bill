@@ -17,48 +17,78 @@ class QueryEngine:
     async def _rewrite_query(self, messages: List[MessagePrompt]) -> str:
         """
         Analyzes the chat history and the latest user question to create a 
-        standalone, search-optimized query. This handles follow-up questions
-        like 'how do I delete it?' by resolving 'it' from the history.
+        standalone, search-optimized query.
         """
-        if len(messages) == 1:
+        if len(messages) <= 1:
             return messages[-1].content
 
-        # Create a prompt for the LLM to condense the history and question
-        history_text = "\n".join([f"{m.role}: {m.content}" for m in messages[:-3]]) # last 3 messages for context
+        # Limit context to last 10 messages for the rewriter to keep it lightning fast
+        context_messages = messages[-11:-1]
+        history_text = "\n".join([f"{m.role}: {m.content}" for m in context_messages])
         last_query = messages[-1].content
         
         prompt = (
             "Given the following conversation history and a NEW user question, "
-            "rephrase the NEW question into a STANDALONE search query that contains all necessary context. "
-            "Internalize keywords from the history into the new query. Output ONLY the standalone query.\n\n"
+            "perform one of two actions:\n"
+            "1. If the question is about the Safe-Bill PLATFORM (features, payments, rules), rephrase it into a standalone search query.\n"
+            "2. If the question is PERSONAL or CONVERSATIONAL (about the user's name, role, shared details, or previous chat history), "
+            "output 'CONVERSATIONAL_CONTEXT'. Do not search the manual for these questions.\n\n"
+            "Output ONLY the standalone query or the keyword.\n\n"
             f"HISTORY:\n{history_text}\n"
             f"NEW QUESTION: {last_query}\n"
-            "STANDALONE SEARCH QUERY:"
+            "RESULT:"
         )
         
         try:
             response = await llm_service.client.chat.completions.create(
                 model=llm_service.model,
                 messages=[{"role": "user", "content": prompt}],
-                stream=False
+                stream=False,
+                temperature=0.0 # Strict classification
             )
-            condensed_query = response.choices[0].message.content.strip()
+            result = response.choices[0].message.content.strip()
             # Clean up potential quotes or AI chatter
-            condensed_query = condensed_query.strip('"').strip("'")
-            return condensed_query if condensed_query else last_query
+            result = result.strip('"').strip("'")
+            return result if result else last_query
         except Exception as e:
             print(f"Warning: Query rewrite failed: {e}")
             return last_query
-
+        
     async def answer_query(self, request: ChatRequest) -> AsyncGenerator[str, None]:
         """
         Orchestrates the full RAG cycle:
         Rewrite -> Retrieve -> Rerank -> Generate Response
         """
-        # 1. Get the primary query (optimized for history context)
+        # 1. Get the primary query (optimized for history context or routed to memory)
         search_query = await self._rewrite_query(request.messages)
+        
+        # Fallback if rewrite fails or returns empty
+        if not search_query or search_query.strip() == "":
+            search_query = request.messages[-1].content
+            
         print(f"--- Search Optimized Query: '{search_query}' ---")
-        # 2. Vector Search (Pinecone)
+
+        # 2. INTELIGENT ROUTING: If the query is marked as conversational, skip RAG search
+        if "CONVERSATIONAL_CONTEXT" in search_query:
+            print("--- INFO: Conversational Routing Active. Skipping Manual Retrieval. ---")
+            async for chunk in llm_service.generate_response_stream(
+                messages=request.messages,
+                context_chunks=[] # Send empty context to prioritize memory
+            ):
+                yield chunk
+            return
+
+        # 3. Vector Search (Pinecone)
+        # Ensure we have a valid string for embedding
+        if not search_query.strip():
+            print("--- WARNING: Empty search query. Yielding fallback response. ---")
+            async for chunk in llm_service.generate_response_stream(
+                messages=request.messages,
+                context_chunks=[]
+            ):
+                yield chunk
+            return
+
         query_vector = embedding_service.embed_text(search_query)
         raw_matches = vector_store.similarity_search(
             query_vector=query_vector, 
@@ -79,8 +109,7 @@ class QueryEngine:
                 )
             ))
             
-        # 3. Intelligent Re-ranking (Cohere)
-        # This fixes the "semantic drift" where Pinecone might give a noisy result
+        # 4. Intelligent Re-ranking (Cohere)
         if candidate_chunks:
             reranked_chunks = await rerank_service.rerank(
                 query=search_query, 
@@ -90,8 +119,8 @@ class QueryEngine:
         else:
             reranked_chunks = []
             
-        # 4. Context Preparation
-        context_texts = [c.text for c in reranked_chunks]
+        # 5. Context Preparation
+        context_texts = [f"[Source: {c.metadata.source} | Section: {c.metadata.title}]\n{c.text}" for c in reranked_chunks]
         
         # DEBUG: Print retrieved context to terminal
         print("\n--- RETRIEVED CONTEXT ---")

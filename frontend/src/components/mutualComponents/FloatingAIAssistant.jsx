@@ -88,6 +88,13 @@ export default function FloatingAIAssistant() {
                     ...prev,
                     { role: "assistant", content: "Sorry, I encountered an error. Please check your connection." }
                 ])
+            },
+            (newId) => {
+                // IMPORTANT: This captures the session ID from the backend 
+                // and keeps this specific chat instance linked to it!
+                if (!currentSessionId) {
+                    setCurrentSessionId(newId)
+                }
             }
         )
     }

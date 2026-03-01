@@ -34,31 +34,46 @@ def chat_with_ai(request):
     # 2. Save User Message to PostgreSQL
     AIMessage.objects.create(session=session, role='user', content=user_query)
 
-    # 3. Retrieve History for RAG Context
+    # 3. Retrieve History for LLM Context
+    # Fetch last 50 messages to ensure long-term memory, then reverse to chronological order
+    past_messages = list(session.messages.all().order_by('-created_at')[:50])
+    past_messages.reverse()
+    
     history = []
-    # Fetch last 10 messages to keep context lean
-    past_messages = session.messages.all().order_by('created_at')[:10]
     for msg in past_messages:
+        # Standardize roles for OpenRouter/LLM (user/assistant)
         history.append({"role": msg.role, "content": msg.content})
 
     # 4. Define the Streaming Proxy Generator
     async def stream_generator():
         full_ai_response = ""
-        
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            # We call our FastAPI Microservice on Port 8001
-            async with client.stream(
-                "POST", 
-                f"{settings.FAST_AI_URL}/api/v1/chat/",
-                json={
-                    "messages": history,
-                    "stream": True,
-                    "session_id": str(session.id)
-                }
-            ) as response:
-                async for chunk in response.aiter_text():
-                    full_ai_response += chunk
-                    yield chunk
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                # We call our FastAPI Microservice on Port 8001
+                async with client.stream(
+                    "POST", 
+                    f"{settings.FAST_AI_URL}/api/v1/chat/",
+                    json={
+                        "messages": history,
+                        "stream": True,
+                        "session_id": str(session.id)
+                    }
+                ) as response:
+                    if response.status_code != 200:
+                        yield "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again in a moment."
+                        return
+
+                    stream_started = False
+                    async for chunk in response.aiter_text():
+                        stream_started = True
+                        full_ai_response += chunk
+                        yield chunk
+                    
+                    if not stream_started:
+                        yield "I received an empty response. Please try rephrasing your question."
+        except Exception as e:
+            print(f"ERROR connecting to FastAPI: {e}")
+            yield "I encountered a connection error. Please ensure the AI service is running."
         
         # 5. Save the Full AI Response to DB after streaming finishes
         if full_ai_response:
@@ -68,7 +83,10 @@ def chat_with_ai(request):
                 content=full_ai_response
             )
 
-    return StreamingHttpResponse(stream_generator(), content_type="text/plain")
+    response = StreamingHttpResponse(stream_generator(), content_type="text/plain")
+    response['X-Session-ID'] = str(session.id)
+    response['Access-Control-Expose-Headers'] = 'X-Session-ID' # Important for CORS
+    return response
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

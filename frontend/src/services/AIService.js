@@ -29,7 +29,7 @@ export const aiApiService = {
    * Main function to handle streaming RAG responses.
    * Leverages browser's Fetch Stream API for real-time output.
    */
-  async sendMessageStream(message, sessionId, onChunk, onComplete, onError) {
+  async sendMessageStream(message, sessionId, onChunk, onComplete, onError, onSessionCreated) {
     const token = sessionStorage.getItem('access');
 
     try {
@@ -47,6 +47,12 @@ export const aiApiService = {
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
+      }
+
+      // Capture the session ID if it's returned (important for new sessions)
+      const xSessionId = response.headers.get('X-Session-ID');
+      if (xSessionId && onSessionCreated) {
+        onSessionCreated(xSessionId);
       }
 
       const reader = response.body.getReader();
