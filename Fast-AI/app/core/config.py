@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
+    CACHE_TTL_SECONDS: int = 3600  # Cache expiration time (default: 1 hour)
 
     model_config = SettingsConfigDict(
         env_file=".env", 

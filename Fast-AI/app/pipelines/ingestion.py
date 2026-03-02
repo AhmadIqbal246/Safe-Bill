@@ -6,6 +6,7 @@ from typing import List
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 
 from app.db.vector_store import vector_store
+from app.db.redis_client import cache_service
 from app.services.embeddings.embedder import embedding_service
 from app.schemas.document import Chunk, IngestionResponse
 
@@ -132,6 +133,9 @@ class DataIngestionPipeline:
             
         # 7. Upsert to Pinecone
         vector_store.upsert_chunks(pinecone_vectors)
+        
+        # 8. Clear the response cache so users get fresh answers
+        await cache_service.clear_all()
         
         total_time_ms = int((time.time() - start_time) * 1000)
         return IngestionResponse(
