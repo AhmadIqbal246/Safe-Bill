@@ -29,7 +29,7 @@ export const aiApiService = {
    * Main function to handle streaming RAG responses.
    * Leverages browser's Fetch Stream API for real-time output.
    */
-  async sendMessageStream(message, sessionId, onChunk, onComplete, onError, onSessionCreated) {
+  async sendMessageStream(message, sessionId, onChunk, onComplete, onError, onSessionCreated, signal) {
     const token = sessionStorage.getItem('access');
 
     try {
@@ -42,7 +42,8 @@ export const aiApiService = {
         body: JSON.stringify({
           message,
           session_id: sessionId
-        })
+        }),
+        signal // AbortController signal for cancellation
       });
 
       if (!response.ok) {
@@ -59,17 +60,31 @@ export const aiApiService = {
       const decoder = new TextDecoder();
       let fullText = '';
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value);
-        fullText += chunk;
-        if (onChunk) onChunk(chunk);
+          const chunk = decoder.decode(value);
+          fullText += chunk;
+          if (onChunk) onChunk(chunk);
+        }
+      } catch (readErr) {
+        // If aborted, cancel the reader and return what we have so far
+        if (readErr.name === 'AbortError') {
+          reader.cancel();
+          if (onComplete) onComplete(fullText);
+          return;
+        }
+        throw readErr;
       }
 
       if (onComplete) onComplete(fullText);
     } catch (err) {
+      if (err.name === 'AbortError') {
+        // User stopped generation — not an error
+        return;
+      }
       if (onError) onError(err);
       console.error('Streaming error:', err);
     }

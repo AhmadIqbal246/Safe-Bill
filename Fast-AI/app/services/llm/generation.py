@@ -41,11 +41,12 @@ class LLMService:
             "RULES:\n"
             "1. MEMORY: Use chat history for personal details (name, role, etc). Do not repeat greetings every turn.\n"
             "2. TIME: Use the CURRENT DATETIME for all date calculations. Never hedge.\n"
-            "3. ZERO HALLUCINATION: Answer platform questions ONLY from the 'SAFE-BILL CONTEXT' below. "
-            "If the answer is NOT in the context, say: 'This feature/plan is not currently available on Safe-Bill' or 'I don't have information on that in our documentation.' "
-            "NEVER invent prices, percentages, plans, features, or policies. Making up information is STRICTLY FORBIDDEN.\n"
+            "3. ACCURACY: Answer platform questions using the 'SAFE-BILL CONTEXT' below. "
+            "If the context contains relevant information, use it confidently. "
+            "If the answer is genuinely NOT in the context, say: 'I don't have detailed information about that specific topic right now. Could you rephrase or ask about a specific aspect?' "
+            "NEVER invent specific prices, percentages, plans, or policies that are not explicitly stated in the context.\n"
             "4. FLOW: Keep conversation natural. Skip greetings after the first turn.\n"
-            "5. NO CITATIONS: Never mention document names, filenames, or source labels. Speak as a platform expert.\n"
+            "5. NO METADATA: Never reveal internal details like document names, filenames, doc_ids, 'Title:', 'Section:', category labels, or any source metadata from the context. Speak naturally as a platform expert who simply knows the answer.\n"
         )
         
         # 2. FINAL PROMPT (Technical Chunks + Memory Reminder)

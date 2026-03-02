@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Bot, X, Send, User, ChevronLeft, PlusCircle, Loader2 } from "lucide-react"
+import { Bot, X, Send, User, ChevronLeft, PlusCircle, Loader2, Square } from "lucide-react"
 import { aiApiService } from "../../services/AIService"
 
 export default function FloatingAIAssistant() {
@@ -13,6 +13,16 @@ export default function FloatingAIAssistant() {
     const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
     const scrollRef = useRef(null)
+    const abortControllerRef = useRef(null)
+
+    // Stop the AI from generating
+    const stopGenerating = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+            abortControllerRef.current = null
+            setIsStreaming(false)
+        }
+    }
 
     // Auto-scroll to bottom of chat
     useEffect(() => {
@@ -72,6 +82,10 @@ export default function FloatingAIAssistant() {
         // Add empty assistant bubble for streaming
         setMessages((prev) => [...prev, { role: "assistant", content: "" }])
 
+        // Create a new AbortController for this request
+        const controller = new AbortController()
+        abortControllerRef.current = controller
+
         await aiApiService.sendMessageStream(
             query,
             currentSessionId,
@@ -85,6 +99,7 @@ export default function FloatingAIAssistant() {
             },
             (fullResponse) => {
                 setIsStreaming(false)
+                abortControllerRef.current = null
                 // Re-ping sessions list to show new session if it was the first msg
                 if (!currentSessionId) {
                     aiApiService.listSessions().then(setSessions)
@@ -92,6 +107,7 @@ export default function FloatingAIAssistant() {
             },
             (err) => {
                 setIsStreaming(false)
+                abortControllerRef.current = null
                 setMessages((prev) => [
                     ...prev,
                     { role: "assistant", content: "Sorry, I encountered an error. Please check your connection." }
@@ -103,7 +119,8 @@ export default function FloatingAIAssistant() {
                 if (!currentSessionId) {
                     setCurrentSessionId(newId)
                 }
-            }
+            },
+            controller.signal // Pass the abort signal
         )
     }
 
@@ -259,20 +276,27 @@ export default function FloatingAIAssistant() {
                             disabled={isStreaming}
                             style={{ minHeight: '40px' }}
                         />
-                        <button
-                            type="submit"
-                            disabled={!inputText.trim() || isStreaming}
-                            className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${!inputText.trim() || isStreaming
-                                ? 'bg-gray-100 text-gray-300'
-                                : 'bg-[#01257D] text-white hover:bg-[#2346a0] active:scale-95 shadow-lg shadow-[#01257D]/10'
-                                }`}
-                        >
-                            {isStreaming ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
+                        {isStreaming ? (
+                            <button
+                                type="button"
+                                onClick={stopGenerating}
+                                className="p-2.5 rounded-xl transition-all flex-shrink-0 bg-red-500 text-white hover:bg-red-600 active:scale-95 shadow-lg"
+                                title="Stop generating"
+                            >
+                                <Square className="h-4 w-4 fill-current" />
+                            </button>
+                        ) : (
+                            <button
+                                type="submit"
+                                disabled={!inputText.trim()}
+                                className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${!inputText.trim()
+                                    ? 'bg-gray-100 text-gray-300'
+                                    : 'bg-[#01257D] text-white hover:bg-[#2346a0] active:scale-95 shadow-lg shadow-[#01257D]/10'
+                                    }`}
+                            >
                                 <Send className="h-5 w-5" />
-                            )}
-                        </button>
+                            </button>
+                        )}
                     </form>
                 </div>
             </div>
