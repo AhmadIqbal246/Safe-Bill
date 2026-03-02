@@ -119,8 +119,8 @@ class QueryEngine:
         else:
             reranked_chunks = []
             
-        # 5. Context Preparation
-        context_texts = [f"[Source: {c.metadata.source} | Section: {c.metadata.title}]\n{c.text}" for c in reranked_chunks]
+        # 5. Context Preparation — raw text only, no source labels (to prevent the LLM from citing filenames)
+        context_texts = [c.text for c in reranked_chunks]
         
         # DEBUG: Print retrieved context to terminal
         print("\n--- RETRIEVED CONTEXT ---")

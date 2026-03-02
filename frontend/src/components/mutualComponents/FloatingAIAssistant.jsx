@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Bot, X, Send, User, ChevronLeft, Trash2, PlusCircle, Loader2 } from "lucide-react"
+import { Bot, X, Send, User, ChevronLeft, PlusCircle, Loader2 } from "lucide-react"
 import { aiApiService } from "../../services/AIService"
 
 export default function FloatingAIAssistant() {
@@ -48,6 +48,14 @@ export default function FloatingAIAssistant() {
         setMessages([])
         setCurrentSessionId(null)
         setShowHistory(false)
+    }
+
+    // Handle keyboard events in textarea
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            handleSendMessage(e)
+        }
     }
 
     // Handle Send Message
@@ -120,31 +128,22 @@ export default function FloatingAIAssistant() {
                 {/* Header */}
                 <div className="p-4 flex items-center justify-between border-b border-gray-100" style={{ backgroundColor: "#01257D" }}>
                     <div className="flex items-center gap-3">
-                        {showHistory ? (
-                            <button
-                                onClick={() => setShowHistory(false)}
-                                className="p-1 hover:bg-white/10 rounded-md transition-colors"
-                            >
-                                <ChevronLeft className="h-5 w-5 text-white" />
-                            </button>
-                        ) : (
-                            <div className="p-2 bg-white/10 rounded-lg">
-                                <Bot className="h-5 w-5 text-white" />
-                            </div>
-                        )}
+                        <button
+                            onClick={() => setShowHistory(!showHistory)}
+                            className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
+                            title="All Conversations"
+                        >
+                            <ChevronLeft className={`h-5 w-5 text-white transition-transform duration-200 ${showHistory ? '' : 'rotate-180'}`} />
+                        </button>
+                        <div className="p-2 bg-white/10 rounded-lg">
+                            <Bot className="h-5 w-5 text-white" />
+                        </div>
                         <div>
                             <h3 className="text-white font-semibold text-sm">Safe-Bill Assistant</h3>
                             <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Verified Support</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowHistory(!showHistory)}
-                            className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-white"
-                            title="Chat History"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </button>
                         <button
                             onClick={() => setIsOpen(false)}
                             className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-white"
@@ -231,7 +230,15 @@ export default function FloatingAIAssistant() {
                                         }`}
                                     style={{ whiteSpace: 'pre-wrap' }}
                                 >
-                                    {m.content}
+                                    {m.role === 'assistant' && m.content === '' && isStreaming ? (
+                                        <span className="inline-flex items-center gap-1">
+                                            <span className="typing-dot" />
+                                            <span className="typing-dot" style={{ animationDelay: '0.2s' }} />
+                                            <span className="typing-dot" style={{ animationDelay: '0.4s' }} />
+                                        </span>
+                                    ) : (
+                                        m.content
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -240,20 +247,22 @@ export default function FloatingAIAssistant() {
                     {/* Input Area */}
                     <form
                         onSubmit={handleSendMessage}
-                        className="p-4 bg-white border-t border-gray-100 flex items-center gap-2"
+                        className="p-4 bg-white border-t border-gray-100 flex items-end gap-2"
                     >
-                        <input
-                            type="text"
+                        <textarea
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="Ask a question..."
-                            className="flex-1 bg-gray-50 border-none px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-[#01257D]/20 outline-none placeholder:text-gray-400"
+                            rows={1}
+                            className="flex-1 bg-gray-50 border-none px-4 py-2.5 rounded-xl text-sm focus:ring-2 focus:ring-[#01257D]/20 outline-none placeholder:text-gray-400 resize-none max-h-24 overflow-y-auto"
                             disabled={isStreaming}
+                            style={{ minHeight: '40px' }}
                         />
                         <button
                             type="submit"
                             disabled={!inputText.trim() || isStreaming}
-                            className={`p-2.5 rounded-xl transition-all ${!inputText.trim() || isStreaming
+                            className={`p-2.5 rounded-xl transition-all flex-shrink-0 ${!inputText.trim() || isStreaming
                                 ? 'bg-gray-100 text-gray-300'
                                 : 'bg-[#01257D] text-white hover:bg-[#2346a0] active:scale-95 shadow-lg shadow-[#01257D]/10'
                                 }`}

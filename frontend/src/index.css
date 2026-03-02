@@ -185,3 +185,19 @@ html:not(.hs-chat-open) iframe[data-hs-messages-widget] {
     bottom: 160px !important; /* extra room on smaller screens */
   }
 }
+
+/* Twinkling dots for AI typing indicator */
+@keyframes typingBlink {
+  0%, 20% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+  80%, 100% { opacity: 0.2; transform: scale(0.8); }
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #01257D;
+  animation: typingBlink 1.2s infinite ease-in-out;
+}
