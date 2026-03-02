@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     HF_TOKEN: Optional[str] = None
 
     # Local Embeddings (Sentence Transformers)
-    EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL_NAME: str = "sentence-transformers/all-mpnet-base-v2"
     EMBEDDING_DIMENSION: int = 768
 
     # Redis Cache

@@ -3,9 +3,8 @@ from app.core.config import settings
 
 class EmbeddingService:
     def __init__(self):
-        # We use a high-accuracy 768-dimension local model
-        # This matches your existing Pinecone index dimension
-        self.model_name = "sentence-transformers/all-mpnet-base-v2"
+        # We now read this from .env (defaults to 768-dimension all-mpnet-base-v2)
+        self.model_name = settings.EMBEDDING_MODEL_NAME
         self.model = SentenceTransformer(self.model_name)
     
     def embed_text(self, text: str) -> list[float]:
